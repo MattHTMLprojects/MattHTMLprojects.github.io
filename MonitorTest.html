@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FPS & Monitor Tearing Test</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #05070b;
+    color: white;
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+
+  body {
+    display: grid;
+    grid-template-rows: 50vh 50vh;
+  }
+
+  /* ---------------- TOP: FPS TEST ---------------- */
+
+  #fpsPanel {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at center, #162235 0%, #080d15 58%, #020305 100%);
+    border-bottom: 2px solid #25334a;
+  }
+
+  .sectionLabel {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    z-index: 10;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #8ca3c6;
+  }
+
+  #fpsDisplay {
+    position: absolute;
+    top: 30px;
+    left: 18px;
+    z-index: 10;
+  }
+
+  #fpsNumber {
+    font-size: clamp(42px, 7vw, 92px);
+    font-weight: 700;
+    line-height: 0.95;
+    color: #65f7a5;
+    text-shadow: 0 0 22px rgba(101,247,165,.25);
+  }
+
+  #fpsText {
+    margin-top: 9px;
+    font-size: 13px;
+    color: #8fa2ba;
+  }
+
+  #frameTime {
+    color: #54c9ff;
+  }
+
+  #fpsTrack {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 16%;
+    height: 82px;
+    border-top: 1px solid rgba(255,255,255,.10);
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    background:
+      linear-gradient(
+        90deg,
+        transparent 0 49%,
+        rgba(255,255,255,.05) 49% 50%,
+        transparent 50% 100%
+      );
+    background-size: 80px 100%;
+  }
+
+  #movingObject {
+    position: absolute;
+    top: 11px;
+    left: 0;
+    width: 58px;
+    height: 58px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ffffff, #4bd8ff);
+    box-shadow:
+      0 0 18px #4bd8ff,
+      0 0 42px rgba(75,216,255,.45);
+    will-change: transform;
+  }
+
+  #fpsGraph {
+    position: absolute;
+    right: 18px;
+    top: 20px;
+    width: 40%;
+    max-width: 520px;
+    height: 110px;
+    border: 1px solid #243148;
+    border-radius: 8px;
+    background: rgba(0,0,0,.28);
+  }
+
+  /* ---------------- BOTTOM: TEARING TEST ---------------- */
+
+  #tearPanel {
+    position: relative;
+    overflow: hidden;
+    background: black;
+  }
+
+  #tearTitle {
+    position: absolute;
+    z-index: 10;
+    left: 18px;
+    top: 14px;
+    color: white;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-shadow: 0 1px 4px black;
+  }
+
+  #tearInfo {
+    position: absolute;
+    z-index: 10;
+    right: 18px;
+    top: 14px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    background: rgba(0,0,0,.65);
+    color: #b9c8dd;
+    font-size: 12px;
+  }
+
+  #tearWorld {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: #f5f5f5;
+  }
+
+  #tearMover {
+    position: absolute;
+    top: 0;
+    left: -500px;
+    width: calc(100% + 1000px);
+    height: 100%;
+    will-change: transform;
+
+    background:
+      repeating-linear-gradient(
+        90deg,
+        #000 0px,
+        #000 46px,
+        #fff 46px,
+        #fff 92px
+      );
+  }
+
+  #tearMover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 69px,
+        rgba(0, 180, 255, .85) 69px,
+        rgba(0, 180, 255, .85) 73px
+      );
+  }
+
+  #centerGuide {
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(255,0,70,.7);
+  }
+
+  #controls {
+    position: absolute;
+    z-index: 20;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    padding: 7px;
+    background: rgba(0,0,0,.78);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 8px;
+  }
+
+  button {
+    border: 1px solid #3f536e;
+    background: #111b29;
+    color: white;
+    border-radius: 5px;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #20314a;
+  }
+
+  #speedValue {
+    min-width: 90px;
+    padding: 7px 9px;
+    text-align: center;
+    color: #6ee7ff;
+    font-size: 12px;
+  }
+
+  @media (max-width: 700px) {
+    #fpsGraph {
+      width: 45%;
+      height: 80px;
+    }
+
+    #fpsNumber {
+      font-size: 46px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<section id="fpsPanel">
+  <div class="sectionLabel">REAL-TIME FRAME TEST</div>
+
+  <div id="fpsDisplay">
+    <div id="fpsNumber">-- FPS</div>
+    <div id="fpsText">
+      Frame time:
+      <span id="frameTime">-- ms</span>
+    </div>
+  </div>
+
+  <canvas id="fpsGraph"></canvas>
+
+  <div id="fpsTrack">
+    <div id="movingObject"></div>
+  </div>
+</section>
+
+
+<section id="tearPanel">
+
+  <div id="tearTitle">IMAGE TEARING / REFRESH TEST</div>
+
+  <div id="tearInfo">
+    Follow one vertical edge with your eyes. A visible horizontal break may indicate tearing.
+  </div>
+
+  <div id="tearWorld">
+    <div id="tearMover"></div>
+    <div id="centerGuide"></div>
+  </div>
+
+  <div id="controls">
+    <button onclick="startTest()">Start</button>
+    <button onclick="stopTest()">Stop</button>
+    <button onclick="changeSpeed(-250)">− Speed</button>
+    <div id="speedValue">1000 px/s</div>
+    <button onclick="changeSpeed(250)">+ Speed</button>
+    <button onclick="toggleDirection()">Reverse</button>
+    <button onclick="toggleFullscreen()">Fullscreen</button>
+  </div>
+
+</section>
+
+
+<script>
+  /* ==============================
+     FPS MEASUREMENT
+     ============================== */
+
+  const fpsNumber = document.getElementById("fpsNumber");
+  const frameTimeDisplay = document.getElementById("frameTime");
+  const movingObject = document.getElementById("movingObject");
+  const fpsTrack = document.getElementById("fpsTrack");
+
+  let previousTime = performance.now();
+
+  let frameCounter = 0;
+  let fpsTimer = 0;
+
+  let currentFPS = 0;
+  let currentFrameTime = 0;
+
+  let objectX = 0;
+  let objectDirection = 1;
+
+  let isRunning = false;
+  let animationFrameId = null;
+
+  /* ==============================
+     GRAPH
+     ============================== */
+
+  const canvas = document.getElementById("fpsGraph");
+  const ctx = canvas.getContext("2d");
+
+  let samples = [];
+
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  }
+
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  function drawGraph() {
+
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+
+    ctx.clearRect(0, 0, width, height);
+
+    ctx.strokeStyle = "rgba(255,255,255,.08)";
+    ctx.lineWidth = 1;
+
+    for (let y = 25; y < height; y += 25) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+
+    if (samples.length < 2) return;
+
+    const maxFPS = Math.max(
+      60,
+      ...samples,
+      currentFPS
+    );
+
+    ctx.beginPath();
+
+    ctx.strokeStyle = "#65f7a5";
+    ctx.lineWidth = 2;
+
+    samples.forEach((fps, index) => {
+
+      const x =
+        (index / Math.max(samples.length - 1, 1)) * width;
+
+      const y =
+        height -
+        Math.min(fps / maxFPS, 1) * (height - 8);
+
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
+
+    ctx.stroke();
+  }
+
+  /* ==============================
+     TEARING TEST
+     ============================== */
+
+  const tearMover =
+    document.getElementById("tearMover");
+
+  const speedValue =
+    document.getElementById("speedValue");
+
+  let tearX = 0;
+
+  let tearSpeed = 1000;
+  let tearDirection = 1;
+
+  function changeSpeed(amount) {
+
+    tearSpeed += amount;
+
+    if (tearSpeed < 250)
+      tearSpeed = 250;
+
+    if (tearSpeed > 4000)
+      tearSpeed = 4000;
+
+    speedValue.textContent =
+      tearSpeed + " px/s";
+  }
+
+  function toggleDirection() {
+    tearDirection *= -1;
+  }
+
+  function toggleFullscreen() {
+
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    }
+    else {
+      document.exitFullscreen();
+    }
+  }
+
+  /* ==============================
+     START / STOP CONTROLS
+     ============================== */
+
+function stopTest() {
+
+  isRunning = false;
+
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+
+  currentFPS = 0;
+  currentFrameTime = 0;
+
+  fpsNumber.textContent = "0 FPS";
+  frameTimeDisplay.textContent = "0.00 ms";
+}
+
+  function startTest() {
+
+    if (isRunning && animationFrameId !== null) {
+      return;
+    }
+
+    isRunning = true;
+
+    previousTime = performance.now();
+
+    frameCounter = 0;
+    fpsTimer = 0;
+
+    animationFrameId =
+      requestAnimationFrame(animate);
+  }
+
+  /* ==============================
+     MAIN ANIMATION LOOP
+     ============================== */
+
+  function animate(now) {
+
+    if (!isRunning) {
+      return;
+    }
+
+    let delta = now - previousTime;
+
+    previousTime = now;
+
+    /*
+      Prevent huge jumps if the tab was
+      suspended or browser lost focus.
+    */
+    delta = Math.min(delta, 100);
+
+    frameCounter++;
+    fpsTimer += delta;
+
+    currentFrameTime = delta;
+
+    /*
+      Update displayed FPS roughly
+      every quarter second so the
+      number remains readable.
+    */
+    if (fpsTimer >= 250) {
+
+      currentFPS =
+        frameCounter /
+        (fpsTimer / 1000);
+
+      fpsNumber.textContent =
+        currentFPS.toFixed(1) + " FPS";
+
+      frameTimeDisplay.textContent =
+        currentFrameTime.toFixed(2) + " ms";
+
+      samples.push(currentFPS);
+
+      if (samples.length > 100) {
+        samples.shift();
+      }
+
+      drawGraph();
+
+      frameCounter = 0;
+      fpsTimer = 0;
+    }
+
+    /* --------------------------
+       TOP MOTION TEST
+       -------------------------- */
+
+    const usableWidth =
+      Math.max(
+        0,
+        fpsTrack.clientWidth - 58
+      );
+
+    objectX +=
+      objectDirection *
+      500 *
+      (delta / 1000);
+
+    if (objectX >= usableWidth) {
+      objectX = usableWidth;
+      objectDirection = -1;
+    }
+
+    if (objectX <= 0) {
+      objectX = 0;
+      objectDirection = 1;
+    }
+
+    movingObject.style.transform =
+      `translate3d(${objectX}px, 0, 0)`;
+
+
+    /* --------------------------
+       BOTTOM TEARING MOTION
+       -------------------------- */
+
+    tearX +=
+      tearDirection *
+      tearSpeed *
+      (delta / 1000);
+
+    /*
+      Keep the offset bounded while
+      preserving continuous movement.
+    */
+    if (tearX > 920 || tearX < -920) {
+      tearX %= 920;
+    }
+
+    tearMover.style.transform =
+      `translate3d(${tearX}px, 0, 0)`;
+
+    animationFrameId =
+      requestAnimationFrame(animate);
+  }
+
+  animationFrameId =
+    requestAnimationFrame(animate);
+</script>
+
+</body>
+</html>
