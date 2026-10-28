@@ -24,23 +24,28 @@
 
     body {
       min-height: 100vh;
+
       color: #eee;
-      font-family: Arial, Helvetica, sans-serif;
-      overflow-x: auto;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 
       background:
         radial-gradient(
-          circle at 50% 18%,
+          circle at 50% 20%,
           #756650 0%,
-          #554837 25%,
-          #30281f 55%,
+          #554837 27%,
+          #30281f 57%,
           #17130f 100%
         );
     }
 
-    /* =========================================
+
+    /* =========================================================
        ROOM
-       ========================================= */
+       ========================================================= */
 
     .room {
       position: relative;
@@ -48,17 +53,23 @@
       min-height: 100vh;
 
       display: flex;
+
       justify-content: center;
-      align-items: flex-start;
+      align-items: center;
 
-      padding: 55px 30px 130px;
+      padding:
+        55px
+        25px
+        80px;
 
-      overflow: hidden;
+      overflow-x: auto;
     }
+
 
     .wall-texture {
       position: absolute;
-      inset: 0 0 30% 0;
+
+      inset: 0;
 
       pointer-events: none;
 
@@ -72,65 +83,29 @@
         );
     }
 
-    .floor {
-      position: absolute;
 
-      left: 0;
-      right: 0;
-      bottom: 0;
-
-      height: 31%;
-
-      background:
-        linear-gradient(
-          rgba(0,0,0,.12),
-          rgba(0,0,0,.38)
-        ),
-        repeating-linear-gradient(
-          90deg,
-          #473527 0,
-          #473527 145px,
-          #3e2c20 146px,
-          #3e2c20 151px,
-          #493629 152px,
-          #493629 294px
-        );
-
-      border-top: 9px solid #21170f;
-
-      box-shadow:
-        inset 0 18px 32px rgba(0,0,0,.35);
-    }
-
-    /* =========================================
-       ENTERTAINMENT CENTER WRAPPER
-       ========================================= */
-
-    .entertainment-center {
-      position: relative;
-      z-index: 2;
-
-      width: min(1540px, 96vw);
-
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    /* =========================================
-       TELEVISION
-       ========================================= */
+    /* =========================================================
+       TV
+       ========================================================= */
 
     .tv {
       position: relative;
+
       z-index: 5;
 
-      width: 100%;
+      width:
+        min(1520px, 96vw);
 
-      padding: 25px 34px 29px;
+      padding:
+        25px
+        34px
+        29px;
 
-      border: 4px solid #050505;
-      border-radius: 19px 19px 7px 7px;
+      border:
+        4px solid #050505;
+
+      border-radius:
+        19px 19px 8px 8px;
 
       background:
         linear-gradient(
@@ -148,21 +123,63 @@
         inset -5px -5px 15px rgba(0,0,0,.85);
     }
 
-    /* =========================================
+
+    /*
+      Deep bottom edge gives the cabinet
+      some old rear-projection TV bulk.
+    */
+
+    .tv::after {
+      content: "";
+
+      position: absolute;
+
+      z-index: -1;
+
+      left: 55px;
+      right: 55px;
+
+      bottom: -32px;
+
+      height: 35px;
+
+      border-radius:
+        0 0 9px 9px;
+
+      background:
+        linear-gradient(
+          #171717,
+          #050505
+        );
+
+      box-shadow:
+        0 14px 19px rgba(0,0,0,.55);
+    }
+
+
+    /* =========================================================
        TV HEADER
-       ========================================= */
+       ========================================================= */
 
     .tv-header {
       height: 55px;
 
       display: flex;
-      justify-content: space-between;
-      align-items: center;
 
-      padding: 0 18px;
+      justify-content:
+        space-between;
 
-      border: 1px solid #030303;
-      border-radius: 7px;
+      align-items:
+        center;
+
+      padding:
+        0 18px;
+
+      border:
+        1px solid #030303;
+
+      border-radius:
+        7px;
 
       background:
         linear-gradient(
@@ -171,38 +188,56 @@
         );
 
       box-shadow:
-        inset 0 1px rgba(255,255,255,.1);
+        inset 0 1px rgba(255,255,255,.10);
     }
 
-    .brand {
-      color: var(--twitch-purple);
 
-      font-size: clamp(24px, 3vw, 34px);
-      font-weight: 900;
-      letter-spacing: 5px;
+    .brand {
+      color:
+        var(--twitch-purple);
+
+      font-size:
+        clamp(24px, 3vw, 34px);
+
+      font-weight:
+        900;
+
+      letter-spacing:
+        5px;
 
       text-shadow:
         0 0 9px rgba(145,71,255,.55);
     }
 
-    .model {
-      color: #9c9c9c;
 
-      font-size: 10px;
-      letter-spacing: 2px;
+    .model {
+      color:
+        #9c9c9c;
+
+      font-size:
+        10px;
+
+      letter-spacing:
+        2px;
     }
 
-    /* =========================================
-       1280 x 720 SCREEN
-       ========================================= */
+
+    /* =========================================================
+       SCREEN CABINET
+       ========================================================= */
 
     .screen-bezel {
-      margin-top: 20px;
+      margin-top:
+        20px;
 
-      padding: 28px 30px 16px;
+      padding:
+        28px 30px 16px;
 
-      border: 4px solid #030303;
-      border-radius: 24px 24px 16px 16px;
+      border:
+        4px solid #030303;
+
+      border-radius:
+        24px 24px 16px 16px;
 
       background:
         linear-gradient(
@@ -215,90 +250,122 @@
       box-shadow:
         inset 0 0 22px #000,
         inset 3px 3px 5px rgba(255,255,255,.07),
-        0 7px 16px rgba(0,0,0,.8);
+        0 7px 16px rgba(0,0,0,.80);
     }
+
+
+    /*
+      1280 × 720 TARGET.
+
+      The player can shrink responsively,
+      but always remains 16:9.
+    */
 
     .screen {
       position: relative;
 
-      width: 1280px;
-      max-width: 100%;
+      width:
+        1280px;
 
-      aspect-ratio: 16 / 9;
+      max-width:
+        100%;
 
-      margin: 0 auto;
+      aspect-ratio:
+        16 / 9;
 
-      overflow: hidden;
+      margin:
+        0 auto;
 
-      border: 4px solid #020202;
-      border-radius: 9px;
+      overflow:
+        hidden;
 
-      background: #000;
+      border:
+        4px solid #020202;
+
+      border-radius:
+        9px;
+
+      background:
+        #000;
 
       box-shadow:
         0 0 30px rgba(100,60,150,.18),
         inset 0 0 22px #000;
     }
 
-    /*
-       This is the actual Twitch player.
 
-       Screen dimensions are controlled by the parent
-       .screen element and remain 16:9.
+    /*
+      Twitch inserts its own iframe
+      inside this element.
     */
 
-    #twitch-player {
-      display: block;
+    #twitch-embed {
+      width:
+        100%;
 
-      width: 100%;
-      height: 100%;
-
-      border: 0;
-
-      background: #000;
-    }
-
-    .screen-glass {
-      position: absolute;
-      inset: 0;
-
-      z-index: 2;
-
-      pointer-events: none;
+      height:
+        100%;
 
       background:
-        linear-gradient(
-          135deg,
-          rgba(255,255,255,.045),
-          transparent 18%,
-          transparent 81%,
-          rgba(145,71,255,.018)
-        );
-
-      box-shadow:
-        inset 0 0 17px rgba(0,0,0,.42);
+        #000;
     }
 
-    /* =========================================
-       STANDBY SCREEN
-       ========================================= */
+
+    /*
+      Force Twitch-generated iframe to
+      exactly fill our 16:9 projection screen.
+    */
+
+    #twitch-embed iframe {
+      display:
+        block;
+
+      width:
+        100% !important;
+
+      height:
+        100% !important;
+
+      border:
+        0;
+    }
+
+
+    /* =========================================================
+       STANDBY
+       ========================================================= */
 
     .standby {
-      position: absolute;
-      inset: 0;
+      position:
+        absolute;
 
-      z-index: 5;
+      inset:
+        0;
 
-      display: none;
+      z-index:
+        10;
 
-      justify-content: center;
-      align-items: center;
+      display:
+        none;
 
-      color: #535353;
+      justify-content:
+        center;
 
-      font-family: "Courier New", monospace;
-      font-size: clamp(16px, 2vw, 27px);
-      letter-spacing: 7px;
+      align-items:
+        center;
+
+      color:
+        #535353;
+
+      font-family:
+        "Courier New",
+        monospace;
+
+      font-size:
+        clamp(16px, 2vw, 27px);
+
+      letter-spacing:
+        7px;
 
       background:
         radial-gradient(
@@ -308,56 +375,78 @@
           #000
         );
 
-      user-select: none;
+      user-select:
+        none;
     }
+
 
     .standby.visible {
-      display: flex;
+      display:
+        flex;
     }
+
 
     .screen-label {
-      margin-top: 11px;
+      margin-top:
+        11px;
 
-      text-align: center;
+      text-align:
+        center;
 
-      color: #747474;
+      color:
+        #747474;
 
-      font-size: 9px;
-      letter-spacing: 4px;
+      font-size:
+        9px;
+
+      letter-spacing:
+        4px;
     }
 
-    /* =========================================
+
+    /* =========================================================
        LOWER TV
-       ========================================= */
+       ========================================================= */
 
     .lower-tv {
-      display: grid;
+      display:
+        grid;
 
       grid-template-columns:
         1fr
-        minmax(260px, 330px)
+        minmax(290px, 355px)
         1fr;
 
-      gap: 20px;
+      gap:
+        20px;
 
-      margin-top: 21px;
+      margin-top:
+        21px;
     }
 
-    /* =========================================
+
+    /* =========================================================
        SPEAKERS
-       ========================================= */
+       ========================================================= */
 
     .speaker {
-      position: relative;
+      position:
+        relative;
 
-      min-height: 235px;
+      min-height:
+        245px;
 
-      border: 4px solid #070707;
-      border-radius: 7px;
+      border:
+        4px solid #070707;
 
-      overflow: hidden;
+      border-radius:
+        7px;
 
-      background-color: #111;
+      overflow:
+        hidden;
+
+      background-color:
+        #111;
 
       background-image:
         radial-gradient(
@@ -365,48 +454,65 @@
           transparent 1.5px
         );
 
-      background-size: 6px 6px;
+      background-size:
+        6px 6px;
 
       box-shadow:
         inset 0 0 26px #000,
         0 4px 7px rgba(0,0,0,.75);
     }
 
+
     .speaker::before {
       content: "";
 
-      position: absolute;
+      position:
+        absolute;
 
-      width: 170px;
-      height: 170px;
+      width:
+        175px;
 
-      left: 50%;
-      top: 50%;
+      height:
+        175px;
+
+      left:
+        50%;
+
+      top:
+        50%;
 
       transform:
         translate(-50%, -50%);
 
       border:
-        3px solid rgba(100,100,100,.2);
+        3px solid rgba(100,100,100,.20);
 
       border-radius:
         50%;
 
       box-shadow:
-        inset 0 0 35px rgba(0,0,0,.9),
+        inset 0 0 35px rgba(0,0,0,.90),
         0 0 12px rgba(150,150,150,.08);
     }
+
 
     .speaker::after {
       content: "";
 
-      position: absolute;
+      position:
+        absolute;
 
-      width: 52px;
-      height: 52px;
+      width:
+        54px;
 
-      left: 50%;
-      top: 50%;
+      height:
+        54px;
+
+      left:
+        50%;
+
+      top:
+        50%;
 
       transform:
         translate(-50%, -50%);
@@ -421,17 +527,23 @@
         0 0 7px rgba(90,90,90,.4);
     }
 
-    /* =========================================
+
+    /* =========================================================
        DIGITAL CONTROL
-       ========================================= */
+       ========================================================= */
 
     .controls {
-      min-height: 235px;
+      min-height:
+        245px;
 
-      padding: 17px;
+      padding:
+        17px;
 
-      border: 3px solid #050505;
-      border-radius: 7px;
+      border:
+        3px solid #050505;
+
+      border-radius:
+        7px;
 
       background:
         linear-gradient(
@@ -443,70 +555,111 @@
         inset 0 1px rgba(255,255,255,.06);
     }
 
+
     .controls-title {
-      margin-bottom: 12px;
+      margin-bottom:
+        12px;
 
-      text-align: center;
+      text-align:
+        center;
 
-      color: #909090;
+      color:
+        #909090;
 
-      font-size: 9px;
-      letter-spacing: 3px;
+      font-size:
+        9px;
+
+      letter-spacing:
+        3px;
     }
 
-    /*
-       Current-channel display
-    */
+
+    /* Current channel display */
 
     .channel-display {
-      height: 42px;
+      height:
+        42px;
 
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      display:
+        flex;
 
-      margin-bottom: 10px;
+      justify-content:
+        center;
 
-      overflow: hidden;
+      align-items:
+        center;
 
-      border: 3px inset #111;
+      margin-bottom:
+        10px;
 
-      color: var(--display-green);
-      background: #07110d;
+      overflow:
+        hidden;
 
-      font-family: "Courier New", monospace;
-      font-size: 11px;
+      border:
+        3px inset #111;
 
-      white-space: nowrap;
+      color:
+        var(--display-green);
+
+      background:
+        #07110d;
+
+      font-family:
+        "Courier New",
+        monospace;
+
+      font-size:
+        11px;
+
+      white-space:
+        nowrap;
 
       text-shadow:
         0 0 8px rgba(80,255,150,.78);
     }
 
+
     /*
-       New channel tuner
+      Channel tuner field.
     */
 
     .channel-search {
-      width: 100%;
-      height: 39px;
+      width:
+        100%;
 
-      margin-bottom: 14px;
+      height:
+        40px;
 
-      padding: 0 10px;
+      margin-bottom:
+        15px;
 
-      border: 2px inset #111;
-      border-radius: 2px;
+      padding:
+        0 10px;
 
-      outline: none;
+      outline:
+        none;
 
-      color: var(--display-green);
-      background: #07110d;
+      border:
+        2px inset #111;
 
-      font-family: "Courier New", monospace;
-      font-size: 11px;
+      border-radius:
+        2px;
 
-      text-align: center;
+      color:
+        var(--display-green);
+
+      background:
+        #07110d;
+
+      font-family:
+        "Courier New",
+        monospace;
+
+      font-size:
+        11px;
+
+      text-align:
+        center;
 
       box-shadow:
         inset 0 0 7px rgba(0,0,0,.9);
@@ -515,41 +668,63 @@
         0 0 6px rgba(80,255,150,.5);
     }
 
+
     .channel-search::placeholder {
-      color: #40745a;
-      opacity: 1;
+      color:
+        #40745a;
+
+      opacity:
+        1;
     }
 
+
     .channel-search:focus {
-      border-color: #34634b;
+      border-color:
+        #34634b;
 
       box-shadow:
         inset 0 0 7px rgba(0,0,0,.9),
         0 0 7px rgba(80,255,150,.25);
     }
 
-    /* =========================================
+
+    /* =========================================================
        BUTTONS
-       ========================================= */
+       ========================================================= */
 
     .button-row {
-      display: flex;
-      justify-content: center;
+      display:
+        flex;
 
-      gap: 13px;
+      justify-content:
+        center;
+
+      gap:
+        13px;
     }
 
+
     button {
-      min-width: 105px;
-      height: 43px;
+      min-width:
+        110px;
 
-      cursor: pointer;
+      height:
+        44px;
 
-      border: 1px solid #030303;
-      border-top: 1px solid #6a6a6a;
-      border-radius: 4px;
+      cursor:
+        pointer;
 
-      color: #ddd;
+      border:
+        1px solid #030303;
+
+      border-top:
+        1px solid #6a6a6a;
+
+      border-radius:
+        4px;
+
+      color:
+        #ddd;
 
       background:
         linear-gradient(
@@ -561,10 +736,16 @@
         0 4px 0 #030303,
         inset 0 1px rgba(255,255,255,.14);
 
-      font-size: 10px;
-      font-weight: bold;
-      letter-spacing: 1px;
+      font-size:
+        10px;
+
+      font-weight:
+        bold;
+
+      letter-spacing:
+        1px;
     }
+
 
     button:hover {
       background:
@@ -574,6 +755,7 @@
         );
     }
 
+
     button:active {
       transform:
         translateY(3px);
@@ -581,6 +763,7 @@
       box-shadow:
         0 1px 0 #030303;
     }
+
 
     .power-button {
       background:
@@ -590,6 +773,7 @@
         );
     }
 
+
     .power-button:hover {
       background:
         linear-gradient(
@@ -598,508 +782,170 @@
         );
     }
 
-    /* =========================================
-       STATUS
-       ========================================= */
+
+    /* =========================================================
+       LED
+       ========================================================= */
 
     .status {
-      display: flex;
+      display:
+        flex;
 
-      justify-content: center;
-      align-items: center;
+      justify-content:
+        center;
 
-      gap: 10px;
+      align-items:
+        center;
 
-      margin-top: 21px;
+      gap:
+        10px;
+
+      margin-top:
+        23px;
     }
+
 
     .led {
-      width: 11px;
-      height: 11px;
+      width:
+        11px;
 
-      border-radius: 50%;
+      height:
+        11px;
 
-      background: #572222;
+      border:
+        1px solid #050505;
 
-      border: 1px solid #050505;
+      border-radius:
+        50%;
+
+      background:
+        #572222;
     }
 
+
     .led.on {
-      background: #ff4141;
+      background:
+        #ff4141;
 
       box-shadow:
         0 0 10px rgba(255,55,55,.85);
     }
 
-    .status-text {
-      color: #777;
 
-      font-size: 8px;
-      letter-spacing: 2px;
+    .status-text {
+      color:
+        #777;
+
+      font-size:
+        8px;
+
+      letter-spacing:
+        2px;
     }
 
-    /* =========================================
-       BOTTOM TV STRIP
-       ========================================= */
+
+    /* =========================================================
+       BOTTOM STRIP
+       ========================================================= */
 
     .bottom-strip {
-      display: flex;
+      display:
+        flex;
 
-      justify-content: space-between;
-      align-items: center;
+      justify-content:
+        space-between;
 
-      margin-top: 18px;
+      align-items:
+        center;
 
-      padding: 12px 7px 2px;
+      margin-top:
+        18px;
 
-      border-top: 1px solid #414141;
+      padding:
+        12px 7px 3px;
 
-      color: #707070;
+      border-top:
+        1px solid #414141;
 
-      font-size: 9px;
-      letter-spacing: 2px;
+      color:
+        #707070;
+
+      font-size:
+        9px;
+
+      letter-spacing:
+        2px;
     }
+
 
     .twitch-badge {
-      padding: 6px 14px;
+      padding:
+        6px 14px;
 
-      border-radius: 3px;
+      border-radius:
+        3px;
 
-      color: #fff;
-      background: #6441a5;
-
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    /* =========================================
-       ENTERTAINMENT CABINET
-       ========================================= */
-
-    .media-stand {
-      position: relative;
-      z-index: 3;
-
-      width: 91%;
-      min-height: 250px;
-
-      display: grid;
-
-      grid-template-columns:
-        1fr
-        1.25fr
-        1fr;
-
-      gap: 10px;
-
-      padding: 18px 20px 21px;
-
-      border: 4px solid #170e09;
-      border-top: 8px solid #291a10;
+      color:
+        #fff;
 
       background:
-        linear-gradient(
-          90deg,
-          #392317,
-          #513420 48%,
-          #3a2417
-        );
+        #6441a5;
 
-      box-shadow:
-        0 30px 35px rgba(0,0,0,.60),
-        inset 0 2px rgba(255,255,255,.08);
+      font-size:
+        12px;
+
+      font-weight:
+        bold;
     }
 
-    .shelf {
-      position: relative;
 
-      min-height: 205px;
-
-      padding: 15px;
-
-      border: 5px solid #29180f;
-
-      background:
-        linear-gradient(
-          145deg,
-          #17120f,
-          #0b0908
-        );
-
-      box-shadow:
-        inset 0 0 26px rgba(0,0,0,.85);
-    }
-
-    /* =========================================
-       VHS TAPES
-       ========================================= */
-
-    .vhs-row {
-      position: absolute;
-
-      left: 12%;
-      right: 12%;
-      bottom: 18px;
-
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-
-      gap: 4px;
-    }
-
-    .vhs {
-      width: 30px;
-      height: 135px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border: 2px solid #111;
-      border-radius: 2px;
-
-      color: #eee6ca;
-
-      background:
-        linear-gradient(
-          90deg,
-          #191919,
-          #3e352e,
-          #181818
-        );
-
-      box-shadow:
-        3px 4px 5px rgba(0,0,0,.5);
-
-      font-family:
-        "Courier New",
-        monospace;
-
-      font-size: 7px;
-      font-weight: bold;
-
-      writing-mode: vertical-rl;
-
-      letter-spacing: 1px;
-    }
-
-    .vhs.red {
-      border-top: 7px solid #9c3c3c;
-    }
-
-    .vhs.blue {
-      border-top: 7px solid #43629b;
-    }
-
-    .vhs.gold {
-      border-top: 7px solid #9d7b32;
-    }
-
-    .vhs.green {
-      border-top: 7px solid #4d784f;
-    }
-
-    .vhs.purple {
-      border-top: 7px solid #76518d;
-    }
-
-    .vhs.white {
-      border-top: 7px solid #c2bda9;
-    }
-
-    /* =========================================
-       VCR
-       ========================================= */
-
-    .vcr {
-      position: absolute;
-
-      left: 50%;
-      top: 50%;
-
-      width: 88%;
-      height: 86px;
-
-      transform:
-        translate(-50%, -50%);
-
-      border: 3px solid #050505;
-      border-radius: 4px;
-
-      background:
-        linear-gradient(
-          #333,
-          #111
-        );
-
-      box-shadow:
-        0 7px 10px rgba(0,0,0,.65);
-    }
-
-    .vcr-slot {
-      position: absolute;
-
-      left: 14%;
-      top: 26px;
-
-      width: 53%;
-      height: 14px;
-
-      border: 2px solid #050505;
-
-      background: #020202;
-
-      box-shadow:
-        inset 0 2px 4px #000;
-    }
-
-    .vcr-display {
-      position: absolute;
-
-      right: 9%;
-      top: 24px;
-
-      width: 55px;
-      height: 21px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      color: #7affb7;
-
-      background: #04100a;
-
-      border: 1px solid #111;
-
-      font-family:
-        "Courier New",
-        monospace;
-
-      font-size: 9px;
-
-      text-shadow:
-        0 0 5px #62ffa8;
-    }
-
-    .vcr-label {
-      position: absolute;
-
-      left: 14%;
-      bottom: 10px;
-
-      color: #777;
-
-      font-size: 7px;
-      letter-spacing: 2px;
-    }
-
-    /* =========================================
-       GAME CONSOLE
-       ========================================= */
-
-    .console {
-      position: absolute;
-
-      left: 50%;
-      top: 40%;
-
-      width: 78%;
-      height: 68px;
-
-      transform:
-        translate(-50%, -50%);
-
-      border: 3px solid #161616;
-      border-radius: 22px 22px 8px 8px;
-
-      background:
-        linear-gradient(
-          #b0aba2,
-          #77726c
-        );
-
-      box-shadow:
-        0 8px 10px rgba(0,0,0,.55),
-        inset 0 1px rgba(255,255,255,.28);
-    }
-
-    .console-slot {
-      position: absolute;
-
-      left: 22%;
-      right: 22%;
-      top: 18px;
-
-      height: 12px;
-
-      border-radius: 4px;
-
-      background: #353535;
-
-      box-shadow:
-        inset 0 2px 3px #111;
-    }
-
-    .console-power {
-      position: absolute;
-
-      left: 10%;
-      bottom: 13px;
-
-      width: 10px;
-      height: 10px;
-
-      border-radius: 50%;
-
-      background: #b54444;
-
-      box-shadow:
-        0 0 5px rgba(255,70,70,.7);
-    }
-
-    .console-label {
-      position: absolute;
-
-      right: 10%;
-      bottom: 11px;
-
-      color: #383838;
-
-      font-size: 7px;
-      font-weight: bold;
-      letter-spacing: 1.5px;
-    }
-
-    /* =========================================
-       GAME CONTROLLER
-       ========================================= */
-
-    .controller {
-      position: absolute;
-
-      left: 50%;
-      bottom: 10px;
-
-      width: 150px;
-      height: 70px;
-
-      transform:
-        translateX(-50%)
-        rotate(-4deg);
-
-      border: 3px solid #1b1b1b;
-      border-radius: 35px 35px 46px 46px;
-
-      background:
-        linear-gradient(
-          #aaa59d,
-          #69645f
-        );
-
-      box-shadow:
-        0 7px 9px rgba(0,0,0,.5);
-    }
-
-    .dpad-h,
-    .dpad-v {
-      position: absolute;
-
-      background: #252525;
-
-      border-radius: 3px;
-    }
-
-    .dpad-h {
-      left: 21px;
-      top: 30px;
-
-      width: 41px;
-      height: 14px;
-    }
-
-    .dpad-v {
-      left: 35px;
-      top: 17px;
-
-      width: 14px;
-      height: 41px;
-    }
-
-    .game-button {
-      position: absolute;
-
-      width: 17px;
-      height: 17px;
-
-      border-radius: 50%;
-
-      background: #a93752;
-
-      box-shadow:
-        inset 0 1px rgba(255,255,255,.2);
-    }
-
-    .game-button.one {
-      right: 25px;
-      top: 22px;
-    }
-
-    .game-button.two {
-      right: 46px;
-      top: 39px;
-    }
-
-    /* =========================================
+    /* =========================================================
        RESPONSIVE
-       ========================================= */
+       ========================================================= */
 
     @media (max-width: 1050px) {
 
-      .room {
-        padding-left: 18px;
-        padding-right: 18px;
+      .model {
+        display:
+          none;
       }
 
-      .model {
-        display: none;
-      }
 
       .lower-tv {
         grid-template-columns:
           1fr
-          230px
+          260px
           1fr;
       }
 
-      .speaker {
-        min-height: 205px;
-      }
 
       .speaker::before {
-        width: 130px;
-        height: 130px;
+        width:
+          135px;
+
+        height:
+          135px;
       }
 
-      .media-stand {
-        width: 96%;
-      }
     }
+
 
     @media (max-width: 720px) {
 
       .room {
-        justify-content: flex-start;
+        justify-content:
+          flex-start;
+
+        min-width:
+          700px;
       }
 
-      .entertainment-center {
-        width: 700px;
+
+      .tv {
+        width:
+          700px;
       }
 
-      .media-stand {
-        min-width: 650px;
-      }
     }
 
   </style>
@@ -1110,365 +956,271 @@
 
   <main class="room">
 
+
     <div class="wall-texture"></div>
 
-    <div class="floor"></div>
+
+    <!-- =====================================================
+         55-INCH-STYLE PROJECTION TELEVISION
+         ===================================================== -->
+
+    <section class="tv">
 
 
-    <div class="entertainment-center">
+      <!-- HEADER -->
+
+      <div class="tv-header">
+
+        <div class="brand">
+          TWITCH
+        </div>
 
 
-      <!-- =====================================
-           PROJECTION TELEVISION
-           ===================================== -->
+        <div class="model">
+          RP-720 WIDESCREEN DIGITAL PROJECTION RECEIVER
+        </div>
 
-      <section class="tv">
+      </div>
 
 
-        <!-- TV HEADER -->
+      <!-- ===================================================
+           SCREEN
+           =================================================== -->
 
-        <div class="tv-header">
+      <div class="screen-bezel">
 
-          <div class="brand">
-            TWITCH
-          </div>
 
-          <div class="model">
-            RP-720 WIDESCREEN DIGITAL PROJECTION RECEIVER
+        <div class="screen">
+
+
+          <!--
+            Twitch's JavaScript SDK will place
+            the player inside this element.
+          -->
+
+          <div id="twitch-embed"></div>
+
+
+          <!-- TV OFF overlay -->
+
+          <div
+            id="standby-screen"
+            class="standby">
+
+            STANDBY
+
           </div>
 
         </div>
 
 
-        <!-- ===================================
-             TWITCH SCREEN
-             =================================== -->
+        <div class="screen-label">
+          1280 × 720 WIDESCREEN DIGITAL PROJECTION DISPLAY
+        </div>
 
-        <div class="screen-bezel">
-
-          <div class="screen">
+      </div>
 
 
-            <!--
-              Twitch player.
+      <!-- ===================================================
+           SPEAKERS + DIGITAL CONTROLS
+           =================================================== -->
 
-              Default channel:
-              theburntpeanut_247
-
-              GitHub Pages parent:
-              matthtmlprojects.github.io
-            -->
-
-            <iframe
-              id="twitch-player"
-
-              src="https://player.twitch.tv/?channel=theburntpeanut_247&parent=matthtmlprojects.github.io&autoplay=false"
-
-              allowfullscreen>
-
-            </iframe>
+      <div class="lower-tv">
 
 
-            <div class="screen-glass"></div>
+        <!-- LEFT SPEAKER -->
+
+        <div class="speaker"></div>
+
+
+        <!-- DIGITAL CONTROL -->
+
+        <div class="controls">
+
+
+          <div class="controls-title">
+            DIGITAL CONTROL
+          </div>
+
+
+          <!--
+            Shows currently tuned station.
+          -->
+
+          <div
+            id="channel-display"
+            class="channel-display">
+
+            THEBURNTPEANUT_247
+
+          </div>
+
+
+          <!--
+            Channel search/tuner.
+
+            Examples:
+
+            lofigirl
+
+            OR
+
+            https://www.twitch.tv/lofigirl
+          -->
+
+          <input
+            id="channel-search"
+            class="channel-search"
+            type="text"
+            placeholder="ENTER TWITCH CHANNEL"
+            autocomplete="off"
+            spellcheck="false"
+          >
+
+
+          <!-- BUTTONS -->
+
+          <div class="button-row">
+
+
+            <button
+              id="power-button"
+              class="power-button"
+              type="button">
+
+              POWER
+
+            </button>
+
+
+            <button
+              id="tune-button"
+              type="button">
+
+              TUNE
+
+            </button>
+
+
+          </div>
+
+
+          <!-- POWER LED -->
+
+          <div class="status">
 
 
             <div
-              id="standby-screen"
-              class="standby">
-
-              STANDBY
+              id="power-led"
+              class="led on">
 
             </div>
 
-          </div>
+
+            <span class="status-text">
+              POWER
+            </span>
 
 
-          <div class="screen-label">
-            1280 × 720 WIDESCREEN DIGITAL PROJECTION DISPLAY
           </div>
+
 
         </div>
 
 
-        <!-- ===================================
-             LOWER TV
-             =================================== -->
+        <!-- RIGHT SPEAKER -->
 
-        <div class="lower-tv">
+        <div class="speaker"></div>
 
 
-          <!-- LEFT SPEAKER -->
+      </div>
 
-          <div class="speaker"></div>
 
+      <!-- ===================================================
+           FOOTER
+           =================================================== -->
 
-          <!-- =================================
-               DIGITAL CONTROL
-               ================================= -->
+      <div class="bottom-strip">
 
-          <div class="controls">
 
-            <div class="controls-title">
-              DIGITAL CONTROL
-            </div>
+        <span>
+          55-INCH-STYLE PROJECTION SYSTEM
+        </span>
 
 
-            <!-- Current station -->
+        <span class="twitch-badge">
+          twitch
+        </span>
 
-            <div
-              id="channel-display"
-              class="channel-display">
 
-              THEBURNTPEANUT_247
+        <span>
+          DIGITAL STEREO
+        </span>
 
-            </div>
 
+      </div>
 
-            <!--
-              NEW CHANNEL TUNER
 
-              Accepts:
-              monstercat
+    </section>
 
-              OR a Twitch URL
-            -->
-
-            <input
-              id="channel-search"
-              class="channel-search"
-              type="text"
-
-              placeholder="ENTER TWITCH CHANNEL"
-
-              autocomplete="off"
-              spellcheck="false"
-            >
-
-
-            <div class="button-row">
-
-              <button
-                id="power-button"
-                class="power-button"
-                type="button">
-
-                POWER
-
-              </button>
-
-
-              <button
-                id="channel-button"
-                type="button">
-
-                CHANNEL
-
-              </button>
-
-            </div>
-
-
-            <div class="status">
-
-              <div
-                id="power-led"
-                class="led on">
-              </div>
-
-
-              <span class="status-text">
-                POWER
-              </span>
-
-            </div>
-
-          </div>
-
-
-          <!-- RIGHT SPEAKER -->
-
-          <div class="speaker"></div>
-
-        </div>
-
-
-        <!-- TV FOOTER -->
-
-        <div class="bottom-strip">
-
-          <span>
-            55-INCH-STYLE PROJECTION SYSTEM
-          </span>
-
-
-          <span class="twitch-badge">
-            twitch
-          </span>
-
-
-          <span>
-            DIGITAL STEREO
-          </span>
-
-        </div>
-
-      </section>
-
-
-      <!-- =====================================
-           90s ENTERTAINMENT CABINET
-           ===================================== -->
-
-      <section class="media-stand">
-
-
-        <!-- VHS SHELF -->
-
-        <div class="shelf">
-
-          <div class="vhs-row">
-
-            <div class="vhs red">
-              NIGHT SHIFT
-            </div>
-
-            <div class="vhs blue">
-              SPACE RUN
-            </div>
-
-            <div class="vhs gold">
-              ROAD TRIP
-            </div>
-
-            <div class="vhs green">
-              ARCADE
-            </div>
-
-            <div class="vhs purple">
-              VIDEO MIX
-            </div>
-
-            <div class="vhs white">
-              MOVIE 96
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- VCR SHELF -->
-
-        <div class="shelf">
-
-          <div class="vcr">
-
-            <div class="vcr-slot"></div>
-
-
-            <div class="vcr-display">
-              12:00
-            </div>
-
-
-            <div class="vcr-label">
-              Hi-Fi STEREO VHS
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- GAME CONSOLE SHELF -->
-
-        <div class="shelf">
-
-          <div class="console">
-
-            <div class="console-slot"></div>
-
-            <div class="console-power"></div>
-
-            <div class="console-label">
-              16-BIT
-            </div>
-
-          </div>
-
-
-          <div class="controller">
-
-            <div class="dpad-h"></div>
-
-            <div class="dpad-v"></div>
-
-            <div class="game-button one"></div>
-
-            <div class="game-button two"></div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-    </div>
 
   </main>
 
 
+  <!-- =======================================================
+       OFFICIAL TWITCH EMBED JAVASCRIPT
+       ======================================================= -->
+
+  <script src="https://embed.twitch.tv/embed/v1.js"></script>
+
+
   <script>
 
-    /* =========================================
+    /* =======================================================
        CONFIGURATION
-       ========================================= */
+       ======================================================= */
 
     const TWITCH_PARENT =
       "matthtmlprojects.github.io";
 
 
-    /*
-      Default Twitch station.
-    */
-
     let currentChannel =
       "theburntpeanut_247";
 
-
-    /*
-      TV begins switched on.
-    */
 
     let televisionOn =
       true;
 
 
-    /* =========================================
-       ELEMENT REFERENCES
-       ========================================= */
+    let twitchEmbed =
+      null;
 
-    const player =
+
+    /* =======================================================
+       UI ELEMENTS
+       ======================================================= */
+
+    const channelSearch =
       document.getElementById(
-        "twitch-player"
+        "channel-search"
+      );
+
+
+    const channelDisplay =
+      document.getElementById(
+        "channel-display"
+      );
+
+
+    const tuneButton =
+      document.getElementById(
+        "tune-button"
       );
 
 
     const powerButton =
       document.getElementById(
         "power-button"
-      );
-
-
-    const channelButton =
-      document.getElementById(
-        "channel-button"
-      );
-
-
-    const channelSearch =
-      document.getElementById(
-        "channel-search"
       );
 
 
@@ -1484,49 +1236,25 @@
       );
 
 
-    const channelDisplay =
-      document.getElementById(
-        "channel-display"
-      );
-
-
-    /* =========================================
-       TWITCH URL GENERATOR
-       ========================================= */
-
-    function buildTwitchURL(channel) {
-
-      return (
-        "https://player.twitch.tv/" +
-
-        "?channel=" +
-        encodeURIComponent(channel) +
-
-        "&parent=" +
-        encodeURIComponent(TWITCH_PARENT) +
-
-        "&autoplay=false"
-      );
-
-    }
-
-
-    /* =========================================
-       CLEAN TYPED CHANNEL
-       ========================================= */
+    /* =======================================================
+       CLEAN CHANNEL NAME
+       ======================================================= */
 
     function cleanChannelName(value) {
+
 
       let channel =
         value.trim();
 
 
       /*
-        Allows the user to paste:
+        Allow somebody to paste:
 
-        https://www.twitch.tv/channelname
+        https://www.twitch.tv/lofigirl
 
-        rather than requiring only the username.
+        instead of only:
+
+        lofigirl
       */
 
       channel =
@@ -1537,8 +1265,7 @@
 
 
       /*
-        Remove query strings, paths, or trailing
-        slashes that may follow the channel name.
+        Remove extra path/query/hash information.
       */
 
       channel =
@@ -1550,11 +1277,70 @@
     }
 
 
-    /* =========================================
+    /* =======================================================
+       CREATE TWITCH PLAYER
+       ======================================================= */
+
+    function createPlayer(channel) {
+
+
+      /*
+        Remove an old embed first.
+      */
+
+      const embedContainer =
+        document.getElementById(
+          "twitch-embed"
+        );
+
+
+      embedContainer.innerHTML =
+        "";
+
+
+      /*
+        Create Twitch's official embed.
+      */
+
+      twitchEmbed =
+        new Twitch.Embed(
+          "twitch-embed",
+          {
+
+            width:
+              "100%",
+
+            height:
+              "100%",
+
+            channel:
+              channel,
+
+            layout:
+              "video",
+
+            autoplay:
+              false,
+
+            allowfullscreen:
+              true,
+
+            parent: [
+              TWITCH_PARENT
+            ]
+
+          }
+        );
+
+    }
+
+
+    /* =======================================================
        TUNE TO CHANNEL
-       ========================================= */
+       ======================================================= */
 
     function tuneChannel() {
+
 
       if (!televisionOn) {
 
@@ -1570,7 +1356,7 @@
 
 
       /*
-        Don't do anything if the field is empty.
+        Nothing entered.
       */
 
       if (!requestedChannel) {
@@ -1578,44 +1364,37 @@
         channelDisplay.textContent =
           "ENTER CHANNEL";
 
+        channelSearch.focus();
+
         return;
 
       }
 
 
       /*
-        Store the newly selected channel.
+      omes current station.
       */
 
       currentChannel =
         requestedChannel;
 
 
-      /*
-        Give the control panel an old-TV-style
-        tuning message.
-      */
-
       channelDisplay.textContent =
         "TUNING...";
 
 
       /*
-        Send the new channel to the existing
-        Twitch iframe.
-
-        The TV and iframe dimensions do not change.
+        Recreate the official Twitch player
+        using the newly selected channel.
       */
 
-      player.src =
-        buildTwitchURL(
-          currentChannel
-        );
+      createPlayer(
+        currentChannel
+      );
 
 
       /*
-        Clear the tuner field so it is ready
-        for another channel.
+        Clear input.
       */
 
       channelSearch.value =
@@ -1623,9 +1402,13 @@
 
 
       /*
-   ow.setTimeout(
+        Update front-panel display.
+      */
+
+      window.setTimeout(
 
         function () {
+
 
           if (televisionOn) {
 
@@ -1634,20 +1417,21 @@
 
           }
 
+
         },
 
-        900
+        800
 
       );
 
     }
 
 
-    /* =========================================
-       CHANNEL BUTTON
-       ========================================= */
+    /* =======================================================
+       TUNE BUTTON
+       ======================================================= */
 
-    channelButton.addEventListener(
+    tuneButton.addEventListener(
 
       "click",
 
@@ -1656,9 +1440,9 @@
     );
 
 
-    /* =========================================
-       PRESS ENTER TO CHANGE CHANNEL
-       ========================================= */
+    /* =======================================================
+       PRESS ENTER TO TUNE
+       ======================================================= */
 
     channelSearch.addEventListener(
 
@@ -1666,20 +1450,22 @@
 
       function (event) {
 
+
         if (event.key === "Enter") {
 
           tuneChannel();
 
         }
 
+
       }
 
     );
 
 
-    /* =========================================
+    /* =======================================================
        POWER BUTTON
-       ========================================= */
+       ======================================================= */
 
     powerButton.addEventListener(
 
@@ -1692,9 +1478,9 @@
           !televisionOn;
 
 
-        /* -------------------------
+        /* ---------------------
            POWER ON
-           ------------------------- */
+           --------------------- */
 
         if (televisionOn) {
 
@@ -1714,31 +1500,33 @@
 
 
           /*
-            Restore wherever the user was
-            previously tuned.
+            Rebuild current Twitch station.
           */
 
-          player.src =
-            buildTwitchURL(
-              currentChannel
-            );
+          createPlayer(
+            currentChannel
+          );
+
 
         }
 
 
-        /* -------------------------
+        /* ---------------------
            POWER OFF
-           ------------------------- */
+           --------------------- */
 
         else {
 
 
           /*
-            about:blank unloads the stream.
+            Remove Twitch completely so audio
+            does not keep playing behind the
+            standby screen.
           */
 
-          player.src =
-            "about:blank";
+          document.getElementById(
+            "twitch-embed"
+          ).innerHTML = "";
 
 
           standbyScreen.classList.add(
@@ -1754,13 +1542,26 @@
           channelDisplay.textContent =
             "STANDBY";
 
+
         }
+
 
       }
 
     );
 
+
+    /* =======================================================
+       INITIAL STARTUP
+       ======================================================= */
+
+    createPlayer(
+      currentChannel
+    );
+
+
   </script>
+
 
 </body>
 </html>
