@@ -1,0 +1,9171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Matt's HZ DROP - Procedural DJ Deck (created with Copilot)</title>
+
+<style>
+
+/* =========================================================
+   HZ DROP
+   Standalone procedural DJ-deck concept
+   ========================================================= */
+
+:root {
+    --bg: #080a0f;
+    --panel: #11151d;
+    --panel2: #171c26;
+    --line: #2a3240;
+    --text: #eaf3ff;
+    --muted: #718096;
+
+    --deckA: #00d9ff;
+    --deckB: #ff3e9d;
+
+    --lime: #b7ff3c;
+    --amber: #ffb52e;
+    --red: #ff445e;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at 50% -20%,
+            #263245 0,
+            #0b0e14 38%,
+            #050609 100%
+        );
+
+    color: var(--text);
+
+    font-family:
+        Inter,
+        "Segoe UI",
+        system-ui,
+        sans-serif;
+
+    padding: 22px;
+}
+
+
+/* =========================================================
+   MAIN DJ UNIT
+   ========================================================= */
+
+.master input {
+    width: 150px;
+
+    margin:
+        6px 0
+        3px;
+
+    accent-color:
+        var(--lime);
+
+    cursor:
+        pointer;
+}
+
+#masterVolumeValue {
+    display: block;
+
+    color:
+        var(--lime);
+
+    font-size:
+        .8rem;
+}
+
+.app {
+    max-width: 1280px;
+    margin: auto;
+
+    background:
+        linear-gradient(
+            145deg,
+            #171d27,
+            #090b10 60%
+        );
+
+    border: 1px solid #303a49;
+    border-radius: 26px;
+
+    padding: 18px;
+
+    box-shadow:
+        0 30px 90px #000b,
+        inset 0 1px #ffffff12;
+}
+
+
+/* =========================================================
+   TOP BAR
+   ========================================================= */
+
+.topbar {
+    display: grid;
+
+    grid-template-columns:
+        1fr auto 1fr;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding:
+        4px
+        6px
+        16px;
+}
+
+.brand {
+    letter-spacing: .32em;
+
+    font-weight: 900;
+
+    font-size:
+        clamp(
+            1.1rem,
+            3vw,
+            2rem
+        );
+}
+
+.brand i {
+    color: var(--deckA);
+
+    font-style: normal;
+
+    text-shadow:
+        0 0 20px
+        var(--deckA);
+}
+
+.status {
+    text-align: center;
+}
+
+.status strong {
+    display: block;
+
+    color: var(--lime);
+
+    letter-spacing: .2em;
+
+    font-size: .72rem;
+}
+
+.status span {
+    font-family:
+        ui-monospace,
+        monospace;
+
+    font-size: .82rem;
+
+    color: #95a2b4;
+}
+
+.master {
+    text-align: right;
+}
+
+.master small {
+    display: block;
+
+    color: var(--muted);
+
+    letter-spacing: .18em;
+}
+
+.master b {
+    color: var(--amber);
+
+    font-family:
+        ui-monospace,
+        monospace;
+}
+
+
+/* =========================================================
+   CONSOLE
+   ========================================================= */
+
+.console {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        250px
+        minmax(0, 1fr);
+
+    gap: 14px;
+}
+
+.deck,
+.mixer {
+    background:
+        linear-gradient(
+            165deg,
+            #171c25,
+            #0d1016
+        );
+
+    border:
+        1px solid
+        var(--line);
+
+    border-radius: 18px;
+
+    padding: 16px;
+
+    box-shadow:
+        inset 0 1px #ffffff0a,
+        0 10px 30px #0007;
+}
+
+
+/* =========================================================
+   DECK HEADERS
+   ========================================================= */
+
+.deckhead {
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    margin-bottom: 10px;
+}
+
+.deckhead b {
+    letter-spacing: .2em;
+}
+
+.badge {
+    font-size: .7rem;
+
+    padding:
+        5px
+        8px;
+
+    border:
+        1px solid;
+
+    border-radius: 5px;
+}
+
+.deck.a .badge {
+    color: var(--deckA);
+}
+
+.deck.b .badge {
+    color: var(--deckB);
+}
+
+
+/* =========================================================
+   DECK LCD DISPLAYS
+   ========================================================= */
+
+.screen {
+    background: #05070b;
+
+    border:
+        1px solid
+        #293241;
+
+    border-radius: 9px;
+
+    padding: 9px;
+
+    margin-bottom: 13px;
+
+    font-family:
+        ui-monospace,
+        monospace;
+
+    box-shadow:
+        inset 0 0 20px
+        #000;
+}
+
+.screenline {
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    color: #8794a7;
+
+    font-size: .72rem;
+}
+
+.screen strong {
+    font-size: 1rem;
+}
+
+.deck.a .screen strong {
+    color: var(--deckA);
+}
+
+.deck.b .screen strong {
+    color: var(--deckB);
+}
+
+
+/* =========================================================
+   TURNTABLE PLATTERS
+   ========================================================= */
+
+.platterWrap {
+    position: relative;
+
+    width:
+        min(
+            88%,
+            330px
+        );
+
+    aspect-ratio: 1;
+
+    margin:
+        5px
+        auto
+        13px;
+}
+
+.platter {
+    position: absolute;
+
+    inset: 0;
+
+    border-radius: 50%;
+
+    background:
+        repeating-radial-gradient(
+            circle,
+            #0c0f14 0 3px,
+            #202632 4px 6px,
+            #0c0f14 7px 9px
+        );
+
+    border:
+        8px solid
+        #252c38;
+
+    box-shadow:
+        0 0 0 2px #08090d,
+        0 14px 25px #000a,
+        inset 0 0 30px #000;
+}
+
+.platter::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 27%;
+
+    border-radius: 50%;
+
+    background:
+        conic-gradient(
+            from 30deg,
+            #232b37,
+            #090b10,
+            #313b4b,
+            #090b10
+        );
+
+    border:
+        3px solid
+        #3b4555;
+}
+
+.platter::after {
+    content: "";
+
+    position: absolute;
+
+    width: 8px;
+    height: 32%;
+
+    left:
+        calc(
+            50% - 4px
+        );
+
+    top: 8%;
+
+    border-radius: 5px;
+
+    background:
+        linear-gradient(
+            #fff,
+            #ffffff00
+        );
+
+    opacity: .7;
+}
+
+.deck.a .platter {
+    outline:
+        1px solid
+        #00d9ff44;
+}
+
+.deck.b .platter {
+    outline:
+        1px solid
+        #ff3e9d44;
+}
+
+
+/* Spin platters while music plays */
+
+.playing .platter {
+    animation:
+        spin
+        2.15s
+        linear
+        infinite;
+}
+
+@keyframes spin {
+
+    to {
+        transform:
+            rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   WAVEFORMS
+   ========================================================= */
+
+.wave {
+    height: 74px;
+
+    border-radius: 8px;
+
+    background: #080b10;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 2px;
+
+    padding: 7px;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        #252d39;
+}
+
+.wave i {
+    display: block;
+
+    flex: 1;
+
+    min-width: 2px;
+
+    border-radius: 4px;
+
+    transform-origin:
+        center;
+}
+
+.deck.a .wave i {
+
+    background:
+        linear-gradient(
+            var(--deckA),
+            #14738a
+        );
+}
+
+.deck.b .wave i {
+
+    background:
+        linear-gradient(
+            var(--deckB),
+            #7b2354
+        );
+}
+
+.playing .wave i {
+
+    animation:
+        waveformPulse
+        .45s
+        ease-in-out
+        infinite
+        alternate;
+
+    animation-delay:
+        var(--delay);
+}
+
+@keyframes waveformPulse {
+
+    to {
+        transform:
+            scaleY(.4);
+
+        filter:
+            brightness(1.6);
+    }
+
+}
+
+
+/* =========================================================
+   PERFORMANCE PADS
+   ========================================================= */
+
+.pads {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            1fr
+        );
+
+    gap: 7px;
+
+    margin-top: 12px;
+}
+
+.pad {
+
+    height: 34px;
+
+    border:
+        1px solid
+        #3a4352;
+
+    border-radius: 6px;
+
+    background:
+        #171c25;
+
+    color:
+        #7b8798;
+
+    font-size:
+        .65rem;
+
+    font-weight:
+        800;
+
+    cursor: pointer;
+}
+
+.pad.on {
+
+    color: white;
+
+    box-shadow:
+        0 0 14px
+        currentColor;
+}
+
+.deck.a .pad.on {
+
+    background:
+        #08697c;
+
+    color:
+        var(--deckA);
+}
+
+.deck.b .pad.on {
+
+    background:
+        #76204e;
+
+    color:
+        var(--deckB);
+}
+
+
+/* =========================================================
+   MIXER
+   ========================================================= */
+
+.mixer h2 {
+
+    text-align: center;
+
+    font-size:
+        .72rem;
+
+    letter-spacing:
+        .28em;
+
+    color:
+        #8d9aad;
+
+    margin:
+        0 0 15px;
+}
+
+.channels {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 13px;
+}
+
+.channel {
+
+    text-align: center;
+}
+
+.channel label {
+
+    font-size:
+        .58rem;
+
+    letter-spacing:
+        .14em;
+
+    color:
+        #69778b;
+}
+
+
+/* =========================================================
+   KNOBS
+   ========================================================= */
+
+.knob {
+
+    --rotation:
+        -35deg;
+
+    width: 46px;
+    height: 46px;
+
+    border-radius: 50%;
+
+    margin:
+        6px
+        auto
+        12px;
+
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #4b5665,
+            #10131a 58%,
+            #050609
+        );
+
+    border:
+        2px solid
+        #3b4553;
+
+    position: relative;
+
+    box-shadow:
+        0 5px 10px
+        #000;
+}
+
+.knob::after {
+
+    content: "";
+
+    position:
+        absolute;
+
+    width: 3px;
+    height: 15px;
+
+    background:
+        #dbeaff;
+
+    top: 4px;
+    left: 20px;
+
+    border-radius: 2px;
+
+    transform-origin:
+        1.5px 19px;
+
+    transform:
+        rotate(
+            var(--rotation)
+        );
+}
+
+
+/* =========================================================
+   VERTICAL FADERS
+   ========================================================= */
+
+.fader {
+
+    height: 130px;
+
+    width: 10px;
+
+    background:
+        #030509;
+
+    border:
+        1px solid
+        #29303b;
+
+    border-radius: 8px;
+
+    margin:
+        8px auto;
+
+    position: relative;
+}
+
+.fader span {
+
+    position: absolute;
+
+    width: 35px;
+    height: 14px;
+
+    border-radius: 4px;
+
+    background:
+        linear-gradient(
+            #657083,
+            #242b36
+        );
+
+    border:
+        1px solid
+        #7f8997;
+
+    left: -13px;
+
+    bottom: 58%;
+}
+
+
+/* =========================================================
+   VERTICAL WAVEFORM SELECTOR
+   ========================================================= */
+
+.waveformControl {
+    margin-top: 8px;
+
+    text-align: center;
+}
+
+.waveformControl > label {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #69778b;
+
+    font-size: .58rem;
+
+    letter-spacing: .14em;
+}
+
+.waveformSliderArea {
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 10px;
+
+    min-height: 150px;
+}
+
+#waveformSlider {
+    width: 130px;
+    height: 18px;
+
+    margin:
+        56px
+        -51px;
+
+    transform:
+        rotate(-90deg);
+
+    accent-color:
+        var(--deckB);
+
+    cursor: pointer;
+}
+
+.waveformTicks {
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content:
+        space-between;
+
+    height: 130px;
+
+    padding:
+        2px
+        0;
+
+    color: #68768a;
+
+    font-family:
+        ui-monospace,
+        monospace;
+
+    font-size: .55rem;
+
+    text-align: left;
+}
+
+.waveformTicks span {
+    position: relative;
+}
+
+.waveformTicks span::before {
+    content: "";
+
+    position: absolute;
+
+    width: 7px;
+    height: 1px;
+
+    top: 50%;
+    left: -11px;
+
+    background: #596679;
+}
+
+#waveformValue {
+    display: block;
+
+    margin-top: 4px;
+
+    min-height: 17px;
+
+    color:
+        var(--deckB);
+
+    font-family:
+        ui-monospace,
+        monospace;
+
+    font-size: .68rem;
+
+    letter-spacing: .08em;
+
+    text-shadow:
+        0 0 10px
+        #ff3e9d77;
+}
+
+/* =========================================================
+   REAL AUDIO VISUALIZER
+   ========================================================= */
+
+.visualizer {
+    position: relative;
+
+    height: 150px;
+
+    margin:
+        10px
+        0;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        #263346;
+
+    border-radius:
+        9px;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            #10243a 0%,
+            #07101c 42%,
+            #02050a 100%
+        );
+
+    box-shadow:
+        inset 0 0 28px #000,
+        0 0 12px #00d9ff18;
+}
+
+.visualizer::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    pointer-events: none;
+
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 3px,
+            #00000025 4px
+        );
+}
+
+#visualizerCanvas {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+}
+
+
+/* =========================================================
+   MASTER OCTAVE
+   ========================================================= */
+
+.octaveControl {
+    margin-top: 18px;
+
+    border-top:
+        1px solid
+        #2a313d;
+
+    padding-top: 15px;
+
+    text-align: center;
+}
+
+.octaveControl label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    font-size: .62rem;
+
+    letter-spacing: .2em;
+
+    color: #718096;
+}
+
+.octaveControl input {
+    width: 100%;
+
+    margin:
+        2px
+        0
+        3px;
+
+    accent-color:
+        var(--deckA);
+
+    cursor: pointer;
+}
+
+.octaveScale {
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    padding:
+        0
+        3px;
+
+    color: #627086;
+
+    font-family:
+        ui-monospace,
+        monospace;
+
+    font-size: .6rem;
+}
+
+#octaveValue {
+    display: block;
+
+    min-height: 18px;
+
+    margin-top: 7px;
+
+    color:
+        var(--deckA);
+
+    font-family:
+        ui-monospace,
+        monospace;
+
+    font-size: .72rem;
+
+    letter-spacing: .09em;
+
+    text-shadow:
+        0 0 10px
+        #00d9ff66;
+}
+
+/* =========================================================
+   BOTTOM TRANSPORT
+   ========================================================= */
+
+.transport {
+
+    margin-top: 14px;
+
+    background:
+        #0c0f15;
+
+    border:
+        1px solid
+        var(--line);
+
+    border-radius:
+        18px;
+
+    padding:
+        16px;
+}
+
+.progressTop {
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    color:
+        #7e8b9e;
+
+    font:
+        12px
+        ui-monospace,
+        monospace;
+}
+
+
+/* =========================================================
+   SONG TIMELINE
+   ========================================================= */
+
+.timeline {
+
+    height: 8px;
+
+    background:
+        #252c36;
+
+    border-radius:
+        10px;
+
+    margin:
+        8px 0 17px;
+
+    overflow:
+        hidden;
+}
+
+.timeline span {
+
+    display: block;
+
+    height: 100%;
+
+    width: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--deckA),
+            var(--deckB)
+        );
+
+    box-shadow:
+        0 0 10px
+        var(--deckA);
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.actions {
+
+    display: flex;
+
+    justify-content:
+        center;
+
+    align-items:
+        center;
+
+    gap: 12px;
+
+    flex-wrap:
+        wrap;
+}
+
+.btn {
+
+    border:
+        1px solid
+        #3b4657;
+
+    border-radius:
+        10px;
+
+    background:
+        linear-gradient(
+            #242b37,
+            #11151c
+        );
+
+    color:
+        #dfe9f7;
+
+    padding:
+        12px 18px;
+
+    font-weight:
+        850;
+
+    letter-spacing:
+        .08em;
+
+    cursor:
+        pointer;
+}
+
+.btn:hover {
+
+    filter:
+        brightness(1.2);
+}
+
+.btn:focus-visible {
+
+    outline:
+        3px solid
+        #fff;
+
+    outline-offset:
+        3px;
+}
+
+
+/* CREATE SONG */
+
+.create {
+
+    border-color:
+        #895c00;
+
+    color:
+        #ffd16d;
+
+    min-width:
+        245px;
+}
+
+
+/* PLAY */
+
+.play {
+
+    width: 82px;
+    height: 82px;
+
+    border-radius:
+        50%;
+
+    font-size:
+        1.6rem;
+
+    color:
+        #071016;
+
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #e6ffaf,
+            var(--lime) 48%,
+            #5c8d00
+        );
+
+    border:
+        5px solid
+        #23310d;
+
+    box-shadow:
+        0 0 28px
+        #b7ff3c70;
+}
+
+.play:disabled {
+
+    filter:
+        grayscale(1);
+
+    opacity:
+        .35;
+
+    cursor:
+        not-allowed;
+}
+
+
+/* STOP */
+
+.stop {
+
+    color:
+        #ff8192;
+}
+
+/* LOOP */
+
+.loop {
+    color: #91a0b5;
+    border-color: #3b4657;
+}
+
+.loop.on {
+    color: var(--lime);
+    border-color: var(--lime);
+    box-shadow:
+        0 0 16px
+        #b7ff3c45;
+}
+
+/* =========================================================
+   LOFI RADIO
+   ========================================================= */
+
+.lofi {
+    color: #d8b4ff;
+    border-color: #76508f;
+    min-width: 190px;
+}
+
+.lofi.on {
+    color: #f1ddff;
+
+    border-color:
+        #c779ff;
+
+    background:
+        linear-gradient(
+            #59356f,
+            #24152e
+        );
+
+    box-shadow:
+        0 0 18px
+        #c779ff55;
+}
+
+/* =========================================================
+   STATUS MESSAGE
+   ========================================================= */
+
+.message {
+
+    text-align:
+        center;
+
+    min-height:
+        24px;
+
+    color:
+        #91a0b5;
+
+    font-size:
+        .78rem;
+
+    letter-spacing:
+        .12em;
+
+    margin-top:
+        12px;
+}
+
+
+/* =========================================================
+   SONG SECTION DISPLAY
+   ========================================================= */
+
+.sections {
+
+    display:
+        flex;
+
+    gap:
+        4px;
+
+    margin-top:
+        14px;
+}
+
+.sections span {
+
+    height:
+        4px;
+
+    flex:
+        1;
+
+    background:
+        #2c333e;
+}
+
+.sections span:nth-child(3),
+.sections span:nth-child(5) {
+
+    background:
+        #73304f;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.foot {
+
+    text-align:
+        center;
+
+    color:
+        #4f5b6d;
+
+    font-size:
+        .68rem;
+
+    margin-top:
+        12px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media(max-width: 900px) {
+
+    .console {
+
+        grid-template-columns:
+            1fr
+            1fr;
+    }
+
+    .mixer {
+
+        grid-column:
+            1 / -1;
+
+        grid-row:
+            2;
+    }
+
+    .mixer .channels {
+
+        max-width:
+            430px;
+
+        margin:
+            auto;
+    }
+
+    .topbar {
+
+        grid-template-columns:
+            1fr
+            1fr;
+    }
+
+    .status {
+
+        order:
+            3;
+
+        grid-column:
+            1 / -1;
+    }
+
+    .master {
+
+        grid-column:
+            2;
+    }
+
+}
+
+
+@media(max-width: 620px) {
+
+    body {
+
+        padding:
+            8px;
+    }
+
+    .app {
+
+        padding:
+            10px;
+
+        border-radius:
+            16px;
+    }
+
+    .console {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    .mixer {
+
+        grid-column:
+            auto;
+
+        grid-row:
+            auto;
+    }
+
+    .topbar {
+
+        gap:
+            8px;
+    }
+
+    .deck {
+
+        padding:
+            12px;
+    }
+
+    .brand {
+
+        letter-spacing:
+            .18em;
+    }
+
+    .actions {
+
+        gap:
+            8px;
+    }
+
+    .create {
+
+        order:
+            3;
+
+        width:
+            100%;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<main
+    class="app"
+    id="hzApp"
+>
+
+
+<!-- ======================================================
+     TOP HEADER
+     ====================================================== -->
+
+<header class="topbar">
+
+    <div class="brand">
+        <i>MATT's HZ</i> DROP
+    </div>
+
+
+    <div class="status">
+
+        <strong id="status">
+            NO TRACK LOADED
+        </strong>
+
+        <span id="trackInfo">
+            PRESS CREATE TO GENERATE A 2:00 SESSION
+        </span>
+
+    </div>
+
+
+<div class="master">
+
+    <small>
+        MASTER VOLUME
+    </small>
+
+    <input
+        id="masterVolume"
+        type="range"
+        min="0"
+        max="100"
+        value="55"
+        aria-label="Master Volume"
+    >
+
+    <b id="masterVolumeValue">
+        55%
+    </b>
+
+    <small style="margin-top:8px;">
+        MASTER CLOCK
+    </small>
+
+    <b id="clock">
+        00:00.0
+    </b>
+
+</div>
+</header>
+
+
+
+<!-- ======================================================
+     MAIN DJ CONSOLE
+     ====================================================== -->
+
+<section class="console">
+
+
+<!-- ======================================================
+     DECK A
+     ====================================================== -->
+
+<article class="deck a">
+
+
+    <div class="deckhead">
+
+        <b>
+            DECK A
+        </b>
+
+        <span class="badge">
+            SUB / ATMOS
+        </span>
+
+    </div>
+
+
+    <div class="screen">
+
+        <div class="screenline">
+
+            <span>
+                FREQUENCY
+            </span>
+
+            <span id="freqA">
+                -- Hz
+            </span>
+
+        </div>
+
+
+        <strong id="titleA">
+            EMPTY DECK
+        </strong>
+
+    </div>
+
+
+    <div class="platterWrap">
+
+        <div class="platter">
+        </div>
+
+    </div>
+
+
+    <div
+        class="wave"
+        id="waveA"
+    >
+    </div>
+
+
+    <div class="pads">
+
+        <button
+            type="button"
+            class="pad on"
+        >
+            SUB
+        </button>
+
+        <button
+            type="button"
+            class="pad"
+        >
+            AIR
+        </button>
+
+        <button
+            type="button"
+            class="pad"
+        >
+            FOG
+        </button>
+
+<button
+    type="button"
+    class="pad"
+    id="miscPad"
+    aria-pressed="false"
+>
+    MISC
+</button>
+
+    </div>
+
+</article>
+
+
+
+<!-- ======================================================
+     MIXER
+     ====================================================== -->
+
+<aside class="mixer">
+
+
+<h2>
+    FREQUENCY MIXER
+</h2>
+
+
+<div class="channels">
+
+
+<!-- CHANNEL A -->
+
+<div class="channel">
+
+    <label>
+        DECK A GAIN
+    </label>
+
+    <div class="knob">
+    </div>
+
+
+    <label>
+        LOW
+    </label>
+
+    <div
+        class="knob"
+        style="--rotation:20deg"
+    >
+    </div>
+
+
+    <div class="fader">
+
+        <span>
+        </span>
+
+    </div>
+
+
+</div>
+
+
+
+<!-- CHANNEL B -->
+
+<div class="channel">
+
+    <label>
+        DECK B GAIN
+    </label>
+
+    <div
+        class="knob"
+        style="--rotation:10deg"
+    >
+    </div>
+
+
+    <label>
+        FILTER
+    </label>
+
+    <div
+        class="knob"
+        style="--rotation:55deg"
+    >
+    </div>
+
+
+
+<div class="waveformControl">
+
+    <label for="waveformSlider">
+        WAVEFORM
+    </label>
+
+    <div class="waveformSliderArea">
+
+        <input
+            id="waveformSlider"
+            type="range"
+            min="0"
+            max="3"
+            value="3"
+            step="1"
+            orient="vertical"
+            aria-label="Bass waveform"
+            aria-valuemin="0"
+            aria-valuemax="3"
+            aria-valuenow="3"
+            aria-valuetext="Square"
+        >
+
+        <div
+            class="waveformTicks"
+            aria-hidden="true"
+        >
+            <span>SQUARE</span>
+            <span>SAWTOOTH</span>
+            <span>TRIANGLE</span>
+            <span>SINE</span>
+        </div>
+
+    </div>
+
+    <strong id="waveformValue">
+        SQUARE
+    </strong>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<!-- Audio spectrum visualizer -->
+
+<div class="visualizer">
+    <canvas
+        id="visualizerCanvas"
+        aria-label="Audio spectrum visualizer"
+    ></canvas>
+</div>
+
+
+
+<!-- MASTER OCTAVE -->
+
+<div class="octaveControl">
+
+    <label for="octaveControl">
+        MASTER OCTAVE
+    </label>
+
+    <input
+        id="octaveControl"
+        type="range"
+        min="-2"
+        max="2"
+        value="0"
+        step="1"
+        aria-label="Master Octave"
+    >
+
+    <div class="octaveScale" aria-hidden="true">
+        <span>-2</span>
+        <span>-1</span>
+        <span>0</span>
+        <span>+1</span>
+        <span>+2</span>
+    </div>
+
+    <strong id="octaveValue">
+        ORIGINAL
+    </strong>
+
+</div>
+
+
+</aside>
+
+
+
+<!-- ======================================================
+     DECK B
+     ====================================================== -->
+
+<article class="deck b">
+
+
+    <div class="deckhead">
+
+        <b>
+            DECK B
+        </b>
+
+        <span class="badge">
+            BASS / DRUMS
+        </span>
+
+    </div>
+
+
+    <div class="screen">
+
+        <div class="screenline">
+
+            <span>
+                FREQUENCY
+            </span>
+
+            <span id="freqB">
+                -- Hz
+            </span>
+
+        </div>
+
+
+        <strong id="titleB">
+            EMPTY DECK
+        </strong>
+
+    </div>
+
+
+    <div class="platterWrap">
+
+        <div class="platter">
+        </div>
+
+    </div>
+
+
+    <div
+        class="wave"
+        id="waveB"
+    >
+    </div>
+
+
+    <div class="pads">
+
+        <button
+            type="button"
+            class="pad on"
+        >
+            KICK
+        </button>
+
+        <button
+            type="button"
+            class="pad on"
+        >
+            SNARE
+        </button>
+
+        <button
+            type="button"
+            class="pad"
+        >
+            WOB
+        </button>
+
+        <button
+            type="button"
+            class="pad"
+        >
+            DROP
+        </button>
+
+    </div>
+
+
+</article>
+
+
+</section>
+
+
+
+<!-- ======================================================
+     TRANSPORT
+     ====================================================== -->
+
+<section class="transport">
+
+
+<div class="progressTop">
+
+    <span id="elapsed">
+        00:00
+    </span>
+
+    <span id="sectionName">
+        WAITING
+    </span>
+
+<span id="totalTime">
+    02:00
+</span>
+
+</div>
+
+
+
+<div class="timeline">
+
+    <span id="progress">
+    </span>
+
+</div>
+
+
+
+<div class="actions">
+
+
+    <button
+        class="btn create"
+        id="createBtn"
+        type="button"
+    >
+        CREATE DUBSTEP Hz SONG
+    </button>
+
+
+    <button
+        class="btn play"
+        id="playBtn"
+        type="button"
+        disabled
+        aria-label="Play"
+    >
+        ▶
+    </button>
+
+<button
+    class="btn loop"
+    id="loopBtn"
+    type="button"
+    aria-pressed="false"
+>
+    LOOP OFF
+</button>
+
+<button
+    class="btn lofi"
+    id="lofiBtn"
+    type="button"
+    aria-pressed="false"
+>
+    ♫ LOFI RADIO OFF
+</button>
+
+    <button
+        class="btn stop"
+        id="stopBtn"
+        type="button"
+    >
+        ■ STOP
+    </button>
+
+
+</div>
+
+
+
+<div
+    class="message"
+    id="message"
+    aria-live="polite"
+>
+    The deck is standing by.
+</div>
+
+
+
+<div class="sections">
+
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+
+</div>
+
+
+</section>
+
+
+
+<div class="foot">
+
+    PROCEDURAL AUDIO CONCEPT
+    • ORIGINAL DUAL-DECK INTERFACE
+    • HEADPHONES RECOMMENDED
+    • CREATED BY MATT L ( WITH THE HELP OF COPILOT )
+</div>
+
+
+</main>
+
+
+
+<script>
+
+(() => {
+
+
+/* =========================================================
+   DOM SHORTCUT
+   ========================================================= */
+
+const root =
+document.getElementById(
+    "hzApp"
+);
+
+
+const $ =
+selector =>
+root.querySelector(
+    selector
+);
+
+
+
+/* =========================================================
+   GLOBAL SONG STATE
+   ========================================================= */
+
+let nextStepToSchedule = 0;
+let loopEnabled = false;
+
+let miscEnabled = false;
+let lofiEnabled = false;
+let lofiTimer = null;
+let lofiStartTime = 0;
+let lofiNextStep = 0;
+let lofiSeed = 0;
+let lofiBarChoice = 0;
+
+let shortNoiseBuffer = null;
+let vinylNoiseBuffer = null;
+
+const LOFI_BPM = 74;
+const LOFI_SCHEDULE_AHEAD = 1.2;
+
+let song =
+null;
+
+let audio =
+null;
+
+let masterGain =
+null;
+
+let masterCompressor = null;
+let masterFilter = null;
+
+let analyser = null;
+
+let visualizerFrame = null;
+let visualizerData = null;
+
+let timer =
+null;
+
+let startTime =
+0;
+
+let pausedAt =
+0;
+
+let nodes =
+[];
+
+let masterOctave =
+0;
+
+let selectedWaveform =
+    "square";
+
+const duration =
+120;
+
+const MASTER_MAX_VOLUME = 10.0;
+
+const WOBBLE_BASE_HZ = 150.00;
+
+/* =========================================================
+   BUILD FAKE WAVEFORM GRAPHICS
+   ========================================================= */
+
+function buildWaveform(id) {
+
+    const element =
+    $(id);
+
+
+    for (
+        let i = 0;
+        i < 62;
+        i++
+    ) {
+
+        const bar =
+        document.createElement(
+            "i"
+        );
+
+
+        bar.style.height =
+        (
+            18 +
+            Math.random() * 80
+        )
+        + "%";
+
+
+        bar.style.setProperty(
+            "--delay",
+            (
+                -Math.random()
+            )
+            + "s"
+        );
+
+
+        element.appendChild(
+            bar
+        );
+
+    }
+
+}
+
+
+buildWaveform(
+    "#waveA"
+);
+
+buildWaveform(
+    "#waveB"
+);
+
+
+
+/* =========================================================
+   BUILD VU METER
+
+
+const vu =
+$("#vu");
+
+
+for (
+    let i = 0;
+    i < 10;
+    i++
+) {
+
+    const meter =
+    document.createElement(
+        "i"
+    );
+
+
+    meter.style.setProperty(
+        "--delay",
+        (
+            -Math.random()
+        )
+        + "s"
+    );
+
+
+    meter.style.setProperty(
+        "--height",
+        (
+            25 +
+            Math.random() * 75
+        )
+        + "%"
+    );
+
+
+    vu.appendChild(
+        meter
+    );
+
+}
+   ========================================================= */
+
+
+/* =========================================================
+   FAKE SONG GENERATION MESSAGES
+   ========================================================= */
+
+const generationStages = [
+
+    "SCANNING FREQUENCIES...",
+
+    "DESIGNING SUB BASS...",
+
+    "BUILDING DRUM PATTERN...",
+
+    "ARRANGING THE DROPS...",
+
+    "MASTERING OUTPUT..."
+
+];
+
+
+
+/* =========================================================
+   RANDOM TRACK SEED
+   ========================================================= */
+
+function createSeed() {
+
+    return Math.floor(
+        100000 +
+        Math.random() *
+        900000
+    );
+
+}
+
+
+
+/* =========================================================
+   CREATE A NEW RANDOM SONG
+   ========================================================= */
+
+function multiply(
+    firstNumber,
+    secondNumber
+) {
+    return firstNumber * secondNumber;
+}
+
+function chooseRandom(array) {
+    return array[
+        Math.floor(
+            Math.random() *
+            array.length
+        )
+    ];
+}
+
+/* =========================================================
+   MUSICAL DUBSTEP BLUEPRINT
+   ========================================================= */
+
+function semitoneRatio(semitones) {
+    return Math.pow(
+        2,
+        semitones / 12
+    );
+}
+
+function octaveRatio(
+    octave
+) {
+    return Math.pow(
+        2,
+        octave
+    );
+}
+
+function applyMasterOctave(
+    frequency
+) {
+    const safeFrequency =
+        Number(
+            frequency
+        );
+
+    if (
+        !Number.isFinite(
+            safeFrequency
+        ) ||
+        safeFrequency <= 0
+    ) {
+        return 1;
+    }
+
+    return (
+        safeFrequency *
+        octaveRatio(
+            masterOctave
+        )
+    );
+}
+
+/*
+ * Natural minor scale:
+ * 1, 2, b3, 4, 5, b6, b7
+ */
+const DUBSTEP_MINOR_SCALE = [
+    0,
+    2,
+    3,
+    5,
+    7,
+    8,
+    10,
+    12
+];
+
+/*
+ * All patterns use 16 steps per bar.
+ *
+ * 0  1  2  3  = beat 1
+ * 4  5  6  7  = beat 2
+ * 8  9 10 11  = beat 3
+ * 12 13 14 15 = beat 4
+ */
+
+function createKickPattern() {
+    const patterns = [
+        [
+            1, 0, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 0,
+            1, 0, 0, 0
+        ],
+        [
+            1, 0, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 0,
+            0, 0, 1, 0
+        ],
+        [
+            1, 0, 0, 0,
+            0, 0, 0, 1,
+            0, 0, 0, 0,
+            1, 0, 1, 0
+        ]
+    ];
+
+    return [
+        ...chooseRandom(
+            patterns
+        )
+    ];
+}
+
+function createSnarePattern() {
+    /*
+     * Dubstep usually uses a half-time backbeat.
+     * The main snare lands on beat 3, step 8.
+     */
+    return [
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        1, 0, 0, 0,
+        0, 0, 0, 0
+    ];
+}
+
+function createHatPattern() {
+    const patterns = [
+        [
+            0, 0, 1, 0,
+            0, 0, 1, 0,
+            0, 0, 1, 0,
+            0, 0, 1, 0
+        ],
+        [
+            0, 1, 0, 1,
+            0, 1, 0, 1,
+            0, 1, 0, 1,
+            0, 1, 0, 1
+        ],
+        [
+            0, 0, 1, 0,
+            0, 0, 1, 0,
+            0, 1, 0, 1,
+            0, 1, 1, 1
+        ]
+    ];
+
+    return [
+        ...chooseRandom(
+            patterns
+        )
+    ];
+}
+
+function createBassRhythm() {
+    /*
+     * Values represent note lengths in sixteenth notes.
+     * A zero means no new bass note begins on that step.
+     */
+    const patterns = [
+        [
+            3, 0, 0, 0,
+            2, 0, 2, 0,
+            3, 0, 0, 0,
+            2, 0, 2, 0
+        ],
+        [
+            4, 0, 0, 0,
+            0, 0, 2, 0,
+            3, 0, 0, 0,
+            0, 2, 0, 1
+        ],
+        [
+            3, 0, 0, 0,
+            0, 2, 0, 0,
+            3, 0, 0, 0,
+            2, 0, 1, 0
+        ]
+    ];
+
+    return [
+        ...chooseRandom(
+            patterns
+        )
+    ];
+}
+
+function createBassNotePattern() {
+    /*
+     * Scale-degree indexes into DUBSTEP_MINOR_SCALE.
+     * Most notes stay around the tonic, minor third,
+     * fourth, fifth, and minor seventh.
+     */
+    const patterns = [
+        [
+            0, 0, 0, 0,
+            2, 0, 0, 0,
+            0, 0, 0, 0,
+            4, 0, 3, 0
+        ],
+        [
+            0, 0, 0, 0,
+            0, 0, 4, 0,
+            2, 0, 0, 0,
+            0, 3, 0, 4
+        ],
+        [
+            0, 0, 0, 0,
+            0, 2, 0, 0,
+            4, 0, 0, 0,
+            3, 0, 2, 0
+        ]
+    ];
+
+    return [
+        ...chooseRandom(
+            patterns
+        )
+    ];
+}
+
+function createLeadPattern() {
+    /*
+     * Null means rest.
+     * Numbers are minor-scale degree indexes.
+     */
+    const patterns = [
+        [
+            null, null, 4, null,
+            null, 3, null, null,
+            null, null, 2, null,
+            4, null, 3, null
+        ],
+        [
+            null, 2, null, null,
+            4, null, 3, null,
+            null, null, 2, null,
+            null, 1, 0, null
+        ],
+        [
+            null, null, 0, null,
+            2, null, null, 3,
+            null, null, 4, null,
+            3, null, 2, null
+        ]
+    ];
+
+    return [
+        ...chooseRandom(
+            patterns
+        )
+    ];
+}
+
+/* =========================================================
+   CONTROLLED RANDOM DUBSTEP ARRANGEMENT
+   ========================================================= */
+
+function chooseWeighted(options) {
+    const totalWeight =
+        options.reduce(
+            (
+                total,
+                option
+            ) =>
+                total +
+                option.weight,
+            0
+        );
+
+    let randomValue =
+        Math.random() *
+        totalWeight;
+
+    for (
+        const option
+        of options
+    ) {
+        randomValue -=
+            option.weight;
+
+        if (
+            randomValue <= 0
+        ) {
+            return option.value;
+        }
+    }
+
+    return options[
+        options.length - 1
+    ].value;
+}
+
+
+/* =========================================================
+   CHOOSE MUSICAL SECTION LENGTH
+   ========================================================= */
+
+function chooseBarLength(
+    sectionType
+) {
+    const barChoices = {
+
+        intro: [
+            {
+                value: 4,
+                weight: 4
+            },
+            {
+                value: 8,
+                weight: 6
+            }
+        ],
+
+        build: [
+            {
+                value: 4,
+                weight: 3
+            },
+            {
+                value: 8,
+                weight: 7
+            }
+        ],
+
+        drop: [
+            {
+                value: 8,
+                weight: 5
+            },
+            {
+                value: 12,
+                weight: 3
+            },
+            {
+                value: 16,
+                weight: 2
+            }
+        ],
+
+        break: [
+            {
+                value: 4,
+                weight: 6
+            },
+            {
+                value: 8,
+                weight: 4
+            }
+        ],
+
+        outro: [
+            {
+                value: 4,
+                weight: 7
+            },
+            {
+                value: 8,
+                weight: 3
+            }
+        ]
+    };
+
+    return chooseWeighted(
+        barChoices[
+            sectionType
+        ]
+    );
+}
+
+
+/* =========================================================
+   GENERATE RANDOM MUSICAL ARRANGEMENT
+   ========================================================= */
+
+function generateArrangement(
+    bpm,
+    targetDuration = 120
+) {
+    const beat =
+        60 /
+        bpm;
+
+    const barDuration =
+        beat *
+        4;
+
+    /*
+     * Reserve four bars for the ending.
+     */
+    const minimumOutroBars =
+        4;
+
+    /*
+     * Calculate how many complete musical bars
+     * fit inside the requested song duration.
+     */
+    const maximumSongBars =
+        Math.max(
+            16,
+            Math.floor(
+                targetDuration /
+                barDuration
+            )
+        );
+
+    const availableMainBars =
+        maximumSongBars -
+        minimumOutroBars;
+
+    const sections =
+        [];
+
+    let currentBar =
+        0;
+
+
+    /* =====================================================
+       ADD SECTION
+       ===================================================== */
+
+    function addSection(
+        type,
+        requestedBars,
+        variation = 0
+    ) {
+        const remainingBars =
+            maximumSongBars -
+            currentBar;
+
+        const bars =
+            Math.min(
+                requestedBars,
+                remainingBars
+            );
+
+        if (
+            bars <= 0
+        ) {
+            return;
+        }
+
+        const startBar =
+            currentBar;
+
+        const endBar =
+            startBar +
+            bars;
+
+        sections.push(
+            {
+                type:
+                    type,
+
+                bars:
+                    bars,
+
+                variation:
+                    variation,
+
+                startBar:
+                    startBar,
+
+                endBar:
+                    endBar,
+
+                start:
+                    startBar *
+                    barDuration,
+
+                end:
+                    endBar *
+                    barDuration,
+
+                /*
+                 * Your scheduler uses
+                 * 16 sixteenth-note steps per bar.
+                 */
+                startStep:
+                    startBar *
+                    16,
+
+                endStep:
+                    endBar *
+                    16
+            }
+        );
+
+        currentBar =
+            endBar;
+    }
+
+
+    /* =====================================================
+       OPENING
+
+       Always maintain enough musical logic to sound
+       intentional:
+
+       INTRO -> BUILD -> DROP
+       ===================================================== */
+
+    addSection(
+        "intro",
+        chooseBarLength(
+            "intro"
+        )
+    );
+
+    addSection(
+        "build",
+        chooseBarLength(
+            "build"
+        )
+    );
+
+    addSection(
+        "drop",
+        chooseBarLength(
+            "drop"
+        ),
+        1
+    );
+
+    let dropNumber =
+        1;
+
+
+    /* =====================================================
+       RANDOMIZED MIDDLE
+
+       DROP -> BREAK or BUILD
+       BREAK -> BUILD
+       BUILD -> DROP
+
+       This creates randomness without creating nonsense.
+       ===================================================== */
+
+    while (
+        currentBar <
+        availableMainBars
+    ) {
+        const remaining =
+            availableMainBars -
+            currentBar;
+
+        /*
+         * If we're getting close to the reserved outro,
+         * use the remaining main bars for one last drop.
+         */
+        if (
+            remaining <
+            8
+        ) {
+            dropNumber++;
+
+            addSection(
+                "drop",
+                remaining,
+                dropNumber
+            );
+
+            break;
+        }
+
+        const lastSection =
+            sections[
+                sections.length - 1
+            ];
+
+
+        /* =================================================
+           AFTER A DROP
+           ================================================= */
+
+        if (
+            lastSection.type ===
+            "drop"
+        ) {
+            /*
+             * Most drops fall into a breakdown.
+             *
+             * Sometimes we go immediately into another
+             * build for a more aggressive arrangement.
+             */
+            const nextType =
+                chooseWeighted(
+                    [
+                        {
+                            value:
+                                "break",
+
+                            weight:
+                                72
+                        },
+
+                        {
+                            value:
+                                "build",
+
+                            weight:
+                                28
+                        }
+                    ]
+                );
+
+            let bars =
+                chooseBarLength(
+                    nextType
+                );
+
+            bars =
+                Math.min(
+                    bars,
+                    Math.max(
+                        4,
+                        remaining -
+                        8
+                    )
+                );
+
+            addSection(
+                nextType,
+                bars
+            );
+        }
+
+
+        /* =================================================
+           AFTER A BREAKDOWN
+           ================================================= */
+
+        else if (
+            lastSection.type ===
+            "break"
+        ) {
+            /*
+             * Rebuild tension after the breakdown.
+             */
+            addSection(
+                "build",
+
+                Math.min(
+                    chooseBarLength(
+                        "build"
+                    ),
+
+                    Math.max(
+                        4,
+                        remaining -
+                        8
+                    )
+                )
+            );
+        }
+
+
+        /* =================================================
+           AFTER A BUILD
+           ================================================= */
+
+        else {
+            /*
+             * Builds resolve into drops.
+             */
+            dropNumber++;
+
+            addSection(
+                "drop",
+
+                Math.min(
+                    chooseBarLength(
+                        "drop"
+                    ),
+                    remaining
+                ),
+
+                dropNumber
+            );
+        }
+    }
+
+
+    /* =====================================================
+       OUTRO
+       ===================================================== */
+
+    addSection(
+        "outro",
+        maximumSongBars -
+        currentBar
+    );
+
+
+    /* =====================================================
+       RETURN ARRANGEMENT
+       ===================================================== */
+
+    return {
+        sections:
+            sections,
+
+        totalBars:
+            maximumSongBars,
+
+        barDuration:
+            barDuration,
+
+        duration:
+            maximumSongBars *
+            barDuration
+    };
+}
+
+
+/* =========================================================
+   FIND CURRENT ARRANGEMENT SECTION
+   ========================================================= */
+
+function getArrangementSection(
+    songPosition
+) {
+    if (
+        !song ||
+        !song.arrangement
+    ) {
+        return null;
+    }
+
+    return (
+        song.arrangement.sections.find(
+            section =>
+                songPosition >=
+                    section.start &&
+                songPosition <
+                    section.end
+        ) ||
+        song.arrangement.sections[
+            song.arrangement.sections.length -
+            1
+        ]
+    );
+}
+
+function generateSongBlueprint() {
+    const styles = [
+        {
+            name: "HEAVY WOBBLE",
+            bassVolume: 0.115,
+            waveform: "square",
+            filterMin: 85,
+            filterMax: 950
+        },
+        {
+            name: "DARK SUB",
+            bassVolume: 0.12,
+            waveform: "square",
+            filterMin: 70,
+            filterMax: 620
+        },
+        {
+            name: "NEON RIDDIM",
+            bassVolume: 0.105,
+            waveform: "square",
+            filterMin: 110,
+            filterMax: 1100
+        },
+        {
+            name: "CYBER DROP",
+            bassVolume: 0.11,
+            waveform: "square",
+            filterMin: 95,
+            filterMax: 1450
+        }
+    ];
+
+    const firstBassRhythm =
+        createBassRhythm();
+
+    const firstBassNotes =
+        createBassNotePattern();
+
+    const secondBassRhythm = [
+        ...firstBassRhythm
+    ];
+
+    const secondBassNotes = [
+        ...firstBassNotes
+    ];
+
+    /*
+     * Give drop two a recognizable variation,
+     * rather than a completely unrelated pattern.
+     */
+    secondBassRhythm[13] = 2;
+    secondBassRhythm[15] = 1;
+
+    secondBassNotes[13] = 4;
+    secondBassNotes[15] = 2;
+
+    const firstLeadPattern =
+        createLeadPattern();
+
+    const secondLeadPattern = [
+        ...firstLeadPattern
+    ];
+
+    secondLeadPattern[12] = 5;
+    secondLeadPattern[14] = 4;
+
+    return {
+        style:
+            chooseRandom(
+                styles
+            ),
+
+        kickPattern:
+            createKickPattern(),
+
+        kickPatternTwo:
+            createKickPattern(),
+
+        snarePattern:
+            createSnarePattern(),
+
+        hatPattern:
+            createHatPattern(),
+
+        hatPatternTwo:
+            createHatPattern(),
+
+        bassRhythm:
+            firstBassRhythm,
+
+        bassRhythmTwo:
+            secondBassRhythm,
+
+        bassNotes:
+            firstBassNotes,
+
+        bassNotesTwo:
+            secondBassNotes,
+
+        leadPattern:
+            firstLeadPattern,
+
+        leadPatternTwo:
+            secondLeadPattern,
+
+        /*
+         * Wobble subdivisions are selected once when
+         * the song is generated, not randomly on every note.
+         */
+        wobbleDivision:
+            chooseRandom(
+                [
+                    1,
+                    2,
+                    2,
+                    4
+                ]
+            ),
+
+        wobbleDivisionTwo:
+            chooseRandom(
+                [
+                    2,
+                    4,
+                    4,
+                    8
+                ]
+            ),
+
+        kickVolume:
+            0.30,
+
+        snareVolume:
+            0.14,
+
+        hatVolume:
+            0.012,
+
+        swing:
+            0.008,
+
+        dropIntensity:
+            1,
+bassOctave:
+    chooseRandom([
+        0.5,
+        1,
+        1,
+        1,
+        2
+    ]),
+
+leadOctave:
+    chooseRandom([
+        4,
+        8,
+        8,
+        8,
+        16
+    ]),
+
+rhythmDensity:
+    chooseRandom([
+        0.65,
+        0.8,
+        1,
+        1,
+        1.15
+    ]),
+
+bassVolumeVariation:
+    chooseRandom([
+        0.85,
+        1,
+        1,
+        1.15
+    ]),
+
+leadVolumeVariation:
+    chooseRandom([
+        0.7,
+        0.85,
+        1,
+        1.15
+    ]),
+
+dropPersonality:
+    chooseRandom([
+        "HEAVY",
+        "SPARSE",
+        "MELODIC",
+        "CHAOTIC"
+    ]),
+
+    };
+}
+
+function createSong() {
+    if (lofiEnabled) {
+        stopLofiRadio(false);
+    } else {
+        stopSong();
+    }
+
+    $("#createBtn").disabled = true;
+
+
+    $("#playBtn").disabled =
+    true;
+
+
+    let stage =
+    0;
+
+
+    $("#status").textContent =
+    "CREATING";
+
+
+    $("#message").textContent =
+    generationStages[0];
+
+
+
+    const generationJob =
+    setInterval(
+
+        () => {
+
+
+            stage++;
+
+
+            if (
+                stage <
+                generationStages.length
+            ) {
+
+                $("#message").textContent =
+                generationStages[
+                    stage
+                ];
+
+                return;
+
+            }
+
+
+
+            clearInterval(
+                generationJob
+            );
+
+
+
+            const rootFrequencies = [
+
+                41.20,
+
+                43.65,
+
+                49.00,
+
+                55.00,
+
+                61.74,
+
+                65.41
+
+            ];
+
+
+
+ song = {
+
+    seed:
+        createSeed(),
+
+bpm:
+Math.floor(
+    138 +
+    Math.random() *
+    5
+),
+
+    root:
+        rootFrequencies[
+            Math.floor(
+                Math.random() *
+                rootFrequencies.length
+            )
+        ],
+
+    blueprint:
+        generateSongBlueprint()
+
+};
+
+song.arrangement =
+    generateArrangement(
+        song.bpm,
+        duration
+    );
+
+$("#totalTime").textContent =
+    formatSongTime(
+        song.arrangement.duration
+    );
+
+            $("#status").textContent =
+            "TRACK READY";
+
+
+            $("#trackInfo").textContent =
+
+            "HZ-" +
+            song.seed +
+            " • " +
+            song.bpm +
+            " BPM • TONE " +
+            song.root.toFixed(2) +
+            " Hz";
+
+
+
+const deckANames = [
+    "NEON SUBSPACE",
+    "VOID SIGNAL",
+    "DARK MATTER",
+    "CYBER ATMOS",
+    "QUANTUM FOG",
+    "SUBZERO SPACE",
+    "GHOST FREQUENCY",
+    "ION STORM",
+    "DEEP ORBIT",
+    "NIGHT SIGNAL"
+];
+
+$("#titleA").textContent =
+    chooseRandom(deckANames);
+
+
+$("#titleB").textContent =
+song.blueprint.style.name;
+
+
+
+updateGeneratedFrequencyDisplay();
+
+
+
+            $("#message").textContent =
+            "PLAY BUTTON IS READY";
+
+
+            $("#playBtn").disabled =
+            false;
+
+
+            $("#createBtn").disabled =
+            false;
+
+
+            $("#createBtn").textContent =
+            "CREATE ANOTHER SONG";
+
+
+        },
+
+        360
+
+    );
+
+}
+
+
+
+/* =========================================================
+   INITIALIZE WEB AUDIO
+   ========================================================= */
+
+function getAudioContext() {
+
+    if (!audio) {
+
+        audio =
+        new (
+            window.AudioContext ||
+            window.webkitAudioContext
+        )();
+
+        masterGain =
+        audio.createGain();
+
+        masterFilter =
+        audio.createBiquadFilter();
+
+        masterCompressor =
+        audio.createDynamicsCompressor();
+
+        masterFilter.type =
+        "lowpass";
+
+        masterFilter.frequency.value =
+        20000;
+
+        masterFilter.Q.value =
+        0.4;
+
+
+
+masterCompressor.threshold.value = -8;
+masterCompressor.knee.value = 12;
+masterCompressor.ratio.value = 3;
+masterCompressor.attack.value = 0.008;
+masterCompressor.release.value = 0.18;
+
+        const sliderValue =
+        Number(
+            $("#masterVolume").value
+        );
+
+        masterGain.gain.value =
+        (
+            sliderValue / 100
+        )
+        *
+        MASTER_MAX_VOLUME;
+
+analyser =
+    audio.createAnalyser();
+
+analyser.fftSize =
+    256;
+
+analyser.smoothingTimeConstant =
+    0.82;
+
+visualizerData =
+    new Uint8Array(
+        analyser.frequencyBinCount
+    );
+
+masterGain
+.connect(
+    masterFilter
+)
+.connect(
+    masterCompressor
+)
+.connect(
+    analyser
+)
+.connect(
+    audio.destination
+);
+
+shortNoiseBuffer =
+audio.createBuffer(
+  1,
+  Math.floor(
+    audio.sampleRate * 2
+  ),
+  audio.sampleRate
+);
+
+const shortNoiseData =
+shortNoiseBuffer.getChannelData(
+  0
+);
+
+for (
+  let i = 0;
+  i < shortNoiseData.length;
+  i++
+) {
+  shortNoiseData[i] =
+    Math.random() * 2 - 1;
+}
+
+vinylNoiseBuffer =
+audio.createBuffer(
+  1,
+  Math.floor(
+    audio.sampleRate * 5
+  ),
+  audio.sampleRate
+);
+
+const vinylNoiseData =
+vinylNoiseBuffer.getChannelData(
+  0
+);
+
+for (
+  let i = 0;
+  i < vinylNoiseData.length;
+  i++
+) {
+  let sample =
+    (
+      Math.random() * 2 -
+      1
+    ) *
+    0.18;
+
+  if (
+    Math.random() < 0.0008
+  ) {
+    sample +=
+      (
+        Math.random() * 2 -
+        1
+      ) *
+      0.9;
+  }
+
+  vinylNoiseData[i] =
+    sample;
+}
+
+startVisualizer();
+    }
+
+    return audio;
+}
+
+
+function startVisualizer() {
+
+    if (visualizerFrame) {
+        return;
+    }
+
+    const canvas =
+        $("#visualizerCanvas");
+
+    const canvasContext =
+        canvas.getContext(
+            "2d"
+        );
+
+    function resizeCanvas() {
+
+        const pixelRatio =
+            window.devicePixelRatio ||
+            1;
+
+        const width =
+            canvas.clientWidth;
+
+        const height =
+            canvas.clientHeight;
+
+        const newWidth =
+            Math.floor(
+                width *
+                pixelRatio
+            );
+
+        const newHeight =
+            Math.floor(
+                height *
+                pixelRatio
+            );
+
+        if (
+            canvas.width !==
+            newWidth ||
+            canvas.height !==
+            newHeight
+        ) {
+
+            canvas.width =
+                newWidth;
+
+            canvas.height =
+                newHeight;
+        }
+    }
+
+/* =========================================================
+   START Visualizer
+   ========================================================= */
+
+
+    function drawVisualizer() {
+
+        visualizerFrame =
+            requestAnimationFrame(
+                drawVisualizer
+            );
+
+        resizeCanvas();
+
+        const width =
+            canvas.width;
+
+        const height =
+            canvas.height;
+
+        canvasContext.clearRect(
+            0,
+            0,
+            width,
+            height
+        );
+
+        if (
+            !analyser ||
+            !visualizerData
+        ) {
+            return;
+        }
+
+        analyser
+        .getByteFrequencyData(
+            visualizerData
+        );
+
+        /*
+         * Dark WMP-style background.
+         */
+
+        const background =
+            canvasContext
+            .createRadialGradient(
+                width / 2,
+                height / 2,
+                0,
+                width / 2,
+                height / 2,
+                width * 0.65
+            );
+
+        background.addColorStop(
+            0,
+            "#102b46"
+        );
+
+        background.addColorStop(
+            0.45,
+            "#06121f"
+        );
+
+        background.addColorStop(
+            1,
+            "#010307"
+        );
+
+        canvasContext.fillStyle =
+            background;
+
+        canvasContext.fillRect(
+            0,
+            0,
+            width,
+            height
+        );
+
+        /*
+         * MIRRORED SPECTRUM
+         */
+
+        const centerX =
+            width / 2;
+
+        const centerY =
+            height / 2;
+
+        const bars =
+            30;
+
+        const gap =
+            Math.max(
+                2,
+                width * 0.004
+            );
+
+        const availableHalfWidth =
+            centerX -
+            gap * bars;
+
+        const barWidth =
+            availableHalfWidth /
+            bars;
+
+        for (
+            let i = 0;
+            i < bars;
+            i++
+        ) {
+
+            /*
+             * Focus mostly on frequencies useful
+             * for music rather than the extreme
+             * upper FFT bins.
+             */
+
+            const normalized =
+                i /
+                bars;
+
+            const dataIndex =
+                Math.floor(
+                    Math.pow(
+                        normalized,
+                        1.55
+                    ) *
+                    (
+                        visualizerData.length *
+                        0.72
+                    )
+                );
+
+            const value =
+                visualizerData[
+                    Math.min(
+                        visualizerData.length - 1,
+                        dataIndex
+                    )
+                ] /
+                255;
+
+            const boosted =
+                Math.pow(
+                    value,
+                    0.72
+                );
+
+            const barHeight =
+                Math.max(
+                    2,
+                    boosted *
+                    height *
+                    0.82
+                );
+
+            /*
+             * Classic neon color progression:
+             *
+             * cyan
+             * blue
+             * purple
+             * magenta
+             */
+
+            const hue =
+                185 +
+                normalized *
+                125;
+
+            const gradient =
+                canvasContext
+                .createLinearGradient(
+                    0,
+                    centerY -
+                    barHeight / 2,
+                    0,
+                    centerY +
+                    barHeight / 2
+                );
+
+            gradient.addColorStop(
+                0,
+                `hsla(${hue},100%,70%,0.2)`
+            );
+
+            gradient.addColorStop(
+                0.5,
+                `hsla(${hue},100%,65%,1)`
+            );
+
+            gradient.addColorStop(
+                1,
+                `hsla(${hue},100%,70%,0.2)`
+            );
+
+            canvasContext.fillStyle =
+                gradient;
+
+            canvasContext.shadowBlur =
+                12;
+
+            canvasContext.shadowColor =
+                `hsla(${hue},100%,60%,0.8)`;
+
+            const distance =
+                i *
+                (
+                    barWidth +
+                    gap
+                );
+
+            /*
+             * Right side.
+             */
+
+            canvasContext.fillRect(
+                centerX +
+                distance +
+                gap,
+                centerY -
+                barHeight / 2,
+                barWidth,
+                barHeight
+            );
+
+            /*
+             * Mirrored left side.
+             */
+
+            canvasContext.fillRect(
+                centerX -
+                distance -
+                gap -
+                barWidth,
+                centerY -
+                barHeight / 2,
+                barWidth,
+                barHeight
+            );
+        }
+
+        /*
+         * Glowing center line.
+         */
+
+        canvasContext.shadowBlur =
+            18;
+
+        canvasContext.shadowColor =
+            "#00d9ff";
+
+        canvasContext.fillStyle =
+            "#afefff";
+
+        canvasContext.fillRect(
+            centerX - 1,
+            height * 0.15,
+            2,
+            height * 0.70
+        );
+
+        /*
+         * Horizontal energy line.
+         */
+
+        canvasContext.shadowBlur =
+            8;
+
+        canvasContext.fillStyle =
+            "#00d9ff66";
+
+        canvasContext.fillRect(
+            width * 0.08,
+            centerY,
+            width * 0.84,
+            Math.max(
+                1,
+                height * 0.008
+            )
+        );
+
+        canvasContext.shadowBlur =
+            0;
+    }
+
+    drawVisualizer();
+}
+
+
+/* =========================================================
+   REMOVE ACTIVE AUDIO NODES
+   ========================================================= */
+
+function trackNode(node) {
+  if (!node) {
+    return;
+  }
+
+  nodes.push(node);
+
+  node.addEventListener(
+    "ended",
+    () => {
+      try {
+        node.disconnect();
+      } catch (error) {
+      }
+
+      const index = nodes.indexOf(node);
+
+      if (index !== -1) {
+        nodes.splice(index, 1);
+      }
+    },
+    {
+      once: true
+    }
+  );
+}
+
+/* =========================================================
+   cleanAudioNodes
+   ========================================================= */
+
+function cleanAudioNodes() {
+    const activeNodes =
+        nodes.slice();
+
+    nodes.length =
+        0;
+
+    activeNodes.forEach(
+        node => {
+            try {
+                node.stop();
+            }
+            catch (error) {
+            }
+
+            try {
+                node.disconnect();
+            }
+            catch (error) {
+            }
+        }
+    );
+}
+
+
+
+/* =========================================================
+   SYNTH BASS NOTE
+   ========================================================= */
+
+function playTone(
+
+    time,
+
+    frequency,
+
+    length,
+
+    waveform = "sawtooth",
+
+    volume = .06
+
+) {
+
+
+    const ctx =
+    getAudioContext();
+
+
+    const oscillator =
+    ctx.createOscillator();
+
+
+    const gain =
+    ctx.createGain();
+
+
+    const filter =
+    ctx.createBiquadFilter();
+
+
+oscillator.type =
+    selectedWaveform ||
+    waveform;
+
+
+oscillator.frequency
+.setValueAtTime(
+    applyMasterOctave(
+        frequency
+    ),
+    time
+);
+
+    filter.type =
+    "lowpass";
+
+
+    filter.frequency
+    .setValueAtTime(
+
+        900,
+
+        time
+
+    );
+
+
+    filter.frequency
+    .exponentialRampToValueAtTime(
+
+        120,
+
+        time + length
+
+    );
+
+
+gain.gain
+.setValueAtTime(
+    0.0001,
+    time
+);
+
+gain.gain
+.exponentialRampToValueAtTime(
+    volume,
+    time + 0.01
+);
+
+gain.gain
+.exponentialRampToValueAtTime(
+    0.0001,
+    time + length
+);
+
+
+
+
+oscillator
+.connect(
+    filter
+)
+.connect(
+    gain
+)
+.connect(
+    masterGain
+);
+
+
+
+    oscillator.start(
+        time
+    );
+
+
+    oscillator.stop(
+        time +
+        length +
+        .02
+    );
+
+
+
+    trackNode(
+        oscillator
+    );
+
+}
+
+/* =========================================================
+   HEAVY DETUNED SQUARE BASS
+   Base reference: 130.81 Hz
+   -2 octaves: 32.7025 Hz
+
+   Replaces the old exaggerated wobble with a tighter,
+   musical square-wave EDM / dubstep bass.
+   ========================================================= */
+function playWobble(
+    time,
+    frequency,
+    length,
+    rate = 4,
+    volume = 0.12
+) {
+    const ctx =
+        getAudioContext();
+
+const activeWaveform =
+    selectedWaveform;
+
+const musicalRatio =
+    frequency /
+    song.root;
+
+const bassFrequency =
+    applyMasterOctave(
+        WOBBLE_BASE_HZ *
+        musicalRatio
+    );
+
+    /*
+     * Three square oscillators.
+     *
+     * The center oscillator gives us the note.
+     * The other two create the wide detuned character.
+     */
+    const oscillatorCenter =
+        ctx.createOscillator();
+
+    const oscillatorLeft =
+        ctx.createOscillator();
+
+    const oscillatorRight =
+        ctx.createOscillator();
+
+
+oscillatorCenter.type =
+    activeWaveform;
+
+oscillatorLeft.type =
+    activeWaveform;
+
+oscillatorRight.type =
+    activeWaveform;
+
+    oscillatorCenter.frequency
+    .setValueAtTime(
+        bassFrequency,
+        time
+    );
+
+    oscillatorLeft.frequency
+    .setValueAtTime(
+        bassFrequency,
+        time
+    );
+
+    oscillatorRight.frequency
+    .setValueAtTime(
+        bassFrequency,
+        time
+    );
+
+    /*
+     * FULL DETUNED CHARACTER
+     *
+     * We keep the tuning spread musical rather than
+     * literally changing the pitch by 100%.
+     */
+    oscillatorCenter.detune
+    .setValueAtTime(
+        0,
+        time
+    );
+
+    oscillatorLeft.detune
+    .setValueAtTime(
+        -18,
+        time
+    );
+
+    oscillatorRight.detune
+    .setValueAtTime(
+        18,
+        time
+    );
+
+    /*
+     * Separate gains keep the detuned oscillators
+     * underneath the center oscillator.
+     */
+    const centerGain =
+        ctx.createGain();
+
+    const leftGain =
+        ctx.createGain();
+
+    const rightGain =
+        ctx.createGain();
+
+    centerGain.gain
+    .setValueAtTime(
+        0.72,
+        time
+    );
+
+    leftGain.gain
+    .setValueAtTime(
+        0.34,
+        time
+    );
+
+    rightGain.gain
+    .setValueAtTime(
+        0.34,
+        time
+    );
+
+    /*
+     * Main tone shaping filter.
+     */
+    const filter =
+        ctx.createBiquadFilter();
+
+    filter.type =
+        "lowpass";
+
+    filter.Q
+    .setValueAtTime(
+        2.6,
+        time
+    );
+
+    /*
+     * Start reasonably bright.
+     */
+    filter.frequency
+    .setValueAtTime(
+        850,
+        time
+    );
+
+    /*
+     * Instead of violently wobbling the filter,
+     * make one controlled downward movement.
+     */
+    filter.frequency
+    .exponentialRampToValueAtTime(
+        260,
+        time +
+        Math.max(
+            0.08,
+            length * 0.78
+        )
+    );
+
+    /*
+     * Bass amplitude envelope.
+     */
+    const gain =
+        ctx.createGain();
+
+    gain.gain
+    .setValueAtTime(
+        0.0001,
+        time
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        volume,
+        time + 0.008
+    );
+
+    gain.gain
+    .setValueAtTime(
+        volume * 0.88,
+        time +
+        Math.max(
+            0.025,
+            length * 0.62
+        )
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+    /*
+     * ROUTING
+     */
+    oscillatorCenter
+    .connect(
+        centerGain
+    )
+    .connect(
+        filter
+    );
+
+    oscillatorLeft
+    .connect(
+        leftGain
+    )
+    .connect(
+        filter
+    );
+
+    oscillatorRight
+    .connect(
+        rightGain
+    )
+    .connect(
+        filter
+    );
+
+    filter
+    .connect(
+        gain
+    )
+    .connect(
+        masterGain
+    );
+
+    /*
+     * Start all three oscillators together.
+     */
+    oscillatorCenter.start(
+        time
+    );
+
+    oscillatorLeft.start(
+        time
+    );
+
+    oscillatorRight.start(
+        time
+    );
+
+    const stopTime =
+        time +
+        length +
+        0.04;
+
+    oscillatorCenter.stop(
+        stopTime
+    );
+
+    oscillatorLeft.stop(
+        stopTime
+    );
+
+    oscillatorRight.stop(
+        stopTime
+    );
+
+trackNode(
+oscillatorCenter
+);
+
+trackNode(
+oscillatorLeft
+);
+
+trackNode(
+oscillatorRight
+);
+}
+
+
+/* =========================================================
+   CATCHY SYNTH PLUCK
+   ========================================================= */
+
+function playPluck(
+    time,
+    frequency,
+    length = 0.18,
+    volume = 0.055
+) {
+    if (
+        !frequency ||
+        frequency <= 0
+    ) {
+        return;
+    }
+
+    const ctx =
+        getAudioContext();
+
+    const oscillator =
+        ctx.createOscillator();
+
+    const secondOscillator =
+        ctx.createOscillator();
+
+    const filter =
+        ctx.createBiquadFilter();
+
+    const gain =
+        ctx.createGain();
+
+const octaveFrequency =
+    applyMasterOctave(
+        frequency
+    );
+
+oscillator.type =
+    selectedWaveform;
+
+    secondOscillator.type =
+        "sawtooth";
+
+
+oscillator.frequency
+.setValueAtTime(
+    octaveFrequency,
+    time
+);
+
+secondOscillator.frequency
+.setValueAtTime(
+    octaveFrequency *
+    1.005,
+    time
+);
+
+
+    filter.type =
+        "lowpass";
+
+    filter.Q
+    .setValueAtTime(
+        5,
+        time
+    );
+
+    filter.frequency
+    .setValueAtTime(
+        2800,
+        time
+    );
+
+    filter.frequency
+    .exponentialRampToValueAtTime(
+        500,
+        time + length
+    );
+
+
+    gain.gain
+    .setValueAtTime(
+        0.0001,
+        time
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        volume,
+        time + 0.006
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+
+    oscillator
+    .connect(
+        filter
+    );
+
+    secondOscillator
+    .connect(
+        filter
+    );
+
+    filter
+    .connect(
+        gain
+    )
+    .connect(
+        masterGain
+    );
+
+
+    oscillator.start(
+        time
+    );
+
+    secondOscillator.start(
+        time
+    );
+
+    oscillator.stop(
+        time + length + 0.02
+    );
+
+    secondOscillator.stop(
+        time + length + 0.02
+    );
+
+
+trackNode(
+oscillator
+);
+
+trackNode(
+secondOscillator
+);
+}
+
+
+
+/* =========================================================
+   LEAD
+   ========================================================= */
+
+function playLead(
+    time,
+    frequency,
+    length,
+    volume = 0.045
+) {
+
+    const ctx =
+    getAudioContext();
+
+
+    const oscillator =
+    ctx.createOscillator();
+
+    const gain =
+    ctx.createGain();
+
+    const filter =
+    ctx.createBiquadFilter();
+
+
+oscillator.type =
+    selectedWaveform;
+
+
+oscillator.frequency
+.setValueAtTime(
+    applyMasterOctave(
+        frequency
+    ),
+    time
+);
+
+
+    filter.type =
+    "lowpass";
+
+    filter.frequency
+    .setValueAtTime(
+        3500,
+        time
+    );
+
+
+    gain.gain
+    .setValueAtTime(
+        0.0001,
+        time
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        volume,
+        time + 0.005
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+
+    oscillator
+    .connect(
+        filter
+    )
+    .connect(
+        gain
+    )
+    .connect(
+        masterGain
+    );
+
+
+    oscillator.start(
+        time
+    );
+
+    oscillator.stop(
+        time + length
+    );
+
+    trackNode(
+        oscillator
+    );
+}
+
+
+/* =========================================================
+   formatSongTime
+   ========================================================= */
+
+function formatSongTime(
+    seconds
+) {
+    const wholeSeconds =
+        Math.max(
+            0,
+            Math.floor(
+                seconds
+            )
+        );
+
+    const minutes =
+        Math.floor(
+            wholeSeconds /
+            60
+        );
+
+    const remainingSeconds =
+        wholeSeconds %
+        60;
+
+    return (
+        String(
+            minutes
+        ).padStart(
+            2,
+            "0"
+        ) +
+        ":" +
+        String(
+            remainingSeconds
+        ).padStart(
+            2,
+            "0"
+        )
+    );
+}
+
+
+/* =========================================================
+   DUBSTEP ATMOSPHERIC MINOR CHORD
+   ========================================================= */
+function playDubstepChord(
+    time,
+    rootFrequency,
+    length = 1.5,
+    volume = 0.018
+) {
+    const chordRatios = [
+        1,
+        semitoneRatio(3),
+        semitoneRatio(7),
+        semitoneRatio(12)
+    ];
+
+    chordRatios.forEach(
+        (
+            ratio,
+            index
+        ) => {
+            const ctx =
+                getAudioContext();
+
+            const oscillator =
+                ctx.createOscillator();
+
+            const gain =
+                ctx.createGain();
+
+            const filter =
+                ctx.createBiquadFilter();
+
+            oscillator.type =
+                index % 2 === 0
+                    ? "sawtooth"
+                    : selectedWaveform;
+
+oscillator.frequency
+.setValueAtTime(
+    applyMasterOctave(
+        rootFrequency *
+        ratio
+    ),
+    time
+);
+
+            oscillator.detune
+            .setValueAtTime(
+                index === 0
+                    ? -4
+                    : index * 3,
+                time
+            );
+
+            filter.type =
+                "lowpass";
+
+            filter.frequency
+            .setValueAtTime(
+                1400,
+                time
+            );
+
+            filter.frequency
+            .exponentialRampToValueAtTime(
+                450,
+                time + length
+            );
+
+            gain.gain
+            .setValueAtTime(
+                0.0001,
+                time
+            );
+
+            gain.gain
+            .linearRampToValueAtTime(
+                volume,
+                time + 0.08
+            );
+
+            gain.gain
+            .setValueAtTime(
+                volume * 0.7,
+                time + length * 0.65
+            );
+
+            gain.gain
+            .exponentialRampToValueAtTime(
+                0.0001,
+                time + length
+            );
+
+            oscillator
+            .connect(
+                filter
+            )
+            .connect(
+                gain
+            )
+            .connect(
+                masterGain
+            );
+
+            oscillator.start(
+                time
+            );
+
+            oscillator.stop(
+                time +
+                length +
+                0.05
+            );
+
+            trackNode(
+                oscillator
+            );
+        }
+    );
+}
+/* =========================================================
+   SUB
+   ========================================================= */
+
+function playSub(
+    time,
+    frequency,
+    length,
+    volume = 0.16
+) {
+
+    const ctx =
+    getAudioContext();
+
+    const oscillator =
+    ctx.createOscillator();
+
+    const gain =
+    ctx.createGain();
+
+oscillator.type =
+    selectedWaveform;
+
+oscillator.frequency
+.setValueAtTime(
+    applyMasterOctave(
+        frequency
+    ),
+    time
+);
+
+    gain.gain
+    .setValueAtTime(
+        0.0001,
+        time
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        volume,
+        time + 0.01
+    );
+
+    gain.gain
+    .setValueAtTime(
+        volume * 0.84,
+        time + Math.max(
+            0.02,
+            length * 0.64
+        )
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+    oscillator
+    .connect(
+        gain
+    )
+    .connect(
+        masterGain
+    );
+
+    oscillator.start(
+        time
+    );
+
+    oscillator.stop(
+        time + length + 0.03
+    );
+
+    trackNode(
+        oscillator
+    );
+}
+
+/* =========================================================
+   SYNTH KICK
+   ========================================================= */
+
+function playKick(
+    time,
+    volume = 0.36
+) {
+
+    const ctx =
+    getAudioContext();
+
+
+    const oscillator =
+    ctx.createOscillator();
+
+
+    const gain =
+    ctx.createGain();
+
+
+
+    oscillator.frequency
+    .setValueAtTime(
+
+        135,
+
+        time
+
+    );
+
+
+    oscillator.frequency
+    .exponentialRampToValueAtTime(
+
+        35,
+
+        time + .18
+
+    );
+
+
+
+gain.gain
+.setValueAtTime(
+    volume,
+    time
+);
+
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+
+        .0001,
+
+        time + .2
+
+    );
+
+
+
+oscillator
+.connect(
+    gain
+)
+.connect(
+    masterGain
+);
+
+
+
+    oscillator.start(
+        time
+    );
+
+
+    oscillator.stop(
+        time + .22
+    );
+
+
+
+    trackNode(
+        oscillator
+    );
+
+}
+
+
+
+/* =========================================================
+   NOISE / SNARE / HI-HAT SOURCE
+   ========================================================= */
+
+function playSnare(
+    time,
+    volume = 0.15
+) {
+
+    const ctx =
+    getAudioContext();
+
+    playNoise(
+        time,
+        0.16,
+        volume
+    );
+
+    const body =
+    ctx.createOscillator();
+
+    const bodyGain =
+    ctx.createGain();
+
+    body.type =
+    "triangle";
+
+    body.frequency
+    .setValueAtTime(
+        210,
+        time
+    );
+
+    body.frequency
+    .exponentialRampToValueAtTime(
+        125,
+        time + 0.08
+    );
+
+    bodyGain.gain
+    .setValueAtTime(
+        volume * 0.85,
+        time
+    );
+
+    bodyGain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + 0.11
+    );
+
+    body
+    .connect(
+        bodyGain
+    )
+    .connect(
+        masterGain
+    );
+
+    body.start(
+        time
+    );
+
+    body.stop(
+        time + 0.12
+    );
+
+    trackNode(
+        body
+    );
+}
+
+/* ----------------------------
+function createReusableNoiseBuffer(
+  durationSeconds = 4
+) {
+  const ctx =
+    getAudioContext();
+
+  const buffer =
+    ctx.createBuffer(
+      1,
+      Math.floor(
+        ctx.sampleRate *
+        durationSeconds
+      ),
+      ctx.sampleRate
+    );
+
+  const data =
+    buffer.getChannelData(
+      0
+    );
+
+  for (
+    let i = 0;
+    i < data.length;
+    i++
+  ) {
+    data[i] =
+      Math.random() *
+      2 -
+      1;
+  }
+
+  return buffer;
+}
+
+ ---------------------------- */
+
+function playCrash(
+    time,
+    volume = 0.08
+) {
+
+    const ctx =
+    getAudioContext();
+
+    const length =
+    1.6;
+
+    const buffer =
+    ctx.createBuffer(
+        1,
+        Math.floor(
+            ctx.sampleRate * length
+        ),
+        ctx.sampleRate
+    );
+
+    const data =
+    buffer.getChannelData(
+        0
+    );
+
+    for (
+        let i = 0;
+        i < data.length;
+        i++
+    ) {
+        data[i] =
+        (
+            Math.random() * 2 - 1
+        )
+        *
+        (
+            1 - i / data.length
+        );
+    }
+
+    const source =
+    ctx.createBufferSource();
+
+    const highpass =
+    ctx.createBiquadFilter();
+
+    const gain =
+    ctx.createGain();
+
+    source.buffer =
+    buffer;
+
+    highpass.type =
+    "highpass";
+
+    highpass.frequency.value =
+    4200;
+
+    gain.gain
+    .setValueAtTime(
+        volume,
+        time
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+    source
+    .connect(
+        highpass
+    )
+    .connect(
+        gain
+    )
+    .connect(
+        masterGain
+    );
+
+    source.start(
+        time
+    );
+
+    source.stop(
+        time + length
+    );
+
+    trackNode(
+        source
+    );
+}
+
+function playImpact(
+    time,
+    volume = 0.2
+) {
+
+    const ctx =
+    getAudioContext();
+
+    const oscillator =
+    ctx.createOscillator();
+
+    const gain =
+    ctx.createGain();
+
+oscillator.type =
+    selectedWaveform;
+
+    oscillator.frequency
+    .setValueAtTime(
+        95,
+        time
+    );
+
+    oscillator.frequency
+    .exponentialRampToValueAtTime(
+        28,
+        time + 0.7
+    );
+
+    gain.gain
+    .setValueAtTime(
+        volume,
+        time
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + 0.85
+    );
+
+    oscillator
+    .connect(
+        gain
+    )
+    .connect(
+        masterGain
+    );
+
+    oscillator.start(
+        time
+    );
+
+    oscillator.stop(
+        time + 0.9
+    );
+
+    playNoise(
+        time,
+        0.4,
+        volume * 0.45
+    );
+
+    trackNode(
+        oscillator
+    );
+}
+
+
+function playRiser(
+    time,
+    length = 4,
+    volume = 0.045
+) {
+
+    const ctx =
+    getAudioContext();
+
+    const oscillator =
+    ctx.createOscillator();
+
+    const filter =
+    ctx.createBiquadFilter();
+
+    const gain =
+    ctx.createGain();
+
+oscillator.type =
+    selectedWaveform;
+
+    oscillator.frequency
+    .setValueAtTime(
+        90,
+        time
+    );
+
+    oscillator.frequency
+    .exponentialRampToValueAtTime(
+        1100,
+        time + length
+    );
+
+    filter.type =
+    "highpass";
+
+    filter.frequency
+    .setValueAtTime(
+        140,
+        time
+    );
+
+    filter.frequency
+    .exponentialRampToValueAtTime(
+        2600,
+        time + length
+    );
+
+    gain.gain
+    .setValueAtTime(
+        0.0001,
+        time
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        volume,
+        time + length * 0.76
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+    oscillator
+    .connect(
+        filter
+    )
+    .connect(
+        gain
+    )
+    .connect(
+        masterGain
+    );
+
+    oscillator.start(
+        time
+    );
+
+    oscillator.stop(
+        time + length
+    );
+
+    trackNode(
+        oscillator
+    );
+}
+
+function playNoise(
+
+    time,
+
+    length = .12,
+
+    volume = .07
+
+) {
+
+
+    const ctx =
+    getAudioContext();
+
+
+
+    const buffer =
+    ctx.createBuffer(
+
+        1,
+
+        ctx.sampleRate *
+        length,
+
+        ctx.sampleRate
+
+    );
+
+
+
+    const data =
+    buffer.getChannelData(
+        0
+    );
+
+
+
+    for (
+        let i = 0;
+        i < data.length;
+        i++
+    ) {
+
+        data[i] =
+        Math.random() * 2 - 1;
+
+    }
+
+
+
+    const source =
+    ctx.createBufferSource();
+
+
+    const filter =
+    ctx.createBiquadFilter();
+
+
+    const gain =
+    ctx.createGain();
+
+
+
+    source.buffer =
+    buffer;
+
+
+
+    filter.type =
+    "highpass";
+
+
+    filter.frequency.value =
+    1800;
+
+
+
+    gain.gain
+    .setValueAtTime(
+
+        volume,
+
+        time
+
+    );
+
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+
+        .0001,
+
+        time + length
+
+    );
+
+
+
+source
+.connect(
+    filter
+)
+.connect(
+    gain
+)
+.connect(
+    masterGain
+);
+
+
+
+    source.start(
+        time
+    );
+
+
+    source.stop(
+        time + length
+    );
+
+
+
+    trackNode(
+        source
+    );
+
+}
+
+/* =========================================================
+   LOFI RADIO AUDIO
+   ========================================================= */
+
+function midiToFrequency(
+    midiNote
+) {
+    return (
+        440 *
+        Math.pow(
+            2,
+            (
+                midiNote -
+                69
+            ) /
+            12
+        )
+    );
+}
+
+
+/* =========================================================
+   SOFT LOFI KICK
+   ========================================================= */
+
+function playLofiKick(
+    time,
+    volume = 0.12
+) {
+    const ctx =
+        getAudioContext();
+
+    const oscillator =
+        ctx.createOscillator();
+
+    const gain =
+        ctx.createGain();
+
+oscillator.type =
+    selectedWaveform;
+
+    oscillator.frequency
+    .setValueAtTime(
+        85,
+        time
+    );
+
+    oscillator.frequency
+    .exponentialRampToValueAtTime(
+        38,
+        time + 0.16
+    );
+
+    gain.gain
+    .setValueAtTime(
+        volume,
+        time
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + 0.22
+    );
+
+    oscillator
+    .connect(
+        gain
+    )
+    .connect(
+        masterGain
+    );
+
+    oscillator.start(
+        time
+    );
+
+    oscillator.stop(
+        time + 0.24
+    );
+
+    trackNode(
+        oscillator
+    );
+}
+
+
+/* =========================================================
+   SOFT LOFI SNARE
+   ========================================================= */
+
+function playLofiSnare(
+    time,
+    volume = 0.045
+) {
+    const ctx =
+        getAudioContext();
+
+    const length =
+        0.14;
+
+    const buffer =
+        ctx.createBuffer(
+            1,
+            Math.floor(
+                ctx.sampleRate *
+                length
+            ),
+            ctx.sampleRate
+        );
+
+    const data =
+        buffer.getChannelData(
+            0
+        );
+
+    for (
+        let i = 0;
+        i < data.length;
+        i++
+    ) {
+        data[i] =
+            (
+                Math.random() *
+                2 -
+                1
+            ) *
+            (
+                1 -
+                i /
+                data.length
+            );
+    }
+
+    const source =
+        ctx.createBufferSource();
+
+    const highpass =
+        ctx.createBiquadFilter();
+
+    const lowpass =
+        ctx.createBiquadFilter();
+
+    const gain =
+        ctx.createGain();
+
+    source.buffer =
+        buffer;
+
+    highpass.type =
+        "highpass";
+
+    highpass.frequency.value =
+        700;
+
+    lowpass.type =
+        "lowpass";
+
+    lowpass.frequency.value =
+        3800;
+
+    gain.gain
+    .setValueAtTime(
+        volume,
+        time
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+    source
+    .connect(
+        highpass
+    )
+    .connect(
+        lowpass
+    )
+    .connect(
+        gain
+    )
+    .connect(
+        masterGain
+    );
+
+    source.start(
+        time
+    );
+
+    source.stop(
+        time + length
+    );
+
+    trackNode(
+        source
+    );
+}
+
+
+/* =========================================================
+   LOFI HI-HAT
+   ========================================================= */
+
+function playLofiHat(
+    time,
+    volume = 0.012
+) {
+    const ctx =
+        getAudioContext();
+
+    const length =
+        0.035;
+
+    const source =
+        ctx.createBufferSource();
+
+    const highpass =
+        ctx.createBiquadFilter();
+
+    const gain =
+        ctx.createGain();
+
+    source.buffer =
+        shortNoiseBuffer;
+
+    highpass.type =
+        "highpass";
+
+    highpass.frequency
+        .setValueAtTime(
+            4500,
+            time
+        );
+
+    gain.gain
+        .setValueAtTime(
+            volume,
+            time
+        );
+
+    gain.gain
+        .exponentialRampToValueAtTime(
+            0.0001,
+            time + length
+        );
+
+    source
+        .connect(
+            highpass
+        )
+        .connect(
+            gain
+        )
+        .connect(
+            masterGain
+        );
+
+    const maximumOffset =
+        Math.max(
+            0,
+            shortNoiseBuffer.duration -
+            length
+        );
+
+    source.start(
+        time,
+        Math.random() * maximumOffset,
+        length
+    );
+
+    trackNode(
+        source
+    );
+}
+
+/* =========================================================
+   LOFI BASS
+   ========================================================= */
+
+function playLofiBass(
+    time,
+    frequency,
+    length = 0.65,
+    volume = 0.055
+) {
+    const ctx =
+        getAudioContext();
+
+    const oscillator =
+        ctx.createOscillator();
+
+    const filter =
+        ctx.createBiquadFilter();
+
+    const gain =
+        ctx.createGain();
+
+oscillator.type =
+    selectedWaveform;
+
+oscillator.frequency
+.setValueAtTime(
+    applyMasterOctave(
+        frequency
+    ),
+    time
+);
+
+    filter.type =
+        "lowpass";
+
+    filter.frequency
+    .setValueAtTime(
+        430,
+        time
+    );
+
+    filter.Q
+    .setValueAtTime(
+        1.5,
+        time
+    );
+
+    gain.gain
+    .setValueAtTime(
+        0.0001,
+        time
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        volume,
+        time + 0.03
+    );
+
+    gain.gain
+    .setValueAtTime(
+        volume * 0.72,
+        time + length * 0.65
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+    oscillator
+    .connect(
+        filter
+    )
+    .connect(
+        gain
+    )
+    .connect(
+        masterGain
+    );
+
+    oscillator.start(
+        time
+    );
+
+    oscillator.stop(
+        time + length + 0.03
+    );
+
+    trackNode(
+        oscillator
+    );
+}
+
+
+/* =========================================================
+   LOFI ELECTRIC PIANO NOTE
+   ========================================================= */
+
+function playLofiPianoNote(
+    time,
+    frequency,
+    length = 1.4,
+    volume = 0.026
+) {
+    const ctx =
+        getAudioContext();
+
+    const oscillator =
+        ctx.createOscillator();
+
+    const secondOscillator =
+        ctx.createOscillator();
+
+    const filter =
+        ctx.createBiquadFilter();
+
+    const gain =
+        ctx.createGain();
+
+const octaveFrequency =
+    applyMasterOctave(
+        frequency
+    );
+
+oscillator.type =
+    selectedWaveform;
+
+    secondOscillator.type =
+        "sine";
+
+oscillator.frequency
+.setValueAtTime(
+    octaveFrequency,
+    time
+);
+
+secondOscillator.frequency
+.setValueAtTime(
+    octaveFrequency *
+    2,
+    time
+);
+
+    filter.type =
+        "lowpass";
+
+    filter.frequency
+    .setValueAtTime(
+        1800,
+        time
+    );
+
+    filter.frequency
+    .exponentialRampToValueAtTime(
+        650,
+        time + length
+    );
+
+    gain.gain
+    .setValueAtTime(
+        0.0001,
+        time
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        volume,
+        time + 0.035
+    );
+
+    gain.gain
+    .setValueAtTime(
+        volume * 0.55,
+        time + 0.22
+    );
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+    oscillator
+    .connect(
+        filter
+    );
+
+    secondOscillator
+    .connect(
+        filter
+    );
+
+    filter
+    .connect(
+        gain
+    )
+    .connect(
+        masterGain
+    );
+
+    oscillator.start(
+        time
+    );
+
+    secondOscillator.start(
+        time
+    );
+
+    oscillator.stop(
+        time + length + 0.03
+    );
+
+    secondOscillator.stop(
+        time + length + 0.03
+    );
+
+trackNode(
+    oscillator
+);
+
+trackNode(
+    secondOscillator
+);
+}
+
+
+/* =========================================================
+   LOFI JAZZ CHORD
+   ========================================================= */
+
+function playLofiChord(
+    time,
+    midiNotes,
+    length = 1.5
+) {
+    midiNotes.forEach(
+        (
+            midiNote,
+            index
+        ) => {
+            playLofiPianoNote(
+                time +
+                index * 0.012,
+                midiToFrequency(
+                    midiNote
+                ),
+                length,
+                0.018
+            );
+        }
+    );
+}
+
+
+/* =========================================================
+   VINYL CRACKLE
+   ========================================================= */
+
+function playVinylCrackle(
+    time,
+    length = 0.4,
+    volume = 0.007
+) {
+    const ctx =
+        getAudioContext();
+
+    const safeLength =
+        Math.min(
+            length,
+            vinylNoiseBuffer.duration
+        );
+
+    const source =
+        ctx.createBufferSource();
+
+    const highpass =
+        ctx.createBiquadFilter();
+
+    const lowpass =
+        ctx.createBiquadFilter();
+
+    const gain =
+        ctx.createGain();
+
+    source.buffer =
+        vinylNoiseBuffer;
+
+    highpass.type =
+        "highpass";
+
+    highpass.frequency
+        .setValueAtTime(
+            500,
+            time
+        );
+
+    lowpass.type =
+        "lowpass";
+
+    lowpass.frequency
+        .setValueAtTime(
+            5200,
+            time
+        );
+
+    gain.gain
+        .setValueAtTime(
+            volume,
+            time
+        );
+
+    gain.gain
+        .exponentialRampToValueAtTime(
+            0.0001,
+            time + safeLength
+        );
+
+    source
+        .connect(
+            highpass
+        )
+        .connect(
+            lowpass
+        )
+        .connect(
+            gain
+        )
+        .connect(
+            masterGain
+        );
+
+    const maximumOffset =
+        Math.max(
+            0,
+            vinylNoiseBuffer.duration -
+            safeLength
+        );
+
+    source.start(
+        time,
+        Math.random() * maximumOffset,
+        safeLength
+    );
+
+    trackNode(
+        source
+    );
+}
+
+/* =========================================================
+   LOFI DETUNED SQUARE BASS
+   Softer version of the dubstep square bass
+   ========================================================= */
+function playLofiSquareBass(
+    time,
+    frequency,
+    length = 0.55,
+    volume = 0.032,
+    detuneAmount = 10
+) {
+    const ctx =
+        getAudioContext();
+
+const octaveFrequency =
+    applyMasterOctave(
+        frequency
+    );
+
+    const center =
+        ctx.createOscillator();
+
+    const left =
+        ctx.createOscillator();
+
+    const right =
+        ctx.createOscillator();
+
+    const centerGain =
+        ctx.createGain();
+
+    const sideGain =
+        ctx.createGain();
+
+    const filter =
+        ctx.createBiquadFilter();
+
+    const output =
+        ctx.createGain();
+
+center.type =
+    selectedWaveform;
+
+left.type =
+    selectedWaveform;
+
+right.type =
+    selectedWaveform;
+
+center.frequency
+.setValueAtTime(
+    octaveFrequency,
+    time
+);
+
+left.frequency
+.setValueAtTime(
+    octaveFrequency,
+    time
+);
+
+right.frequency
+.setValueAtTime(
+    octaveFrequency,
+    time
+);
+
+    /*
+     * Less detuning than the full dubstep bass.
+     * This keeps the LoFi character intact.
+     */
+    center.detune
+    .setValueAtTime(
+        0,
+        time
+    );
+
+    left.detune
+    .setValueAtTime(
+        -detuneAmount,
+        time
+    );
+
+    right.detune
+    .setValueAtTime(
+        detuneAmount,
+        time
+    );
+
+    centerGain.gain
+    .setValueAtTime(
+        0.68,
+        time
+    );
+
+    sideGain.gain
+    .setValueAtTime(
+        0.22,
+        time
+    );
+
+    /*
+     * Dark filter keeps the square wave
+     * from overpowering the piano.
+     */
+    filter.type =
+        "lowpass";
+
+    filter.frequency
+    .setValueAtTime(
+        520,
+        time
+    );
+
+    filter.Q
+    .setValueAtTime(
+        1.8,
+        time
+    );
+
+    filter.frequency
+    .exponentialRampToValueAtTime(
+        220,
+        time + length
+    );
+
+    output.gain
+    .setValueAtTime(
+        0.0001,
+        time
+    );
+
+    output.gain
+    .exponentialRampToValueAtTime(
+        volume,
+        time + 0.015
+    );
+
+    output.gain
+    .setValueAtTime(
+        volume * 0.75,
+        time + length * 0.6
+    );
+
+    output.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+    center
+    .connect(
+        centerGain
+    )
+    .connect(
+        filter
+    );
+
+    /*
+     * Both detuned oscillators share
+     * the quieter side gain.
+     */
+    left
+    .connect(
+        sideGain
+    );
+
+    right
+    .connect(
+        sideGain
+    );
+
+    sideGain
+    .connect(
+        filter
+    );
+
+    filter
+    .connect(
+        output
+    )
+    .connect(
+        masterGain
+    );
+
+    center.start(time);
+    left.start(time);
+    right.start(time);
+
+    const stopTime =
+        time +
+        length +
+        0.04;
+
+    center.stop(stopTime);
+    left.stop(stopTime);
+    right.stop(stopTime);
+
+trackNode(
+    center
+);
+
+trackNode(
+    left
+);
+
+trackNode(
+    right
+);
+}
+
+
+/* =========================================================
+   LOFI VINYL SCRATCH V2
+   More aggressive "wicka-wicka" character
+   ========================================================= */
+
+function playLofiScratch(
+    time,
+    volume = 0.045
+) {
+    const ctx =
+        getAudioContext();
+
+    const length =
+        0.42;
+
+
+    /* =====================================================
+       VINYL / STYLUS NOISE
+       ===================================================== */
+
+    const buffer =
+        ctx.createBuffer(
+            1,
+            Math.floor(
+                ctx.sampleRate *
+                length
+            ),
+            ctx.sampleRate
+        );
+
+    const data =
+        buffer.getChannelData(
+            0
+        );
+
+    for (
+        let i = 0;
+        i < data.length;
+        i++
+    ) {
+
+        const progress =
+            i /
+            data.length;
+
+        /*
+         * Base surface noise.
+         */
+
+        let sample =
+            Math.random() *
+            2 -
+            1;
+
+
+        /*
+         * Add occasional sharper stylus clicks.
+         */
+
+        if (
+            Math.random() <
+            0.004
+        ) {
+            sample +=
+                (
+                    Math.random() *
+                    2 -
+                    1
+                ) *
+                2.2;
+        }
+
+
+        /*
+         * Slight decay.
+         */
+
+        data[i] =
+            sample *
+            (
+                1 -
+                progress *
+                0.35
+            );
+    }
+
+
+    const noise =
+        ctx.createBufferSource();
+
+    noise.buffer =
+        buffer;
+
+
+
+    /* =====================================================
+       SCRATCH TONE
+       ===================================================== */
+
+    const oscillator =
+        ctx.createOscillator();
+
+oscillator.type =
+    selectedWaveform;
+
+
+    /*
+     * Rapid forward/back platter motion.
+     *
+     * Think:
+     *
+     * WI → KA → WI → KA
+     */
+
+    oscillator.frequency
+    .setValueAtTime(
+        120,
+        time
+    );
+
+    /* forward */
+
+    oscillator.frequency
+    .exponentialRampToValueAtTime(
+        1100,
+        time + 0.055
+    );
+
+    /* backward */
+
+    oscillator.frequency
+    .exponentialRampToValueAtTime(
+        95,
+        time + 0.115
+    );
+
+    /* forward */
+
+    oscillator.frequency
+    .exponentialRampToValueAtTime(
+        900,
+        time + 0.17
+    );
+
+    /* backward */
+
+    oscillator.frequency
+    .exponentialRampToValueAtTime(
+        110,
+        time + 0.225
+    );
+
+    /* smaller forward flick */
+
+    oscillator.frequency
+    .exponentialRampToValueAtTime(
+        680,
+        time + 0.275
+    );
+
+    /* final pull */
+
+    oscillator.frequency
+    .exponentialRampToValueAtTime(
+        80,
+        time + 0.36
+    );
+
+
+
+    /* =====================================================
+       STYLUS FILTER
+       ===================================================== */
+
+    const noiseFilter =
+        ctx.createBiquadFilter();
+
+    noiseFilter.type =
+        "bandpass";
+
+    noiseFilter.Q
+    .setValueAtTime(
+        4.5,
+        time
+    );
+
+
+    /*
+     * Moving this filter aggressively is a big part
+     * of producing the scratch character.
+     */
+
+    noiseFilter.frequency
+    .setValueAtTime(
+        1400,
+        time
+    );
+
+    noiseFilter.frequency
+    .exponentialRampToValueAtTime(
+        5200,
+        time + 0.055
+    );
+
+    noiseFilter.frequency
+    .exponentialRampToValueAtTime(
+        750,
+        time + 0.115
+    );
+
+    noiseFilter.frequency
+    .exponentialRampToValueAtTime(
+        4300,
+        time + 0.17
+    );
+
+    noiseFilter.frequency
+    .exponentialRampToValueAtTime(
+        650,
+        time + 0.225
+    );
+
+    noiseFilter.frequency
+    .exponentialRampToValueAtTime(
+        3600,
+        time + 0.275
+    );
+
+    noiseFilter.frequency
+    .exponentialRampToValueAtTime(
+        600,
+        time + 0.40
+    );
+
+
+
+    /* =====================================================
+       TONAL FILTER
+       ===================================================== */
+
+    const toneFilter =
+        ctx.createBiquadFilter();
+
+    toneFilter.type =
+        "bandpass";
+
+    toneFilter.frequency
+    .setValueAtTime(
+        1700,
+        time
+    );
+
+    toneFilter.frequency
+    .exponentialRampToValueAtTime(
+        3900,
+        time + 0.055
+    );
+
+    toneFilter.frequency
+    .exponentialRampToValueAtTime(
+        800,
+        time + 0.115
+    );
+
+    toneFilter.frequency
+    .exponentialRampToValueAtTime(
+        3200,
+        time + 0.17
+    );
+
+    toneFilter.frequency
+    .exponentialRampToValueAtTime(
+        700,
+        time + 0.225
+    );
+
+    toneFilter.Q
+    .setValueAtTime(
+        3.2,
+        time
+    );
+
+
+
+    /* =====================================================
+       SCRATCH GAINS
+       ===================================================== */
+
+    const noiseGain =
+        ctx.createGain();
+
+    const toneGain =
+        ctx.createGain();
+
+
+
+    /*
+     * CLOSED crossfader initially.
+     */
+
+    noiseGain.gain
+    .setValueAtTime(
+        0.0001,
+        time
+    );
+
+    toneGain.gain
+    .setValueAtTime(
+        0.0001,
+        time
+    );
+
+
+
+    /* =====================================================
+       SCRATCH #1
+       ===================================================== */
+
+    noiseGain.gain
+    .linearRampToValueAtTime(
+        volume,
+        time + 0.006
+    );
+
+    toneGain.gain
+    .linearRampToValueAtTime(
+        volume * 0.42,
+        time + 0.006
+    );
+
+
+    /*
+     * Hard chop.
+     */
+
+    noiseGain.gain
+    .setValueAtTime(
+        volume,
+        time + 0.047
+    );
+
+    noiseGain.gain
+    .linearRampToValueAtTime(
+        0.0001,
+        time + 0.056
+    );
+
+    toneGain.gain
+    .linearRampToValueAtTime(
+        0.0001,
+        time + 0.056
+    );
+
+
+
+    /* =====================================================
+       SCRATCH #2
+       ===================================================== */
+
+    noiseGain.gain
+    .linearRampToValueAtTime(
+        volume * 0.95,
+        time + 0.073
+    );
+
+    toneGain.gain
+    .linearRampToValueAtTime(
+        volume * 0.38,
+        time + 0.073
+    );
+
+    noiseGain.gain
+    .setValueAtTime(
+        volume * 0.95,
+        time + 0.105
+    );
+
+    noiseGain.gain
+    .linearRampToValueAtTime(
+        0.0001,
+        time + 0.115
+    );
+
+    toneGain.gain
+    .linearRampToValueAtTime(
+        0.0001,
+        time + 0.115
+    );
+
+
+
+    /* =====================================================
+       SCRATCH #3
+       ===================================================== */
+
+    noiseGain.gain
+    .linearRampToValueAtTime(
+        volume * 0.9,
+        time + 0.137
+    );
+
+    toneGain.gain
+    .linearRampToValueAtTime(
+        volume * 0.34,
+        time + 0.137
+    );
+
+    noiseGain.gain
+    .setValueAtTime(
+        volume * 0.9,
+        time + 0.16
+    );
+
+    noiseGain.gain
+    .linearRampToValueAtTime(
+        0.0001,
+        time + 0.17
+    );
+
+    toneGain.gain
+    .linearRampToValueAtTime(
+        0.0001,
+        time + 0.17
+    );
+
+
+
+    /* =====================================================
+       SCRATCH #4
+       ===================================================== */
+
+    noiseGain.gain
+    .linearRampToValueAtTime(
+        volume * 0.82,
+        time + 0.192
+    );
+
+    toneGain.gain
+    .linearRampToValueAtTime(
+        volume * 0.30,
+        time + 0.192
+    );
+
+    noiseGain.gain
+    .setValueAtTime(
+        volume * 0.82,
+        time + 0.215
+    );
+
+    noiseGain.gain
+    .linearRampToValueAtTime(
+        0.0001,
+        time + 0.225
+    );
+
+    toneGain.gain
+    .linearRampToValueAtTime(
+        0.0001,
+        time + 0.225
+    );
+
+
+
+    /* =====================================================
+       FINAL FLICK
+       ===================================================== */
+
+    noiseGain.gain
+    .linearRampToValueAtTime(
+        volume * 0.65,
+        time + 0.25
+    );
+
+    toneGain.gain
+    .linearRampToValueAtTime(
+        volume * 0.24,
+        time + 0.25
+    );
+
+    noiseGain.gain
+    .setValueAtTime(
+        volume * 0.65,
+        time + 0.285
+    );
+
+    noiseGain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+    toneGain.gain
+    .exponentialRampToValueAtTime(
+        0.0001,
+        time + length
+    );
+
+
+
+    /* =====================================================
+       ROUTING
+       ===================================================== */
+
+    noise
+    .connect(
+        noiseFilter
+    )
+    .connect(
+        noiseGain
+    )
+    .connect(
+        masterGain
+    );
+
+
+    oscillator
+    .connect(
+        toneFilter
+    )
+    .connect(
+        toneGain
+    )
+    .connect(
+        masterGain
+    );
+
+
+
+    /* =====================================================
+       START
+       ===================================================== */
+
+    noise.start(
+        time
+    );
+
+    oscillator.start(
+        time
+    );
+
+
+    noise.stop(
+        time + length
+    );
+
+    oscillator.stop(
+        time + length
+    );
+
+
+    trackNode(
+        noise
+    );
+
+    trackNode(
+        oscillator
+    );
+}
+/* =========================================================
+   LOFI RADIO SCHEDULER
+   ========================================================= */
+
+function scheduleLofiMusic(currentPosition) {
+
+    const ctx = getAudioContext();
+
+    const beat = 60 / LOFI_BPM;
+    const halfBeat = beat / 2;
+
+const expectedStep =
+Math.floor(
+currentPosition /
+halfBeat
+);
+
+if (
+lofiNextStep <
+expectedStep
+) {
+lofiNextStep =
+expectedStep;
+}
+
+const chords = [
+    [50, 53, 57, 60], // Dm7
+    [43, 47, 50, 53], // G7
+    [48, 52, 55, 59], // Cmaj7
+    [45, 48, 52, 55], // Am7
+
+    [41, 45, 48, 52], // Fmaj7
+    [40, 43, 47, 50], // Em7
+    [47, 50, 53, 57], // Bm7b5
+    [45, 48, 52, 59]  // Am9
+];
+
+const bassNotes = [
+    38, // D
+    43, // G
+    36, // C
+    33, // A
+    41, // F
+    40, // E
+    35, // B
+    33  // A
+];
+
+    while (true) {
+
+        const musicPosition =
+            lofiNextStep * halfBeat;
+
+        if (
+            musicPosition >
+            currentPosition + LOFI_SCHEDULE_AHEAD
+        ) {
+            break;
+        }
+
+        if (
+            musicPosition <
+            currentPosition - 0.05
+        ) {
+            lofiNextStep++;
+            continue;
+        }
+
+        const step = lofiNextStep;
+        const stepInBar = step % 8;
+        const bar = Math.floor(step / 8);
+
+/*
+ * 12-bar repeating LoFi arrangement:
+ *
+ * Bars 1-8  = normal LoFi
+ * Bars 9-12 = square bass crossover
+ */
+const cycleBar =
+    bar % 12;
+
+const isWobbleSection =
+    cycleBar >= 8;
+
+if (stepInBar === 0) {
+
+    let nextChoice;
+
+    do {
+        nextChoice =
+            Math.floor(
+                Math.random() *
+                chords.length
+            );
+    }
+    while (
+        nextChoice ===
+        lofiBarChoice
+    );
+
+    lofiBarChoice =
+        nextChoice;
+}
+
+const progressionIndex =
+    lofiBarChoice;
+
+        const humanizedSwing =
+            stepInBar % 2 === 1
+                ? 0.035
+                : 0;
+
+        const randomHumanize =
+            Math.random() * 0.008;
+
+        const delay =
+            Math.max(
+                0,
+                musicPosition - currentPosition
+            );
+
+        const audioTime =
+            ctx.currentTime +
+            delay +
+            0.03 +
+            humanizedSwing +
+            randomHumanize;
+
+
+        // Play chord and bass at start of bar
+
+if (stepInBar === 0) {
+    playLofiChord(
+        audioTime,
+        chords[
+            progressionIndex
+        ],
+        beat * 1.65
+    );
+
+    const bassFrequency =
+        midiToFrequency(
+            bassNotes[
+                progressionIndex
+            ]
+        );
+
+    if (isWobbleSection) {
+        /*
+         * Bars 9-12:
+         * use the detuned square bass.
+         */
+        playLofiSquareBass(
+            audioTime,
+            bassFrequency,
+            beat * 1.25,
+            0.032,
+            10
+        );
+    }
+    else {
+        /*
+         * Bars 1-8:
+         * original warm LoFi bass.
+         */
+        playLofiBass(
+            audioTime,
+            bassFrequency,
+            beat * 1.45,
+            0.055
+        );
+    }
+}
+
+/*
+ * Extra square-bass notes only during
+ * the four crossover measures.
+ */
+if (isWobbleSection) {
+
+    const baseBassMidi =
+        bassNotes[
+            progressionIndex
+        ];
+
+    /*
+     * Answer note on beat 2.
+     */
+    if (
+        stepInBar === 2 &&
+        cycleBar % 2 === 0
+    ) {
+        playLofiSquareBass(
+            audioTime,
+            midiToFrequency(
+                baseBassMidi + 7
+            ),
+            beat * 0.42,
+            0.022,
+            8
+        );
+    }
+
+    /*
+     * Root stab around beat 3.
+     */
+    if (
+        stepInBar === 4
+    ) {
+        playLofiSquareBass(
+            audioTime,
+            midiToFrequency(
+                baseBassMidi
+            ),
+            beat * 0.52,
+            0.026,
+            12
+        );
+    }
+
+    /*
+     * Fifth leading back into the next bar.
+     */
+    if (
+        stepInBar === 7
+    ) {
+        playLofiSquareBass(
+            audioTime,
+            midiToFrequency(
+                baseBassMidi + 7
+            ),
+            beat * 0.24,
+            0.018,
+            14
+        );
+    }
+}
+        // Occasional second bass note
+
+        if (
+            stepInBar === 4 &&
+            bar % 2 === 1
+        ) {
+
+            playLofiBass(
+                audioTime,
+                midiToFrequency(
+                    bassNotes[progressionIndex] + 7
+                ),
+                beat * 0.85,
+                0.035
+            );
+        }
+
+
+        // Soft kick
+
+        if (
+            stepInBar === 0 ||
+            stepInBar === 5
+        ) {
+
+            playLofiKick(
+                audioTime,
+                stepInBar === 0
+                    ? 0.12
+                    : 0.075
+            );
+        }
+
+
+// Snare
+
+if (
+    stepInBar === 2 ||
+    stepInBar === 6
+) {
+    playLofiSnare(
+        audioTime,
+        0.04
+    );
+}
+
+
+/*
+ * Occasional vinyl scratch.
+ *
+ * Only happens at the end of a bar so it acts
+ * like a transition into the next measure.
+ */
+
+if (
+    stepInBar === 7 &&
+    !isWobbleSection &&
+    Math.random() < 0.28
+) {
+    playLofiScratch(
+        audioTime,
+        0.035
+    );
+}
+
+// Occasional jazz drum fill
+
+if (
+    stepInBar === 7 &&
+    Math.random() < 0.18
+) {
+    playLofiSnare(
+        audioTime,
+        0.025
+    );
+
+    playLofiHat(
+        audioTime + 0.07,
+        0.018
+    );
+
+    playLofiSnare(
+        audioTime + 0.14,
+        0.018
+    );
+
+    playLofiHat(
+        audioTime + 0.21,
+        0.022
+    );
+}
+
+/*
+ * Slightly stronger electronic groove during
+ * the four square-bass measures.
+ */
+if (isWobbleSection) {
+
+    /*
+     * Extra kick before the snare.
+     */
+    if (
+        stepInBar === 3
+    ) {
+        playLofiKick(
+            audioTime,
+            0.055
+        );
+    }
+
+    /*
+     * Quiet ghost snare late in the final
+     * square-bass bar.
+     */
+    if (
+        stepInBar === 7 &&
+        cycleBar === 11
+    ) {
+        playLofiSnare(
+            audioTime,
+            0.025
+        );
+    }
+
+    /*
+     * Slightly brighter offbeat hat.
+     */
+    if (
+        stepInBar === 5
+    ) {
+        playLofiHat(
+            audioTime,
+            0.014
+        );
+    }
+}
+
+        // Hi-hat
+
+        if (
+            stepInBar % 2 === 1
+        ) {
+
+            playLofiHat(
+                audioTime,
+                0.009 +
+                Math.random() * 0.005
+            );
+        }
+
+
+        // Vinyl crackle
+
+        if (stepInBar === 0) {
+
+            playVinylCrackle(
+                audioTime,
+                beat * 3.9,
+                0.006
+            );
+        }
+
+
+        lofiNextStep++;
+    }
+}
+
+// START LOFI RADIO
+
+function startLofiRadio() {
+
+    stopSong();
+
+    const ctx =
+        getAudioContext();
+
+    if (
+        ctx.state ===
+        "suspended"
+    ) {
+        ctx.resume();
+    }
+
+    lofiEnabled =
+        true;
+
+    lofiSeed =
+        createSeed();
+
+    lofiNextStep =
+        0;
+
+lofiStartTime =
+ctx.currentTime;
+
+    const lofiButton =
+        $("#lofiBtn");
+
+    lofiButton.classList.add(
+        "on"
+    );
+
+    lofiButton.textContent =
+        "♫ LOFI RADIO ON";
+
+    lofiButton.setAttribute(
+        "aria-pressed",
+        "true"
+    );
+
+    root.classList.add(
+        "playing"
+    );
+
+    $("#status").textContent =
+        "LOFI ON AIR";
+
+    $("#trackInfo").textContent =
+        "LOFI-" +
+        lofiSeed +
+        " • " +
+        LOFI_BPM +
+        " BPM • ENDLESS RADIO";
+
+    $("#titleA").textContent =
+        "MIDNIGHT JAZZ";
+
+    $("#titleB").textContent =
+        "VINYL BEATS";
+
+$("#freqA").textContent =
+    applyMasterOctave(
+        261.63
+    ).toFixed(
+        2
+    ) +
+    " Hz";
+
+$("#freqB").textContent =
+    applyMasterOctave(
+        73.42
+    ).toFixed(
+        2
+    ) +
+    " Hz";
+
+    $("#sectionName").textContent =
+        "LOFI RADIO";
+
+    $("#message").textContent =
+        "ENDLESS LOFI FREQUENCY RADIO IS PLAYING";
+
+    $("#progress").style.width =
+        "100%";
+
+    scheduleLofiMusic(
+        0
+    );
+
+    lofiTimer =
+        setInterval(
+            () => {
+
+                if (
+                    !lofiEnabled
+                ) {
+                    return;
+                }
+
+const position =
+Math.max(
+0,
+ctx.currentTime -
+lofiStartTime
+);
+
+                scheduleLofiMusic(
+                    position
+                );
+
+                updateLofiDisplay(
+                    position
+                );
+
+            },
+            50
+        );
+}
+
+/* ===================*==================================*==
+   LOFI RADIO DISPLAY
+   ======*==================================*=============== */
+
+// LOFI RADIO DISPLAY
+
+function updateLofiDisplay(position) {
+
+    const minutes =
+        Math.floor(
+            position / 60
+        );
+
+    const seconds =
+        Math.floor(
+            position % 60
+        );
+
+    const tenths =
+        Math.floor(
+            (position % 1) * 10
+        );
+
+    $("#clock").textContent =
+        String(minutes).padStart(
+            2,
+            "0"
+        ) +
+        ":" +
+        String(seconds).padStart(
+            2,
+            "0"
+        ) +
+        "." +
+        tenths;
+
+    $("#elapsed").textContent =
+        String(minutes).padStart(
+            2,
+            "0"
+        ) +
+        ":" +
+        String(seconds).padStart(
+            2,
+            "0"
+        );
+
+    $("#sectionName").textContent =
+        "LOFI RADIO";
+
+    // Only change the displayed Hz once per second.
+
+    const displaySecond =
+        Math.floor(
+            position
+        );
+
+    if (
+        displaySecond ===
+        updateLofiDisplay.lastSecond
+    ) {
+        return;
+    }
+
+    updateLofiDisplay.lastSecond =
+        displaySecond;
+
+    const upperFrequencies = [
+        220,
+        246.94,
+        261.63,
+        293.66,
+        329.63,
+        349.23
+    ];
+
+    const lowerFrequencies = [
+        55,
+        61.74,
+        65.41,
+        73.42,
+        82.41,
+        98
+    ];
+
+$("#freqA").textContent =
+    applyMasterOctave(
+        chooseRandom(
+            upperFrequencies
+        )
+    ).toFixed(
+        2
+    ) +
+    " Hz";
+
+$("#freqB").textContent =
+    applyMasterOctave(
+        chooseRandom(
+            lowerFrequencies
+        )
+    ).toFixed(
+        2
+    ) +
+    " Hz";
+}
+
+updateLofiDisplay.lastSecond =
+    -1;
+
+/* =======================*=================================
+*  STOP LOFI RADIO
+   =============*==================================*======== */
+
+// STOP LOFI RADIO
+
+function stopLofiRadio(
+    updateInterface = true
+) {
+    lofiEnabled =
+        false;
+
+    if (
+        lofiTimer
+    ) {
+        clearInterval(
+            lofiTimer
+        );
+
+        lofiTimer =
+            null;
+    }
+
+    cleanAudioNodes();
+
+    lofiNextStep =
+        0;
+
+    updateLofiDisplay.lastSecond =
+        -1;
+
+    const lofiButton =
+        $("#lofiBtn");
+
+    lofiButton.classList.remove(
+        "on"
+    );
+
+    lofiButton.textContent =
+        "♫ LOFI RADIO OFF";
+
+    lofiButton.setAttribute(
+        "aria-pressed",
+        "false"
+    );
+
+    if (
+        !updateInterface
+    ) {
+        return;
+    }
+
+    root.classList.remove(
+        "playing"
+    );
+
+    $("#clock").textContent =
+        "00:00.0";
+
+    $("#elapsed").textContent =
+        "00:00";
+
+    $("#progress").style.width =
+        "0%";
+
+    $("#sectionName").textContent =
+        song
+            ? "READY"
+            : "WAITING";
+
+    $("#status").textContent =
+        song
+            ? "TRACK READY"
+            : "NO TRACK LOADED";
+
+    $("#message").textContent =
+        song
+            ? "LOFI RADIO STOPPED. GENERATED SONG IS READY."
+            : "LOFI RADIO STOPPED.";
+}
+
+
+// TOGGLE LOFI RADIO
+
+function toggleLofiRadio() {
+
+    if (
+        lofiEnabled
+    ) {
+        stopLofiRadio();
+    }
+    else {
+        startLofiRadio();
+    }
+}
+
+/* =========================================================
+   MUSICAL DUBSTEP SCHEDULER
+   ========================================================= */
+function scheduleMusic(
+    currentPosition
+) {
+    const ctx =
+        getAudioContext();
+
+    if (
+        ctx.state ===
+        "suspended"
+    ) {
+        ctx.resume();
+    }
+
+    const beat =
+        60 /
+        song.bpm;
+
+    const sixteenth =
+        beat /
+        4;
+
+    const scheduleAhead =
+        1.2;
+
+    const blueprint =
+        song.blueprint;
+
+    const generatedDuration =
+        song.arrangement
+            ? song.arrangement.duration
+            : duration;
+
+    while (true) {
+        const songPosition =
+            nextStepToSchedule *
+            sixteenth;
+
+        if (
+            songPosition >=
+            generatedDuration
+        ) {
+            break;
+        }
+
+        if (
+            songPosition >
+            currentPosition +
+            scheduleAhead
+        ) {
+            break;
+        }
+
+        if (
+            songPosition <
+            currentPosition -
+            0.05
+        ) {
+            nextStepToSchedule++;
+            continue;
+        }
+
+        const step =
+            nextStepToSchedule;
+
+        const stepInBar =
+            step %
+            16;
+
+        const bar =
+            Math.floor(
+                step /
+                16
+            );
+
+        const phraseBar =
+            bar %
+            4;
+
+        const delay =
+            Math.max(
+                0,
+                songPosition -
+                currentPosition
+            );
+
+        const swingOffset =
+            stepInBar % 2 === 1
+                ? blueprint.swing
+                : 0;
+
+        const audioTime =
+            ctx.currentTime +
+            delay +
+            0.03 +
+            swingOffset;
+
+
+/*
+ * Determine which randomized arrangement section
+ * this scheduled step belongs to.
+ */
+const arrangementSection =
+    getArrangementSection(
+        songPosition
+    );
+
+if (!arrangementSection) {
+    nextStepToSchedule++;
+    continue;
+}
+
+const sectionType =
+    arrangementSection.type;
+
+const isIntro =
+    sectionType ===
+    "intro";
+
+const isBuild =
+    sectionType ===
+    "build";
+
+const isDrop =
+    sectionType ===
+    "drop";
+
+const isBreak =
+    sectionType ===
+    "break";
+
+const isOutro =
+    sectionType ===
+    "outro";
+
+/*
+ * Drop variation comes directly from
+ * generateArrangement().
+ *
+ * variation 1 = first drop
+ * variation 2+ = later drops
+ */
+const isDropOne =
+    isDrop &&
+    arrangementSection.variation === 1;
+
+const isDropTwo =
+    isDrop &&
+    arrangementSection.variation > 1;
+
+/*
+ * Determine whether this build occurs
+ * after at least one drop.
+ */
+const isSecondBuild =
+    isBuild &&
+    arrangementSection.start > 0 &&
+    song.arrangement.sections.some(
+        section =>
+            section.type === "drop" &&
+            section.end <=
+                arrangementSection.start
+    );
+
+        const kickPattern =
+            isDropTwo
+                ? blueprint.kickPatternTwo
+                : blueprint.kickPattern;
+
+        const hatPattern =
+            isDropTwo
+                ? blueprint.hatPatternTwo
+                : blueprint.hatPattern;
+
+        const bassRhythm =
+            isDropTwo
+                ? blueprint.bassRhythmTwo
+                : blueprint.bassRhythm;
+
+        const bassNotes =
+            isDropTwo
+                ? blueprint.bassNotesTwo
+                : blueprint.bassNotes;
+
+        const leadPattern =
+            isDropTwo
+                ? blueprint.leadPatternTwo
+                : blueprint.leadPattern;
+
+        const wobbleDivision =
+            isDropTwo
+                ? blueprint.wobbleDivisionTwo
+                : blueprint.wobbleDivision;
+
+        /*
+         * Wobble rate synchronized to the track:
+         *
+         * 1 = quarter-note wobble
+         * 2 = eighth-note wobble
+         * 4 = sixteenth-note wobble
+         */
+        const wobbleRate =
+            (
+                song.bpm /
+                60
+            ) *
+            wobbleDivision;
+
+        /* =================================================
+           INTRO
+           ================================================= */
+
+        if (isIntro) {
+            /*
+             * Atmospheric tonic chord every two bars.
+             */
+            if (
+                stepInBar === 0 &&
+                bar % 2 === 0
+            ) {
+                playDubstepChord(
+                    audioTime,
+                    song.root * 4,
+                    beat * 3.6,
+                    0.012
+                );
+
+                playSub(
+                    audioTime,
+                    song.root,
+                    beat * 2.8,
+                    0.045
+                );
+            }
+
+            /*
+             * Sparse pulse establishes the tempo.
+             */
+            if (
+                stepInBar === 0 &&
+                bar % 2 === 1
+            ) {
+                playKick(
+                    audioTime,
+                    blueprint.kickVolume *
+                    0.52
+                );
+            }
+
+            /*
+             * Preview the hook near the end
+             * of each two-bar phrase.
+             */
+            if (
+                (
+                    stepInBar === 10 ||
+                    stepInBar === 14
+                ) &&
+                bar % 2 === 1
+            ) {
+                const degree =
+                    leadPattern[
+                        stepInBar
+                    ];
+
+                if (
+                    degree !==
+                    null
+                ) {
+                    const frequency =
+                        song.root *
+                        8 *
+                        semitoneRatio(
+                            DUBSTEP_MINOR_SCALE[
+                                degree
+                            ]
+                        );
+
+                    playPluck(
+                        audioTime,
+                        frequency,
+                        sixteenth * 1.8,
+                        0.025
+                    );
+                }
+            }
+        }
+
+        /* =================================================
+           BUILD
+           ================================================= */
+
+        if (
+            isBuild ||
+            isSecondBuild
+        ) {
+            /*
+             * Four-on-the-floor kicks give the build
+             * clear forward motion.
+             */
+            if (
+                stepInBar === 0 ||
+                stepInBar === 4 ||
+                stepInBar === 8 ||
+                stepInBar === 12
+            ) {
+                playKick(
+                    audioTime,
+                    blueprint.kickVolume *
+                    0.72
+                );
+            }
+
+            /*
+             * Snare roll increases over each
+             * four-bar phrase.
+             */
+            const rollSpacing =
+                phraseBar === 0
+                    ? 8
+                    : phraseBar === 1
+                        ? 4
+                        : phraseBar === 2
+                            ? 2
+                            : 1;
+
+            if (
+                stepInBar %
+                rollSpacing ===
+                0
+            ) {
+                playSnare(
+                    audioTime,
+                    blueprint.snareVolume *
+                    (
+                        phraseBar === 3
+                            ? 0.48
+                            : 0.34
+                    )
+                );
+            }
+
+            /*
+             * Repeating minor-key hook.
+             */
+            const degree =
+                leadPattern[
+                    stepInBar
+                ];
+
+            if (
+                degree !==
+                null &&
+                stepInBar % 2 === 0
+            ) {
+                const frequency =
+                    song.root *
+                    8 *
+                    semitoneRatio(
+                        DUBSTEP_MINOR_SCALE[
+                            degree
+                        ]
+                    );
+
+                playPluck(
+                    audioTime,
+                    frequency,
+                    sixteenth * 1.65,
+                    0.034
+                );
+            }
+
+            /*
+             * Add high-frequency movement during
+             * the final half of the phrase.
+             */
+            if (
+                phraseBar >= 2 &&
+                stepInBar % 2 === 1
+            ) {
+                playNoise(
+                    audioTime,
+                    0.025,
+                    0.007
+                );
+            }
+        }
+
+        /* =================================================
+           DROP
+           ================================================= */
+
+        if (isDrop) {
+            /*
+             * Musical eight-bar drop structure:
+             *
+             * Bars 1-2: bass answer
+             * Bars 3-4: stronger lead response
+             * Bars 5-6: bass answer
+             * Bars 7-8: variation and fill
+             */
+            const dropStart = arrangementSection.start;
+
+            const dropBeatPosition =
+                Math.max(
+                    0,
+                    songPosition -
+                    dropStart
+                );
+
+            /*
+             * Divide elapsed drop time by the
+             * duration of one four-beat bar.
+             */
+            const dropBar =
+                Math.floor(
+                    dropBeatPosition /
+                    (
+                        beat *
+                        4
+                    )
+                );
+
+            const dropPhraseBar =
+                dropBar %
+                8;
+
+            const bassDominantBar =
+                dropPhraseBar === 0 ||
+                dropPhraseBar === 1 ||
+                dropPhraseBar === 4 ||
+                dropPhraseBar === 5;
+
+            const leadDominantBar =
+                dropPhraseBar === 2 ||
+                dropPhraseBar === 3 ||
+                dropPhraseBar === 6;
+
+            /*
+             * Main kick pattern.
+             */
+            if (
+                kickPattern[
+                    stepInBar
+                ]
+            ) {
+                playKick(
+                    audioTime,
+                    blueprint.kickVolume
+                );
+            }
+
+            /*
+             * Half-time snare on beat 3.
+             */
+            if (
+                stepInBar === 8
+            ) {
+                playSnare(
+                    audioTime,
+                    blueprint.snareVolume
+                );
+
+                /*
+                 * Quiet layered clap/noise component.
+                 */
+                playNoise(
+                    audioTime,
+                    0.09,
+                    0.025
+                );
+            }
+
+            /*
+             * Steady hats create a recognizable grid.
+             */
+            if (
+                hatPattern[
+                    stepInBar
+                ]
+            ) {
+                playNoise(
+                    audioTime,
+                    0.022,
+                    blueprint.hatVolume
+                );
+            }
+
+            /*
+             * Open-hat-like accents.
+             */
+            if (
+                stepInBar === 6 ||
+                stepInBar === 14
+            ) {
+                playNoise(
+                    audioTime,
+                    0.07,
+                    0.008
+                );
+            }
+
+            /*
+             * Bass phrase.
+             *
+             * Each generated track repeats its
+             * phrase consistently.
+             */
+            const bassLengthSteps =
+                bassRhythm[
+                    stepInBar
+                ];
+
+            if (
+                bassLengthSteps >
+                0 &&
+                (
+                    bassDominantBar ||
+                    stepInBar === 0 ||
+                    stepInBar === 8
+                )
+            ) {
+                const scaleDegree =
+                    bassNotes[
+                        stepInBar
+                    ];
+
+                const semitones =
+                    DUBSTEP_MINOR_SCALE[
+                        scaleDegree
+                    ];
+
+const bassFrequency =
+    song.root *
+    blueprint.bassOctave *
+    semitoneRatio(
+        semitones
+    );
+
+                const bassLength =
+                    Math.max(
+                        sixteenth * 0.8,
+                        sixteenth *
+                        bassLengthSteps *
+                        0.88
+                    );
+
+playWobble(
+    audioTime,
+    bassFrequency,
+    bassLength,
+    wobbleRate,
+    blueprint.style.bassVolume *
+    blueprint.bassVolumeVariation
+                );
+
+                playSub(
+                    audioTime,
+                    bassFrequency,
+                    bassLength,
+                    0.09
+                );
+            }
+
+            /*
+             * Lead response. The lead uses the same
+             * minor scale as the bass.
+             */
+            const leadDegree =
+                leadPattern[
+                    stepInBar
+                ];
+
+            if (
+                leadDegree !==
+                null &&
+                (
+                    leadDominantBar ||
+                    stepInBar === 10 ||
+                    stepInBar === 14
+                )
+            ) {
+                const leadFrequency =
+                    song.root *
+                    blueprint.leadOctave *
+                    semitoneRatio(
+                        DUBSTEP_MINOR_SCALE[
+                            leadDegree
+                        ]
+                    );
+
+playPluck(
+    audioTime,
+    leadFrequency,
+    sixteenth * 1.55,
+    (
+        leadDominantBar
+            ? 0.045
+            : 0.03
+    ) *
+    blueprint.leadVolumeVariation
+);
+            }
+
+            /*
+             * Final bar fill occurs once every
+             * eight bars.
+             */
+            if (
+                dropPhraseBar === 7
+            ) {
+                if (
+                    stepInBar === 12 ||
+                    stepInBar === 14 ||
+                    stepInBar === 15
+                ) {
+                    playSnare(
+                        audioTime,
+                        blueprint.snareVolume *
+                        (
+                            stepInBar === 15
+                                ? 0.8
+                                : 0.48
+                        )
+                    );
+                }
+
+                if (
+                    stepInBar >= 12
+                ) {
+                    playNoise(
+                        audioTime,
+                        0.018,
+                        0.01
+                    );
+                }
+            }
+
+            /*
+             * Crash on the first bar of each
+             * eight-bar drop phrase.
+             */
+            if (
+                stepInBar === 0 &&
+                dropPhraseBar === 0
+            ) {
+                playCrash(
+                    audioTime,
+                    0.045
+                );
+            }
+        }
+
+/* =================================================
+   MISC DJ EFFECTS
+   ================================================= */
+
+if (
+    miscEnabled &&
+    isDrop &&
+    stepInBar === 15
+) {
+    /*
+     * Scratch occasionally at the end of a bar.
+     *
+     * This lets the scratch lead naturally into
+     * the next downbeat.
+     */
+
+    if (
+        Math.random() <
+        0.16
+    ) {
+        playLofiScratch(
+            audioTime,
+            0.045
+        );
+    }
+}
+
+        /* =================================================
+           BREAKDOWN
+           ================================================= */
+
+        if (isBreak) {
+            if (
+                stepInBar === 0 &&
+                bar % 2 === 0
+            ) {
+                playDubstepChord(
+                    audioTime,
+                    song.root * 4,
+                    beat * 3.5,
+                    0.016
+                );
+
+                playSub(
+                    audioTime,
+                    song.root,
+                    beat * 2.6,
+                    0.055
+                );
+            }
+
+            const breakdownDegree =
+                leadPattern[
+                    stepInBar
+                ];
+
+            if (
+                breakdownDegree !==
+                null &&
+                (
+                    stepInBar === 2 ||
+                    stepInBar === 6 ||
+                    stepInBar === 10 ||
+                    stepInBar === 14
+                )
+            ) {
+                const frequency =
+                    song.root *
+                    8 *
+                    semitoneRatio(
+                        DUBSTEP_MINOR_SCALE[
+                            breakdownDegree
+                        ]
+                    );
+
+                playLead(
+                    audioTime,
+                    frequency,
+                    beat * 0.7,
+                    0.018
+                );
+            }
+
+            /*
+             * A soft half-time pulse keeps the
+             * breakdown connected to the song.
+             */
+            if (
+                stepInBar === 8 &&
+                bar % 2 === 1
+            ) {
+                playSnare(
+                    audioTime,
+                    blueprint.snareVolume *
+                    0.34
+                );
+            }
+        }
+
+        /* =================================================
+           OUTRO
+           ================================================= */
+
+        if (isOutro) {
+            if (
+                stepInBar === 0
+            ) {
+                playKick(
+                    audioTime,
+                    blueprint.kickVolume *
+                    0.55
+                );
+            }
+
+            if (
+                stepInBar === 8
+            ) {
+                playSnare(
+                    audioTime,
+                    blueprint.snareVolume *
+                    0.5
+                );
+            }
+
+            if (
+                stepInBar === 0 &&
+                bar % 2 === 0
+            ) {
+                playSub(
+                    audioTime,
+                    song.root,
+                    beat * 2.5,
+                    0.052
+                );
+
+                playDubstepChord(
+                    audioTime,
+                    song.root * 4,
+                    beat * 3.2,
+                    0.009
+                );
+            }
+        }
+
+/* =========================================================
+   RANDOM ARRANGEMENT TRANSITIONS
+   ========================================================= */
+
+/*
+ * Trigger effects on the first step
+ * of each generated section.
+ */
+if (
+    step ===
+    arrangementSection.startStep
+) {
+    /*
+     * Every generated drop gets an impact.
+     */
+    if (
+        arrangementSection.type ===
+        "drop"
+    ) {
+        playImpact(
+            audioTime,
+            arrangementSection.variation > 1
+                ? 0.19
+                : 0.17
+        );
+
+        playCrash(
+            audioTime,
+            arrangementSection.variation > 1
+                ? 0.065
+                : 0.055
+        );
+    }
+}
+
+/*
+ * Start a riser during the final bar
+ * of a BUILD section.
+ */
+if (
+    arrangementSection.type ===
+    "build"
+) {
+    const stepsUntilSectionEnd =
+        arrangementSection.endStep -
+        step;
+
+    if (
+        stepsUntilSectionEnd === 16
+    ) {
+        const nextSectionIndex =
+            song.arrangement.sections
+            .indexOf(
+                arrangementSection
+            ) +
+            1;
+
+        const nextSection =
+            song.arrangement.sections[
+                nextSectionIndex
+            ];
+
+        if (
+            nextSection &&
+            nextSection.type ===
+            "drop"
+        ) {
+            playRiser(
+                audioTime,
+                song.arrangement.barDuration,
+                0.036
+            );
+        }
+    }
+}
+
+nextStepToSchedule++;
+
+    } // closes while (true)
+
+} // closes scheduleMusic()
+
+
+/* =========================================================
+   PLAY GENERATED SONG
+   ========================================================= */
+
+function playSong() {
+    if (!song) {
+        return;
+    }
+
+    if (lofiEnabled) {
+        stopLofiRadio(false);
+    }
+
+    if (timer) {
+        return;
+    }
+
+    const ctx =
+        getAudioContext();
+
+    if (
+        ctx.state ===
+        "suspended"
+    ) {
+        ctx.resume();
+    }
+
+const sixteenth =
+    (
+        60 /
+        song.bpm
+    ) /
+    4;
+
+nextStepToSchedule =
+    Math.floor(
+        pausedAt /
+        sixteenth
+    );
+
+    root.classList.add(
+        "playing"
+    );
+
+    $("#status").textContent =
+        "ON AIR";
+
+    $("#message").textContent =
+        loopEnabled
+            ? "PROCEDURAL SESSION PLAYING, LOOP ON"
+            : "PROCEDURAL SESSION PLAYING";
+
+    startTime =
+        performance.now() -
+        multiply(
+            pausedAt,
+            1000
+        );
+
+scheduleMusic(
+    pausedAt
+);
+
+    timer =
+        setInterval(
+            () => {
+                const position =
+                    (
+                        performance.now() -
+                        startTime
+                    ) /
+                    1000;
+
+                pausedAt =
+                    position;
+
+                scheduleMusic(
+                    position
+                );
+
+                updatePlaybackDisplay(
+                    position
+                );
+
+const generatedDuration =
+    song.arrangement
+        ? song.arrangement.duration
+        : duration;
+
+if (
+    position >=
+    generatedDuration
+) {
+                    if (loopEnabled) {
+                        restartLoop();
+                    }
+                    else {
+                        stopSong();
+                    }
+                }
+            },
+            50
+        );
+}
+
+function updatePlaybackDisplay(
+    position
+) {
+
+const minutes =
+    Math.floor(
+        position /
+        60
+    );
+
+    const seconds =
+        Math.floor(
+            position %
+            60
+        );
+
+    const tenths =
+        Math.floor(
+            multiply(
+                position % 1,
+                10
+            )
+        );
+
+    $("#clock").textContent =
+        String(
+            minutes
+        ).padStart(
+            2,
+            "0"
+        ) +
+        ":" +
+        String(
+            seconds
+        ).padStart(
+            2,
+            "0"
+        ) +
+        "." +
+        tenths;
+
+    $("#elapsed").textContent =
+        String(
+            minutes
+        ).padStart(
+            2,
+            "0"
+        ) +
+        ":" +
+        String(
+            seconds
+        ).padStart(
+            2,
+            "0"
+        );
+
+const generatedDuration =
+    song &&
+    song.arrangement
+        ? song.arrangement.duration
+        : duration;
+
+$("#progress").style.width =
+    Math.min(
+        100,
+        multiply(
+            position /
+            generatedDuration,
+            100
+        )
+    ) +
+    "%";
+
+ const currentSection =
+    getArrangementSection(
+        position
+    );
+
+if (currentSection) {
+    if (
+        currentSection.type ===
+        "drop"
+    ) {
+        $("#sectionName").textContent =
+            "DROP " +
+            currentSection.variation;
+    }
+    else {
+        $("#sectionName").textContent =
+            currentSection.type
+            .toUpperCase();
+    }
+}
+
+    const displaySecond =
+        Math.floor(
+            position
+        );
+
+    if (
+        displaySecond ===
+        playSong.lastDisplaySecond
+    ) {
+        return;
+    }
+
+    playSong.lastDisplaySecond =
+        displaySecond;
+
+    const multipliersA = [
+        0.5,
+        1,
+        1.5,
+        2
+    ];
+
+    const multipliersB = [
+        1,
+        2,
+        2.5,
+        3,
+        4
+    ];
+
+$("#freqA").textContent =
+    applyMasterOctave(
+        multiply(
+            song.root,
+            chooseRandom(
+                multipliersA
+            )
+        )
+    ).toFixed(
+        2
+    ) +
+    " Hz";
+
+$("#freqB").textContent =
+    applyMasterOctave(
+        multiply(
+            song.root,
+            chooseRandom(
+                multipliersB
+            )
+        )
+    ).toFixed(
+        2
+    ) +
+    " Hz";
+}
+
+playSong.lastDisplaySecond =
+    -1;
+
+/* =========================================================
+   FrequencyDisplay
+   ========================================================= */
+
+function updateGeneratedFrequencyDisplay() {
+    if (!song) {
+        return;
+    }
+
+    const upperFrequency =
+        applyMasterOctave(
+            song.root *
+            8
+        );
+
+    const lowerFrequency =
+        applyMasterOctave(
+            song.root *
+            2
+        );
+
+    $("#freqA").textContent =
+        upperFrequency.toFixed(
+            2
+        ) +
+        " Hz";
+
+    $("#freqB").textContent =
+        lowerFrequency.toFixed(
+            2
+        ) +
+        " Hz";
+}
+
+/* =========================================================
+   STOP SONG
+   ========================================================= */
+
+function stopSong() {
+    if (timer) {
+        clearInterval(
+            timer
+        );
+
+        timer =
+            null;
+    }
+
+    cleanAudioNodes();
+
+    root.classList.remove(
+        "playing"
+    );
+
+    pausedAt =
+        0;
+
+    nextStepToSchedule =
+        0;
+
+    playSong.lastDisplaySecond =
+        -1;
+
+    $("#clock").textContent =
+        "00:00.0";
+
+    $("#elapsed").textContent =
+        "00:00";
+
+    $("#progress").style.width =
+        "0%";
+
+    $("#sectionName").textContent =
+        song
+            ? "READY"
+            : "WAITING";
+
+    if (song) {
+        $("#status").textContent =
+            "TRACK READY";
+
+        $("#message").textContent =
+            "Stopped. Press play to restart the same generated song.";
+    }
+}
+
+function restartLoop() {
+    cleanAudioNodes();
+
+    pausedAt =
+        0;
+
+    nextStepToSchedule =
+        0;
+
+    playSong.lastDisplaySecond =
+        -1;
+
+    startTime =
+        performance.now();
+
+    $("#clock").textContent =
+        "00:00.0";
+
+    $("#elapsed").textContent =
+        "00:00";
+
+    $("#progress").style.width =
+        "0%";
+
+    $("#sectionName").textContent =
+        "INTRO";
+
+    $("#message").textContent =
+        "LOOP RESTARTED";
+
+    scheduleMusic(
+        0
+    );
+}
+
+
+/* =========================================================
+   MASTER OCTAVE
+   ========================================================= */
+
+const octaveSlider =
+    $("#octaveControl");
+
+const octaveValue =
+    $("#octaveValue");
+
+function updateOctaveLabel() {
+    const labels = {
+        "-2": "2 OCTAVES DOWN",
+        "-1": "1 OCTAVE DOWN",
+        "0": "ORIGINAL",
+        "1": "1 OCTAVE UP",
+        "2": "2 OCTAVES UP"
+    };
+
+    octaveValue.textContent =
+        labels[
+            String(
+                masterOctave
+            )
+        ];
+}
+
+octaveSlider.addEventListener(
+    "input",
+    () => {
+        masterOctave =
+            Number(
+                octaveSlider.value
+            );
+
+        updateOctaveLabel();
+
+        playSong.lastDisplaySecond =
+            -1;
+
+        updateLofiDisplay.lastSecond =
+            -1;
+
+        if (
+            song &&
+            !lofiEnabled
+        ) {
+            updateGeneratedFrequencyDisplay();
+        }
+
+        $("#message").textContent =
+            masterOctave === 0
+                ? "MASTER OCTAVE RETURNED TO ORIGINAL"
+                : (
+                    "MASTER OCTAVE SET TO " +
+                    (
+                        masterOctave > 0
+                            ? "+"
+                            : ""
+                    ) +
+                    masterOctave
+                );
+    }
+);
+
+updateOctaveLabel();
+
+/* =========================================================
+   BASS WAVEFORM SELECTOR
+   ========================================================= */
+
+const waveformSlider =
+    $("#waveformSlider");
+
+const waveformValue =
+    $("#waveformValue");
+
+const waveformOptions = [
+    "sine",
+    "triangle",
+    "sawtooth",
+    "square"
+];
+
+function updateWaveformControl() {
+    const waveformIndex =
+        Math.max(
+            0,
+            Math.min(
+                waveformOptions.length - 1,
+                Number(
+                    waveformSlider.value
+                )
+            )
+        );
+
+    selectedWaveform =
+        waveformOptions[
+            waveformIndex
+        ];
+
+    waveformValue.textContent =
+        selectedWaveform.toUpperCase();
+
+    waveformSlider.setAttribute(
+        "aria-valuenow",
+        String(
+            waveformIndex
+        )
+    );
+
+    waveformSlider.setAttribute(
+        "aria-valuetext",
+        selectedWaveform
+    );
+}
+
+waveformSlider.addEventListener(
+    "input",
+    () => {
+        updateWaveformControl();
+
+        $("#message").textContent =
+            selectedWaveform.toUpperCase() +
+            " BASS WAVEFORM SELECTED";
+    }
+);
+
+updateWaveformControl();
+
+/* =========================================================
+   MASTER VOLUME
+   ========================================================= */
+
+
+const masterVolumeSlider =
+$("#masterVolume");
+
+const masterVolumeValue =
+$("#masterVolumeValue");
+
+masterVolumeSlider
+.addEventListener(
+
+    "input",
+
+    () => {
+
+        const volume =
+        Number(
+            masterVolumeSlider.value
+        );
+
+        masterVolumeValue.textContent =
+        volume +
+        "%";
+
+        if (masterGain && audio) {
+
+            const normalizedVolume =
+            (
+                volume /
+                100
+            )
+            *
+            MASTER_MAX_VOLUME;
+
+            masterGain.gain
+            .setTargetAtTime(
+
+                normalizedVolume,
+
+                audio.currentTime,
+
+                0.01
+
+            );
+        }
+    }
+);
+
+
+/* =========================================================
+   BUTTON EVENTS
+   ========================================================= */
+
+$("#loopBtn")
+.addEventListener(
+    "click",
+    () => {
+        loopEnabled =
+            !loopEnabled;
+
+        const loopButton =
+            $("#loopBtn");
+
+        loopButton.classList.toggle(
+            "on",
+            loopEnabled
+        );
+
+        loopButton.textContent =
+            loopEnabled
+                ? "LOOP ON"
+                : "LOOP OFF";
+
+        loopButton.setAttribute(
+            "aria-pressed",
+            String(
+                loopEnabled
+            )
+        );
+
+        $("#message").textContent =
+            loopEnabled
+                ? "LOOP ENABLED"
+                : "LOOP DISABLED";
+    }
+);
+
+$("#miscPad")
+.addEventListener(
+    "click",
+    () => {
+
+        miscEnabled =
+            !miscEnabled;
+
+        $("#miscPad")
+        .classList.toggle(
+            "on",
+            miscEnabled
+        );
+
+        $("#miscPad")
+        .setAttribute(
+            "aria-pressed",
+            String(miscEnabled)
+        );
+
+        $("#message").textContent =
+            miscEnabled
+                ? "MISC DJ EFFECTS ENABLED"
+                : "MISC DJ EFFECTS DISABLED";
+    }
+);
+
+$("#createBtn")
+.addEventListener(
+
+    "click",
+
+    createSong
+
+);
+
+
+
+$("#playBtn")
+.addEventListener(
+
+    "click",
+
+    playSong
+
+);
+
+$("#lofiBtn")
+.addEventListener(
+    "click",
+    toggleLofiRadio
+);
+
+$("#stopBtn")
+.addEventListener(
+    "click",
+    () => {
+        if (
+            lofiEnabled
+        ) {
+            stopLofiRadio();
+        }
+        else {
+            stopSong();
+        }
+    }
+);
+
+
+/* =========================================================
+   PERFORMANCE PAD VISUAL TOGGLES
+   ========================================================= */
+
+root
+.querySelectorAll(
+    ".pad:not(#miscPad)"
+)
+.forEach(
+
+    pad => {
+
+        pad.addEventListener(
+
+            "click",
+
+            () => {
+
+                pad.classList.toggle(
+                    "on"
+                );
+
+            }
+
+        );
+
+    }
+
+);
+
+
+})();
+
+</script>
+
+
+</body>
+</html>
