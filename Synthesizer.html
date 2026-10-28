@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>37-Key Web Audio Synthesizer</title>
+    <style>
+        body {
+            background-color: #1e1e24;
+            color: #f5f5f7;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .controls {
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            background: #2a2a35;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        select {
+            background: #3a3a4a;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Keyboard Container */
+        .keyboard {
+            display: flex;
+            position: relative;
+            background: #111;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            user-select: none;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        /* White Keys */
+        .key {
+            width: 40px;
+            height: 180px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 0 0 5px 5px;
+            box-sizing: border-box;
+            cursor: pointer;
+            z-index: 1;
+            position: relative;
+            transition: background 0.05s ease;
+        }
+
+        .key:active, .key.active {
+            background: #e0e0e0;
+            height: 178px;
+            top: 2px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Black Keys */
+        .key.black {
+            width: 26px;
+            height: 110px;
+            background: #222;
+            border: 1px solid #000;
+            margin-left: -13px;
+            margin-right: -13px;
+            z-index: 2;
+            border-radius: 0 0 3px 3px;
+        }
+
+        .key.black:active, .key.black.active {
+            background: #444;
+            height: 109px;
+            top: 1px;
+        }
+
+        .label {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 10px;
+            color: #888;
+            pointer-events: none;
+        }
+
+        .key.black .label {
+            color: #aaa;
+            bottom: 5px;
+        }
+
+ 
+#drumMachine {
+margin-top: 30px;
+ 
+width: 850px;
+max-width: 100%;
+min-width: 0;
+box-sizing: border-box;
+ 
+background: linear-gradient(
+180deg,
+#2c2c35,
+#1a1a22
+);
+ 
+border: 2px solid #444;
+border-radius: 14px;
+padding: 20px;
+ 
+box-shadow:
+0 0 20px rgba(0, 0, 0, 0.5),
+inset 0 0 20px rgba(255, 255, 255, 0.03);
+ 
+overflow: hidden;
+}
+ 
+#drumMachine h2 {
+margin: 0 0 15px;
+text-align: center;
+color: #ffd700;
+}
+ 
+#sequencerControls {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 12px;
+background: #16161d;
+border: 1px solid #444;
+border-radius: 8px;
+margin-bottom: 12px;
+}
+ 
+#sequencerControls button {
+background: linear-gradient(
+180deg,
+#444,
+#222
+);
+color: white;
+border: 1px solid #666;
+border-radius: 6px;
+padding: 8px 14px;
+cursor: pointer;
+font-weight: bold;
+}
+ 
+#sequencerControls button:hover {
+background: linear-gradient(
+180deg,
+#666,
+#333
+);
+}
+ 
+#bpm {
+accent-color: gold;
+}
+ 
+#sequencer {
+width: 100%;
+max-width: 100%;
+min-width: 0;
+box-sizing: border-box;
+ 
+display: flex;
+flex-direction: row;
+flex-wrap: nowrap;
+justify-content: flex-start;
+align-items: center;
+ 
+gap: 5px;
+padding: 12px;
+ 
+background: #111;
+border-radius: 8px;
+ 
+overflow-x: auto;
+overflow-y: hidden;
+}
+.step {
+ 
+width: 60px;
+height: 60px;
+ 
+flex: 0 0 60px;
+ 
+display: flex;
+align-items: center;
+justify-content: center;
+ 
+background: linear-gradient(
+180deg,
+#555,
+#333
+);
+ 
+color: white;
+ 
+font-size: 14px;
+font-weight: bold;
+ 
+border: 2px solid #666;
+ 
+border-radius: 10px;
+ 
+box-shadow:
+inset 0 2px 3px rgba(
+255,
+255,
+255,
+.1
+),
+0 4px 8px rgba(
+0,
+0,
+0,
+.5
+);
+ 
+cursor: pointer;
+ 
+transition: all .15s ease;
+}
+ 
+.step:hover {
+ 
+background: linear-gradient(
+180deg,
+#666,
+#444
+);
+}
+ 
+.step.active {
+ 
+background: linear-gradient(
+180deg,
+#44ff77,
+#18a83e
+);
+ 
+border-color: #9cffb3;
+ 
+color: white;
+ 
+box-shadow:
+0 0 15px #18a83e,
+inset 0 1px 2px rgba(
+255,
+255,
+255,
+.3
+);
+}
+ 
+.beat-marker {
+ 
+border: 2px solid #ff5555;
+}  
+
+.step.playing {
+ 
+border-color: gold;
+ 
+box-shadow:
+0 0 20px gold,
+inset 0 0 10px rgba(
+255,
+215,
+0,
+.5
+);
+}
+
+#synthSequencer {
+width: 100%;
+max-width: 100%;
+min-width: 0;
+box-sizing: border-box;
+ 
+display: flex;
+flex-direction: row;
+flex-wrap: nowrap;
+justify-content: flex-start;
+align-items: center;
+ 
+gap: 5px;
+padding: 12px;
+ 
+background: #111;
+border-radius: 8px;
+ 
+overflow-x: auto;
+overflow-y: hidden;
+}
+.synthStep {
+width: 60px;
+height: 90px;
+flex: 0 0 60px;
+box-sizing: border-box;
+ 
+display: flex;
+flex-direction: column;
+justify-content: center;
+gap: 6px;
+ 
+padding: 7px;
+ 
+background: linear-gradient(
+180deg,
+#45455a,
+#242432
+);
+ 
+border: 2px solid #666;
+border-radius: 10px;
+ 
+box-shadow:
+inset 0 2px 3px rgba(255,255,255,.1),
+0 4px 8px rgba(0,0,0,.5);
+}
+ 
+.synthStepNumber {
+color: #7fd4ff;
+font-size: 16px;
+font-weight: bold;
+text-align: center;
+}
+ 
+.synthStep input {
+width: 100%;
+box-sizing: border-box;
+ 
+padding: 5px 3px;
+ 
+background: #111;
+color: white;
+ 
+border: 1px solid #666;
+border-radius: 5px;
+ 
+font-size: 14px;
+text-align: center;
+}
+ 
+.synthStep select {
+width: 80%;
+box-sizing: border-box;
+ 
+padding: 2px;
+ 
+background: #222;
+color: white;
+ 
+border: 1px solid #666;
+border-radius: 5px;
+ 
+font-size: 10px;
+}
+ 
+.synthStep.synthPlaying {
+border-color: #7fd4ff;
+ 
+box-shadow:
+0 0 14px #2faee8,
+inset 0 0 8px rgba(127, 212, 255, 0.25);
+}
+
+</style>
+</head>
+<body>
+
+    <h1>37-Key Synthesizer</h1>
+    <div class="controls">
+        <div class="control-group">
+            <label for="waveform">Waveform:</label>
+            <select id="waveform">
+                <option value="sine">Sine</option>
+                <option value="square">Square</option>
+                <option value="sawtooth" selected>Sawtooth</option>
+                <option value="triangle">Triangle</option>
+            </select>
+        </div>
+<div class="control-group">
+<button id="octaveDown">Octave -</button>
+<span id="octaveDisplay">0</span>
+<button id="octaveUp">Octave +</button>
+</div>
+<div class="control-group">
+<label for="detuneAmount">Detune:</label>
+<input
+type="range"
+id="detuneAmount"
+min="0"
+max="100"
+step="0.1"
+value="1"
+>
+<span id="detuneValue">0%</span>
+</div>
+    </div>
+    <!-- The physical piano layout container -->
+    <div class="keyboard" id="keyboard"></div>
+
+<div id="drumMachine">
+<h2>Drum Machine</h2>
+<div id="sequencerControls">
+
+<button id="playSequence">
+▶ Play
+</button>
+ 
+<button id="stopSequence">
+■ Stop
+</button>
+
+<button id="randomizeMelody">🎲 Randomize</button>
+ 
+<select id="melodyStyle">
+<option value="happy">Happy</option>
+<option value="cyberpunk">Cyberpunk</option>
+<option value="grunge">Grunge</option>
+<option value="dark">Dark Ambient</option>
+<option value="techno">Techno</option>
+</select>
+
+<label>BPM</label>
+<input
+type="range"
+id="bpm"
+min="50"
+max="150"
+value="80">
+<span id="bpmValue">80</span>
+</div><br>
+<div
+id="sequencer"
+style="
+display: flex;
+flex-direction: row;
+flex-wrap: nowrap;
+align-items: center;
+justify-content: center;
+gap: 5px;
+padding: 12px;
+background: #111;
+border-radius: 8px;
+overflow-x: auto;">
+</div>
+<br>
+<h3 style="
+margin-top:15px;
+margin-bottom:8px;
+color:#7fd4ff;">
+Synth Lane</h3>
+<div id="synthSequencer"
+style="
+display:flex;
+flex-direction:row;
+flex-wrap:nowrap;
+gap:10px;
+overflow-x:auto;">
+</div>
+</div>
+
+    <script>
+        // Initialize Audio Context lazily on user interaction (browser security policy)
+        let audioCtx = null;
+        
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        // Active notes tracking to handle multi-touch/polyphony safely
+        const activeOscillators = {};
+
+let octaveShift = 0;
+ 
+function shiftedFrequency(freq) {
+return freq * Math.pow(2, octaveShift);
+}
+
+const computerKeyMap = {
+'a': 'C3',
+'w': 'C#3',
+'s': 'D3',
+'e': 'D#3',
+'d': 'E3',
+'f': 'F3',
+'t': 'F#3',
+'g': 'G3',
+'y': 'G#3',
+'h': 'A3',
+'u': 'A#3',
+'j': 'B3',
+ 
+'k': 'C4',
+'o': 'C#4',
+'l': 'D4',
+'p': 'D#4',
+';': 'E4',
+ 
+'z': 'F4',
+'x': 'G4',
+'c': 'A4',
+'v': 'B4',
+'b': 'C5',
+'n': 'D5',
+'m': 'E5',
+',': 'F5',
+'.': 'G5',
+'/': 'A5'
+};
+ 
+const pressedKeys = new Set();
+const noteLookup = {};
+
+const sequence = new Array(16).fill(0);
+const synthSequence =
+Array.from(
+{ length: 16 },
+() => ({
+freq: 0,
+waveform: 'square'
+})
+);
+let currentStep = 0;
+let sequenceTimer = null;
+
+const sequencerDiv =
+document.getElementById('sequencer');
+ 
+for (let i = 0; i < 16; i++) {
+ 
+const cell =
+document.createElement('div');
+ 
+cell.className = 'step';
+ 
+cell.style.width = '60px';
+cell.style.height = '60px';
+ 
+cell.style.display = 'flex';
+cell.style.alignItems = 'center';
+cell.style.justifyContent = 'center';
+ 
+cell.style.background =
+'linear-gradient(#555,#333)';
+ 
+cell.style.border =
+'2px solid #666';
+ 
+cell.style.borderRadius =
+'10px';
+ 
+cell.style.color =
+'white';
+ 
+cell.style.fontWeight =
+'bold';
+ 
+cell.style.cursor =
+'pointer';
+
+
+cell.textContent = i + 1;
+ 
+cell.dataset.step = i;
+ 
+if (
+i === 0 ||
+i === 4 ||
+i === 8 ||
+i === 12
+) {
+cell.classList.add(
+'beat-marker'
+);
+}
+ 
+cell.addEventListener('click', () => {
+ 
+sequence[i]++;
+ 
+if (sequence[i] > 6) {
+sequence[i] = 0;
+}
+ 
+cell.textContent = sequence[i];
+ 
+switch (sequence[i]) {
+ 
+case 0:
+cell.style.background =
+'linear-gradient(#555,#333)';
+break;
+ 
+case 1: // Kick
+cell.style.background =
+'linear-gradient(#ff4d4d,#b30000)';
+break;
+ 
+case 2: // Snare
+cell.style.background =
+'linear-gradient(#4da6ff,#0059b3)';
+break;
+ 
+case 3: // Kick+Snare
+cell.style.background =
+'linear-gradient(#cc66ff,#6600cc)';
+break;
+ 
+case 4: // HiHat
+cell.style.background =
+'linear-gradient(#ffe066,#d4aa00)';
+break;
+ 
+case 5: // Clap
+cell.style.background =
+'linear-gradient(#66ff99,#00994d)';
+break;
+ 
+case 6: // Crash
+cell.style.background =
+'linear-gradient(#ff9933,#cc5200)';
+break;
+}
+ 
+});
+ 
+sequencerDiv.appendChild(cell);
+ 
+}
+// ==============================
+// Build the 16-step synth lane
+// ==============================
+ 
+const synthSequencerDiv =
+document.getElementById(
+'synthSequencer'
+);
+ 
+for (let i = 0; i < 16; i++) {
+const synthTile =
+document.createElement('div');
+ 
+synthTile.className =
+'synthStep';
+ 
+synthTile.dataset.synthStep =
+i;
+ 
+const stepLabel =
+document.createElement('div');
+ 
+stepLabel.className =
+'synthStepNumber';
+ 
+stepLabel.textContent =
+i + 1;
+ 
+const frequencyInput =
+document.createElement('input');
+ 
+frequencyInput.type =
+'number';
+ 
+frequencyInput.min =
+'0';
+ 
+frequencyInput.max =
+'20000';
+ 
+frequencyInput.step =
+'1';
+ 
+frequencyInput.value =
+'0';
+ 
+frequencyInput.placeholder =
+'Hz';
+ 
+frequencyInput.title =
+'Enter frequency in Hz. Use 0 for silence.';
+ 
+frequencyInput.addEventListener(
+'input',
+() => {
+const enteredFrequency =
+Number(
+frequencyInput.value
+);
+ 
+synthSequence[i].freq =
+Number.isFinite(
+enteredFrequency
+)
+? Math.max(
+0,
+Math.min(
+20000,
+enteredFrequency
+)
+)
+: 0;
+}
+);
+ 
+const waveformInput =
+document.createElement('select');
+ 
+const waveformOptions = [
+{
+value: 'sine',
+label: 'Sine'
+},
+{
+value: 'square',
+label: 'Square'
+},
+{
+value: 'sawtooth',
+label: 'Sawtooth'
+},
+{
+value: 'triangle',
+label: 'Triangle'
+}
+];
+ 
+waveformOptions.forEach(optionData => {
+const option =
+document.createElement('option');
+ 
+option.value =
+optionData.value;
+ 
+option.textContent =
+optionData.label;
+ 
+if (
+optionData.value ===
+synthSequence[i].waveform
+) {
+option.selected = true;
+}
+ 
+waveformInput.appendChild(
+option
+);
+});
+ 
+waveformInput.addEventListener(
+'change',
+() => {
+synthSequence[i].waveform =
+waveformInput.value;
+}
+);
+ 
+synthTile.appendChild(
+stepLabel
+);
+ 
+synthTile.appendChild(
+frequencyInput
+);
+ 
+synthTile.appendChild(
+waveformInput
+);
+ 
+synthSequencerDiv.appendChild(
+synthTile
+);
+}
+
+        // 37-Key Note Definition Map (From C3 to C6 inclusive)
+        const notes = [
+            { name: "C3", freq: 130.81, isBlack: false },
+            { name: "C#3", freq: 138.59, isBlack: true },
+            { name: "D3", freq: 146.83, isBlack: false },
+            { name: "D#3", freq: 154.34, isBlack: true },
+            { name: "E3", freq: 164.81, isBlack: false },
+            { name: "F3", freq: 174.61, isBlack: false },
+            { name: "F#3", freq: 185.00, isBlack: true },
+            { name: "G3", freq: 196.00, isBlack: false },
+            { name: "G#3", freq: 207.65, isBlack: true },
+            { name: "A3", freq: 220.00, isBlack: false },
+            { name: "A#3", freq: 233.08, isBlack: true },
+            { name: "B3", freq: 246.94, isBlack: false },
+
+            { name: "C4", freq: 261.63, isBlack: false },
+            { name: "C#4", freq: 277.18, isBlack: true },
+            { name: "D4", freq: 293.66, isBlack: false },
+            { name: "D#4", freq: 311.13, isBlack: true },
+            { name: "E4", freq: 329.63, isBlack: false },
+            { name: "F4", freq: 349.23, isBlack: false },
+            { name: "F#4", freq: 369.99, isBlack: true },
+            { name: "G4", freq: 392.00, isBlack: false },
+            { name: "G#4", freq: 415.30, isBlack: true },
+            { name: "A4", freq: 440.00, isBlack: false },
+            { name: "A#4", freq: 466.16, isBlack: true },
+            { name: "B4", freq: 493.88, isBlack: false },
+
+            { name: "C5", freq: 523.25, isBlack: false },
+            { name: "C#5", freq: 554.37, isBlack: true },
+            { name: "D5", freq: 587.33, isBlack: false },
+            { name: "D#5", freq: 622.25, isBlack: true },
+            { name: "E5", freq: 659.25, isBlack: false },
+            { name: "F5", freq: 698.46, isBlack: false },
+            { name: "F#5", freq: 739.99, isBlack: true },
+            { name: "G5", freq: 783.99, isBlack: false },
+            { name: "G#5", freq: 830.61, isBlack: true },
+            { name: "A5", freq: 880.00, isBlack: false },
+            { name: "A#5", freq: 932.33, isBlack: true },
+            { name: "B5", freq: 987.77, isBlack: false },
+            
+            { name: "C6", freq: 1046.50, isBlack: false }
+        ];
+
+        const keyboardContainer = document.getElementById('keyboard');
+        const waveformSelect = document.getElementById('waveform');
+
+
+const detuneSlider =
+document.getElementById('detuneAmount');
+ 
+const detuneValue =
+document.getElementById('detuneValue');
+
+detuneSlider.addEventListener('input', () => {
+ 
+detuneValue.textContent =
+detuneSlider.value + '%';
+ 
+});
+
+        // Dynamically build the DOM structure for the 37 keys
+        notes.forEach((note, index) => {
+            const keyDiv = document.createElement('div');
+            keyDiv.className = `key ${note.isBlack ? 'black' : ''}`;
+            keyDiv.dataset.freq = note.freq;
+            keyDiv.dataset.note = note.name;
+
+
+
+            // Simple labels for context
+            if (!note.isBlack || note.name === "A#3" || note.name === "A#4" || note.name === "A#5") {
+                const label = document.createElement('span');
+                label.className = 'label';
+                label.innerText = note.name;
+                keyDiv.appendChild(label);
+            }
+
+            // Mouse and Touch Event Listeners
+            keyDiv.addEventListener('mousedown', () =>
+startNote(
+shiftedFrequency(note.freq),
+note.name,
+keyDiv
+)
+);
+            keyDiv.addEventListener('mouseup', () => stopNote(note.name, keyDiv));
+            keyDiv.addEventListener('mouseleave', () => stopNote(note.name, keyDiv));
+            
+            keyDiv.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startNote(
+shiftedFrequency(note.freq),
+note.name,
+keyDiv
+);
+            });
+            keyDiv.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                stopNote(note.name, keyDiv);
+            });
+
+keyboardContainer.appendChild(keyDiv);
+});
+ 
+// Build note lookup once
+notes.forEach(note => {
+noteLookup[note.name] = note;
+});
+
+        // Trigger Audio Synthesis
+        function startNote(freq, noteName, element) {
+            const ctx = getAudioContext();
+            if (ctx.state === 'suspended') {
+                ctx.resume();
+            }
+
+            // If the note is already playing, stop it first to prevent overlapping duplicates
+            if (activeOscillators[noteName]) {
+                stopNote(noteName, element);
+            }
+
+// Create Oscillators and Gain node
+const osc = ctx.createOscillator();
+const osc2 = ctx.createOscillator();
+ 
+const gainNode = ctx.createGain();
+
+osc.type = waveformSelect.value;
+osc2.type = waveformSelect.value;
+ 
+osc.frequency.setValueAtTime(
+freq,
+ctx.currentTime
+);
+ 
+const detunePercent =
+parseFloat(detuneSlider.value);
+ 
+osc2.frequency.setValueAtTime(
+freq * (1 + detunePercent / 100),
+ctx.currentTime
+);
+ 
+            // Envelope configuration to reduce sharp clicking sound artifacts
+            gainNode.gain.setValueAtTime(0, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(5.8, ctx.currentTime + 0.01); // 0.2 maximum volume
+
+osc.connect(gainNode);
+osc2.connect(gainNode);
+ 
+gainNode.connect(ctx.destination);
+ 
+osc.start();
+osc2.start();
+
+            // Store nodes references to close later
+activeOscillators[noteName] = {
+osc,
+osc2,
+gainNode
+};
+            element.classList.add('active');
+        }
+
+        // Gracefully fade out and tear down nodes
+        function stopNote(noteName, element) {
+            const active = activeOscillators[noteName];
+            if (active) {
+                const ctx = getAudioContext();
+              const {
+osc,
+osc2,
+gainNode
+} = active;
+
+                // Audio fade-out (Release envelope stage)
+                gainNode.gain.setValueAtTime(gainNode.gain.value, ctx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.05);
+
+                // Stop node cleanup
+osc.stop(ctx.currentTime + 0.06);
+osc2.stop(ctx.currentTime + 0.06);
+                delete activeOscillators[noteName];
+            }
+            element.classList.remove('active');
+        }
+
+// ==============================
+// Drum Sounds
+// ==============================
+
+//----------------------------------------
+// KICK (below)
+//----------------------------------------
+function playKick() {
+const ctx = getAudioContext();
+const now = ctx.currentTime;
+ 
+const osc = ctx.createOscillator();
+const gain = ctx.createGain();
+ 
+osc.type = 'triangle';
+ 
+osc.frequency.setValueAtTime(
+120,
+now
+);
+ 
+osc.frequency.exponentialRampToValueAtTime(
+30,
+now + 0.15
+);
+ 
+gain.gain.setValueAtTime(
+3.0,
+now
+);
+ 
+gain.gain.exponentialRampToValueAtTime(
+0.001,
+now + 0.15
+);
+ 
+osc.connect(gain);
+gain.connect(ctx.destination);
+ 
+osc.start(now);
+osc.stop(now + 0.16);
+}
+
+//----------------------------------------
+// SNARE (below)
+//----------------------------------------
+function playSnare() {
+const ctx = getAudioContext();
+const now = ctx.currentTime;
+ 
+const noiseBuffer = ctx.createBuffer(
+1,
+ctx.sampleRate * 0.2,
+ctx.sampleRate
+);
+ 
+const output =
+noiseBuffer.getChannelData(0);
+ 
+for (let i = 0; i < output.length; i++) {
+output[i] =
+Math.random() * 2 - 1;
+}
+ 
+const noise =
+ctx.createBufferSource();
+ 
+noise.buffer = noiseBuffer;
+ 
+const filter =
+ctx.createBiquadFilter();
+ 
+filter.type = 'highpass';
+filter.frequency.value = 1000;
+ 
+const gain = ctx.createGain();
+ 
+gain.gain.setValueAtTime(
+3.0,
+now
+);
+ 
+gain.gain.exponentialRampToValueAtTime(
+0.001,
+now + 0.18
+);
+ 
+noise.connect(filter);
+filter.connect(gain);
+gain.connect(ctx.destination);
+ 
+noise.start(now);
+noise.stop(now + 0.2);
+}
+
+//----------------------------------------
+// HIHAT (below)
+//----------------------------------------
+function playHiHat() {
+const ctx = getAudioContext();
+const now = ctx.currentTime;
+ 
+const buffer = ctx.createBuffer(
+1,
+ctx.sampleRate * 0.06,
+ctx.sampleRate
+);
+ 
+const data =
+buffer.getChannelData(0);
+ 
+for (let i = 0; i < data.length; i++) {
+data[i] =
+Math.random() * 2 - 1;
+}
+ 
+const noise =
+ctx.createBufferSource();
+ 
+noise.buffer = buffer;
+ 
+const filter =
+ctx.createBiquadFilter();
+ 
+filter.type = 'highpass';
+filter.frequency.value = 10000;
+ 
+const gain = ctx.createGain();
+ 
+gain.gain.setValueAtTime(
+3.0,
+now
+);
+ 
+gain.gain.exponentialRampToValueAtTime(
+0.001,
+now + 0.25
+);
+ 
+noise.connect(filter);
+filter.connect(gain);
+gain.connect(ctx.destination);
+ 
+noise.start(now);
+noise.stop(now + 0.26);
+}
+
+//----------------------------------------
+// CLAP (below)
+//----------------------------------------
+function playClap() {
+const ctx = getAudioContext();
+const now = ctx.currentTime;
+ 
+for (let hit = 0; hit < 3; hit++) {
+const hitTime =
+now + hit * 0.025;
+ 
+const buffer = ctx.createBuffer(
+1,
+ctx.sampleRate * 0.08,
+ctx.sampleRate
+);
+ 
+const data =
+buffer.getChannelData(0);
+ 
+for (let i = 0; i < data.length; i++) {
+data[i] =
+Math.random() * 2 - 1;
+}
+ 
+const noise =
+ctx.createBufferSource();
+ 
+noise.buffer = buffer;
+ 
+const filter =
+ctx.createBiquadFilter();
+ 
+filter.type = 'bandpass';
+filter.frequency.value = 1400;
+ 
+const gain = ctx.createGain();
+ 
+gain.gain.setValueAtTime(
+3.0,
+hitTime
+);
+ 
+gain.gain.exponentialRampToValueAtTime(
+0.001,
+hitTime + 0.07
+);
+ 
+noise.connect(filter);
+filter.connect(gain);
+gain.connect(ctx.destination);
+ 
+noise.start(hitTime);
+noise.stop(hitTime + 0.08);
+}
+}
+
+//----------------------------------------
+// CRASH (below)
+//----------------------------------------
+function playCrash() {
+const ctx = getAudioContext();
+const now = ctx.currentTime;
+ 
+const buffer = ctx.createBuffer(
+1,
+ctx.sampleRate * 1.2,
+ctx.sampleRate
+);
+ 
+const data =
+buffer.getChannelData(0);
+ 
+for (let i = 0; i < data.length; i++) {
+data[i] =
+Math.random() * 2 - 1;
+}
+
+const noise =
+ctx.createBufferSource();
+ 
+noise.buffer = buffer;
+ 
+const filter =
+ctx.createBiquadFilter();
+ 
+filter.type = 'highpass';
+filter.frequency.value = 4000;
+ 
+const gain = ctx.createGain();
+ 
+gain.gain.setValueAtTime(
+3.0,
+now
+);
+ 
+gain.gain.exponentialRampToValueAtTime(
+0.001,
+now + 1.1
+);
+ 
+noise.connect(filter);
+filter.connect(gain);
+gain.connect(ctx.destination);
+ 
+noise.start(now);
+noise.stop(now + 1.2);
+}
+
+//----------------------------------------
+// SYNTH FREQUENCY (below)
+//----------------------------------------
+function playSynthFrequency(freq,waveform) {
+ 
+const ctx = getAudioContext();
+ 
+const osc1 =
+ctx.createOscillator();
+ 
+const osc2 =
+ctx.createOscillator();
+ 
+const gain =
+ctx.createGain();
+ 
+osc1.type =
+waveform;
+ 
+osc2.type =
+waveform;
+ 
+osc1.frequency.value =
+freq;
+ 
+osc2.frequency.value =
+freq * 1.01;
+ 
+gain.gain.setValueAtTime(
+1.0,
+ctx.currentTime
+);
+ 
+gain.gain.exponentialRampToValueAtTime(
+0.001,
+ctx.currentTime + 1.0
+);
+ 
+osc1.connect(gain);
+osc2.connect(gain);
+ 
+gain.connect(ctx.destination);
+ 
+osc1.start();
+osc2.start();
+ 
+osc1.stop(
+ctx.currentTime + 1.2
+);
+ 
+osc2.stop(
+ctx.currentTime + 1.2
+);
+}
+
+// ==============================
+// Sequencer Playback
+// ==============================
+ 
+function playCurrentDrumSound(soundNumber) {
+switch (soundNumber) {
+case 1:
+playKick();
+break;
+ 
+case 2:
+playSnare();
+break;
+ 
+case 3:
+playKick();
+playSnare();
+break;
+ 
+case 4:
+playHiHat();
+break;
+ 
+case 5:
+playClap();
+break;
+ 
+case 6:
+playCrash();
+break;
+ 
+case 0:
+default:
+break;
+}
+}
+ 
+function runSequenceStep() {
+ 
+const soundNumber =
+sequence[currentStep];
+ 
+playCurrentDrumSound(
+soundNumber
+);
+ 
+const synthStep =
+synthSequence[currentStep];
+ 
+if (
+synthStep &&
+synthStep.freq > 0
+) {
+ 
+playSynthFrequency(
+synthStep.freq,
+synthStep.waveform
+);
+ 
+}
+ 
+currentStep++;
+ 
+if (currentStep >= sequence.length) {
+currentStep = 0;
+}
+}
+ 
+function playSequence() {
+if (sequenceTimer !== null) {
+return;
+}
+ 
+const ctx = getAudioContext();
+ 
+if (ctx.state === 'suspended') {
+ctx.resume();
+}
+ 
+const bpm =
+Number(
+document.getElementById('bpm').value
+);
+ 
+const millisecondsPerStep =
+(60000 / bpm) / 4;
+ 
+currentStep = 0;
+ 
+// Start step 1 immediately
+runSequenceStep();
+ 
+sequenceTimer =
+window.setInterval(
+runSequenceStep,
+millisecondsPerStep
+);
+}
+ 
+function stopSequence() {
+if (sequenceTimer !== null) {
+window.clearInterval(
+sequenceTimer
+);
+ 
+sequenceTimer = null;
+}
+ 
+currentStep = 0;
+}
+ 
+// ==============================
+// Drum Controls
+// ==============================
+ 
+document
+.getElementById('playSequence')
+.addEventListener(
+'click',
+playSequence
+);
+ 
+document
+.getElementById('stopSequence')
+.addEventListener(
+'click',
+stopSequence
+);
+ 
+const bpmSlider =
+document.getElementById('bpm');
+ 
+const bpmValue =
+document.getElementById('bpmValue');
+ 
+bpmSlider.addEventListener('input', () => {
+bpmValue.textContent =
+bpmSlider.value;
+ 
+if (sequenceTimer !== null) {
+stopSequence();
+playSequence();
+}
+});
+
+
+// ==============================
+// Physical keyboard controls
+// ==============================
+ 
+window.addEventListener('keydown', (e) => {
+ 
+const key = e.key.toLowerCase();
+
+if (key === '[') {
+ 
+if (octaveShift > -3) {
+octaveShift--;
+}
+ 
+document.getElementById(
+'octaveDisplay'
+).textContent =
+octaveShift > 0
+? '+' + octaveShift
+: octaveShift;
+ 
+return;
+}
+ 
+if (key === ']') {
+ 
+if (octaveShift < 3) {
+octaveShift++;
+}
+ 
+document.getElementById(
+'octaveDisplay'
+).textContent =
+octaveShift > 0
+? '+' + octaveShift
+: octaveShift;
+ 
+return;
+}
+
+ 
+if (!computerKeyMap[key]) return;
+if (pressedKeys.has(key)) return;
+ 
+pressedKeys.add(key);
+ 
+const noteName = computerKeyMap[key];
+const note = noteLookup[noteName];
+ 
+if (!note) return;
+ 
+const element = document.querySelector(
+`[data-note="${noteName}"]`
+);
+ 
+startNote(
+shiftedFrequency(note.freq),
+note.name,
+element
+);
+});
+ 
+window.addEventListener('keyup', (e) => {
+ 
+const key = e.key.toLowerCase();
+ 
+if (!computerKeyMap[key]) return;
+ 
+pressedKeys.delete(key);
+ 
+const noteName = computerKeyMap[key];
+ 
+const element = document.querySelector(
+`[data-note="${noteName}"]`
+);
+ 
+stopNote(
+noteName,
+element
+);
+});
+ 
+// Prevent stuck notes when browser loses focus
+
+const octaveDisplay =
+document.getElementById('octaveDisplay');
+ 
+document.getElementById('octaveUp')
+.addEventListener('click', () => {
+ 
+if (octaveShift < 3) {
+octaveShift++;
+}
+ 
+octaveDisplay.textContent =
+octaveShift > 0
+? '+' + octaveShift
+: octaveShift;
+});
+ 
+document.getElementById('octaveDown')
+.addEventListener('click', () => {
+ 
+if (octaveShift > -3) {
+octaveShift--;
+}
+ 
+octaveDisplay.textContent =
+octaveShift > 0
+? '+' + octaveShift
+: octaveShift;
+});
+
+window.addEventListener('blur', () => {
+ 
+pressedKeys.clear();
+ 
+Object.keys(activeOscillators).forEach(noteName => {
+ 
+const element = document.querySelector(
+`[data-note="${noteName}"]`
+);
+ 
+stopNote(noteName, element);
+});
+});
+
+document
+.getElementById('randomizeMelody')
+.addEventListener('click', randomizeMelody);
+ 
+function randomizeMelody() {
+ 
+const style =
+document.getElementById(
+'melodyStyle'
+).value;
+ 
+let scale;
+ 
+switch(style) {
+ 
+case "cyberpunk":
+ 
+scale = [
+130.81,
+155.56,
+196.00,
+233.08,
+311.13,
+392.00,
+466.16
+];
+ 
+break;
+ 
+case "grunge":
+ 
+scale = [
+50,
+100,
+220.00,
+261.63,
+293.66,
+329.63,
+392.00
+];
+ 
+break;
+ 
+case "dark":
+ 
+scale = [
+50,
+100,
+120,
+130.81,
+146.83,
+174.61,
+196.00
+];
+ 
+break;
+ 
+case "techno":
+ 
+scale = [
+60,
+293.66,
+329.63,
+392.00,
+440.00,
+523.25
+];
+ 
+break;
+ 
+default:
+ 
+scale = [
+200,
+300,
+500,
+600,
+800,
+2000
+];
+}
+ 
+const inputs =
+document.querySelectorAll(
+'#synthSequencer input[type="number"]'
+);
+ 
+let noteIndex =
+Math.floor(
+Math.random() *
+scale.length
+);
+ 
+for(let i = 0; i < 16; i++) {
+ 
+if(Math.random() < 0.15) {
+ 
+synthSequence[i].freq = 0;
+inputs[i].value = 0;
+continue;
+}
+ 
+noteIndex +=
+Math.floor(
+Math.random() * 3
+) - 1;
+ 
+noteIndex =
+Math.max(
+0,
+Math.min(
+scale.length - 1,
+noteIndex
+)
+);
+ 
+const freq =
+scale[noteIndex];
+ 
+synthSequence[i].freq =
+freq;
+ 
+inputs[i].value =
+freq.toFixed(2);
+}
+}
+    </script>
+</body>
+</html>
