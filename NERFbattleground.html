@@ -1,0 +1,5348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Nerf Battleground by Matt L</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+body {
+    display: grid;
+    place-items: center;
+    padding: 10px;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    background: radial-gradient(circle at top, #2b4032, #101713 70%);
+}
+
+#shell {
+    width: min(98vw, 1450px);
+}
+
+#bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+h1 {
+    margin: 0;
+    font-size: clamp(18px, 2vw, 28px);
+}
+
+#sub {
+    margin-top: 3px;
+    color: #adc0b2;
+    font-size: 12px;
+}
+
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+}
+
+button {
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 7px;
+    background: #2a3b31;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #3d5446;
+}
+
+#hudOpacityControl {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 9px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 7px;
+    background: #2a3b31;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+#hudOpacitySlider {
+    width: 90px;
+    accent-color: #ff9e2c;
+}
+
+#hudOpacityValue {
+    min-width: 34px;
+    color: #d8e5dc;
+    text-align: right;
+}
+
+#wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 10 / 7;
+    max-height: calc(100vh - 82px);
+    overflow: hidden;
+    border: 2px solid #536f5d;
+    border-radius: 9px;
+    background: #315d38;
+    box-shadow: 0 20px 55px rgba(0,0,0,0.6);
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#help {
+    position: absolute;
+    left: 12px;
+    bottom: 10px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    background: rgba(10,15,11,0.8);
+    color: #d8e5dc;
+    font-size: 12px;
+    pointer-events: none;
+}
+
+#start {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(7,16,9,0.74);
+    backdrop-filter: blur(3px);
+}
+
+#card {
+    width: min(560px,91%);
+    padding: 24px;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 14px;
+    background: rgba(23,37,29,0.96);
+    text-align: center;
+}
+
+#card h2 {
+    margin: 0 0 10px;
+    color: #ff9e2c;
+}
+
+#card p {
+    color: #c9d7cd;
+    line-height: 1.45;
+}
+
+#card button {
+    padding: 11px 24px;
+    background: #d86c15;
+    font-size: 17px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+@media (max-width: 760px) {
+    #sub {
+        display: none;
+    }
+
+    button {
+        padding: 6px 8px;
+        font-size: 11px;
+    }
+
+    #help {
+        font-size: 10px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="shell">
+
+<div id="bar">
+    <div>
+        <h1>Nerf Battleground</h1>
+        <div id="sub">
+            4-player free-for-all • 5-minute pressure match
+        </div>
+    </div>
+
+    <div class="buttons">
+
+        <label id="hudOpacityControl">
+            HUD
+            <input
+                id="hudOpacitySlider"
+                type="range"
+                min="0.20"
+                max="1"
+                step="0.05"
+                value="0.88"
+            >
+            <span id="hudOpacityValue">88%</span>
+        </label>
+
+        <button id="newMapButton">New Map</button>
+        <button id="restartButton">Restart Match</button>
+
+    </div>
+</div>
+
+<div id="wrap">
+
+<canvas
+    id="gameCanvas"
+    width="1000"
+    height="700">
+</canvas>
+
+<div id="help">
+    WASD move • Mouse aim • Click shoot • E loot • R reload
+</div>
+
+<div id="start">
+
+<div id="card">
+
+<h2>Nerf Battleground</h2>
+
+<p>
+Everyone starts unarmed. Find a loot box to obtain a
+blaster and darts. One dart eliminates a player.
+Last player standing wins.
+</p>
+
+<p>
+Your vision is limited to a flashlight-style field of view.
+Bunkers, rocks, and trees block your flashlight beam.
+</p>
+
+<p>
+At two minutes remaining, bots become more aggressive
+and gain smarter navigation and combat strafing.
+</p>
+
+<p>
+<strong>At one minute remaining, surviving bots can fly over
+any object and pursue their targets directly.</strong>
+</p>
+
+<button id="startButton">Start Match</button>
+
+</div>
+</div>
+
+</div>
+</div>
+
+<script>
+"use strict";
+
+const canvas =
+    document.getElementById("gameCanvas");
+
+const ctx =
+    canvas.getContext("2d");
+
+const WORLD_WIDTH = 1000;
+const WORLD_HEIGHT = 1000;
+const TAU = Math.PI * 2;
+
+const CONFIG = {
+    totalPlayers: 4,
+
+    bunkers: 9,
+    lootBoxes: 16,
+    trees: 32,
+    rocks: 18,
+    hatches: 4,
+
+    actorRadius: 13,
+
+    clipSize: 6,
+
+    dartSpeed: 8.5,
+    dartLifetime: 110,
+
+    matchSeconds: 300,
+
+    directProbeDistance: 62,
+    detourProbeDistance: 72,
+    recoveryProbeDistance: 62,
+
+    progressCheckFrames: 28,
+    minimumProgress: 8,
+    stuckCheckLimit: 2,
+
+    proStrafeStartSeconds: 120,
+    proStrafeProbeDistance: 48,
+    proStrafeFramesMin: 24,
+    proStrafeFramesMax: 42,
+    proStrafeRadiusMin: 46,
+    proStrafeRadiusMax: 76,
+
+    smartNavigationStartSeconds: 120,
+    smartProbeDistance: 92,
+    smartProbeAngles: 15,
+    smartProbeArc: Math.PI * 1.65,
+
+    trappedFrameLimit: 18,
+
+    escapeFramesMin: 34,
+    escapeFramesMax: 54,
+
+    directionMemoryWeight: 0.32,
+    goalDirectionWeight: 0.48,
+    clearanceWeight: 1.25,
+
+flashlightFovDegrees: 105,
+flashlightRange: 500,
+flashlightDarkness: 0.30,
+flashlightRayCount: 180,
+flashlightRayStep: 5,
+flashlightCollisionPadding: 2,
+
+    botFlightStartSeconds: 60,
+    botFlightSpeed: 2.35,
+
+// Flying bot eliminates its target when this
+// outer flight circle touches the target.
+
+botFlightContactPadding: 5,
+
+    botFlightAnnouncementFrames: 180
+};
+
+const keys = {};
+
+const mouse = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    down: false
+};
+
+let bunkers = [];
+let obstacles = [];
+let lootBoxes = [];
+let hatches = [];
+let actors = [];
+let darts = [];
+
+let camera = {
+    x: 0,
+    y: 0
+};
+
+let mapSeed = 0;
+
+let gameState = "title";
+
+let gameMessage = "";
+let messageTimer = 0;
+
+let matchTimeRemaining =
+    CONFIG.matchSeconds;
+
+let previousFrameTime =
+    performance.now();
+
+let hudOpacity = 0.88;
+
+let botFlightAnnounced = false;
+
+
+/* =========================================================
+   BASIC UTILITIES
+========================================================= */
+
+function randomRange(minimum, maximum) {
+    return minimum +
+        Math.random() *
+        (maximum - minimum);
+}
+
+function randomInteger(minimum, maximum) {
+    return Math.floor(
+        randomRange(
+            minimum,
+            maximum + 1
+        )
+    );
+}
+
+function clamp(
+    value,
+    minimum,
+    maximum
+) {
+    return Math.max(
+        minimum,
+        Math.min(
+            maximum,
+            value
+        )
+    );
+}
+
+function lerp(start, end, amount) {
+    return start +
+        (end - start) *
+        amount;
+}
+
+function distance(first, second) {
+    return Math.hypot(
+        first.x - second.x,
+        first.y - second.y
+    );
+}
+
+function normalizeAngle(angle) {
+
+    while (angle > Math.PI) {
+        angle -= TAU;
+    }
+
+    while (angle < -Math.PI) {
+        angle += TAU;
+    }
+
+    return angle;
+}
+
+function pointAt(
+    x,
+    y,
+    angle,
+    range
+) {
+    return {
+        x:
+            x +
+            Math.cos(angle) *
+            range,
+
+        y:
+            y +
+            Math.sin(angle) *
+            range
+    };
+}
+
+
+/* =========================================================
+   MATCH PRESSURE
+========================================================= */
+
+function getMatchPressure() {
+
+    return clamp(
+        1 -
+        matchTimeRemaining /
+        CONFIG.matchSeconds,
+
+        0,
+        1
+    );
+}
+
+function getPressurePhase() {
+
+    if (matchTimeRemaining > 210) {
+        return {
+            label: "Cautious",
+            color: "#7ee18c"
+        };
+    }
+
+    if (matchTimeRemaining > 120) {
+        return {
+            label: "Engaged",
+            color: "#ffe18a"
+        };
+    }
+
+    if (matchTimeRemaining > 60) {
+        return {
+            label: "Aggressive",
+            color: "#ffad55"
+        };
+    }
+
+    if (matchTimeRemaining > 30) {
+        return {
+            label: "FLIGHT MODE",
+            color: "#ff7268"
+        };
+    }
+
+    return {
+        label: "FINAL PUSH",
+        color: "#ff3b31"
+    };
+}
+
+function getBotProfile() {
+
+    const pressure =
+        getMatchPressure();
+
+    return {
+        speed:
+            lerp(
+                1.76,
+                1.96,
+                pressure
+            ),
+
+        preferredMinRange:
+            lerp(
+                112,
+                62,
+                pressure
+            ),
+
+        preferredMaxRange:
+            lerp(
+                188,
+                112,
+                pressure
+            ),
+
+        shootRange:
+            lerp(
+                385,
+                430,
+                pressure
+            ),
+
+        fireCooldownMin:
+            lerp(
+                32,
+                23,
+                pressure
+            ),
+
+        fireCooldownMax:
+            lerp(
+                48,
+                33,
+                pressure
+            ),
+
+        aimError:
+            lerp(
+                0.058,
+                0.039,
+                pressure
+            ),
+
+        thinkMin:
+            lerp(
+                22,
+                8,
+                pressure
+            ),
+
+        thinkMax:
+            lerp(
+                36,
+                15,
+                pressure
+            ),
+
+        forwardPressure:
+            lerp(
+                0.03,
+                0.66,
+                pressure
+            ),
+
+        targetCommitFrames:
+            lerp(
+                105,
+                230,
+                pressure
+            ),
+
+        vulnerableTargetBonus:
+            lerp(
+                45,
+                160,
+                pressure
+            )
+    };
+}
+
+function formatTime(seconds) {
+
+    const safeSeconds =
+        Math.max(
+            0,
+            Math.ceil(seconds)
+        );
+
+    const minutes =
+        Math.floor(
+            safeSeconds / 60
+        );
+
+    const remainder =
+        safeSeconds % 60;
+
+    return (
+        String(minutes) +
+        ":" +
+        String(remainder)
+            .padStart(2, "0")
+    );
+}
+
+
+/* =========================================================
+   COLLISION
+========================================================= */
+
+function circleRectangleCollision(
+    circleX,
+    circleY,
+    radius,
+    rectangle
+) {
+    const nearestX =
+        clamp(
+            circleX,
+            rectangle.x,
+            rectangle.x +
+            rectangle.width
+        );
+
+    const nearestY =
+        clamp(
+            circleY,
+            rectangle.y,
+            rectangle.y +
+            rectangle.height
+        );
+
+    const differenceX =
+        circleX - nearestX;
+
+    const differenceY =
+        circleY - nearestY;
+
+    return (
+        differenceX *
+        differenceX +
+
+        differenceY *
+        differenceY
+
+        <
+
+        radius *
+        radius
+    );
+}
+
+function circleRotatedRectangleCollision(
+    circleX,
+    circleY,
+    radius,
+    rectangle
+) {
+    const centerX =
+        rectangle.x +
+        rectangle.width / 2;
+
+    const centerY =
+        rectangle.y +
+        rectangle.height / 2;
+
+    const cosine =
+        Math.cos(
+            -rectangle.rotation
+        );
+
+    const sine =
+        Math.sin(
+            -rectangle.rotation
+        );
+
+    const differenceX =
+        circleX - centerX;
+
+    const differenceY =
+        circleY - centerY;
+
+    const localX =
+        differenceX * cosine -
+        differenceY * sine;
+
+    const localY =
+        differenceX * sine +
+        differenceY * cosine;
+
+    return circleRectangleCollision(
+        localX,
+        localY,
+        radius,
+        {
+            x:
+                -rectangle.width / 2,
+
+            y:
+                -rectangle.height / 2,
+
+            width:
+                rectangle.width,
+
+            height:
+                rectangle.height
+        }
+    );
+}
+
+function circleBunkerCollision(
+    circleX,
+    circleY,
+    radius,
+    bunker
+) {
+    if (
+        bunker.shape ===
+        "circle"
+    ) {
+        return (
+            Math.hypot(
+                circleX -
+                bunker.x,
+
+                circleY -
+                bunker.y
+            )
+
+            <
+
+            radius +
+            bunker.radius
+        );
+    }
+
+    return circleRotatedRectangleCollision(
+        circleX,
+        circleY,
+        radius,
+        {
+            x:
+                bunker.x -
+                bunker.width / 2,
+
+            y:
+                bunker.y -
+                bunker.height / 2,
+
+            width:
+                bunker.width,
+
+            height:
+                bunker.height,
+
+            rotation:
+                bunker.rotation
+        }
+    );
+}
+
+function pointInsideBunker(
+    x,
+    y,
+    bunker,
+    padding = 0
+) {
+    return circleBunkerCollision(
+        x,
+        y,
+        Math.max(
+            0.01,
+            padding
+        ),
+        bunker
+    );
+}
+
+function collides(
+    x,
+    y,
+    radius
+) {
+    if (
+        x - radius < 0 ||
+        y - radius < 0 ||
+        x + radius > WORLD_WIDTH ||
+        y + radius > WORLD_HEIGHT
+    ) {
+        return true;
+    }
+
+    for (
+        const bunker
+        of bunkers
+    ) {
+        if (
+            circleBunkerCollision(
+                x,
+                y,
+                radius,
+                bunker
+            )
+        ) {
+            return true;
+        }
+    }
+
+    for (
+        const obstacle
+        of obstacles
+    ) {
+        if (
+            Math.hypot(
+                x - obstacle.x,
+                y - obstacle.y
+            ) <
+            radius +
+            obstacle.radius
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/* =========================================================
+   MAP
+========================================================= */
+
+function findFreePosition(
+    radius = 20
+) {
+    for (
+        let attempt = 0;
+        attempt < 1500;
+        attempt++
+    ) {
+        const point = {
+
+            x:
+                randomRange(
+                    radius + 25,
+                    WORLD_WIDTH -
+                    radius - 25
+                ),
+
+            y:
+                randomRange(
+                    radius + 25,
+                    WORLD_HEIGHT -
+                    radius - 25
+                )
+        };
+
+        if (
+            !collides(
+                point.x,
+                point.y,
+                radius
+            )
+        ) {
+            return point;
+        }
+    }
+
+    return {
+        x: WORLD_WIDTH / 2,
+        y: WORLD_HEIGHT / 2
+    };
+}
+
+function getBunkerCollisionRadius(
+    bunker
+) {
+    if (
+        bunker.shape ===
+        "circle"
+    ) {
+        return bunker.radius;
+    }
+
+    return Math.hypot(
+        bunker.width / 2,
+        bunker.height / 2
+    );
+}
+
+function generateBunkers() {
+
+    const types = [
+        {
+            shape: "rectangle",
+            width: 142,
+            height: 54
+        },
+        {
+            shape: "rectangle",
+            width: 108,
+            height: 72
+        },
+        {
+            shape: "rectangle",
+            width: 76,
+            height: 76
+        },
+        {
+            shape: "circle",
+            radius: 48
+        },
+        {
+            shape: "circle",
+            radius: 36
+        }
+    ];
+
+    const palettes = [
+        {
+            dark: "#005bbb",
+            base: "#00a8ff",
+            light: "#79ddff"
+        },
+        {
+            dark: "#be123c",
+            base: "#ff315f",
+            light: "#ff9eb4"
+        },
+        {
+            dark: "#c96c00",
+            base: "#ff9f1c",
+            light: "#ffd166"
+        },
+        {
+            dark: "#5e17a6",
+            base: "#9747ff",
+            light: "#d3a9ff"
+        },
+        {
+            dark: "#00875a",
+            base: "#20c878",
+            light: "#8cf0ba"
+        }
+    ];
+
+    const rotations = [
+        0,
+        Math.PI / 4,
+        Math.PI / 2,
+        Math.PI * 0.75
+    ];
+
+    for (
+        let index = 0;
+        index < CONFIG.bunkers;
+        index++
+    ) {
+        for (
+            let attempt = 0;
+            attempt < 500;
+            attempt++
+        ) {
+            const type =
+                types[
+                    randomInteger(
+                        0,
+                        types.length - 1
+                    )
+                ];
+
+            const palette =
+                palettes[
+                    randomInteger(
+                        0,
+                        palettes.length - 1
+                    )
+                ];
+
+            const bunker = {
+                x:
+                    randomRange(
+                        105,
+                        895
+                    ),
+
+                y:
+                    randomRange(
+                        105,
+                        895
+                    ),
+
+                shape:
+                    type.shape,
+
+                width:
+                    type.width || 0,
+
+                height:
+                    type.height || 0,
+
+                radius:
+                    type.radius || 0,
+
+                rotation:
+                    rotations[
+                        randomInteger(
+                            0,
+                            rotations.length - 1
+                        )
+                    ],
+
+                colors:
+                    palette
+            };
+
+            const radius =
+                getBunkerCollisionRadius(
+                    bunker
+                );
+
+            const separated =
+                bunkers.every(
+                    other =>
+                        distance(
+                            bunker,
+                            other
+                        ) >
+                        radius +
+                        getBunkerCollisionRadius(
+                            other
+                        ) +
+                        55
+                );
+
+            if (separated) {
+                bunkers.push(
+                    bunker
+                );
+
+                break;
+            }
+        }
+    }
+}
+
+function createRockShape(
+    radius
+) {
+    const points = [];
+
+    const count =
+        randomInteger(
+            6,
+            8
+        );
+
+    for (
+        let index = 0;
+        index < count;
+        index++
+    ) {
+        const angle =
+            index /
+            count *
+            TAU;
+
+        points.push({
+            angle,
+
+            radius:
+                radius *
+                randomRange(
+                    0.76,
+                    0.96
+                )
+        });
+    }
+
+    return points;
+}
+
+function generateObstacles() {
+
+    for (
+        let index = 0;
+        index < CONFIG.trees;
+        index++
+    ) {
+        const radius =
+            randomRange(
+                16,
+                22
+            );
+
+        const point =
+            findFreePosition(
+                radius + 7
+            );
+
+        obstacles.push({
+            x: point.x,
+            y: point.y,
+            radius,
+            type: "tree",
+            rotation:
+                randomRange(
+                    0,
+                    TAU
+                )
+        });
+    }
+
+    for (
+        let index = 0;
+        index < CONFIG.rocks;
+        index++
+    ) {
+        const radius =
+            randomRange(
+                9,
+                15
+            );
+
+        const point =
+            findFreePosition(
+                radius + 5
+            );
+
+        obstacles.push({
+            x: point.x,
+            y: point.y,
+            radius,
+            type: "rock",
+            rotation:
+                randomRange(
+                    0,
+                    TAU
+                ),
+            shape:
+                createRockShape(
+                    radius
+                )
+        });
+    }
+}
+
+function generateHatches() {
+
+    for (
+        let index = 0;
+        index < CONFIG.hatches;
+        index++
+    ) {
+        let point = null;
+
+        for (
+            let attempt = 0;
+            attempt < 600;
+            attempt++
+        ) {
+            const candidate =
+                findFreePosition(28);
+
+            if (
+                hatches.every(
+                    hatch =>
+                        distance(
+                            candidate,
+                            hatch
+                        ) > 220
+                )
+            ) {
+                point =
+                    candidate;
+
+                break;
+            }
+        }
+
+        hatches.push(
+            point ||
+            findFreePosition(
+                28
+            )
+        );
+    }
+
+    hatches =
+        hatches.map(
+            point => ({
+                x: point.x,
+                y: point.y,
+                radius: 25
+            })
+        );
+}
+
+function generateLootBoxes() {
+
+    for (
+        const hatch
+        of hatches
+    ) {
+        let point = null;
+
+        for (
+            let attempt = 0;
+            attempt < 100;
+            attempt++
+        ) {
+            const candidate =
+                pointAt(
+                    hatch.x,
+                    hatch.y,
+                    randomRange(
+                        0,
+                        TAU
+                    ),
+                    randomRange(
+                        55,
+                        90
+                    )
+                );
+
+            if (
+                !collides(
+                    candidate.x,
+                    candidate.y,
+                    12
+                )
+            ) {
+                point =
+                    candidate;
+
+                break;
+            }
+        }
+
+        point =
+            point ||
+            findFreePosition(
+                12
+            );
+
+        lootBoxes.push({
+            x: point.x,
+            y: point.y,
+            opened: false
+        });
+    }
+
+    while (
+        lootBoxes.length <
+        CONFIG.lootBoxes
+    ) {
+        const point =
+            findFreePosition(
+                12
+            );
+
+        if (
+            lootBoxes.every(
+                box =>
+                    distance(
+                        point,
+                        box
+                    ) > 35
+            )
+        ) {
+            lootBoxes.push({
+                x: point.x,
+                y: point.y,
+                opened: false
+            });
+        }
+    }
+}
+
+
+/* =========================================================
+   ACTORS
+========================================================= */
+
+function createActor(
+    name,
+    color,
+    hatch,
+    isBot
+) {
+    const profile =
+        getBotProfile();
+
+    return {
+        name,
+        color,
+
+        x: hatch.x,
+        y: hatch.y,
+
+        radius:
+            CONFIG.actorRadius,
+
+        isBot,
+
+        alive: true,
+
+        angle: 0,
+
+        speed:
+            isBot
+                ? profile.speed
+                : 2.5,
+
+        hasBlaster: false,
+
+        ammo: 0,
+        reserve: 0,
+
+        fireCooldown: 0,
+        reloadTimer: 0,
+
+        lootTarget: null,
+        target: null,
+
+        thinkTimer: 0,
+        targetCommitTimer: 0,
+
+        strafeDirection:
+            Math.random() < 0.5
+                ? -1
+                : 1,
+
+        eliminations: 0,
+
+        navigationState:
+            "direct",
+
+        navigationDirection:
+            0,
+
+        navigationCommitTimer:
+            0,
+
+        navigationPauseTimer:
+            0,
+
+        navigationLastX:
+            hatch.x,
+
+        navigationLastY:
+            hatch.y,
+
+        navigationProgressTimer:
+            CONFIG.progressCheckFrames,
+
+        navigationStuckChecks:
+            0,
+
+        navigationPreviousDirection:
+            0,
+
+        navigationBlockedFrames:
+            0,
+
+        navigationCurrentGoal:
+            null,
+
+        navigationEscapeGoal:
+            null,
+
+        proStrafeTimer:
+            0,
+
+        proStrafeTotalFrames:
+            0,
+
+        proStrafeDirection:
+            1
+    };
+}
+
+function spawnActors() {
+
+    actors = [
+        createActor(
+            "YOU",
+            "#27b9ff",
+            hatches[0],
+            false
+        ),
+
+        createActor(
+            "BOT A",
+            "#f05454",
+            hatches[1],
+            true
+        ),
+
+        createActor(
+            "BOT B",
+            "#d65cff",
+            hatches[2],
+            true
+        ),
+
+        createActor(
+            "BOT C",
+            "#f4d44d",
+            hatches[3],
+            true
+        )
+    ];
+}
+
+function resetBotNavigation(
+    bot
+) {
+    bot.navigationState =
+        "direct";
+
+    bot.navigationDirection =
+        0;
+
+    bot.navigationCommitTimer =
+        0;
+
+    bot.navigationPauseTimer =
+        0;
+
+    bot.navigationLastX =
+        bot.x;
+
+    bot.navigationLastY =
+        bot.y;
+
+    bot.navigationProgressTimer =
+        CONFIG.progressCheckFrames;
+
+    bot.navigationStuckChecks =
+        0;
+
+    bot.navigationBlockedFrames =
+        0;
+
+    bot.navigationEscapeGoal =
+        null;
+
+    bot.navigationCurrentGoal =
+        null;
+}
+
+
+/* =========================================================
+   MOVEMENT
+========================================================= */
+
+function moveActor(
+    actor,
+    directionX,
+    directionY
+) {
+    const length =
+        Math.hypot(
+            directionX,
+            directionY
+        ) || 1;
+
+    const movementX =
+        directionX /
+        length *
+        actor.speed;
+
+    const movementY =
+        directionY /
+        length *
+        actor.speed;
+
+    const originalX =
+        actor.x;
+
+    const originalY =
+        actor.y;
+
+    actor.x += movementX;
+
+    if (
+        collides(
+            actor.x,
+            actor.y,
+            actor.radius
+        )
+    ) {
+        actor.x =
+            originalX;
+    }
+
+    actor.y += movementY;
+
+    if (
+        collides(
+            actor.x,
+            actor.y,
+            actor.radius
+        )
+    ) {
+        actor.y =
+            originalY;
+    }
+
+    const actualX =
+        actor.x -
+        originalX;
+
+    const actualY =
+        actor.y -
+        originalY;
+
+    const movementAmount =
+        Math.hypot(
+            actualX,
+            actualY
+        );
+
+    if (actor.isBot) {
+
+        if (
+            movementAmount <
+            actor.speed * 0.28
+        ) {
+            actor.navigationBlockedFrames++;
+        } else {
+            actor.navigationBlockedFrames =
+                Math.max(
+                    0,
+                    actor.navigationBlockedFrames -
+                    2
+                );
+
+            actor.navigationPreviousDirection =
+                Math.atan2(
+                    actualY,
+                    actualX
+                );
+        }
+    }
+
+    return (
+        movementAmount >
+        actor.speed * 0.12
+    );
+}
+
+
+/* =========================================================
+   LINE OF SIGHT
+========================================================= */
+
+function lineOfSightBlocked(
+    first,
+    second
+) {
+    const totalDistance =
+        distance(
+            first,
+            second
+        );
+
+    const steps =
+        Math.ceil(
+            totalDistance /
+            12
+        );
+
+    for (
+        let index = 1;
+        index < steps;
+        index++
+    ) {
+        const percentage =
+            index /
+            steps;
+
+        const x =
+            first.x +
+            (
+                second.x -
+                first.x
+            ) *
+            percentage;
+
+        const y =
+            first.y +
+            (
+                second.y -
+                first.y
+            ) *
+            percentage;
+
+        if (
+            bunkers.some(
+                bunker =>
+                    pointInsideBunker(
+                        x,
+                        y,
+                        bunker,
+                        3
+                    )
+            )
+        ) {
+            return true;
+        }
+
+        if (
+            obstacles.some(
+                obstacle =>
+                    Math.hypot(
+                        x -
+                        obstacle.x,
+
+                        y -
+                        obstacle.y
+                    ) <
+                    obstacle.radius +
+                    2
+            )
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/* =========================================================
+   LOOT / WEAPONS
+========================================================= */
+
+function claimLoot(
+    actor,
+    box
+) {
+    if (
+        !box ||
+        box.opened
+    ) {
+        return false;
+    }
+
+    box.opened = true;
+
+    if (!actor.hasBlaster) {
+
+        actor.hasBlaster =
+            true;
+
+        actor.ammo =
+            CONFIG.clipSize;
+
+        actor.reserve =
+            randomInteger(
+                6,
+                12
+            );
+
+    } else {
+
+        actor.reserve +=
+            randomInteger(
+                5,
+                10
+            );
+    }
+
+    return true;
+}
+
+function openNearbyLoot(
+    actor
+) {
+    const box =
+        lootBoxes.find(
+            item =>
+                !item.opened &&
+                distance(
+                    actor,
+                    item
+                ) < 42
+        );
+
+    claimLoot(
+        actor,
+        box
+    );
+}
+
+function shoot(actor) {
+
+    if (
+        !actor.alive ||
+        !actor.hasBlaster ||
+        actor.fireCooldown > 0 ||
+        actor.reloadTimer > 0
+    ) {
+        return;
+    }
+
+    if (
+        actor.ammo <= 0
+    ) {
+        startReload(actor);
+        return;
+    }
+
+    actor.ammo--;
+
+    if (actor.isBot) {
+
+        const profile =
+            getBotProfile();
+
+        actor.fireCooldown =
+            randomRange(
+                profile.fireCooldownMin,
+                profile.fireCooldownMax
+            );
+
+    } else {
+
+        actor.fireCooldown =
+            13;
+    }
+
+    darts.push({
+    x:
+        actor.x +
+        Math.cos(
+            actor.angle
+        ) *
+        20,
+
+    y:
+        actor.y +
+        Math.sin(
+            actor.angle
+        ) *
+        20,
+
+    velocityX:
+        Math.cos(
+            actor.angle
+        ) *
+        CONFIG.dartSpeed,
+
+    velocityY:
+        Math.sin(
+            actor.angle
+        ) *
+        CONFIG.dartSpeed,
+
+    owner:
+        actor,
+
+    /*
+        Darts fired by bots during flight
+        mode can pass over bunkers, trees,
+        and rocks.
+    */
+    ignoresObstacles:
+        actor.isBot &&
+        botFlightActive(),
+
+    lifetime:
+        CONFIG.dartLifetime
+});
+}
+
+function startReload(actor) {
+
+    if (
+        !actor.hasBlaster ||
+        actor.reloadTimer > 0 ||
+        actor.ammo >=
+            CONFIG.clipSize ||
+        actor.reserve <= 0
+    ) {
+        return;
+    }
+
+    actor.reloadTimer =
+        actor.isBot
+            ? 74
+            : 90;
+}
+
+function finishReload(
+    actor
+) {
+    const needed =
+        CONFIG.clipSize -
+        actor.ammo;
+
+    const amount =
+        Math.min(
+            needed,
+            actor.reserve
+        );
+
+    actor.ammo += amount;
+    actor.reserve -= amount;
+}
+
+
+/* =========================================================
+   PLAYER
+========================================================= */
+
+function updatePlayer() {
+
+    const player =
+        actors[0];
+
+    if (
+        !player ||
+        !player.alive
+    ) {
+        return;
+    }
+
+    let directionX = 0;
+    let directionY = 0;
+
+    if (keys.w) {
+        directionY--;
+    }
+
+    if (keys.s) {
+        directionY++;
+    }
+
+    if (keys.a) {
+        directionX--;
+    }
+
+    if (keys.d) {
+        directionX++;
+    }
+
+    if (
+        directionX !== 0 ||
+        directionY !== 0
+    ) {
+        moveActor(
+            player,
+            directionX,
+            directionY
+        );
+    }
+
+    const worldMouseX =
+        mouse.x +
+        camera.x;
+
+    const worldMouseY =
+        mouse.y +
+        camera.y;
+
+    player.angle =
+        Math.atan2(
+            worldMouseY -
+            player.y,
+
+            worldMouseX -
+            player.x
+        );
+
+    if (mouse.down) {
+        shoot(player);
+    }
+
+    if (keys.e) {
+        openNearbyLoot(
+            player
+        );
+        keys.e = false;
+    }
+
+    if (keys.r) {
+        startReload(
+            player
+        );
+        keys.r = false;
+    }
+}
+
+
+/* =========================================================
+   BOT NAVIGATION
+========================================================= */
+
+function navigationClearance(
+    actor,
+    angle,
+    maximumDistance,
+    padding = 2
+) {
+    const spacing = 14;
+
+    const samples =
+        Math.max(
+            1,
+            Math.ceil(
+                maximumDistance /
+                spacing
+            )
+        );
+
+    for (
+        let sample = 1;
+        sample <= samples;
+        sample++
+    ) {
+        const percentage =
+            sample /
+            samples;
+
+        const probeDistance =
+            maximumDistance *
+            percentage;
+
+        const probeX =
+            actor.x +
+            Math.cos(angle) *
+            probeDistance;
+
+        const probeY =
+            actor.y +
+            Math.sin(angle) *
+            probeDistance;
+
+        if (
+            collides(
+                probeX,
+                probeY,
+                actor.radius +
+                padding
+            )
+        ) {
+            return (
+                sample - 1
+            ) / samples;
+        }
+    }
+
+    return 1;
+}
+
+function smartNavigationActive() {
+
+    return (
+        matchTimeRemaining <=
+        CONFIG.smartNavigationStartSeconds
+    );
+}
+
+function angleSimilarity(
+    first,
+    second
+) {
+    return (
+        Math.cos(
+            normalizeAngle(
+                first -
+                second
+            )
+        ) +
+        1
+    ) / 2;
+}
+
+function scoreNavigationDirection(
+    actor,
+    angle,
+    goalAngle
+) {
+    const clearance =
+        navigationClearance(
+            actor,
+            angle,
+            CONFIG.smartProbeDistance,
+            4
+        );
+
+    const alignment =
+        angleSimilarity(
+            angle,
+            goalAngle
+        );
+
+    const continuity =
+        angleSimilarity(
+            angle,
+            actor.navigationPreviousDirection
+        );
+
+    const reverse =
+        angleSimilarity(
+            angle,
+            normalizeAngle(
+                actor.navigationPreviousDirection +
+                Math.PI
+            )
+        );
+
+    return (
+        clearance *
+        CONFIG.clearanceWeight +
+
+        alignment *
+        CONFIG.goalDirectionWeight +
+
+        continuity *
+        CONFIG.directionMemoryWeight -
+
+        reverse *
+        0.34
+    );
+}
+
+function chooseSmartDirection(
+    actor,
+    goal
+) {
+    const goalAngle =
+        Math.atan2(
+            goal.y -
+            actor.y,
+
+            goal.x -
+            actor.x
+        );
+
+    let bestAngle =
+        goalAngle;
+
+    let bestScore =
+        -Infinity;
+
+    for (
+        let index = 0;
+        index <
+            CONFIG.smartProbeAngles;
+        index++
+    ) {
+        const percentage =
+            index /
+            (
+                CONFIG.smartProbeAngles -
+                1
+            );
+
+        const offset =
+            -CONFIG.smartProbeArc /
+            2 +
+
+            CONFIG.smartProbeArc *
+            percentage;
+
+        const angle =
+            normalizeAngle(
+                goalAngle +
+                offset
+            );
+
+        const score =
+            scoreNavigationDirection(
+                actor,
+                angle,
+                goalAngle
+            );
+
+        if (
+            score >
+            bestScore
+        ) {
+            bestScore =
+                score;
+
+            bestAngle =
+                angle;
+        }
+    }
+
+    return bestAngle;
+}
+
+function beginSimpleRecovery(
+    actor
+) {
+    const candidates = [
+        normalizeAngle(
+            actor.angle +
+            Math.PI / 2
+        ),
+
+        normalizeAngle(
+            actor.angle -
+            Math.PI / 2
+        ),
+
+        normalizeAngle(
+            actor.angle +
+            Math.PI
+        )
+    ];
+
+    candidates.sort(
+        (first, second) =>
+            navigationClearance(
+                actor,
+                second,
+                CONFIG.recoveryProbeDistance,
+                3
+            ) -
+            navigationClearance(
+                actor,
+                first,
+                CONFIG.recoveryProbeDistance,
+                3
+            )
+    );
+
+    actor.navigationState =
+        "recover";
+
+    actor.navigationDirection =
+        candidates[0];
+
+    actor.navigationCommitTimer =
+        randomInteger(
+            20,
+            34
+        );
+
+    actor.navigationStuckChecks =
+        0;
+}
+
+function beginSmartEscape(
+    actor,
+    goal
+) {
+    const angle =
+        chooseSmartDirection(
+            actor,
+            goal
+        );
+
+    actor.navigationEscapeGoal = {
+        x:
+            clamp(
+                actor.x +
+                Math.cos(angle) *
+                105,
+
+                actor.radius,
+
+                WORLD_WIDTH -
+                actor.radius
+            ),
+
+        y:
+            clamp(
+                actor.y +
+                Math.sin(angle) *
+                105,
+
+                actor.radius,
+
+                WORLD_HEIGHT -
+                actor.radius
+            )
+    };
+
+    actor.navigationState =
+        "smartEscape";
+
+    actor.navigationDirection =
+        angle;
+
+    actor.navigationCommitTimer =
+        randomInteger(
+            CONFIG.escapeFramesMin,
+            CONFIG.escapeFramesMax
+        );
+
+    actor.navigationBlockedFrames =
+        0;
+
+    actor.navigationStuckChecks =
+        0;
+
+    actor.proStrafeTimer =
+        0;
+}
+
+function continueSmartEscape(
+    actor,
+    originalGoal
+) {
+    const escapeGoal =
+        actor.navigationEscapeGoal;
+
+    if (!escapeGoal) {
+        actor.navigationState =
+            "direct";
+        return;
+    }
+
+    const angle =
+        chooseSmartDirection(
+            actor,
+            escapeGoal
+        );
+
+    moveActor(
+        actor,
+        Math.cos(angle),
+        Math.sin(angle)
+    );
+
+    actor.angle =
+        angle;
+
+    actor.navigationCommitTimer--;
+
+    if (
+        distance(
+            actor,
+            escapeGoal
+        ) < 18 ||
+        actor.navigationCommitTimer <= 0
+    ) {
+        actor.navigationState =
+            "direct";
+
+        actor.navigationEscapeGoal =
+            null;
+
+        actor.navigationBlockedFrames =
+            0;
+    }
+}
+
+function updateNavigationProgress(
+    actor
+) {
+    actor.navigationProgressTimer--;
+
+    if (
+        actor.navigationProgressTimer >
+        0
+    ) {
+        return;
+    }
+
+    actor.navigationProgressTimer =
+        CONFIG.progressCheckFrames;
+
+    const movement =
+        Math.hypot(
+            actor.x -
+            actor.navigationLastX,
+
+            actor.y -
+            actor.navigationLastY
+        );
+
+    if (
+        movement <
+        CONFIG.minimumProgress
+    ) {
+        actor.navigationStuckChecks++;
+    } else {
+        actor.navigationStuckChecks =
+            Math.max(
+                0,
+                actor.navigationStuckChecks -
+                1
+            );
+    }
+
+    actor.navigationLastX =
+        actor.x;
+
+    actor.navigationLastY =
+        actor.y;
+
+    if (
+        actor.navigationStuckChecks >=
+        CONFIG.stuckCheckLimit
+    ) {
+        if (
+            smartNavigationActive() &&
+            actor.navigationCurrentGoal
+        ) {
+            beginSmartEscape(
+                actor,
+                actor.navigationCurrentGoal
+            );
+        } else {
+            beginSimpleRecovery(
+                actor
+            );
+        }
+    }
+}
+
+function navigateActor(
+    actor,
+    goal
+) {
+    if (!goal) {
+        return;
+    }
+
+    actor.navigationCurrentGoal =
+        goal;
+
+    updateNavigationProgress(
+        actor
+    );
+
+    if (
+        actor.navigationState ===
+        "smartEscape" &&
+        actor.navigationCommitTimer >
+        0
+    ) {
+        continueSmartEscape(
+            actor,
+            goal
+        );
+        return;
+    }
+
+    if (
+        actor.navigationState ===
+        "recover" &&
+        actor.navigationCommitTimer >
+        0
+    ) {
+        actor.navigationCommitTimer--;
+
+        moveActor(
+            actor,
+            Math.cos(
+                actor.navigationDirection
+            ),
+            Math.sin(
+                actor.navigationDirection
+            )
+        );
+
+        return;
+    }
+
+    const desiredAngle =
+        Math.atan2(
+            goal.y -
+            actor.y,
+
+            goal.x -
+            actor.x
+        );
+
+    const clearance =
+        navigationClearance(
+            actor,
+            desiredAngle,
+            CONFIG.directProbeDistance,
+            2
+        );
+
+    if (
+        clearance > 0.9
+    ) {
+        actor.navigationState =
+            "direct";
+
+        actor.angle =
+            desiredAngle;
+
+        moveActor(
+            actor,
+            Math.cos(
+                desiredAngle
+            ),
+            Math.sin(
+                desiredAngle
+            )
+        );
+
+        return;
+    }
+
+    let detourAngle;
+
+    if (
+        smartNavigationActive()
+    ) {
+        detourAngle =
+            chooseSmartDirection(
+                actor,
+                goal
+            );
+    } else {
+        const left =
+            desiredAngle +
+            0.82;
+
+        const right =
+            desiredAngle -
+            0.82;
+
+        detourAngle =
+            navigationClearance(
+                actor,
+                left,
+                CONFIG.detourProbeDistance
+            ) >
+
+            navigationClearance(
+                actor,
+                right,
+                CONFIG.detourProbeDistance
+            )
+
+            ? left
+            : right;
+    }
+
+    actor.navigationState =
+        "detour";
+
+    actor.navigationDirection =
+        detourAngle;
+
+    actor.angle =
+        detourAngle;
+
+    moveActor(
+        actor,
+        Math.cos(
+            detourAngle
+        ),
+        Math.sin(
+            detourAngle
+        )
+    );
+}
+
+
+/* =========================================================
+   BOT FLIGHT
+========================================================= */
+
+function botFlightActive() {
+    return (
+        matchTimeRemaining <=
+        CONFIG.botFlightStartSeconds
+    );
+}
+
+function moveFlyingBot(
+    bot,
+    directionX,
+    directionY
+) {
+    const length =
+        Math.hypot(
+            directionX,
+            directionY
+        ) || 1;
+
+    bot.x =
+        clamp(
+            bot.x +
+            directionX /
+            length *
+            CONFIG.botFlightSpeed,
+
+            bot.radius,
+
+            WORLD_WIDTH -
+            bot.radius
+        );
+
+    bot.y =
+        clamp(
+            bot.y +
+            directionY /
+            length *
+            CONFIG.botFlightSpeed,
+
+            bot.radius,
+
+            WORLD_HEIGHT -
+            bot.radius
+        );
+
+    bot.navigationBlockedFrames =
+        0;
+
+    bot.navigationStuckChecks =
+        0;
+}
+
+function updateFlyingBot(
+    bot,
+    target
+) {
+    if (
+        !target ||
+        !target.alive
+    ) {
+        return;
+    }
+
+    bot.navigationState =
+        "flying";
+
+    bot.navigationEscapeGoal =
+        null;
+
+    bot.proStrafeTimer =
+        0;
+
+    const angle =
+        Math.atan2(
+            target.y -
+            bot.y,
+
+            target.x -
+            bot.x
+        );
+
+    moveFlyingBot(
+        bot,
+        Math.cos(angle),
+        Math.sin(angle)
+    );
+
+    const profile =
+        getBotProfile();
+
+    /*
+        Flying bots aim directly at their
+        target with normal aim error.
+    */
+
+    bot.angle =
+        angle +
+        randomRange(
+            -profile.aimError,
+            profile.aimError
+        );
+
+    /*
+        FLIGHT-CONTACT ELIMINATION
+
+        The visible flight circle has a
+        radius of bot.radius + 5.
+
+        If that circle touches the target,
+        the flying bot immediately wins
+        the contact.
+    */
+
+    const flightContactDistance =
+        bot.radius +
+        CONFIG.botFlightContactPadding +
+        target.radius;
+
+    if (
+        distance(
+            bot,
+            target
+        ) <=
+        flightContactDistance
+    ) {
+        eliminate(
+            target,
+            bot
+        );
+
+        return;
+    }
+
+    /*
+        Flying bots no longer require
+        ground-level line of sight.
+
+        Their flight darts are marked as
+        ignoresObstacles inside shoot().
+    */
+
+    if (
+        bot.reloadTimer <= 0 &&
+        distance(
+            bot,
+            target
+        ) <
+        profile.shootRange
+    ) {
+        shoot(bot);
+    }
+
+    /*
+        Start reloading after the current
+        clip is empty.
+    */
+
+    if (
+        bot.ammo === 0
+    ) {
+        startReload(bot);
+    }
+}
+
+
+/* =========================================================
+   BOT AI
+========================================================= */
+
+function selectCombatTarget(
+    bot
+) {
+    const enemies =
+        actors.filter(
+            actor =>
+                actor !== bot &&
+                actor.alive
+        );
+
+    if (
+        enemies.length === 0
+    ) {
+        return null;
+    }
+
+    enemies.sort(
+        (first, second) =>
+            distance(
+                bot,
+                first
+            ) -
+            distance(
+                bot,
+                second
+            )
+    );
+
+    return enemies[0];
+}
+
+function selectLootTarget(
+    bot
+) {
+    const boxes =
+        lootBoxes.filter(
+            box =>
+                !box.opened
+        );
+
+    boxes.sort(
+        (first, second) =>
+            distance(
+                bot,
+                first
+            ) -
+            distance(
+                bot,
+                second
+            )
+    );
+
+    return boxes[0] ||
+        null;
+}
+
+function updateBot(bot) {
+
+    if (!bot.alive) {
+        return;
+    }
+
+    const profile =
+        getBotProfile();
+
+    bot.speed =
+        profile.speed;
+
+    /*
+        FIND BLASTER FIRST
+    */
+
+    if (!bot.hasBlaster) {
+
+        if (
+            !bot.lootTarget ||
+            bot.lootTarget.opened
+        ) {
+            bot.lootTarget =
+                selectLootTarget(
+                    bot
+                );
+        }
+
+        if (!bot.lootTarget) {
+            return;
+        }
+
+        if (
+            distance(
+                bot,
+                bot.lootTarget
+            ) < 32
+        ) {
+            claimLoot(
+                bot,
+                bot.lootTarget
+            );
+
+            bot.lootTarget =
+                null;
+
+            return;
+        }
+
+        /*
+            During the final minute,
+            bots may also fly directly
+            to loot if still unarmed.
+        */
+
+        if (
+            botFlightActive()
+        ) {
+            moveFlyingBot(
+                bot,
+
+                bot.lootTarget.x -
+                bot.x,
+
+                bot.lootTarget.y -
+                bot.y
+            );
+        } else {
+            navigateActor(
+                bot,
+                bot.lootTarget
+            );
+        }
+
+        return;
+    }
+
+    /*
+        SELECT TARGET
+    */
+
+    if (
+        !bot.target ||
+        !bot.target.alive ||
+        bot.thinkTimer <= 0
+    ) {
+        bot.target =
+            selectCombatTarget(
+                bot
+            );
+
+        bot.thinkTimer =
+            randomRange(
+                profile.thinkMin,
+                profile.thinkMax
+            );
+    }
+
+    bot.thinkTimer--;
+
+    const target =
+        bot.target;
+
+    if (!target) {
+        return;
+    }
+
+    /*
+        FINAL MINUTE
+    */
+
+    if (
+        botFlightActive()
+    ) {
+        updateFlyingBot(
+            bot,
+            target
+        );
+
+        return;
+    }
+
+    const targetDistance =
+        distance(
+            bot,
+            target
+        );
+
+    const blocked =
+        lineOfSightBlocked(
+            bot,
+            target
+        );
+
+    const aimAngle =
+        Math.atan2(
+            target.y -
+            bot.y,
+
+            target.x -
+            bot.x
+        );
+
+    bot.angle =
+        aimAngle +
+        randomRange(
+            -profile.aimError,
+            profile.aimError
+        );
+
+    if (blocked) {
+
+        navigateActor(
+            bot,
+            target
+        );
+
+    } else if (
+        targetDistance >
+        profile.preferredMaxRange
+    ) {
+
+        navigateActor(
+            bot,
+            target
+        );
+
+    } else {
+
+        /*
+            Combat strafe.
+            At two minutes the bot presses
+            forward harder.
+        */
+
+        const forwardPressure =
+            smartNavigationActive()
+                ? 0.68
+                : profile.forwardPressure;
+
+        const movementX =
+            -Math.sin(
+                aimAngle
+            ) *
+            bot.strafeDirection +
+
+            Math.cos(
+                aimAngle
+            ) *
+            forwardPressure;
+
+        const movementY =
+            Math.cos(
+                aimAngle
+            ) *
+            bot.strafeDirection +
+
+            Math.sin(
+                aimAngle
+            ) *
+            forwardPressure;
+
+        const moved =
+            moveActor(
+                bot,
+                movementX,
+                movementY
+            );
+
+        if (!moved) {
+
+            if (
+                smartNavigationActive()
+            ) {
+                beginSmartEscape(
+                    bot,
+                    target
+                );
+            } else {
+                bot.strafeDirection *=
+                    -1;
+            }
+        }
+    }
+
+    if (
+        targetDistance <
+        profile.shootRange &&
+        !blocked
+    ) {
+        shoot(bot);
+    }
+
+    if (
+        bot.ammo === 0
+    ) {
+        startReload(bot);
+    }
+}
+
+
+/* =========================================================
+   DARTS / ELIMINATION
+========================================================= */
+
+function eliminate(
+    victim,
+    attacker
+) {
+    if (!victim.alive) {
+        return;
+    }
+
+    victim.alive = false;
+
+    if (attacker) {
+        attacker.eliminations++;
+    }
+
+    const survivors =
+        actors.filter(
+            actor =>
+                actor.alive
+        );
+
+    if (
+        survivors.length === 1
+    ) {
+        gameState =
+            "ended";
+
+        gameMessage =
+            survivors[0].isBot
+                ? survivors[0].name +
+                    " WINS"
+                : "YOU WIN!";
+    }
+}
+
+function updateDarts() {
+
+    for (
+        let index =
+            darts.length - 1;
+        index >= 0;
+        index--
+    ) {
+        const dart =
+            darts[index];
+
+        dart.x +=
+            dart.velocityX;
+
+        dart.y +=
+            dart.velocityY;
+
+        dart.lifetime--;
+
+let destroyed =
+    dart.lifetime <= 0 ||
+    (
+        !dart.ignoresObstacles &&
+        collides(
+            dart.x,
+            dart.y,
+            3
+        )
+    );
+
+        if (!destroyed) {
+
+            for (
+                const actor
+                of actors
+            ) {
+                if (
+                    actor ===
+                        dart.owner ||
+                    !actor.alive
+                ) {
+                    continue;
+                }
+
+                if (
+                    Math.hypot(
+                        dart.x -
+                        actor.x,
+
+                        dart.y -
+                        actor.y
+                    ) <
+                    actor.radius +
+                    4
+                ) {
+                    eliminate(
+                        actor,
+                        dart.owner
+                    );
+
+                    destroyed =
+                        true;
+
+                    break;
+                }
+            }
+        }
+
+        if (destroyed) {
+            darts.splice(
+                index,
+                1
+            );
+        }
+    }
+}
+
+
+/* =========================================================
+   UPDATE
+========================================================= */
+
+function resolveTimeout() {
+
+    const survivors =
+        actors.filter(
+            actor =>
+                actor.alive
+        );
+
+    if (
+        survivors.length === 1
+    ) {
+        gameMessage =
+            survivors[0].isBot
+                ? survivors[0].name +
+                    " WINS"
+                : "YOU WIN!";
+    } else {
+        gameMessage =
+            "TIME EXPIRED - DRAW";
+    }
+
+    gameState =
+        "ended";
+}
+
+function update(
+    deltaSeconds
+) {
+    if (
+        gameState !==
+        "playing"
+    ) {
+        return;
+    }
+
+    matchTimeRemaining =
+        Math.max(
+            0,
+
+            matchTimeRemaining -
+            deltaSeconds
+        );
+
+    /*
+        ONE-MINUTE ANNOUNCEMENT
+    */
+
+    if (
+        botFlightActive() &&
+        !botFlightAnnounced
+    ) {
+        botFlightAnnounced =
+            true;
+
+        gameMessage =
+            "BOTS CAN NOW FLY OVER ANY OBJECT";
+
+        messageTimer =
+            CONFIG.botFlightAnnouncementFrames;
+    }
+
+    if (
+        matchTimeRemaining <= 0
+    ) {
+        resolveTimeout();
+        return;
+    }
+
+    updatePlayer();
+
+    for (
+        const bot
+        of actors.slice(1)
+    ) {
+        updateBot(bot);
+    }
+
+    for (
+        const actor
+        of actors
+    ) {
+        if (
+            actor.fireCooldown >
+            0
+        ) {
+            actor.fireCooldown--;
+        }
+
+        if (
+            actor.reloadTimer >
+            0
+        ) {
+            actor.reloadTimer--;
+
+            if (
+                actor.reloadTimer ===
+                0
+            ) {
+                finishReload(
+                    actor
+                );
+            }
+        }
+    }
+
+    updateDarts();
+
+    const player =
+        actors[0];
+
+    if (player) {
+
+        camera.x =
+            clamp(
+                player.x -
+                canvas.width / 2,
+
+                0,
+
+                WORLD_WIDTH -
+                canvas.width
+            );
+
+        camera.y =
+            clamp(
+                player.y -
+                canvas.height / 2,
+
+                0,
+
+                WORLD_HEIGHT -
+                canvas.height
+            );
+    }
+
+    if (
+        messageTimer > 0
+    ) {
+        messageTimer--;
+    }
+}
+
+
+/* =========================================================
+   FLASHLIGHT WITH WALL BLOCKING
+========================================================= */
+
+function castFlashlightRay(
+    player,
+    angle
+) {
+    let lastX =
+        player.x;
+
+    let lastY =
+        player.y;
+
+    for (
+        let range =
+            CONFIG.flashlightRayStep;
+
+        range <=
+            CONFIG.flashlightRange;
+
+        range +=
+            CONFIG.flashlightRayStep
+    ) {
+        const x =
+            player.x +
+            Math.cos(angle) *
+            range;
+
+        const y =
+            player.y +
+            Math.sin(angle) *
+            range;
+
+        if (
+            collides(
+                x,
+                y,
+                CONFIG
+                    .flashlightCollisionPadding
+            )
+        ) {
+            break;
+        }
+
+        lastX = x;
+        lastY = y;
+    }
+
+    return {
+        x:
+            lastX -
+            camera.x,
+
+        y:
+            lastY -
+            camera.y
+    };
+}
+
+function drawPlayerVision() {
+    const player = actors[0];
+
+    if (
+        !player ||
+        !player.alive ||
+        gameState === "title"
+    ) {
+        return;
+    }
+
+    const screenX =
+        player.x - camera.x;
+
+    const screenY =
+        player.y - camera.y;
+
+    const halfFov =
+        (
+            CONFIG.flashlightFovDegrees *
+            Math.PI /
+            180
+        ) / 2;
+
+    const startAngle =
+        player.angle - halfFov;
+
+    const totalAngle =
+        halfFov * 2;
+
+    /*
+        Build the visible-area polygon.
+        The polygon follows walls and obstacles.
+    */
+
+    const visionPoints = [];
+
+    for (
+        let index = 0;
+        index <= CONFIG.flashlightRayCount;
+        index++
+    ) {
+        const percentage =
+            index /
+            CONFIG.flashlightRayCount;
+
+        const rayAngle =
+            startAngle +
+            totalAngle *
+            percentage;
+
+        visionPoints.push(
+            castFlashlightRay(
+                player,
+                rayAngle
+            )
+        );
+    }
+
+    ctx.save();
+
+    /*
+        Create one path containing:
+
+        1. The entire canvas
+        2. The visible FOV inside it
+
+        Using the even-odd fill rule means
+        only the area outside the FOV is darkened.
+        No world pixels are erased.
+    */
+
+    ctx.beginPath();
+
+    ctx.rect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    ctx.moveTo(
+        screenX,
+        screenY
+    );
+
+    for (
+        const point
+        of visionPoints
+    ) {
+        ctx.lineTo(
+            point.x,
+            point.y
+        );
+    }
+
+    ctx.closePath();
+
+    ctx.fillStyle =
+        `rgba(5,10,7,${CONFIG.flashlightDarkness})`;
+
+    ctx.fill("evenodd");
+
+    ctx.restore();
+}
+
+/* =========================================================
+   DRAW WORLD
+========================================================= */
+
+function drawGrass() {
+
+    ctx.fillStyle =
+        "#3c763f";
+
+    ctx.fillRect(
+        0,
+        0,
+        WORLD_WIDTH,
+        WORLD_HEIGHT
+    );
+}
+
+function drawBunker(bunker) {
+    ctx.save();
+
+    ctx.translate(
+        bunker.x,
+        bunker.y
+    );
+
+    ctx.rotate(
+        bunker.rotation
+    );
+
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+
+    if (bunker.shape === "circle") {
+        /*
+            Ground shadow.
+        */
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.32)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            5,
+            8,
+            bunker.radius + 4,
+            bunker.radius * 0.82,
+            0,
+            0,
+            TAU
+        );
+
+        ctx.fill();
+
+        /*
+            Main circular bunker.
+        */
+
+        const gradient =
+            ctx.createRadialGradient(
+                -bunker.radius * 0.35,
+                -bunker.radius * 0.4,
+                3,
+                0,
+                0,
+                bunker.radius * 1.2
+            );
+
+        gradient.addColorStop(
+            0,
+            bunker.colors.light
+        );
+
+        gradient.addColorStop(
+            0.43,
+            bunker.colors.base
+        );
+
+        gradient.addColorStop(
+            1,
+            bunker.colors.dark
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+        ctx.strokeStyle =
+            "#14271b";
+
+        ctx.lineWidth =
+            5;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            bunker.radius,
+            0,
+            TAU
+        );
+
+        ctx.fill();
+        ctx.stroke();
+
+        /*
+            Inner panel ring.
+        */
+
+        ctx.strokeStyle =
+            "rgba(255,255,255,0.34)";
+
+        ctx.lineWidth =
+            3;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            bunker.radius * 0.7,
+            Math.PI * 1.05,
+            Math.PI * 1.85
+        );
+
+        ctx.stroke();
+
+        ctx.strokeStyle =
+            "rgba(0,0,0,0.3)";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            bunker.radius * 0.77,
+            0.12,
+            Math.PI * 0.92
+        );
+
+        ctx.stroke();
+
+       
+    } else {
+        const left =
+            -bunker.width / 2;
+
+        const top =
+            -bunker.height / 2;
+
+        /*
+            Ground shadow.
+        */
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.34)";
+
+        ctx.fillRect(
+            left + 7,
+            top + 9,
+            bunker.width,
+            bunker.height
+        );
+
+        /*
+            Main bunker gradient.
+        */
+
+        const gradient =
+            ctx.createLinearGradient(
+                0,
+                top,
+                0,
+                top + bunker.height
+            );
+
+        gradient.addColorStop(
+            0,
+            bunker.colors.light
+        );
+
+        gradient.addColorStop(
+            0.28,
+            bunker.colors.base
+        );
+
+        gradient.addColorStop(
+            1,
+            bunker.colors.dark
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+        ctx.strokeStyle =
+            "#14271b";
+
+        ctx.lineWidth =
+            5;
+
+        ctx.beginPath();
+
+        if (ctx.roundRect) {
+            ctx.roundRect(
+                left,
+                top,
+                bunker.width,
+                bunker.height,
+                8
+            );
+        } else {
+            ctx.rect(
+                left,
+                top,
+                bunker.width,
+                bunker.height
+            );
+        }
+
+        ctx.fill();
+        ctx.stroke();
+
+        /*
+            Top highlight.
+        */
+
+        ctx.strokeStyle =
+            "rgba(255,255,255,0.46)";
+
+        ctx.lineWidth =
+            3;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            left + 9,
+            top + 8
+        );
+
+        ctx.lineTo(
+            left +
+                bunker.width -
+                9,
+            top + 8
+        );
+
+        ctx.stroke();
+
+        /*
+            Bottom depth line.
+        */
+
+        ctx.strokeStyle =
+            "rgba(0,0,0,0.3)";
+
+        ctx.lineWidth =
+            4;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            left + 7,
+            top +
+                bunker.height -
+                7
+        );
+
+        ctx.lineTo(
+            left +
+                bunker.width -
+                7,
+            top +
+                bunker.height -
+                7
+        );
+
+        ctx.stroke();
+
+        /*
+            Segmented inflatable panels.
+        */
+
+        const panelCount =
+            Math.max(
+                2,
+                Math.round(
+                    bunker.width / 38
+                )
+            );
+
+        ctx.strokeStyle =
+            "rgba(0,0,0,0.22)";
+
+        ctx.lineWidth =
+            2;
+
+        for (
+            let panel = 1;
+            panel < panelCount;
+            panel++
+        ) {
+            const panelX =
+                left +
+                bunker.width *
+                panel /
+                panelCount;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                panelX,
+                top + 5
+            );
+
+            ctx.lineTo(
+                panelX,
+                top +
+                    bunker.height -
+                    5
+            );
+
+            ctx.stroke();
+        }
+
+    }
+
+    ctx.restore();
+}
+
+function drawObstacle(
+    obstacle
+) {
+    ctx.save();
+
+    ctx.translate(
+        obstacle.x,
+        obstacle.y
+    );
+
+    if (
+        obstacle.type ===
+        "tree"
+    ) {
+        ctx.fillStyle =
+            "#1c542a";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            obstacle.radius,
+            0,
+            TAU
+        );
+
+        ctx.fill();
+
+    } else {
+
+        ctx.fillStyle =
+            "#77776f";
+
+        ctx.beginPath();
+
+        for (
+            let index = 0;
+            index <
+                obstacle.shape.length;
+            index++
+        ) {
+            const point =
+                obstacle.shape[
+                    index
+                ];
+
+            const x =
+                Math.cos(
+                    point.angle
+                ) *
+                point.radius;
+
+            const y =
+                Math.sin(
+                    point.angle
+                ) *
+                point.radius;
+
+            if (
+                index === 0
+            ) {
+                ctx.moveTo(
+                    x,
+                    y
+                );
+            } else {
+                ctx.lineTo(
+                    x,
+                    y
+                );
+            }
+        }
+
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    ctx.restore();
+}
+
+function drawLootBox(box) {
+    ctx.save();
+
+    ctx.translate(
+        box.x,
+        box.y
+    );
+
+    /*
+        Ground shadow
+    */
+
+    ctx.fillStyle =
+        "rgba(0,0,0,0.28)";
+
+    ctx.fillRect(
+        -11,
+        -5,
+        24,
+        17
+    );
+
+    if (!box.opened) {
+
+        /*
+            Outer dark casing
+        */
+
+        ctx.fillStyle =
+            "#56300c";
+
+        ctx.fillRect(
+            -12,
+            -10,
+            24,
+            20
+        );
+
+        /*
+            Main orange crate
+        */
+
+        const crateGradient =
+            ctx.createLinearGradient(
+                0,
+                -8,
+                0,
+                8
+            );
+
+        crateGradient.addColorStop(
+            0,
+            "#ffc84a"
+        );
+
+        crateGradient.addColorStop(
+            0.38,
+            "#f49a20"
+        );
+
+        crateGradient.addColorStop(
+            1,
+            "#b9560c"
+        );
+
+        ctx.fillStyle =
+            crateGradient;
+
+        ctx.fillRect(
+            -10,
+            -8,
+            20,
+            16
+        );
+
+        /*
+            Top lid stripe
+        */
+
+        ctx.fillStyle =
+            "#ffcf4f";
+
+        ctx.fillRect(
+            -9,
+            -7,
+            18,
+            4
+        );
+
+        /*
+            Dark reinforcement straps
+        */
+
+        ctx.fillStyle =
+            "#50341d";
+
+        ctx.fillRect(
+            -7,
+            -8,
+            3,
+            16
+        );
+
+        ctx.fillRect(
+            4,
+            -8,
+            3,
+            16
+        );
+
+        /*
+            Center panel
+        */
+
+        ctx.fillStyle =
+            "#eb7415";
+
+        ctx.fillRect(
+            -3,
+            -5,
+            6,
+            10
+        );
+
+        /*
+            Bright latch
+        */
+
+        ctx.fillStyle =
+            "#ffe367";
+
+        ctx.fillRect(
+            -2,
+            -2,
+            4,
+            4
+        );
+
+        /*
+            Top highlight
+        */
+
+        ctx.strokeStyle =
+            "rgba(255,255,255,0.55)";
+
+        ctx.lineWidth = 1;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            -9,
+            -7
+        );
+
+        ctx.lineTo(
+            9,
+            -7
+        );
+
+        ctx.stroke();
+
+        /*
+            Strong outline
+        */
+
+        ctx.strokeStyle =
+            "#38240f";
+
+        ctx.lineWidth = 2;
+
+        ctx.strokeRect(
+            -11,
+            -9,
+            22,
+            18
+        );
+
+    } else {
+
+        /*
+            Opened / empty box
+        */
+
+        ctx.fillStyle =
+            "#332a21";
+
+        ctx.fillRect(
+            -10,
+            -5,
+            20,
+            13
+        );
+
+        /*
+            Dark empty interior
+        */
+
+        ctx.fillStyle =
+            "#161310";
+
+        ctx.fillRect(
+            -7,
+            -3,
+            14,
+            8
+        );
+
+        /*
+            Open lid
+        */
+
+        ctx.fillStyle =
+            "#7a4b1d";
+
+        ctx.fillRect(
+            -10,
+            -11,
+            20,
+            6
+        );
+
+        ctx.fillStyle =
+            "#ad671f";
+
+        ctx.fillRect(
+            -8,
+            -10,
+            16,
+            3
+        );
+
+        /*
+            Hinges
+        */
+
+        ctx.fillStyle =
+            "#30271d";
+
+        ctx.fillRect(
+            -7,
+            -7,
+            4,
+            3
+        );
+
+        ctx.fillRect(
+            3,
+            -7,
+            4,
+            3
+        );
+
+        ctx.strokeStyle =
+            "#171410";
+
+        ctx.lineWidth = 2;
+
+        ctx.strokeRect(
+            -10,
+            -5,
+            20,
+            13
+        );
+    }
+
+    ctx.restore();
+}
+
+function drawLootInteractionPrompt() {
+    const player = actors[0];
+
+    if (
+        !player ||
+        !player.alive ||
+        gameState !== "playing"
+    ) {
+        return;
+    }
+
+    /*
+        Find an unopened box within the
+        actual interaction distance.
+    */
+
+    const nearbyBox =
+        lootBoxes.find(
+            box =>
+                !box.opened &&
+                distance(
+                    player,
+                    box
+                ) < 42
+        );
+
+    if (!nearbyBox) {
+        return;
+    }
+
+    const text =
+        "Press E to interact with lootbox";
+
+    ctx.save();
+
+    ctx.font =
+        "bold 13px Arial";
+
+    ctx.textBaseline =
+        "middle";
+
+    const paddingX = 12;
+    const width =
+        ctx.measureText(text).width +
+        paddingX * 2;
+
+    const height = 28;
+
+    /*
+        Bottom-left position.
+
+        The HTML controls box sits near
+        the bottom-left, so this appears
+        directly above it.
+    */
+
+    const x = 12;
+    const y =
+        canvas.height - 58;
+
+    /*
+        45% opacity background
+    */
+
+    ctx.fillStyle =
+        "rgba(8,12,9,0.45)";
+
+    ctx.beginPath();
+
+    if (ctx.roundRect) {
+        ctx.roundRect(
+            x,
+            y - height,
+            width,
+            height,
+            7
+        );
+    } else {
+        ctx.rect(
+            x,
+            y - height,
+            width,
+            height
+        );
+    }
+
+    ctx.fill();
+
+    /*
+        Subtle border
+    */
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.25)";
+
+    ctx.lineWidth = 1;
+
+    ctx.stroke();
+
+      /*
+        Interaction message
+    */
+
+    ctx.fillStyle =
+        "rgba(255,255,255,0.95)";
+
+    ctx.textAlign =
+        "left";
+
+    ctx.fillText(
+        "Press ",
+        x + paddingX,
+        y - height / 2
+    );
+
+    const pressWidth =
+        ctx.measureText("Press ").width;
+
+    ctx.fillStyle =
+        "#ffb347";
+
+    ctx.fillText(
+        "E",
+        x + paddingX + pressWidth,
+        y - height / 2
+    );
+
+    const eWidth =
+        ctx.measureText("E").width;
+
+    ctx.fillStyle =
+        "rgba(255,255,255,0.95)";
+
+    ctx.fillText(
+        " to interact with lootbox",
+        x + paddingX + pressWidth + eWidth,
+        y - height / 2
+    );
+
+    ctx.restore();
+}
+
+function isActorVisibleToPlayer(actor) {
+    const player = actors[0];
+
+    if (!player) {
+        return true;
+    }
+
+    /*
+        Player is always rendered.
+    */
+
+    if (actor === player) {
+        return true;
+    }
+
+    /*
+        SPECTATOR MODE
+
+        Once the player is eliminated,
+        stop applying flashlight/FOV
+        restrictions to the bots.
+
+        This lets the player watch the
+        remaining battle.
+    */
+
+    if (!player.alive) {
+        return true;
+    }
+
+    /*
+        Only bots need FOV restrictions.
+    */
+
+    if (!actor.isBot) {
+        return true;
+    }
+
+    const dx =
+        actor.x - player.x;
+
+    const dy =
+        actor.y - player.y;
+
+    const actorDistance =
+        Math.hypot(
+            dx,
+            dy
+        );
+
+    /*
+        Outside vision range.
+    */
+
+    if (
+        actorDistance >
+        CONFIG.flashlightRange
+    ) {
+        return false;
+    }
+
+    /*
+        Check viewing angle.
+    */
+
+    const angleToBot =
+        Math.atan2(
+            dy,
+            dx
+        );
+
+    const angleDifference =
+        Math.abs(
+            normalizeAngle(
+                angleToBot -
+                player.angle
+            )
+        );
+
+    const halfFov =
+        (
+            CONFIG.flashlightFovDegrees *
+            Math.PI /
+            180
+        ) / 2;
+
+    if (
+        angleDifference >
+        halfFov
+    ) {
+        return false;
+    }
+
+    /*
+        Bunkers, trees and rocks
+        still block sight.
+    */
+
+    if (
+        lineOfSightBlocked(
+            player,
+            actor
+        )
+    ) {
+        return false;
+    }
+
+    return true;
+}
+
+function drawActor(actor) {
+
+    ctx.save();
+
+    ctx.globalAlpha =
+        actor.alive
+            ? 1
+            : 0.25;
+
+    ctx.translate(
+        actor.x,
+        actor.y
+    );
+
+    /*
+        Flying bots get a small outer
+        glow during final minute.
+    */
+
+    if (
+        actor.isBot &&
+        actor.alive &&
+        botFlightActive()
+    ) {
+        ctx.strokeStyle =
+            "rgba(255,255,255,0.75)";
+
+        ctx.lineWidth =
+            3;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            actor.radius + 5,
+            0,
+            TAU
+        );
+
+        ctx.stroke();
+    }
+
+    ctx.rotate(
+        actor.angle
+    );
+
+    ctx.fillStyle =
+        actor.color;
+
+    ctx.strokeStyle =
+        "#102018";
+
+    ctx.lineWidth =
+        3;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        actor.radius,
+        0,
+        TAU
+    );
+
+    ctx.fill();
+    ctx.stroke();
+
+    if (
+        actor.hasBlaster
+    ) {
+        ctx.fillStyle =
+            "#18242a";
+
+        ctx.fillRect(
+            2,
+            -4,
+            20,
+            8
+        );
+
+        ctx.fillStyle =
+            "#ff7a00";
+
+        ctx.fillRect(
+            17,
+            -2,
+            8,
+            4
+        );
+    }
+
+    ctx.restore();
+
+    ctx.fillStyle =
+        "#ffffff";
+
+    ctx.font =
+        "bold 10px Arial";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.fillText(
+        actor.alive
+            ? actor.name
+            : "OUT",
+
+        actor.x,
+        actor.y - 22
+    );
+
+    ctx.textAlign =
+        "left";
+}
+
+function drawDart(dart) {
+    const angle =
+        Math.atan2(
+            dart.velocityY,
+            dart.velocityX
+        );
+
+    ctx.save();
+
+    ctx.translate(
+        dart.x,
+        dart.y
+    );
+
+    ctx.rotate(angle);
+
+    /*
+        Blue foam body.
+
+        Front and back remain flat.
+        Only the long sides have a
+        slight outward curve.
+    */
+
+    ctx.fillStyle =
+        "#2796e8";
+
+    ctx.beginPath();
+
+    ctx.moveTo(-8, -2);
+
+    /*
+        Top curved side
+    */
+
+    ctx.quadraticCurveTo(
+        -1.5,
+        -3.2,
+        5,
+        -2
+    );
+
+    /*
+        Flat front
+    */
+
+    ctx.lineTo(
+        5,
+        2
+    );
+
+    /*
+        Bottom curved side
+    */
+
+    ctx.quadraticCurveTo(
+        -1.5,
+        3.2,
+        -8,
+        2
+    );
+
+    /*
+        Flat back
+    */
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    /*
+        Simple orange tip.
+
+        Flat where it connects to the
+        blue body with a slightly curved
+        outer surface.
+    */
+
+    ctx.fillStyle =
+        "#ff7a00";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        5,
+        -2.5
+    );
+
+    ctx.lineTo(
+        7,
+        -2.5
+    );
+
+    ctx.quadraticCurveTo(
+        9,
+        0,
+        7,
+        2.5
+    );
+
+    ctx.lineTo(
+        5,
+        2.5
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawWorld() {
+    ctx.save();
+
+    ctx.translate(
+        -camera.x,
+        -camera.y
+    );
+
+    drawGrass();
+
+    for (const bunker of bunkers) {
+        drawBunker(bunker);
+    }
+
+for (const box of lootBoxes) {
+    drawLootBox(box);
+}
+
+    for (const obstacle of obstacles) {
+        drawObstacle(obstacle);
+    }
+
+    /*
+        Darts are intentionally not drawn
+        here. They are drawn after the
+        flashlight overlay.
+    */
+
+for (const actor of actors) {
+    if (
+        isActorVisibleToPlayer(
+            actor
+        )
+    ) {
+        drawActor(actor);
+    }
+}
+
+    ctx.restore();
+}
+
+function drawVisibleDarts() {
+    ctx.save();
+
+    ctx.translate(
+        -camera.x,
+        -camera.y
+    );
+
+    for (const dart of darts) {
+        drawDart(dart);
+    }
+
+    ctx.restore();
+}
+
+function draw() {
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    drawWorld();
+    drawPlayerVision();
+    drawVisibleDarts();
+
+    /*
+        Screen-level interaction prompt
+    */
+
+    drawLootInteractionPrompt();
+
+    drawHUD();
+}
+
+/* =========================================================
+   HUD
+========================================================= */
+
+function drawTimer() {
+
+    const phase =
+        getPressurePhase();
+
+    ctx.fillStyle =
+        `rgba(7,16,11,${hudOpacity})`;
+
+    ctx.fillRect(
+        canvas.width / 2 -
+        110,
+        14,
+        220,
+        66
+    );
+
+    ctx.strokeStyle =
+        phase.color;
+
+    ctx.lineWidth =
+        2;
+
+    ctx.strokeRect(
+        canvas.width / 2 -
+        110,
+        14,
+        220,
+        66
+    );
+
+    ctx.textAlign =
+        "center";
+
+    ctx.fillStyle =
+        phase.color;
+
+    ctx.font =
+        "bold 30px Arial";
+
+    ctx.fillText(
+        formatTime(
+            matchTimeRemaining
+        ),
+        canvas.width / 2,
+        45
+    );
+
+    ctx.font =
+        "bold 12px Arial";
+
+    ctx.fillText(
+        botFlightActive()
+            ? "BOTS: FLYING"
+            : "BOT PRESSURE: " +
+                phase.label,
+
+        canvas.width / 2,
+        66
+    );
+
+    ctx.textAlign =
+        "left";
+}
+
+function drawHUD() {
+
+    if (
+        actors.length === 0
+    ) {
+        return;
+    }
+
+    drawTimer();
+
+    const player =
+        actors[0];
+
+    const alive =
+        actors.filter(
+            actor =>
+                actor.alive
+        ).length;
+
+    /*
+        TOP-LEFT HUD PANEL
+    */
+
+    ctx.fillStyle =
+        `rgba(7,16,11,${hudOpacity})`;
+
+    ctx.fillRect(
+        14,
+        14,
+        275,
+        132
+    );
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.2)";
+
+    ctx.lineWidth = 1;
+
+    ctx.strokeRect(
+        14,
+        14,
+        275,
+        132
+    );
+
+    /*
+        ALIVE COUNT
+    */
+
+    ctx.fillStyle =
+        "#ffffff";
+
+    ctx.font =
+        "bold 19px Arial";
+
+    ctx.fillText(
+        "Alive: " +
+        alive +
+        " / " +
+        CONFIG.totalPlayers,
+
+        28,
+        43
+    );
+
+    /*
+        WEAPON / RELOAD STATUS
+    */
+
+    ctx.font =
+        "bold 15px Arial";
+
+    if (!player.hasBlaster) {
+
+        ctx.fillStyle =
+            "#ff9a25";
+
+        ctx.fillText(
+            "UNARMED - FIND LOOT",
+            28,
+            70
+        );
+
+    } else if (
+        player.reloadTimer > 0
+    ) {
+
+        /*
+            Yellow RELOADING text
+        */
+
+        ctx.fillStyle =
+            "#ffe26f";
+
+        ctx.fillText(
+            "Reloading",
+            28,
+            70
+        );
+
+        /*
+            Player reload begins at
+            90 frames and counts
+            downward to zero.
+        */
+
+        const reloadDuration = 90;
+
+        const reloadProgress =
+            clamp(
+                1 -
+                player.reloadTimer /
+                reloadDuration,
+
+                0,
+                1
+            );
+
+        /*
+            Progress bar.
+
+            Positioned on the same line
+            as "Reloading".
+        */
+
+        const barX = 113;
+        const barY = 60;
+        const barWidth = 145;
+        const barHeight = 10;
+
+        /*
+            Yellow bar outline
+        */
+
+        ctx.strokeStyle =
+            "#ffe26f";
+
+        ctx.lineWidth = 2;
+
+        ctx.strokeRect(
+            barX,
+            barY,
+            barWidth,
+            barHeight
+        );
+
+        /*
+            Yellow progress fill
+        */
+
+        ctx.fillStyle =
+            "#ffe26f";
+
+        ctx.fillRect(
+            barX + 2,
+            barY + 2,
+
+            (
+                barWidth - 4
+            ) *
+            reloadProgress,
+
+            barHeight - 4
+        );
+
+    } else {
+
+        /*
+            NORMAL AMMO DISPLAY
+        */
+
+        ctx.fillStyle =
+            "#ff9a25";
+
+        ctx.fillText(
+            "Darts: " +
+            player.ammo +
+            " / " +
+            player.reserve,
+
+            28,
+            70
+        );
+    }
+
+    /*
+        ELIMINATIONS
+    */
+
+    ctx.fillStyle =
+        "#d2dfd7";
+
+    ctx.font =
+        "bold 15px Arial";
+
+    ctx.fillText(
+        "Eliminations: " +
+        player.eliminations,
+
+        28,
+        96
+    );
+
+    /*
+        BOT PRESSURE / FLIGHT WARNING
+    */
+
+    if (
+        botFlightActive()
+    ) {
+        ctx.fillStyle =
+            "#ff6259";
+
+        ctx.fillText(
+            "WARNING: BOTS CAN FLY",
+            28,
+            122
+        );
+
+    } else {
+
+        ctx.fillStyle =
+            getPressurePhase().color;
+
+        ctx.fillText(
+            "Bot Pressure: " +
+            getPressurePhase().label,
+
+            28,
+            122
+        );
+    }
+
+    /*
+        CENTER ANNOUNCEMENT
+    */
+
+    if (
+        messageTimer > 0
+    ) {
+        ctx.textAlign =
+            "center";
+
+        ctx.font =
+            "bold 24px Arial";
+
+        ctx.fillStyle =
+            botFlightActive()
+                ? "#ff5147"
+                : "#ffd36b";
+
+        ctx.fillText(
+            gameMessage,
+            canvas.width / 2,
+            115
+        );
+
+        ctx.textAlign =
+            "left";
+    }
+
+    /*
+        PLAYER ELIMINATED MESSAGE
+    */
+
+    if (
+        !player.alive &&
+        gameState === "playing"
+    ) {
+        ctx.textAlign =
+            "center";
+
+        ctx.font =
+            "bold 27px Arial";
+
+        ctx.fillStyle =
+            "#ff867b";
+
+        ctx.fillText(
+            "YOU ARE OUT - BOTS STILL FIGHTING",
+            canvas.width / 2,
+            155
+        );
+
+        ctx.textAlign =
+            "left";
+    }
+
+    /*
+        MATCH ENDED OVERLAY
+    */
+
+    if (
+        gameState === "ended"
+    ) {
+        ctx.fillStyle =
+            "rgba(7,16,9,0.78)";
+
+        ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        ctx.textAlign =
+            "center";
+
+        ctx.font =
+            "bold 45px Arial";
+
+        ctx.fillStyle =
+            gameMessage.includes(
+                "YOU WIN"
+            )
+                ? "#66f58a"
+                : "#ff7a6e";
+
+        ctx.fillText(
+            gameMessage,
+            canvas.width / 2,
+            canvas.height / 2
+        );
+
+        ctx.textAlign =
+            "left";
+    }
+}
+
+/* =========================================================
+   GENERATE MAP
+========================================================= */
+
+function generateMap() {
+
+    mapSeed =
+        Math.floor(
+            Math.random() *
+            999999
+        );
+
+    bunkers = [];
+    obstacles = [];
+    lootBoxes = [];
+    hatches = [];
+    actors = [];
+    darts = [];
+
+    /*
+        ORDER IS IMPORTANT.
+
+        Bunkers first because remaining
+        objects check collisions against
+        existing geometry.
+    */
+
+    generateBunkers();
+    generateObstacles();
+    generateHatches();
+    generateLootBoxes();
+
+    spawnActors();
+
+    matchTimeRemaining =
+        CONFIG.matchSeconds;
+
+    previousFrameTime =
+        performance.now();
+
+    botFlightAnnounced =
+        false;
+
+    gameMessage = "";
+    messageTimer = 0;
+
+    gameState =
+        "playing";
+}
+
+
+/* =========================================================
+   GAME LOOP
+========================================================= */
+
+function gameLoop(
+    currentTime
+) {
+    requestAnimationFrame(
+        gameLoop
+    );
+
+    const deltaSeconds =
+        Math.min(
+            0.05,
+
+            Math.max(
+                0,
+                (
+                    currentTime -
+                    previousFrameTime
+                ) /
+                1000
+            )
+        );
+
+    previousFrameTime =
+        currentTime;
+
+    try {
+
+        update(
+            deltaSeconds
+        );
+
+        draw();
+
+    } catch (error) {
+
+        console.error(
+            "Nerf Battleground frame error:",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+function updateMousePosition(
+    event
+) {
+    const rectangle =
+        canvas.getBoundingClientRect();
+
+    mouse.x =
+        (
+            event.clientX -
+            rectangle.left
+        ) *
+        canvas.width /
+        rectangle.width;
+
+    mouse.y =
+        (
+            event.clientY -
+            rectangle.top
+        ) *
+        canvas.height /
+        rectangle.height;
+}
+
+window.addEventListener(
+    "keydown",
+    event => {
+
+        const key =
+            event.key.toLowerCase();
+
+        keys[key] =
+            true;
+
+        if (
+            [
+                "w",
+                "a",
+                "s",
+                "d",
+                "e",
+                "r"
+            ].includes(
+                key
+            )
+        ) {
+            event.preventDefault();
+        }
+    }
+);
+
+window.addEventListener(
+    "keyup",
+    event => {
+
+        keys[
+            event.key.toLowerCase()
+        ] = false;
+    }
+);
+
+canvas.addEventListener(
+    "mousemove",
+    updateMousePosition
+);
+
+canvas.addEventListener(
+    "mousedown",
+    event => {
+
+        updateMousePosition(
+            event
+        );
+
+        mouse.down =
+            true;
+    }
+);
+
+window.addEventListener(
+    "mouseup",
+    () => {
+
+        mouse.down =
+            false;
+    }
+);
+
+window.addEventListener(
+    "blur",
+    () => {
+
+        mouse.down =
+            false;
+
+        for (
+            const key
+            in keys
+        ) {
+            keys[key] =
+                false;
+        }
+    }
+);
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+const hudOpacitySlider =
+    document.getElementById(
+        "hudOpacitySlider"
+    );
+
+const hudOpacityValue =
+    document.getElementById(
+        "hudOpacityValue"
+    );
+
+hudOpacitySlider.addEventListener(
+    "input",
+    () => {
+
+        hudOpacity =
+            Number(
+                hudOpacitySlider.value
+            );
+
+        hudOpacityValue.textContent =
+            Math.round(
+                hudOpacity *
+                100
+            ) +
+            "%";
+    }
+);
+
+document
+    .getElementById(
+        "startButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            document
+                .getElementById(
+                    "start"
+                )
+                .classList
+                .add(
+                    "hidden"
+                );
+
+            generateMap();
+        }
+    );
+
+document
+    .getElementById(
+        "newMapButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            generateMap();
+        }
+    );
+
+document
+    .getElementById(
+        "restartButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            spawnActors();
+
+            darts = [];
+
+            for (
+                const box
+                of lootBoxes
+            ) {
+                box.opened =
+                    false;
+            }
+
+            matchTimeRemaining =
+                CONFIG.matchSeconds;
+
+            previousFrameTime =
+                performance.now();
+
+            botFlightAnnounced =
+                false;
+
+            gameState =
+                "playing";
+
+            gameMessage =
+                "";
+
+            messageTimer =
+                0;
+        }
+    );
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+generateMap();
+
+gameState =
+    "title";
+
+previousFrameTime =
+    performance.now();
+
+requestAnimationFrame(
+    gameLoop
+);
+
+</script>
+
+</body>
+</html>
