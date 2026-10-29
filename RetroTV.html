@@ -1,1558 +1,1918 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Retro Twitch Projection TV</title>
+<title>Retro Twitch Projection TV</title>
 
-  <style>
-    :root {
-      --twitch-purple: #9147ff;
-      --display-green: #6dffae;
-    }
+<style>
+:root {
+    --twitch-purple: #9147ff;
+    --display-green: #6dffae;
+}
 
-    * {
-      box-sizing: border-box;
-    }
+* {
+    box-sizing: border-box;
+}
 
-    html,
-    body {
-      margin: 0;
-      min-height: 100%;
-    }
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
 
-    body {
-      min-height: 100vh;
-
-      color: #eee;
-
-      font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-      background:
+body {
+    min-height: 100vh;
+    color: #eee;
+    font-family: Arial, Helvetica, sans-serif;
+    background:
         radial-gradient(
-          circle at 50% 20%,
-          #756650 0%,
-          #554837 27%,
-          #30281f 57%,
-          #17130f 100%
+            circle at 50% 20%,
+            #756650 0%,
+            #554837 27%,
+            #30281f 57%,
+            #17130f 100%
         );
-    }
+}
 
+/* =========================================================
+   ROOM
+========================================================= */
 
-    /* =========================================================
-       ROOM
-       ========================================================= */
+.room {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 55px 25px 80px;
+    overflow-x: auto;
+}
 
-    .room {
-      position: relative;
-
-      min-height: 100vh;
-
-      display: flex;
-
-      justify-content: center;
-      align-items: center;
-
-      padding:
-        55px
-        25px
-        80px;
-
-      overflow-x: auto;
-    }
-
-
-    .wall-texture {
-      position: absolute;
-
-      inset: 0;
-
-      pointer-events: none;
-
-      background:
+.wall-texture {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
         repeating-linear-gradient(
-          90deg,
-          rgba(255,255,255,.012) 0,
-          rgba(255,255,255,.012) 2px,
-          transparent 2px,
-          transparent 115px
+            90deg,
+            rgba(255, 255, 255, 0.012) 0,
+            rgba(255, 255, 255, 0.012) 2px,
+            transparent 2px,
+            transparent 115px
         );
-    }
+}
 
+/* =========================================================
+   TV
+========================================================= */
 
-    /* =========================================================
-       TV
-       ========================================================= */
-
-    .tv {
-      position: relative;
-
-      z-index: 5;
-
-      width:
-        min(1520px, 96vw);
-
-      padding:
-        25px
-        34px
-        29px;
-
-      border:
-        4px solid #050505;
-
-      border-radius:
-        19px 19px 8px 8px;
-
-      background:
+.tv {
+    position: relative;
+    z-index: 5;
+    width: min(1520px, 96vw);
+    padding: 25px 34px 29px;
+    border: 4px solid #050505;
+    border-radius: 19px 19px 8px 8px;
+    background:
         linear-gradient(
-          145deg,
-          #454545 0%,
-          #181818 17%,
-          #303030 52%,
-          #141414 82%,
-          #080808 100%
+            145deg,
+            #454545 0%,
+            #181818 17%,
+            #303030 52%,
+            #141414 82%,
+            #080808 100%
         );
+    box-shadow:
+        0 42px 55px rgba(0, 0, 0, 0.72),
+        inset 3px 3px 4px rgba(255, 255, 255, 0.12),
+        inset -5px -5px 15px rgba(0, 0, 0, 0.85);
+}
 
-      box-shadow:
-        0 42px 55px rgba(0,0,0,.72),
-        inset 3px 3px 4px rgba(255,255,255,.12),
-        inset -5px -5px 15px rgba(0,0,0,.85);
-    }
+/*
+Deep bottom edge gives the cabinet
+some old rear-projection TV bulk.
+*/
 
-
-    /*
-      Deep bottom edge gives the cabinet
-      some old rear-projection TV bulk.
-    */
-
-    .tv::after {
-      content: "";
-
-      position: absolute;
-
-      z-index: -1;
-
-      left: 55px;
-      right: 55px;
-
-      bottom: -32px;
-
-      height: 35px;
-
-      border-radius:
-        0 0 9px 9px;
-
-      background:
+.tv::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 55px;
+    right: 55px;
+    bottom: -32px;
+    height: 35px;
+    border-radius: 0 0 9px 9px;
+    background:
         linear-gradient(
-          #171717,
-          #050505
+            #171717,
+            #050505
         );
+    box-shadow:
+        0 14px 19px rgba(0, 0, 0, 0.55);
+}
 
-      box-shadow:
-        0 14px 19px rgba(0,0,0,.55);
-    }
+/* =========================================================
+   TV HEADER
+========================================================= */
 
-
-    /* =========================================================
-       TV HEADER
-       ========================================================= */
-
-    .tv-header {
-      height: 55px;
-
-      display: flex;
-
-      justify-content:
-        space-between;
-
-      align-items:
-        center;
-
-      padding:
-        0 18px;
-
-      border:
-        1px solid #030303;
-
-      border-radius:
-        7px;
-
-      background:
+.tv-header {
+    height: 55px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 18px;
+    border: 1px solid #030303;
+    border-radius: 7px;
+    background:
         linear-gradient(
-          #303030,
-          #0f0f0f
+            #303030,
+            #0f0f0f
         );
+    box-shadow:
+        inset 0 1px rgba(255, 255, 255, 0.10);
+}
 
-      box-shadow:
-        inset 0 1px rgba(255,255,255,.10);
-    }
+.brand {
+    color: var(--twitch-purple);
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 900;
+    letter-spacing: 5px;
+    text-shadow:
+        0 0 9px rgba(145, 71, 255, 0.55);
+}
 
+.model {
+    color: #9c9c9c;
+    font-size: 10px;
+    letter-spacing: 2px;
+}
 
-    .brand {
-      color:
-        var(--twitch-purple);
+/* =========================================================
+   SCREEN CABINET
+========================================================= */
 
-      font-size:
-        clamp(24px, 3vw, 34px);
-
-      font-weight:
-        900;
-
-      letter-spacing:
-        5px;
-
-      text-shadow:
-        0 0 9px rgba(145,71,255,.55);
-    }
-
-
-    .model {
-      color:
-        #9c9c9c;
-
-      font-size:
-        10px;
-
-      letter-spacing:
-        2px;
-    }
-
-
-    /* =========================================================
-       SCREEN CABINET
-       ========================================================= */
-
-    .screen-bezel {
-      margin-top:
-        20px;
-
-      padding:
-        28px 30px 16px;
-
-      border:
-        4px solid #030303;
-
-      border-radius:
-        24px 24px 16px 16px;
-
-      background:
+.screen-bezel {
+    margin-top: 20px;
+    padding: 28px 30px 13px;
+    border: 4px solid #030303;
+    border-radius: 24px 24px 16px 16px;
+    background:
         linear-gradient(
-          145deg,
-          #030303,
-          #262626 48%,
-          #070707
+            145deg,
+            #030303,
+            #262626 48%,
+            #070707
         );
-
-      box-shadow:
+    box-shadow:
         inset 0 0 22px #000,
-        inset 3px 3px 5px rgba(255,255,255,.07),
-        0 7px 16px rgba(0,0,0,.80);
-    }
+        inset 3px 3px 5px rgba(255, 255, 255, 0.07),
+        0 7px 16px rgba(0, 0, 0, 0.80);
+}
 
+/*
+1280 × 720 TARGET.
 
-    /*
-      1280 × 720 TARGET.
+The player can shrink responsively,
+but always remains 16:9.
+*/
 
-      The player can shrink responsively,
-      but always remains 16:9.
-    */
-
-    .screen {
-      position: relative;
-
-      width:
-        1280px;
-
-      max-width:
-        100%;
-
-      aspect-ratio:
-        16 / 9;
-
-      margin:
-        0 auto;
-
-      overflow:
-        hidden;
-
-      border:
-        4px solid #020202;
-
-      border-radius:
-        9px;
-
-      background:
-        #000;
-
-      box-shadow:
-        0 0 30px rgba(100,60,150,.18),
+.screen {
+    position: relative;
+    width: 1280px;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 4px solid #020202;
+    border-radius: 9px;
+    background: #000;
+    box-shadow:
+        0 0 30px rgba(100, 60, 150, 0.18),
         inset 0 0 22px #000;
-    }
+}
 
+/*
+Twitch inserts its own iframe
+inside this element.
+*/
 
-    /*
-      Twitch inserts its own iframe
-      inside this element.
-    */
+#twitch-embed {
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
 
-    #twitch-embed {
-      width:
-        100%;
+/*
+Force Twitch-generated iframe to
+exactly fill our 16:9 projection screen.
+*/
 
-      height:
-        100%;
+#twitch-embed iframe {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    border: 0;
+}
 
-      background:
-        #000;
-    }
+/* =========================================================
+   STANDBY
+========================================================= */
 
-
-    /*
-      Force Twitch-generated iframe to
-      exactly fill our 16:9 projection screen.
-    */
-
-    #twitch-embed iframe {
-      display:
-        block;
-
-      width:
-        100% !important;
-
-      height:
-        100% !important;
-
-      border:
-        0;
-    }
-
-
-    /* =========================================================
-       STANDBY
-       ========================================================= */
-
-    .standby {
-      position:
-        absolute;
-
-      inset:
-        0;
-
-      z-index:
-        10;
-
-      display:
-        none;
-
-      justify-content:
-        center;
-
-      align-items:
-        center;
-
-      color:
-        #535353;
-
-      font-family:
-        "Courier New",
-        monospace;
-
-      font-size:
-        clamp(16px, 2vw, 27px);
-
-      letter-spacing:
-        7px;
-
-      background:
+.standby {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    color: #535353;
+    font-family: "Courier New", monospace;
+    font-size: clamp(16px, 2vw, 27px);
+    letter-spacing: 7px;
+    background:
         radial-gradient(
-          ellipse at center,
-          #1c1c1c,
-          #030303 72%,
-          #000
+            ellipse at center,
+            #1c1c1c,
+            #030303 72%,
+            #000
         );
+    user-select: none;
+}
 
-      user-select:
-        none;
+.standby.visible {
+    display: flex;
+}
+
+/* =========================================================
+   DVD SCREENSAVER OVERLAY
+========================================================= */
+
+.dvd-screen {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: none;
+    overflow: hidden;
+    background:
+        radial-gradient(
+            ellipse at center,
+            #090909 0%,
+            #030303 62%,
+            #000 100%
+        );
+    box-shadow:
+        inset 0 0 38px rgba(0, 0, 0, 0.95);
+    cursor: none;
+    user-select: none;
+}
+
+/*
+The visible class is controlled by JavaScript.
+*/
+
+.dvd-screen.visible {
+    display: block;
+}
+
+/*
+Subtle CRT scanlines over the DVD screen.
+*/
+
+.dvd-screen::after {
+    content: "";
+    position: absolute;
+    z-index: 5;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.19;
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 2px,
+            rgba(255, 255, 255, 0.035) 2px,
+            rgba(255, 255, 255, 0.035) 3px
+        );
+}
+
+/*
+The full DVD logo assembly moves as one object.
+Its size is responsive so it remains appropriate
+when the television shrinks.
+*/
+
+.dvd-logo {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    top: 0;
+    width: clamp(78px, 12vw, 156px);
+    height: clamp(48px, 7.5vw, 96px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: rgb(0, 255, 255);
+    filter:
+        drop-shadow(0 0 5px currentColor)
+        drop-shadow(0 0 12px currentColor);
+    will-change: transform;
+}
+
+/*
+Large stylized DVD lettering.
+*/
+
+.dvd-word {
+    position: relative;
+    line-height: 0.72;
+    font-family: Arial Black, Impact, Arial, sans-serif;
+    font-size: clamp(35px, 6vw, 74px);
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: -6px;
+    transform: scaleX(1.18);
+}
+
+/*
+Small disc-shaped underline beneath DVD.
+*/
+
+.dvd-word::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -11px;
+    width: 92%;
+    height: 9px;
+    border: 4px solid currentColor;
+    border-top-width: 2px;
+    border-radius: 50%;
+    transform: translateX(-50%) skewX(-13deg);
+}
+
+/*
+VIDEO lettering beneath the main DVD mark.
+*/
+
+.dvd-video {
+    margin-top: 14px;
+    padding-left: 4px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(8px, 1.1vw, 14px);
+    font-weight: 900;
+    letter-spacing: clamp(4px, 0.7vw, 9px);
+}
+
+/*
+Brief effect used only when the logo genuinely
+hits two edges within the corner-detection window.
+*/
+
+.dvd-logo.corner-hit {
+    animation:
+        cornerFlash 0.65s ease-out;
+}
+
+@keyframes cornerFlash {
+    0% {
+        color: #fff;
+        filter:
+            drop-shadow(0 0 8px #fff)
+            drop-shadow(0 0 20px #fff)
+            drop-shadow(0 0 38px #fff);
+        transform: scale(1);
     }
 
-
-    .standby.visible {
-      display:
-        flex;
+    35% {
+        color: #fff;
+        filter:
+            drop-shadow(0 0 14px #fff)
+            drop-shadow(0 0 30px #fff)
+            drop-shadow(0 0 55px #fff);
+        transform: scale(1.12);
     }
 
-
-    .screen-label {
-      margin-top:
-        11px;
-
-      text-align:
-        center;
-
-      color:
-        #747474;
-
-      font-size:
-        9px;
-
-      letter-spacing:
-        4px;
+    100% {
+        transform: scale(1);
     }
+}
 
+/* =========================================================
+   SCREEN LABEL AND DVD BEZEL BUTTON
+========================================================= */
 
-    /* =========================================================
-       LOWER TV
-       ========================================================= */
+/*
+This row occupies the lower part of the screen bezel.
+The center label stays centered while the DVD button
+sits on the lower-right side.
+*/
 
-    .lower-tv {
-      display:
-        grid;
+.screen-info {
+    position: relative;
+    min-height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 7px;
+    padding: 0 64px;
+}
 
-      grid-template-columns:
+.screen-label {
+    text-align: center;
+    color: #747474;
+    font-size: 9px;
+    letter-spacing: 4px;
+}
+
+/*
+Tiny recessed late-1990s hardware button.
+
+The general "button" rules are overridden so this
+does not look like the large POWER and TUNE buttons.
+*/
+
+.dvd-button {
+    position: absolute;
+    right: 1px;
+    top: 50%;
+    min-width: 51px;
+    width: 51px;
+    height: 24px;
+    padding: 0;
+    transform: translateY(-50%);
+    border: 1px solid #030303;
+    border-top-color: #111;
+    border-left-color: #111;
+    border-right-color: #555;
+    border-bottom-color: #555;
+    border-radius: 2px;
+    color: #9b9b9b;
+    background:
+        linear-gradient(
+            180deg,
+            #181818 0%,
+            #252525 47%,
+            #111 53%,
+            #0b0b0b 100%
+        );
+    box-shadow:
+        inset 1px 1px 3px rgba(0, 0, 0, 0.95),
+        inset -1px -1px 1px rgba(255, 255, 255, 0.10),
+        0 1px 0 rgba(255, 255, 255, 0.08);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    line-height: 22px;
+    text-align: center;
+    text-shadow:
+        0 -1px 0 #000;
+}
+
+/*
+Small indicator dot built into the DVD button.
+*/
+
+.dvd-button::before {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    transform: translateY(-50%);
+    border: 1px solid #020202;
+    border-radius: 50%;
+    background: #303030;
+    box-shadow:
+        inset 0 0 2px #000;
+}
+
+.dvd-button:hover {
+    color: #c2c2c2;
+    background:
+        linear-gradient(
+            180deg,
+            #202020 0%,
+            #303030 47%,
+            #151515 53%,
+            #0d0d0d 100%
+        );
+}
+
+/*
+The active state looks physically depressed.
+*/
+
+.dvd-button.active {
+    color: #d9d9d9;
+    border-top-color: #030303;
+    border-left-color: #030303;
+    border-right-color: #454545;
+    border-bottom-color: #454545;
+    background:
+        linear-gradient(
+            180deg,
+            #080808 0%,
+            #151515 48%,
+            #1c1c1c 100%
+        );
+    box-shadow:
+        inset 2px 2px 5px rgba(0, 0, 0, 1),
+        inset -1px -1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.dvd-button.active::before {
+    background: #59ff86;
+    box-shadow:
+        0 0 4px rgba(89, 255, 134, 0.95),
+        0 0 8px rgba(89, 255, 134, 0.55);
+}
+
+.dvd-button:active {
+    transform:
+        translateY(calc(-50% + 1px));
+    box-shadow:
+        inset 2px 2px 5px rgba(0, 0, 0, 1);
+}
+
+/* =========================================================
+   LOWER TV
+========================================================= */
+
+.lower-tv {
+    display: grid;
+    grid-template-columns:
         1fr
         minmax(290px, 355px)
         1fr;
+    gap: 20px;
+    margin-top: 21px;
+}
 
-      gap:
-        20px;
+/* =========================================================
+   SPEAKERS
+========================================================= */
 
-      margin-top:
-        21px;
-    }
-
-
-    /* =========================================================
-       SPEAKERS
-       ========================================================= */
-
-    .speaker {
-      position:
-        relative;
-
-      min-height:
-        245px;
-
-      border:
-        4px solid #070707;
-
-      border-radius:
-        7px;
-
-      overflow:
-        hidden;
-
-      background-color:
-        #111;
-
-      background-image:
+.speaker {
+    position: relative;
+    min-height: 245px;
+    border: 4px solid #070707;
+    border-radius: 7px;
+    overflow: hidden;
+    background-color: #111;
+    background-image:
         radial-gradient(
-          #050505 1.5px,
-          transparent 1.5px
+            #050505 1.5px,
+            transparent 1.5px
         );
-
-      background-size:
-        6px 6px;
-
-      box-shadow:
+    background-size: 6px 6px;
+    box-shadow:
         inset 0 0 26px #000,
-        0 4px 7px rgba(0,0,0,.75);
+        0 4px 7px rgba(0, 0, 0, 0.75);
+}
+
+.speaker::before {
+    content: "";
+    position: absolute;
+    width: 175px;
+    height: 175px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border: 3px solid rgba(100, 100, 100, 0.20);
+    border-radius: 50%;
+    box-shadow:
+        inset 0 0 35px rgba(0, 0, 0, 0.90),
+        0 0 12px rgba(150, 150, 150, 0.08);
+}
+
+.speaker::after {
+    content: "";
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.82);
+    box-shadow:
+        0 0 7px rgba(90, 90, 90, 0.4);
+}
+
+/* =========================================================
+   DIGITAL CONTROL
+========================================================= */
+
+.controls {
+    min-height: 245px;
+    padding: 17px;
+    border: 3px solid #050505;
+    border-radius: 7px;
+    background:
+        linear-gradient(
+            #202020,
+            #080808
+        );
+    box-shadow:
+        inset 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.controls-title {
+    margin-bottom: 12px;
+    text-align: center;
+    color: #909090;
+    font-size: 9px;
+    letter-spacing: 3px;
+}
+
+/* Current channel display */
+
+.channel-display {
+    height: 42px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+    overflow: hidden;
+    border: 3px inset #111;
+    color: var(--display-green);
+    background: #07110d;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    white-space: nowrap;
+    text-shadow:
+        0 0 8px rgba(80, 255, 150, 0.78);
+}
+
+/*
+Channel tuner field.
+*/
+
+.channel-search {
+    width: 100%;
+    height: 40px;
+    margin-bottom: 15px;
+    padding: 0 10px;
+    outline: none;
+    border: 2px inset #111;
+    border-radius: 2px;
+    color: var(--display-green);
+    background: #07110d;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    text-align: center;
+    box-shadow:
+        inset 0 0 7px rgba(0, 0, 0, 0.9);
+    text-shadow:
+        0 0 6px rgba(80, 255, 150, 0.5);
+}
+
+.channel-search::placeholder {
+    color: #40745a;
+    opacity: 1;
+}
+
+.channel-search:focus {
+    border-color: #34634b;
+    box-shadow:
+        inset 0 0 7px rgba(0, 0, 0, 0.9),
+        0 0 7px rgba(80, 255, 150, 0.25);
+}
+
+/* =========================================================
+   MAIN CONTROL BUTTONS
+========================================================= */
+
+.button-row {
+    display: flex;
+    justify-content: center;
+    gap: 13px;
+}
+
+/*
+These rules apply only to the larger front-panel
+buttons, preventing them from affecting the DVD button.
+*/
+
+.button-row button {
+    min-width: 110px;
+    height: 44px;
+    cursor: pointer;
+    border: 1px solid #030303;
+    border-top: 1px solid #6a6a6a;
+    border-radius: 4px;
+    color: #ddd;
+    background:
+        linear-gradient(
+            #474747,
+            #171717
+        );
+    box-shadow:
+        0 4px 0 #030303,
+        inset 0 1px rgba(255, 255, 255, 0.14);
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+button {
+    cursor: pointer;
+}
+
+.button-row button:hover {
+    background:
+        linear-gradient(
+            #5b5b5b,
+            #262626
+        );
+}
+
+.button-row button:active {
+    transform: translateY(3px);
+    box-shadow:
+        0 1px 0 #030303;
+}
+
+.power-button {
+    background:
+        linear-gradient(
+            #783838,
+            #301010
+        ) !important;
+}
+
+.power-button:hover {
+    background:
+        linear-gradient(
+            #974545,
+            #421313
+        ) !important;
+}
+
+/* =========================================================
+   LED
+========================================================= */
+
+.status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 23px;
+}
+
+.led {
+    width: 11px;
+    height: 11px;
+    border: 1px solid #050505;
+    border-radius: 50%;
+    background: #572222;
+}
+
+.led.on {
+    background: #ff4141;
+    box-shadow:
+        0 0 10px rgba(255, 55, 55, 0.85);
+}
+
+.status-text {
+    color: #777;
+    font-size: 8px;
+    letter-spacing: 2px;
+}
+
+/* =========================================================
+   BOTTOM STRIP
+========================================================= */
+
+.bottom-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 18px;
+    padding: 12px 7px 3px;
+    border-top: 1px solid #414141;
+    color: #707070;
+    font-size: 9px;
+    letter-spacing: 2px;
+}
+
+.twitch-badge {
+    padding: 6px 14px;
+    border-radius: 3px;
+    color: #fff;
+    background: #6441a5;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1050px) {
+    .model {
+        display: none;
     }
 
+    .lower-tv {
+        grid-template-columns:
+            1fr
+            260px
+            1fr;
+    }
 
     .speaker::before {
-      content: "";
+        width: 135px;
+        height: 135px;
+    }
+}
 
-      position:
-        absolute;
-
-      width:
-        175px;
-
-      height:
-        175px;
-
-      left:
-        50%;
-
-      top:
-        50%;
-
-      transform:
-        translate(-50%, -50%);
-
-      border:
-        3px solid rgba(100,100,100,.20);
-
-      border-radius:
-        50%;
-
-      box-shadow:
-        inset 0 0 35px rgba(0,0,0,.90),
-        0 0 12px rgba(150,150,150,.08);
+@media (max-width: 720px) {
+    .room {
+        justify-content: flex-start;
+        min-width: 700px;
     }
 
-
-    .speaker::after {
-      content: "";
-
-      position:
-        absolute;
-
-      width:
-        54px;
-
-      height:
-        54px;
-
-      left:
-        50%;
-
-      top:
-        50%;
-
-      transform:
-        translate(-50%, -50%);
-
-      border-radius:
-        50%;
-
-      background:
-        rgba(0,0,0,.82);
-
-      box-shadow:
-        0 0 7px rgba(90,90,90,.4);
+    .tv {
+        width: 700px;
     }
+}
 
+/*
+Respect reduced-motion preference.
 
-    /* =========================================================
-       DIGITAL CONTROL
-       ========================================================= */
+The screensaver still works, but at a slower speed.
+JavaScript detects this preference.
+*/
 
-    .controls {
-      min-height:
-        245px;
-
-      padding:
-        17px;
-
-      border:
-        3px solid #050505;
-
-      border-radius:
-        7px;
-
-      background:
-        linear-gradient(
-          #202020,
-          #080808
-        );
-
-      box-shadow:
-        inset 0 1px rgba(255,255,255,.06);
+@media (prefers-reduced-motion: reduce) {
+    .dvd-logo.corner-hit {
+        animation: none;
     }
-
-
-    .controls-title {
-      margin-bottom:
-        12px;
-
-      text-align:
-        center;
-
-      color:
-        #909090;
-
-      font-size:
-        9px;
-
-      letter-spacing:
-        3px;
-    }
-
-
-    /* Current channel display */
-
-    .channel-display {
-      height:
-        42px;
-
-      display:
-        flex;
-
-      justify-content:
-        center;
-
-      align-items:
-        center;
-
-      margin-bottom:
-        10px;
-
-      overflow:
-        hidden;
-
-      border:
-        3px inset #111;
-
-      color:
-        var(--display-green);
-
-      background:
-        #07110d;
-
-      font-family:
-        "Courier New",
-        monospace;
-
-      font-size:
-        11px;
-
-      white-space:
-        nowrap;
-
-      text-shadow:
-        0 0 8px rgba(80,255,150,.78);
-    }
-
-
-    /*
-      Channel tuner field.
-    */
-
-    .channel-search {
-      width:
-        100%;
-
-      height:
-        40px;
-
-      margin-bottom:
-        15px;
-
-      padding:
-        0 10px;
-
-      outline:
-        none;
-
-      border:
-        2px inset #111;
-
-      border-radius:
-        2px;
-
-      color:
-        var(--display-green);
-
-      background:
-        #07110d;
-
-      font-family:
-        "Courier New",
-        monospace;
-
-      font-size:
-        11px;
-
-      text-align:
-        center;
-
-      box-shadow:
-        inset 0 0 7px rgba(0,0,0,.9);
-
-      text-shadow:
-        0 0 6px rgba(80,255,150,.5);
-    }
-
-
-    .channel-search::placeholder {
-      color:
-        #40745a;
-
-      opacity:
-        1;
-    }
-
-
-    .channel-search:focus {
-      border-color:
-        #34634b;
-
-      box-shadow:
-        inset 0 0 7px rgba(0,0,0,.9),
-        0 0 7px rgba(80,255,150,.25);
-    }
-
-
-    /* =========================================================
-       BUTTONS
-       ========================================================= */
-
-    .button-row {
-      display:
-        flex;
-
-      justify-content:
-        center;
-
-      gap:
-        13px;
-    }
-
-
-    button {
-      min-width:
-        110px;
-
-      height:
-        44px;
-
-      cursor:
-        pointer;
-
-      border:
-        1px solid #030303;
-
-      border-top:
-        1px solid #6a6a6a;
-
-      border-radius:
-        4px;
-
-      color:
-        #ddd;
-
-      background:
-        linear-gradient(
-          #474747,
-          #171717
-        );
-
-      box-shadow:
-        0 4px 0 #030303,
-        inset 0 1px rgba(255,255,255,.14);
-
-      font-size:
-        10px;
-
-      font-weight:
-        bold;
-
-      letter-spacing:
-        1px;
-    }
-
-
-    button:hover {
-      background:
-        linear-gradient(
-          #5b5b5b,
-          #262626
-        );
-    }
-
-
-    button:active {
-      transform:
-        translateY(3px);
-
-      box-shadow:
-        0 1px 0 #030303;
-    }
-
-
-    .power-button {
-      background:
-        linear-gradient(
-          #783838,
-          #301010
-        );
-    }
-
-
-    .power-button:hover {
-      background:
-        linear-gradient(
-          #974545,
-          #421313
-        );
-    }
-
-
-    /* =========================================================
-       LED
-       ========================================================= */
-
-    .status {
-      display:
-        flex;
-
-      justify-content:
-        center;
-
-      align-items:
-        center;
-
-      gap:
-        10px;
-
-      margin-top:
-        23px;
-    }
-
-
-    .led {
-      width:
-        11px;
-
-      height:
-        11px;
-
-      border:
-        1px solid #050505;
-
-      border-radius:
-        50%;
-
-      background:
-        #572222;
-    }
-
-
-    .led.on {
-      background:
-        #ff4141;
-
-      box-shadow:
-        0 0 10px rgba(255,55,55,.85);
-    }
-
-
-    .status-text {
-      color:
-        #777;
-
-      font-size:
-        8px;
-
-      letter-spacing:
-        2px;
-    }
-
-
-    /* =========================================================
-       BOTTOM STRIP
-       ========================================================= */
-
-    .bottom-strip {
-      display:
-        flex;
-
-      justify-content:
-        space-between;
-
-      align-items:
-        center;
-
-      margin-top:
-        18px;
-
-      padding:
-        12px 7px 3px;
-
-      border-top:
-        1px solid #414141;
-
-      color:
-        #707070;
-
-      font-size:
-        9px;
-
-      letter-spacing:
-        2px;
-    }
-
-
-    .twitch-badge {
-      padding:
-        6px 14px;
-
-      border-radius:
-        3px;
-
-      color:
-        #fff;
-
-      background:
-        #6441a5;
-
-      font-size:
-        12px;
-
-      font-weight:
-        bold;
-    }
-
-
-    /* =========================================================
-       RESPONSIVE
-       ========================================================= */
-
-    @media (max-width: 1050px) {
-
-      .model {
-        display:
-          none;
-      }
-
-
-      .lower-tv {
-        grid-template-columns:
-          1fr
-          260px
-          1fr;
-      }
-
-
-      .speaker::before {
-        width:
-          135px;
-
-        height:
-          135px;
-      }
-
-    }
-
-
-    @media (max-width: 720px) {
-
-      .room {
-        justify-content:
-          flex-start;
-
-        min-width:
-          700px;
-      }
-
-
-      .tv {
-        width:
-          700px;
-      }
-
-    }
-
-  </style>
+}
+</style>
 </head>
-
 
 <body>
 
-  <main class="room">
-
-
+<main class="room">
     <div class="wall-texture"></div>
-
 
     <!-- =====================================================
          55-INCH-STYLE PROJECTION TELEVISION
-         ===================================================== -->
+    ====================================================== -->
 
     <section class="tv">
 
+        <!-- HEADER -->
 
-      <!-- HEADER -->
-
-      <div class="tv-header">
-
-
-        <div class="model">
-          RP-720 WIDESCREEN DIGITAL PROJECTION RECEIVER
+        <div class="tv-header">
+            <div class="model">
+                RP-720 WIDESCREEN DIGITAL PROJECTION RECEIVER
+            </div>
         </div>
 
-      </div>
+        <!-- ===================================================
+             SCREEN
+        ==================================================== -->
 
+        <div class="screen-bezel">
 
-      <!-- ===================================================
-           SCREEN
-           =================================================== -->
+            <div class="screen" id="tv-screen">
 
-      <div class="screen-bezel">
+                <!--
+                Twitch's JavaScript SDK will place
+                the player inside this element.
+                -->
 
+                <div id="twitch-embed"></div>
 
-        <div class="screen">
+                <!-- DVD screensaver overlay -->
 
+                <div
+                    id="dvd-screen"
+                    class="dvd-screen"
+                    aria-hidden="true">
 
-          <!--
-            Twitch's JavaScript SDK will place
-            the player inside this element.
-          -->
+                    <div
+                        id="dvd-logo"
+                        class="dvd-logo">
 
-          <div id="twitch-embed"></div>
+                        <div class="dvd-word">
+                            DVD
+                        </div>
 
+                        <div class="dvd-video">
+                            VIDEO
+                        </div>
 
-          <!-- TV OFF overlay -->
+                    </div>
+                </div>
 
-          <div
-            id="standby-screen"
-            class="standby">
+                <!-- TV OFF overlay -->
 
-            STANDBY
-
-          </div>
-
-        </div>
-
-
-        <div class="screen-label">
-          1280 × 720 WIDESCREEN DIGITAL PROJECTION DISPLAY
-        </div>
-
-      </div>
-
-
-      <!-- ===================================================
-           SPEAKERS + DIGITAL CONTROLS
-           =================================================== -->
-
-      <div class="lower-tv">
-
-
-        <!-- LEFT SPEAKER -->
-
-        <div class="speaker"></div>
-
-
-        <!-- DIGITAL CONTROL -->
-
-        <div class="controls">
-
-
-          <div class="controls-title">
-            DIGITAL CONTROL
-          </div>
-
-
-          <!--
-            Shows currently tuned station.
-          -->
-
-          <div
-            id="channel-display"
-            class="channel-display">
-
-            THEBURNTPEANUT_247
-
-          </div>
-
-
-          <!--
-            Channel search/tuner.
-
-            Examples:
-
-            lofigirl
-
-            OR
-
-            https://www.twitch.tv/lofigirl
-          -->
-
-          <input
-            id="channel-search"
-            class="channel-search"
-            type="text"
-            placeholder="ENTER TWITCH CHANNEL"
-            autocomplete="off"
-            spellcheck="false"
-          >
-
-
-          <!-- BUTTONS -->
-
-          <div class="button-row">
-
-
-            <button
-              id="power-button"
-              class="power-button"
-              type="button">
-
-              POWER
-
-            </button>
-
-
-            <button
-              id="tune-button"
-              type="button">
-
-              TUNE
-
-            </button>
-
-
-          </div>
-
-
-          <!-- POWER LED -->
-
-          <div class="status">
-
-
-            <div
-              id="power-led"
-              class="led on">
+                <div
+                    id="standby-screen"
+                    class="standby">
+                    STANDBY
+                </div>
 
             </div>
 
+            <!-- SCREEN LABEL AND DVD BUTTON -->
 
-            <span class="status-text">
-              POWER
-            </span>
+            <div class="screen-info">
 
+                <div class="screen-label">
+                    1280 × 720 WIDESCREEN DIGITAL PROJECTION DISPLAY
+                </div>
 
-          </div>
+                <button
+                    id="dvd-button"
+                    class="dvd-button"
+                    type="button"
+                    aria-pressed="false"
+                    title="Toggle DVD screensaver">
+                    DVD
+                </button>
 
+            </div>
 
         </div>
 
+        <!-- ===================================================
+             SPEAKERS + DIGITAL CONTROLS
+        ==================================================== -->
 
-        <!-- RIGHT SPEAKER -->
+        <div class="lower-tv">
 
-        <div class="speaker"></div>
+            <!-- LEFT SPEAKER -->
 
+            <div class="speaker"></div>
 
-      </div>
+            <!-- DIGITAL CONTROL -->
 
+            <div class="controls">
 
-      <!-- ===================================================
-           FOOTER
-           =================================================== -->
+                <div class="controls-title">
+                    DIGITAL CONTROL
+                </div>
 
-      <div class="bottom-strip">
+                <!-- Shows currently tuned station -->
 
+                <div
+                    id="channel-display"
+                    class="channel-display">
+                    THEBURNTPEANUT_247
+                </div>
 
-        <span>
-          55-INCH-STYLE PROJECTION SYSTEM
-        </span>
+                <!--
+                Channel search/tuner.
 
+                Examples:
+                lofigirl
 
-        <span>
-          DIGITAL STEREO
-        </span>
+                or:
+                https://www.twitch.tv/lofigirl
+                -->
 
+                <input
+                    id="channel-search"
+                    class="channel-search"
+                    type="text"
+                    placeholder="ENTER TWITCH CHANNEL"
+                    autocomplete="off"
+                    spellcheck="false">
 
-      </div>
+                <!-- BUTTONS -->
 
+                <div class="button-row">
+
+                    <button
+                        id="power-button"
+                        class="power-button"
+                        type="button">
+                        POWER
+                    </button>
+
+                    <button
+                        id="tune-button"
+                        type="button">
+                        TUNE
+                    </button>
+
+                </div>
+
+                <!-- POWER LED -->
+
+                <div class="status">
+
+                    <div
+                        id="power-led"
+                        class="led on">
+                    </div>
+
+                    <span class="status-text">
+                        POWER
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- RIGHT SPEAKER -->
+
+            <div class="speaker"></div>
+
+        </div>
+
+        <!-- ===================================================
+             FOOTER
+        ==================================================== -->
+
+        <div class="bottom-strip">
+
+            <span>
+                55-INCH-STYLE PROJECTION SYSTEM
+            </span>
+
+            <span>
+                DIGITAL STEREO
+            </span>
+
+        </div>
 
     </section>
+</main>
 
+<!-- =======================================================
+     OFFICIAL TWITCH EMBED JAVASCRIPT
+======================================================= -->
 
-  </main>
+<script src="https://embed.twitch.tv/embed/v1.js"></script>
 
+<script>
+/* =======================================================
+   CONFIGURATION
+======================================================= */
 
-  <!-- =======================================================
-       OFFICIAL TWITCH EMBED JAVASCRIPT
-       ======================================================= -->
+const TWITCH_PARENT =
+    "matthtmlprojects.github.io";
 
-  <script src="https://embed.twitch.tv/embed/v1.js"></script>
+let currentChannel =
+    "theburntpeanut_247";
 
+let televisionOn =
+    true;
 
-  <script>
+let twitchEmbed =
+    null;
 
-    /* =======================================================
-       CONFIGURATION
-       ======================================================= */
+/* =======================================================
+   UI ELEMENTS
+======================================================= */
 
-    const TWITCH_PARENT =
-      "matthtmlprojects.github.io";
-
-
-    let currentChannel =
-      "theburntpeanut_247";
-
-
-    let televisionOn =
-      true;
-
-
-    let twitchEmbed =
-      null;
-
-
-    /* =======================================================
-       UI ELEMENTS
-       ======================================================= */
-
-    const channelSearch =
-      document.getElementById(
+const channelSearch =
+    document.getElementById(
         "channel-search"
-      );
+    );
 
-
-    const channelDisplay =
-      document.getElementById(
+const channelDisplay =
+    document.getElementById(
         "channel-display"
-      );
+    );
 
-
-    const tuneButton =
-      document.getElementById(
+const tuneButton =
+    document.getElementById(
         "tune-button"
-      );
+    );
 
-
-    const powerButton =
-      document.getElementById(
+const powerButton =
+    document.getElementById(
         "power-button"
-      );
+    );
 
-
-    const standbyScreen =
-      document.getElementById(
+const standbyScreen =
+    document.getElementById(
         "standby-screen"
-      );
+    );
 
-
-    const powerLED =
-      document.getElementById(
+const powerLED =
+    document.getElementById(
         "power-led"
-      );
+    );
 
+const tvScreen =
+    document.getElementById(
+        "tv-screen"
+    );
 
-    /* =======================================================
-       CLEAN CHANNEL NAME
-       ======================================================= */
+const dvdScreen =
+    document.getElementById(
+        "dvd-screen"
+    );
 
-    function cleanChannelName(value) {
+const dvdLogo =
+    document.getElementById(
+        "dvd-logo"
+    );
 
+const dvdButton =
+    document.getElementById(
+        "dvd-button"
+    );
 
-      let channel =
+/* =======================================================
+   CLEAN CHANNEL NAME
+======================================================= */
+
+function cleanChannelName(value) {
+    let channel =
         value.trim();
 
+    /*
+    Allow somebody to paste:
 
-      /*
-        Allow somebody to paste:
+    https://www.twitch.tv/lofigirl
 
-        https://www.twitch.tv/lofigirl
+    instead of only:
 
-        instead of only:
+    lofigirl
+    */
 
-        lofigirl
-      */
-
-      channel =
+    channel =
         channel.replace(
-          /^https?:\/\/(www\.)?twitch\.tv\//i,
-          ""
+            /^https?:\/\/(www\.)?twitch\.tv\//i,
+            ""
         );
 
+    /*
+    Remove extra path/query/hash information.
+    */
 
-      /*
-        Remove extra path/query/hash information.
-      */
-
-      channel =
+    channel =
         channel.split(/[/?#]/)[0];
 
+    return channel.trim();
+}
 
-      return channel.trim();
+/* =======================================================
+   CREATE TWITCH PLAYER
+======================================================= */
 
-    }
+function createPlayer(channel) {
+    /*
+    Remove an old embed first.
+    */
 
-
-    /* =======================================================
-       CREATE TWITCH PLAYER
-       ======================================================= */
-
-    function createPlayer(channel) {
-
-
-      /*
-        Remove an old embed first.
-      */
-
-      const embedContainer =
+    const embedContainer =
         document.getElementById(
-          "twitch-embed"
+            "twitch-embed"
         );
 
-
-      embedContainer.innerHTML =
+    embedContainer.innerHTML =
         "";
 
+    /*
+    Create Twitch's official embed.
+    */
 
-      /*
-        Create Twitch's official embed.
-      */
-
-      twitchEmbed =
+    twitchEmbed =
         new Twitch.Embed(
-          "twitch-embed",
-          {
+            "twitch-embed",
+            {
+                width:
+                    "100%",
 
-            width:
-              "100%",
+                height:
+                    "100%",
 
-            height:
-              "100%",
+                channel:
+                    channel,
 
-            channel:
-              channel,
+                layout:
+                    "video",
 
-            layout:
-              "video",
+                autoplay:
+                    false,
 
-            autoplay:
-              false,
+                allowfullscreen:
+                    true,
 
-            allowfullscreen:
-              true,
-
-            parent: [
-              TWITCH_PARENT
-            ]
-
-          }
+                parent: [
+                    TWITCH_PARENT
+                ]
+            }
         );
+}
 
+/* =======================================================
+   TUNE TO CHANNEL
+======================================================= */
+
+function tuneChannel() {
+    if (!televisionOn) {
+        return;
     }
 
-
-    /* =======================================================
-       TUNE TO CHANNEL
-       ======================================================= */
-
-    function tuneChannel() {
-
-
-      if (!televisionOn) {
-
-        return;
-
-      }
-
-
-      const requestedChannel =
+    const requestedChannel =
         cleanChannelName(
-          channelSearch.value
+            channelSearch.value
         );
 
+    /*
+    Nothing entered.
+    */
 
-      /*
-        Nothing entered.
-      */
-
-      if (!requestedChannel) {
-
+    if (!requestedChannel) {
         channelDisplay.textContent =
-          "ENTER CHANNEL";
+            "ENTER CHANNEL";
 
         channelSearch.focus();
 
         return;
-
-      }
-
-
-      /*
-      omes current station.
-      */
-
-      currentChannel =
-        requestedChannel;
-
-
-      channelDisplay.textContent =
-        "TUNING...";
-
-
-      /*
-        Recreate the official Twitch player
-        using the newly selected channel.
-      */
-
-      createPlayer(
-        currentChannel
-      );
-
-
-      /*
-        Clear input.
-      */
-
-      channelSearch.value =
-        "";
-
-
-      /*
-        Update front-panel display.
-      */
-
-      window.setTimeout(
-
-        function () {
-
-
-          if (televisionOn) {
-
-            channelDisplay.textContent =
-              currentChannel.toUpperCase();
-
-          }
-
-
-        },
-
-        800
-
-      );
-
     }
 
+    /*
+    Becomes current station.
+    */
 
-    /* =======================================================
-       TUNE BUTTON
-       ======================================================= */
+    currentChannel =
+        requestedChannel;
 
-    tuneButton.addEventListener(
+    channelDisplay.textContent =
+        "TUNING...";
 
-      "click",
+    /*
+    Recreate the official Twitch player
+    using the newly selected channel.
+    */
 
-      tuneChannel
-
+    createPlayer(
+        currentChannel
     );
 
+    /*
+    Clear input.
+    */
 
-    /* =======================================================
-       PRESS ENTER TO TUNE
-       ======================================================= */
+    channelSearch.value =
+        "";
 
-    channelSearch.addEventListener(
+    /*
+    Update front-panel display.
+    */
 
-      "keydown",
+    window.setTimeout(
+        function () {
+            if (televisionOn) {
+                channelDisplay.textContent =
+                    currentChannel.toUpperCase();
+            }
+        },
+        800
+    );
+}
 
-      function (event) {
+/* =======================================================
+   TUNE BUTTON
+======================================================= */
 
+tuneButton.addEventListener(
+    "click",
+    tuneChannel
+);
 
+/* =======================================================
+   PRESS ENTER TO TUNE
+======================================================= */
+
+channelSearch.addEventListener(
+    "keydown",
+    function (event) {
         if (event.key === "Enter") {
+            tuneChannel();
+        }
+    }
+);
 
-          tuneChannel();
+/* =======================================================
+   DVD SCREENSAVER
+======================================================= */
 
+let dvdModeOn =
+    false;
+
+let dvdAnimationFrame =
+    null;
+
+let dvdLastFrameTime =
+    0;
+
+let dvdX =
+    0;
+
+let dvdY =
+    0;
+
+/*
+Pixels per second.
+
+Positive X moves right.
+Positive Y moves down.
+*/
+
+let dvdVelocityX =
+    175;
+
+let dvdVelocityY =
+    145;
+
+/*
+Used to tell whether the horizontal and vertical
+collisions happened close enough together to count
+as a genuine corner hit.
+*/
+
+let lastHorizontalBounce =
+    -1000;
+
+let lastVerticalBounce =
+    -1000;
+
+const cornerHitWindow =
+    45;
+
+/*
+Bright colors that resemble the classic
+color-changing DVD screensaver.
+*/
+
+const dvdColors = [
+    "rgb(0, 255, 255)",
+    "rgb(255, 45, 45)",
+    "rgb(77, 255, 77)",
+    "rgb(255, 68, 255)",
+    "rgb(255, 225, 0)",
+    "rgb(57, 120, 255)",
+    "rgb(255, 128, 0)",
+    "rgb(170, 75, 255)"
+];
+
+let currentDVDColorIndex =
+    0;
+
+/*
+Offer gentler movement when the operating system
+has reduced motion enabled.
+*/
+
+const reducedMotion =
+    window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+if (reducedMotion) {
+    dvdVelocityX =
+        85;
+
+    dvdVelocityY =
+        70;
+}
+
+/* -------------------------------------------------------
+   CHANGE DVD LOGO COLOR
+------------------------------------------------------- */
+
+function changeDVDColor() {
+    let nextIndex =
+        currentDVDColorIndex;
+
+    /*
+    Avoid choosing the same color twice.
+    */
+
+    while (
+        nextIndex === currentDVDColorIndex
+    ) {
+        nextIndex =
+            Math.floor(
+                Math.random() *
+                dvdColors.length
+            );
+    }
+
+    currentDVDColorIndex =
+        nextIndex;
+
+    dvdLogo.style.color =
+        dvdColors[currentDVDColorIndex];
+}
+
+/* -------------------------------------------------------
+   CORNER HIT EFFECT
+------------------------------------------------------- */
+
+function showCornerHit() {
+    /*
+    Restart the animation even if another corner
+    was hit recently.
+    */
+
+    dvdLogo.classList.remove(
+        "corner-hit"
+    );
+
+    void dvdLogo.offsetWidth;
+
+    dvdLogo.classList.add(
+        "corner-hit"
+    );
+
+    /*
+    Remove the class after the visual celebration.
+    */
+
+    window.setTimeout(
+        function () {
+            dvdLogo.classList.remove(
+                "corner-hit"
+            );
+        },
+        700
+    );
+}
+
+/* -------------------------------------------------------
+   PLACE LOGO INSIDE SCREEN
+------------------------------------------------------- */
+
+function constrainDVDLogoToScreen() {
+    const screenWidth =
+        dvdScreen.clientWidth;
+
+    const screenHeight =
+        dvdScreen.clientHeight;
+
+    const logoWidth =
+        dvdLogo.offsetWidth;
+
+    const logoHeight =
+        dvdLogo.offsetHeight;
+
+    const maximumX =
+        Math.max(
+            0,
+            screenWidth - logoWidth
+        );
+
+    const maximumY =
+        Math.max(
+            0,
+            screenHeight - logoHeight
+        );
+
+    dvdX =
+        Math.min(
+            Math.max(dvdX, 0),
+            maximumX
+        );
+
+    dvdY =
+        Math.min(
+            Math.max(dvdY, 0),
+            maximumY
+        );
+
+    dvdLogo.style.transform =
+        `translate3d(${dvdX}px, ${dvdY}px, 0)`;
+}
+
+/* -------------------------------------------------------
+   START DVD SCREENSAVER
+------------------------------------------------------- */
+
+function startDVDScreensaver() {
+    if (
+        !televisionOn ||
+        dvdModeOn
+    ) {
+        return;
+    }
+
+    dvdModeOn =
+        true;
+
+    dvdScreen.classList.add(
+        "visible"
+    );
+
+    dvdScreen.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    dvdButton.classList.add(
+        "active"
+    );
+
+    dvdButton.setAttribute(
+        "aria-pressed",
+        "true"
+    );
+
+    /*
+    Start at a semi-random point within the screen.
+    Waiting one frame allows the browser to calculate
+    the overlay and logo dimensions.
+    */
+
+    window.requestAnimationFrame(
+        function () {
+            const maximumX =
+                Math.max(
+                    0,
+                    dvdScreen.clientWidth -
+                    dvdLogo.offsetWidth
+                );
+
+            const maximumY =
+                Math.max(
+                    0,
+                    dvdScreen.clientHeight -
+                    dvdLogo.offsetHeight
+                );
+
+            dvdX =
+                maximumX * 0.27;
+
+            dvdY =
+                maximumY * 0.34;
+
+            /*
+            Give the two axes different speeds so
+            the motion does not repeat too quickly.
+            */
+
+            dvdVelocityX =
+                Math.abs(dvdVelocityX);
+
+            dvdVelocityY =
+                Math.abs(dvdVelocityY);
+
+            changeDVDColor();
+
+            dvdLastFrameTime =
+                performance.now();
+
+            dvdAnimationFrame =
+                window.requestAnimationFrame(
+                    animateDVD
+                );
+        }
+    );
+}
+
+/* -------------------------------------------------------
+   STOP DVD SCREENSAVER
+------------------------------------------------------- */
+
+function stopDVDScreensaver() {
+    dvdModeOn =
+        false;
+
+    if (dvdAnimationFrame !== null) {
+        window.cancelAnimationFrame(
+            dvdAnimationFrame
+        );
+
+        dvdAnimationFrame =
+            null;
+    }
+
+    dvdScreen.classList.remove(
+        "visible"
+    );
+
+    dvdScreen.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    dvdButton.classList.remove(
+        "active"
+    );
+
+    dvdButton.setAttribute(
+        "aria-pressed",
+        "false"
+    );
+
+    dvdLastFrameTime =
+        0;
+}
+
+/* -------------------------------------------------------
+   DVD ANIMATION LOOP
+------------------------------------------------------- */
+
+function animateDVD(timestamp) {
+    if (!dvdModeOn) {
+        return;
+    }
+
+    /*
+    Convert elapsed milliseconds into seconds.
+
+    Limiting the value prevents the logo from leaping
+    across the screen if the browser tab was inactive.
+    */
+
+    const elapsedSeconds =
+        Math.min(
+            (timestamp - dvdLastFrameTime) / 1000,
+            0.05
+        );
+
+    dvdLastFrameTime =
+        timestamp;
+
+    const screenWidth =
+        dvdScreen.clientWidth;
+
+    const screenHeight =
+        dvdScreen.clientHeight;
+
+    const logoWidth =
+        dvdLogo.offsetWidth;
+
+    const logoHeight =
+        dvdLogo.offsetHeight;
+
+    const maximumX =
+        Math.max(
+            0,
+            screenWidth - logoWidth
+        );
+
+    const maximumY =
+        Math.max(
+            0,
+            screenHeight - logoHeight
+        );
+
+    dvdX +=
+        dvdVelocityX * elapsedSeconds;
+
+    dvdY +=
+        dvdVelocityY * elapsedSeconds;
+
+    let hitHorizontalEdge =
+        false;
+
+    let hitVerticalEdge =
+        false;
+
+    /*
+    Left or right edge collision.
+    */
+
+    if (dvdX <= 0) {
+        dvdX =
+            0;
+
+        dvdVelocityX =
+            Math.abs(dvdVelocityX);
+
+        hitHorizontalEdge =
+            true;
+    }
+    else if (dvdX >= maximumX) {
+        dvdX =
+            maximumX;
+
+        dvdVelocityX =
+            -Math.abs(dvdVelocityX);
+
+        hitHorizontalEdge =
+            true;
+    }
+
+    /*
+    Top or bottom edge collision.
+    */
+
+    if (dvdY <= 0) {
+        dvdY =
+            0;
+
+        dvdVelocityY =
+            Math.abs(dvdVelocityY);
+
+        hitVerticalEdge =
+            true;
+    }
+    else if (dvdY >= maximumY) {
+        dvdY =
+            maximumY;
+
+        dvdVelocityY =
+            -Math.abs(dvdVelocityY);
+
+        hitVerticalEdge =
+            true;
+    }
+
+    /*
+    Change color once per frame if any edge
+    was contacted.
+    */
+
+    if (
+        hitHorizontalEdge ||
+        hitVerticalEdge
+    ) {
+        changeDVDColor();
+    }
+
+    /*
+    Track the timing of each kind of collision.
+    */
+
+    if (hitHorizontalEdge) {
+        lastHorizontalBounce =
+            timestamp;
+    }
+
+    if (hitVerticalEdge) {
+        lastVerticalBounce =
+            timestamp;
+    }
+
+    /*
+    A corner hit occurs naturally when horizontal
+    and vertical collisions happen almost together.
+    */
+
+    if (
+        Math.abs(
+            lastHorizontalBounce -
+            lastVerticalBounce
+        ) <= cornerHitWindow &&
+        (
+            hitHorizontalEdge ||
+            hitVerticalEdge
+        )
+    ) {
+        showCornerHit();
+
+        /*
+        Reset the timers so one corner does not
+        accidentally get counted twice.
+        */
+
+        lastHorizontalBounce =
+            -1000;
+
+        lastVerticalBounce =
+            -1000;
+    }
+
+    /*
+    Move the logo using the GPU-friendly transform.
+    */
+
+    dvdLogo.style.transform =
+        `translate3d(${dvdX}px, ${dvdY}px, 0)`;
+
+    dvdAnimationFrame =
+        window.requestAnimationFrame(
+            animateDVD
+        );
+}
+
+/* -------------------------------------------------------
+   DVD BUTTON
+------------------------------------------------------- */
+
+dvdButton.addEventListener(
+    "click",
+    function () {
+        /*
+        The DVD button does nothing while the
+        television is turned off.
+        */
+
+        if (!televisionOn) {
+            return;
         }
 
+        if (dvdModeOn) {
+            stopDVDScreensaver();
+        }
+        else {
+            startDVDScreensaver();
+        }
+    }
+);
 
-      }
+/* -------------------------------------------------------
+   KEEP LOGO INSIDE SCREEN AFTER RESIZING
+------------------------------------------------------- */
 
-    );
+window.addEventListener(
+    "resize",
+    function () {
+        if (dvdModeOn) {
+            constrainDVDLogoToScreen();
+        }
+    }
+);
 
+/* =======================================================
+   POWER BUTTON
+======================================================= */
 
-    /* =======================================================
-       POWER BUTTON
-       ======================================================= */
-
-    powerButton.addEventListener(
-
-      "click",
-
-      function () {
-
-
+powerButton.addEventListener(
+    "click",
+    function () {
         televisionOn =
-          !televisionOn;
-
+            !televisionOn;
 
         /* ---------------------
            POWER ON
-           --------------------- */
+        --------------------- */
 
         if (televisionOn) {
+            standbyScreen.classList.remove(
+                "visible"
+            );
 
+            powerLED.classList.add(
+                "on"
+            );
 
-          standbyScreen.classList.remove(
-            "visible"
-          );
+            channelDisplay.textContent =
+                currentChannel.toUpperCase();
 
-
-          powerLED.classList.add(
-            "on"
-          );
-
-
-          channelDisplay.textContent =
-            currentChannel.toUpperCase();
-
-
-          /*
+            /*
             Rebuild current Twitch station.
-          */
+            */
 
-          createPlayer(
-            currentChannel
-          );
-
-
+            createPlayer(
+                currentChannel
+            );
         }
-
 
         /* ---------------------
            POWER OFF
-           --------------------- */
+        --------------------- */
 
         else {
+            /*
+            Disable the DVD mode first.
+            */
 
+            stopDVDScreensaver();
 
-          /*
+            /*
             Remove Twitch completely so audio
             does not keep playing behind the
             standby screen.
-          */
+            */
 
-          document.getElementById(
-            "twitch-embed"
-          ).innerHTML = "";
+            document.getElementById(
+                "twitch-embed"
+            ).innerHTML = "";
 
+            standbyScreen.classList.add(
+                "visible"
+            );
 
-          standbyScreen.classList.add(
-            "visible"
-          );
+            powerLED.classList.remove(
+                "on"
+            );
 
-
-          powerLED.classList.remove(
-            "on"
-          );
-
-
-          channelDisplay.textContent =
-            "STANDBY";
-
-
+            channelDisplay.textContent =
+                "STANDBY";
         }
+    }
+);
 
+/* =======================================================
+   INITIAL STARTUP
+======================================================= */
 
-      }
-
-    );
-
-
-    /* =======================================================
-       INITIAL STARTUP
-       ======================================================= */
-
-    createPlayer(
-      currentChannel
-    );
-
-
-  </script>
-
+createPlayer(
+    currentChannel
+);
+</script>
 
 </body>
 </html>
