@@ -7,1012 +7,1387 @@
 <title>Welcome to Matt's HTML Comfy Corner</title>
 
 <style>
-    :root {
-        --taskbar-height: 4.1%;
-        --icon-width: clamp(50px, 7.2vw, 82px);
-        --icon-height: clamp(62px, 8.7vw, 94px);
-    }
-
-    * {
-        box-sizing: border-box;
-    }
-
-    html,
-    body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        overflow: hidden;
-        background: #080b12;
-        font-family: Tahoma, "Segoe UI", Arial, sans-serif;
-    }
-
-    button,
-    a {
-        font: inherit;
-    }
-
-    /*
-       The design area always keeps the original image's
-       square 1024 x 1024 aspect ratio.
-    */
-    .scene {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        width: min(100vw, 100vh);
-        height: min(100vw, 100vh);
-        transform: translate(-50%, -50%);
-        overflow: hidden;
-        background: #080b12;
-    }
-
-    /*
-       The original uploaded photograph.
-
-       Put image.png in the same folder as this HTML file.
-    */
-    .setup-photo {
-        position: absolute;
-        z-index: 1;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        display: block;
-        object-fit: cover;
-        pointer-events: none;
-    }
-
-    /*
-       These three overlays cover the lime-green portions
-       visible in the photograph.
-
-       Their clip paths follow the perspective and shape
-       of the three monitors.
-    */
-.monitor-screen {
-    position: absolute;
-    z-index: 2;
-    overflow: hidden;
-
-    /* Cyberpunk desktop */
-    background:
-        radial-gradient(
-            circle at 72% 28%,
-            rgba(255, 0, 204, 0.28),
-            transparent 27%
-        ),
-        radial-gradient(
-            circle at 22% 70%,
-            rgba(0, 220, 255, 0.26),
-            transparent 32%
-        ),
-        linear-gradient(
-            145deg,
-            #07132c 0%,
-            #101442 42%,
-            #190f38 70%,
-            #070b1b 100%
-        );
-
-    filter:
-        saturate(1.12)
-        contrast(1.05);
+:root {
+  --taskbar-height: 4.1%;
+  --icon-width: clamp(50px, 7.2vw, 82px);
+  --icon-height: clamp(62px, 8.7vw, 94px);
 }
 
-    .left-screen {
-        left: 6.0%;
-        top: 33.3%;
-        width: 29.98%;
-        height: 25.83%;
-        clip-path: polygon(
-            0.7% 0%,
-            100% 11.4%,
-            100% 84.5%,
-            1% 100%
-        );
-    }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #080b12;
+  font-family: Tahoma, "Segoe UI", Arial, sans-serif;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+/* =========================================================
+   SCENE
+========================================================= */
+
+.scene {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(100vw, 100vh);
+  height: min(100vw, 100vh);
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  background: #080b12;
+}
+
+.setup-photo {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* =========================================================
+   MONITORS
+========================================================= */
+
+.monitor-screen {
+  position: absolute;
+  z-index: 2;
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 72% 28%,
+      rgba(255, 0, 204, 0.28),
+      transparent 27%
+    ),
+    radial-gradient(
+      circle at 22% 70%,
+      rgba(0, 220, 255, 0.26),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      #07132c 0%,
+      #101442 42%,
+      #190f38 70%,
+      #070b1b 100%
+    );
+
+  filter:
+    saturate(1.12)
+    contrast(1.05);
+}
+
+.left-screen {
+  left: 6.0%;
+  top: 33.3%;
+  width: 29.98%;
+  height: 25.83%;
+
+  clip-path: polygon(
+    0.7% 0%,
+    100% 11.4%,
+    100% 84.5%,
+    1% 100%
+  );
+}
 
 .center-screen {
-    left: 36.25%;
-    top: 36.2%;
-    width: 15.88%;
-    height: 19.3%;
+  left: 36.25%;
+  top: 36.2%;
+  width: 15.88%;
+  height: 19.3%;
 
-    /*
-       Perspective:
-       left side = taller
-       right side = shorter
-    */
-    clip-path: polygon(
-        0.3% 0%,       /* top-left */
-        100% 7%,     /* top-right LOWER */
-        100% 91%,    /* bottom-right HIGHER */
-        0% 100%      /* bottom-left */
+  clip-path: polygon(
+    0.3% 0%,
+    100% 7%,
+    100% 91%,
+    0% 100%
+  );
+}
+
+.right-screen {
+  left: 52.24%;
+  top: 37.7%;
+  width: 20.75%;
+  height: 17.05%;
+
+  clip-path: polygon(
+    0% 0%,
+    98% 2.8%,
+    100% 98%,
+    0% 94.5%
+  );
+}
+
+/* =========================================================
+   CYBERPUNK WALLPAPER
+========================================================= */
+
+.cyber-sun {
+  position: absolute;
+  width: 38%;
+  aspect-ratio: 1;
+  right: 10%;
+  top: 12%;
+  border-radius: 50%;
+
+  background:
+    repeating-linear-gradient(
+      180deg,
+      #FA8C33 0 7%,
+      transparent 7% 10%
+    ),
+    linear-gradient(
+      #FA8823,
+      #E87F05 55%,
+      #D4BD25
+    );
+
+  box-shadow:
+    0 0 15px rgba(255, 108, 1, 0.65),
+    0 0 35px rgba(255, 255, 255, 0.65);
+
+  opacity: 0.85;
+}
+
+.cyber-grid {
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  bottom: -10%;
+  height: 58%;
+
+  transform:
+    perspective(190px)
+    rotateX(57deg);
+
+  transform-origin: center bottom;
+
+  background-image:
+    linear-gradient(
+      rgba(0, 238, 255, 0.58) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(0, 238, 255, 0.58) 1px,
+      transparent 1px
+    );
+
+  background-size: 14px 14px;
+
+  box-shadow:
+    0 -12px 25px rgba(0, 213, 255, 0.22);
+}
+
+.cyber-grid::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -2px;
+  height: 3px;
+
+  background: #00eeff;
+
+  box-shadow:
+    0 0 9px #00eeff,
+    0 0 18px #00aeff;
+}
+
+.cyber-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      115deg,
+      rgba(0, 220, 255, 0.13),
+      transparent 30%,
+      transparent 65%,
+      rgba(255, 0, 212, 0.12)
     );
 }
 
-    .right-screen {
-        left: 52.24%;
-        top: 37.7%;
-        width: 20.75%;
-        height: 17.05%;
-        clip-path: polygon(
-            0% 0%,
-            98% 2.8%,
-            100% 98%,
-            0% 94.5%
-        );
-    }
-
- 
 /* =========================================================
-   CYBERPUNK WALLPAPER
-   ========================================================= */
+   DESKTOP ICONS
+========================================================= */
 
-.cyber-sun {
-    position: absolute;
-
-    width: 38%;
-    aspect-ratio: 1;
-
-    right: 10%;
-    top: 12%;
-
-    border-radius: 50%;
-
-    background:
-        repeating-linear-gradient(
-            180deg,
-            #FA8C33 0 7%,
-            transparent 7% 10%
-        ),
-        linear-gradient(
-            #FA8823,
-            #E87F05 55%,
-            #D4BD25
-        );
-
-    box-shadow:
-        0 0 15px rgba(255, 108, 1, 0.65),
-        0 0 35px rgba(255, 255, 255, 0.65);
-
-    opacity: 0.85;
+.desktop-icons {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  pointer-events: none;
 }
 
+.desktop-icon {
+  position: absolute;
 
-.cyber-grid {
-    position: absolute;
+  width: var(--icon-width);
+  min-height: var(--icon-height);
 
-    left: -30%;
-    right: -30%;
-    bottom: -10%;
+  padding: 3px;
 
-    height: 58%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 
-    transform:
-        perspective(190px)
-        rotateX(57deg);
+  color: #fff;
+  text-decoration: none;
 
-    transform-origin:
-        center bottom;
+  border: 1px solid transparent;
+  border-radius: 4px;
 
-    background-image:
+  background: transparent;
+  outline: none;
 
-        linear-gradient(
-            rgba(0, 238, 255, 0.58) 1px,
-            transparent 1px
-        ),
-
-        linear-gradient(
-            90deg,
-            rgba(0, 238, 255, 0.58) 1px,
-            transparent 1px
-        );
-
-    background-size:
-        14px 14px;
-
-    box-shadow:
-        0 -12px 25px
-        rgba(0, 213, 255, 0.22);
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
 }
 
-
-.cyber-grid::before {
-    content: "";
-
-    position: absolute;
-
-    left: 0;
-    right: 0;
-    top: -2px;
-
-    height: 3px;
-
-    background:
-        #00eeff;
-
-    box-shadow:
-        0 0 9px #00eeff,
-        0 0 18px #00aeff;
+.desktop-icon:hover,
+.desktop-icon:focus-visible,
+.desktop-icon.selected {
+  border-color: rgba(255, 255, 255, 0.62);
+  background: rgba(25, 83, 169, 0.42);
 }
 
-
-.cyber-glow {
-    position: absolute;
-
-    inset: 0;
-
-    pointer-events: none;
-
-    background:
-        linear-gradient(
-            115deg,
-            rgba(0, 220, 255, 0.13),
-            transparent 30%,
-            transparent 65%,
-            rgba(255, 0, 212, 0.12)
-        );
+.desktop-icon:active {
+  background: rgba(19, 66, 145, 0.64);
 }
 
+.icon-art {
+  width: clamp(31px, 4.25vw, 49px);
+  height: clamp(31px, 4.25vw, 49px);
 
-    /*
-       Desktop icons are placed above the monitor overlays.
+  display: grid;
+  place-items: center;
 
-       Column 1 is on the left monitor:
-       Recycle Bin, FPS, Synthesizer, DJ.
+  filter:
+    drop-shadow(
+      2px 3px 2px rgba(0, 0, 0, 0.52)
+    );
 
-       Column 2 starts near the top of the center monitor:
-       Retro TV and NERF Battleground.
-    */
-    .desktop-icons {
-        position: absolute;
-        z-index: 10;
-        inset: 0;
-        pointer-events: none;
-    }
+  transition:
+    transform 130ms ease,
+    filter 130ms ease;
+}
 
-    .desktop-icon {
-        position: absolute;
-        width: var(--icon-width);
-        min-height: var(--icon-height);
-        padding: 3px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        color: #fff;
-        text-decoration: none;
-        border: 1px solid transparent;
-        border-radius: 4px;
-        background: transparent;
-        outline: none;
-        cursor: pointer;
-        pointer-events: auto;
-        user-select: none;
-    }
+.desktop-icon:hover .icon-art {
+  transform:
+    translateY(-2px)
+    scale(1.05);
 
-    .desktop-icon:hover,
-    .desktop-icon:focus-visible,
-    .desktop-icon.selected {
-        border-color: rgba(255, 255, 255, 0.62);
-        background: rgba(25, 83, 169, 0.42);
-    }
+  filter:
+    drop-shadow(
+      2px 4px 3px rgba(0, 0, 0, 0.56)
+    )
+    brightness(1.08);
+}
 
-    .desktop-icon:active {
-        background: rgba(19, 66, 145, 0.64);
-    }
+.icon-art svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
 
-    .icon-art {
-        width: clamp(31px, 4.25vw, 49px);
-        height: clamp(31px, 4.25vw, 49px);
-        display: grid;
-        place-items: center;
-        filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.52));
-        transition:
-            transform 130ms ease,
-            filter 130ms ease;
-    }
+.icon-label {
+  max-width: 100%;
+  margin-top: 2px;
+  padding: 1px 3px;
 
-    .desktop-icon:hover .icon-art {
-        transform: translateY(-2px) scale(1.05);
-        filter:
-            drop-shadow(2px 4px 3px rgba(0, 0, 0, 0.56))
-            brightness(1.08);
-    }
+  color: white;
 
-    .icon-art svg {
-        width: 100%;
-        height: 100%;
-        overflow: visible;
-    }
+  font-size:
+    clamp(7px, 1.05vw, 11px);
 
-    .icon-label {
-        max-width: 100%;
-        margin-top: 2px;
-        padding: 1px 3px;
-        color: white;
-        font-size: clamp(7px, 1.05vw, 11px);
-        line-height: 1.1;
-        text-align: center;
-        text-shadow:
-            1px 1px 2px #000,
-            -1px -1px 2px rgba(0, 0, 0, 0.78);
-    }
+  line-height: 1.1;
+  text-align: center;
 
-    .desktop-icon.selected .icon-label {
-        background: #1556ac;
-    }
+  text-shadow:
+    1px 1px 2px #000,
+    -1px -1px 2px rgba(0, 0, 0, 0.78);
+}
 
-    /*
-       First icon column on the left monitor.
-       The positions follow the screen's perspective.
-    */
-    #recycleIcon {
-        left: 6.2%;
-        top: 34.0%;
-    }
+.desktop-icon.selected .icon-label {
+  background: #1556ac;
+}
 
-    #fpsIcon {
-        left: 12.5%;
-        top: 34.8%;
-    }
+/* =========================================================
+   ICON POSITIONS
+========================================================= */
 
-    #pianoIcon {
-        left: 6.55%;
-        top: 42.1%;
-    }
+/* Left monitor */
 
-    #djIcon {
-        left: 6.65%;
-        top: 49.55%;
-    }
+#recycleIcon {
+  left: 6.2%;
+  top: 34.0%;
+}
 
-    /*
-       Second icon column begins at the top-left portion
-       of the center monitor.
-    */
-    #tvIcon {
-        left: 37%;
-        top: 37.8%;
-    }
+#fpsIcon {
+  left: 12.5%;
+  top: 34.8%;
+}
 
-    #nerfIcon {
-        left: 37%;
-        top: 45.3%;
-    }
+#pianoIcon {
+  left: 6.55%;
+  top: 42.1%;
+}
 
-    /* Monitor glass highlights */
-    .screen-glass {
-        position: absolute;
-        z-index: 5;
-        inset: 0;
-        pointer-events: none;
-        background:
-            linear-gradient(
-                118deg,
-                rgba(255, 255, 255, 0.11),
-                transparent 22%,
-                transparent 72%,
-                rgba(255, 255, 255, 0.035)
-            );
-    }
+#djIcon {
+  left: 6.65%;
+  top: 49.55%;
+}
 
-    /* Notification message */
-    .notification {
-        position: absolute;
-        z-index: 30;
-        left: 12%;
-        top: 49%;
-        width: 22%;
-        min-width: 150px;
-        padding: 9px 10px 9px 35px;
-        display: none;
-        color: #143c63;
-        border: 1px solid #1765af;
-        border-radius: 6px;
-        background:
-            linear-gradient(
-                180deg,
-                #fff,
-                #dceeff
-            );
-        box-shadow: 0 5px 16px rgba(0, 0, 0, 0.44);
-        font-size: clamp(8px, 1vw, 11px);
-        line-height: 1.35;
-        pointer-events: none;
-    }
+/* Center monitor */
 
-    .notification.show {
-        display: block;
-        animation: notification-in 180ms ease-out;
-    }
+#tvIcon {
+  left: 37%;
+  top: 37.8%;
+}
 
-    .notification-symbol {
-        position: absolute;
-        left: 9px;
-        top: 10px;
-        font-size: clamp(15px, 2vw, 22px);
-    }
+#nerfIcon {
+  left: 37%;
+  top: 45.3%;
+}
 
-    @keyframes notification-in {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
+/*
+TinyDino sits in the second column of the center monitor.
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+Because the scene itself scales as a square and the icon uses the
+same clamp() dimensions as every other icon, TinyDino scales and
+zooms with the rest of the desktop.
+*/
 
-    /*
-       Photograph shading around the outer edges.
-       This does not cover the active monitor area.
-    */
-    .vignette {
-        position: absolute;
-        z-index: 20;
-        inset: 0;
-        pointer-events: none;
-        background:
-            radial-gradient(
-                ellipse at 46% 47%,
-                transparent 46%,
-                rgba(0, 0, 0, 0.08) 73%,
-                rgba(0, 0, 0, 0.24) 100%
-            );
-    }
+#tinyDinoIcon {
+  left: 43.8%;
+  top: 38.4%;
+}
 
-    .instructions {
-        position: fixed;
-        z-index: 100;
-        left: 50%;
-        bottom: 12px;
-        transform: translateX(-50%);
-        padding: 7px 12px;
-        color: rgba(255, 255, 255, 0.86);
-        border: 1px solid rgba(97, 155, 255, 0.35);
-        border-radius: 999px;
-        background: rgba(5, 12, 26, 0.72);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.38);
-        backdrop-filter: blur(6px);
-        font-size: 11px;
-        white-space: nowrap;
-        pointer-events: none;
-        animation: fade-instructions 1s 5s forwards;
-    }
+/* =========================================================
+   MONITOR GLASS
+========================================================= */
 
-    @keyframes fade-instructions {
-        to {
-            opacity: 0;
-            visibility: hidden;
-        }
-    }
+.screen-glass {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  pointer-events: none;
 
-    @media (max-width: 650px), (max-height: 650px) {
-        .icon-label {
-            font-size: 7px;
-        }
+  background:
+    linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.11),
+      transparent 22%,
+      transparent 72%,
+      rgba(255, 255, 255, 0.035)
+    );
+}
 
-        .instructions {
-            display: none;
-        }
-    }
+/* =========================================================
+   NOTIFICATION
+========================================================= */
+
+.notification {
+  position: absolute;
+  z-index: 30;
+
+  left: 12%;
+  top: 49%;
+
+  width: 22%;
+  min-width: 150px;
+
+  padding: 9px 10px 9px 35px;
+
+  display: none;
+
+  color: #143c63;
+
+  border: 1px solid #1765af;
+  border-radius: 6px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #fff,
+      #dceeff
+    );
+
+  box-shadow:
+    0 5px 16px rgba(0, 0, 0, 0.44);
+
+  font-size:
+    clamp(8px, 1vw, 11px);
+
+  line-height: 1.35;
+  pointer-events: none;
+}
+
+.notification.show {
+  display: block;
+
+  animation:
+    notification-in 180ms ease-out;
+}
+
+.notification-symbol {
+  position: absolute;
+  left: 9px;
+  top: 10px;
+
+  font-size:
+    clamp(15px, 2vw, 22px);
+}
+
+@keyframes notification-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   VIGNETTE
+========================================================= */
+
+.vignette {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      ellipse at 46% 47%,
+      transparent 46%,
+      rgba(0, 0, 0, 0.08) 73%,
+      rgba(0, 0, 0, 0.24) 100%
+    );
+}
+
+/* =========================================================
+   INSTRUCTIONS
+========================================================= */
+
+.instructions {
+  position: fixed;
+  z-index: 100;
+
+  left: 50%;
+  bottom: 12px;
+
+  transform:
+    translateX(-50%);
+
+  padding: 7px 12px;
+
+  color:
+    rgba(255, 255, 255, 0.86);
+
+  border:
+    1px solid rgba(97, 155, 255, 0.35);
+
+  border-radius: 999px;
+
+  background:
+    rgba(5, 12, 26, 0.72);
+
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.38);
+
+  backdrop-filter: blur(6px);
+
+  font-size: 11px;
+
+  white-space: nowrap;
+  pointer-events: none;
+
+  animation:
+    fade-instructions 1s 5s forwards;
+}
+
+@keyframes fade-instructions {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@media (max-width: 650px), (max-height: 650px) {
+  .icon-label {
+    font-size: 7px;
+  }
+
+  .instructions {
+    display: none;
+  }
+}
 </style>
 </head>
 
+
 <body>
 
-<main class="scene" id="scene" aria-label="Interactive triple-monitor computer setup">
+<main
+  class="scene"
+  id="scene"
+  aria-label="Interactive triple-monitor computer setup"
+>
 
-    <!--
-        Save the uploaded photograph as image.png
-        in the same folder as this HTML file.
-    -->
-   
-<img src="image_computerdesk.png"
+  <!-- DESK PHOTOGRAPH -->
+
+  <img
+    src="https://matthtmlprojects.github.io/image_computerdesk.png"
     class="setup-photo"
-    alt="Triple monitor computer setup">
+    alt="Triple monitor computer setup"
+  >
 
-    <!-- LEFT MONITOR -->
-    <div class="monitor-screen left-screen" aria-hidden="true">
-<div class="cyber-sun"></div>
-<div class="cyber-grid"></div>
-<div class="cyber-glow"></div>
-        <div class="screen-glass"></div>
-    </div>
 
-    <!-- CENTER MONITOR -->
-    <div class="monitor-screen center-screen" aria-hidden="true">
-<div class="cyber-sun"></div>
-<div class="cyber-grid"></div>
-<div class="cyber-glow"></div>
-        <div class="screen-glass"></div>
-    </div>
+  <!-- LEFT MONITOR -->
 
-    <!-- RIGHT MONITOR -->
-    <div class="monitor-screen right-screen" aria-hidden="true">
-<div class="cyber-sun"></div>
-<div class="cyber-grid"></div>
-<div class="cyber-glow"></div>
-        <div class="screen-glass"></div>
-    </div>
+  <div
+    class="monitor-screen left-screen"
+    aria-hidden="true"
+  >
+    <div class="cyber-sun"></div>
+    <div class="cyber-grid"></div>
+    <div class="cyber-glow"></div>
+    <div class="screen-glass"></div>
+  </div>
 
-    <div class="desktop-icons">
 
-        <!-- RECYCLE BIN: intentionally does not open a URL -->
-        <button
-            class="desktop-icon"
-            id="recycleIcon"
-            type="button"
-            title="Recycle Bin"
-            aria-label="Recycle Bin. Decorative icon."
-        >
-            <span class="icon-art">
-                <svg viewBox="0 0 64 64" aria-hidden="true">
-                    <defs>
-                        <linearGradient id="binGradient" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0" stop-color="#f3fdff"/>
-                            <stop offset=".55" stop-color="#89cce9"/>
-                            <stop offset="1" stop-color="#4288b3"/>
-                        </linearGradient>
-                    </defs>
+  <!-- CENTER MONITOR -->
 
-                    <path
-                        d="M18 18h29l-3 38H21z"
-                        fill="url(#binGradient)"
-                        stroke="#efffff"
-                        stroke-width="2"
-                    />
+  <div
+    class="monitor-screen center-screen"
+    aria-hidden="true"
+  >
+    <div class="cyber-sun"></div>
+    <div class="cyber-grid"></div>
+    <div class="cyber-glow"></div>
+    <div class="screen-glass"></div>
+  </div>
 
-                    <path
-                        d="M15 14h35v7H15z"
-                        fill="#ddf8ff"
-                        stroke="#578faf"
-                        stroke-width="2"
-                    />
 
-                    <path
-                        d="M24 9h17l3 5H21z"
-                        fill="#b9ebff"
-                        stroke="#578faf"
-                        stroke-width="2"
-                    />
+  <!-- RIGHT MONITOR -->
 
-                    <path
-                        d="M29 30l4-5 4 5h-3v6h-5z"
-                        fill="#278b48"
-                    />
+  <div
+    class="monitor-screen right-screen"
+    aria-hidden="true"
+  >
+    <div class="cyber-sun"></div>
+    <div class="cyber-grid"></div>
+    <div class="cyber-glow"></div>
+    <div class="screen-glass"></div>
+  </div>
 
-                    <path
-                        d="M41 39l-3 6-3-2 2-3-5-3 3-5z"
-                        fill="#278b48"
-                    />
 
-                    <path
-                        d="M27 45h8v4H24l-3-6 3-5 3 2-2 3z"
-                        fill="#278b48"
-                    />
-                </svg>
-            </span>
+  <!-- =====================================================
+       DESKTOP ICONS
+  ====================================================== -->
 
-            <span class="icon-label">Recycle Bin</span>
-        </button>
+  <div class="desktop-icons">
 
-        <!-- FPS SPEEDOMETER -->
-        <a
-            class="desktop-icon"
-            id="fpsIcon"
-            href="https://matthtmlprojects.github.io/MonitorTest.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open FPS Monitor Test"
-            aria-label="Open FPS Monitor Test in a new tab"
-        >
-            <span class="icon-art">
-                <svg viewBox="0 0 64 64" aria-hidden="true">
-                    <defs>
-                        <linearGradient id="gaugeGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0" stop-color="#394f6e"/>
-                            <stop offset="1" stop-color="#080d17"/>
-                        </linearGradient>
-                    </defs>
 
-                    <circle
-                        cx="32"
-                        cy="32"
-                        r="27"
-                        fill="url(#gaugeGradient)"
-                        stroke="#cceaff"
-                        stroke-width="3"
-                    />
+    <!-- RECYCLE BIN -->
 
-                    <path
-                        d="M12 37a21 21 0 0 1 11-19"
-                        fill="none"
-                        stroke="#56dc61"
-                        stroke-width="5"
-                    />
+    <button
+      class="desktop-icon"
+      id="recycleIcon"
+      type="button"
+      title="Recycle Bin"
+      aria-label="Recycle Bin. Decorative icon."
+    >
+      <span class="icon-art">
 
-                    <path
-                        d="M23 18a21 21 0 0 1 18 0"
-                        fill="none"
-                        stroke="#ffe04a"
-                        stroke-width="5"
-                    />
+        <svg viewBox="0 0 64 64" aria-hidden="true">
 
-                    <path
-                        d="M41 18a21 21 0 0 1 11 19"
-                        fill="none"
-                        stroke="#ff5656"
-                        stroke-width="5"
-                    />
+          <defs>
+            <linearGradient
+              id="binGradient"
+              x1="0"
+              y1="0"
+              x2="1"
+              y2="1"
+            >
+              <stop
+                offset="0"
+                stop-color="#f3fdff"
+              />
 
-                    <line
-                        x1="32"
-                        y1="36"
-                        x2="44"
-                        y2="22"
-                        stroke="#fff"
-                        stroke-width="3"
-                        stroke-linecap="round"
-                    />
+              <stop
+                offset=".55"
+                stop-color="#89cce9"
+              />
 
-                    <circle cx="32" cy="36" r="4" fill="#fff"/>
+              <stop
+                offset="1"
+                stop-color="#4288b3"
+              />
+            </linearGradient>
+          </defs>
 
-                    <text
-                        x="32"
-                        y="51"
-                        text-anchor="middle"
-                        fill="#d8f1ff"
-                        font-size="8"
-                        font-family="Arial"
-                        font-weight="bold"
-                    >FPS</text>
-                </svg>
-            </span>
+          <path
+            d="M18 18h29l-3 38H21z"
+            fill="url(#binGradient)"
+            stroke="#efffff"
+            stroke-width="2"
+          />
 
-            <span class="icon-label">FPS Test</span>
-        </a>
+          <path
+            d="M15 14h35v7H15z"
+            fill="#ddf8ff"
+            stroke="#578faf"
+            stroke-width="2"
+          />
 
-        <!-- MINI PIANO -->
-        <a
-            class="desktop-icon"
-            id="pianoIcon"
-            href="https://matthtmlprojects.github.io/Synthesizer.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open Synthesizer"
-            aria-label="Open Synthesizer in a new tab"
-        >
-            <span class="icon-art">
-                <svg viewBox="0 0 64 64" aria-hidden="true">
-                    <rect
-                        x="3"
-                        y="12"
-                        width="58"
-                        height="42"
-                        rx="6"
-                        fill="#282c38"
-                        stroke="#bd9cff"
-                        stroke-width="3"
-                    />
+          <path
+            d="M24 9h17l3 5H21z"
+            fill="#b9ebff"
+            stroke="#578faf"
+            stroke-width="2"
+          />
 
-                    <rect x="8" y="20" width="48" height="27" fill="#fff"/>
+          <path
+            d="M29 30l4-5 4 5h-3v6h-5z"
+            fill="#278b48"
+          />
 
-                    <g fill="#fafafa" stroke="#26282e" stroke-width="1">
-                        <rect x="8" y="20" width="8" height="27"/>
-                        <rect x="16" y="20" width="8" height="27"/>
-                        <rect x="24" y="20" width="8" height="27"/>
-                        <rect x="32" y="20" width="8" height="27"/>
-                        <rect x="40" y="20" width="8" height="27"/>
-                        <rect x="48" y="20" width="8" height="27"/>
-                    </g>
+          <path
+            d="M41 39l-3 6-3-2 2-3-5-3 3-5z"
+            fill="#278b48"
+          />
 
-                    <g fill="#11131a">
-                        <rect x="13" y="20" width="5" height="16"/>
-                        <rect x="21" y="20" width="5" height="16"/>
-                        <rect x="37" y="20" width="5" height="16"/>
-                        <rect x="45" y="20" width="5" height="16"/>
-                    </g>
+          <path
+            d="M27 45h8v4H24l-3-6 3-5 3 2-2 3z"
+            fill="#278b48"
+          />
 
-                    <circle cx="12" cy="16" r="2.5" fill="#62ffc3"/>
-                    <circle cx="20" cy="16" r="2.5" fill="#fc6bc9"/>
+        </svg>
 
-                    <path
-                        d="M29 16h25"
-                        stroke="#9467ff"
-                        stroke-width="3"
-                        stroke-linecap="round"
-                    />
-                </svg>
-            </span>
+      </span>
 
-            <span class="icon-label">Synthesizer</span>
-        </a>
+      <span class="icon-label">
+        Recycle Bin
+      </span>
+    </button>
 
-        <!-- DJ HEADPHONES -->
-        <a
-            class="desktop-icon"
-            id="djIcon"
-            href="https://matthtmlprojects.github.io/DJ.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open DJ Studio"
-            aria-label="Open DJ Studio in a new tab"
-        >
-            <span class="icon-art">
-                <svg viewBox="0 0 64 64" aria-hidden="true">
-                    <defs>
-                        <linearGradient id="headphoneGradient" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0" stop-color="#56caff"/>
-                            <stop offset=".5" stop-color="#9467ff"/>
-                            <stop offset="1" stop-color="#ff5fc7"/>
-                        </linearGradient>
-                    </defs>
 
-                    <path
-                        d="M10 36v-8C10 15 20 6 32 6s22 9 22 22v8"
-                        fill="none"
-                        stroke="url(#headphoneGradient)"
-                        stroke-width="8"
-                        stroke-linecap="round"
-                    />
+    <!-- FPS SPEEDOMETER -->
 
-                    <rect
-                        x="6"
-                        y="31"
-                        width="16"
-                        height="25"
-                        rx="7"
-                        fill="#252936"
-                        stroke="#8c6aff"
-                        stroke-width="3"
-                    />
+    <a
+      class="desktop-icon"
+      id="fpsIcon"
+      href="https://matthtmlprojects.github.io/MonitorTest.html"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Open FPS Monitor Test"
+      aria-label="Open FPS Monitor Test in a new tab"
+    >
+      <span class="icon-art">
 
-                    <rect
-                        x="42"
-                        y="31"
-                        width="16"
-                        height="25"
-                        rx="7"
-                        fill="#252936"
-                        stroke="#ff61c7"
-                        stroke-width="3"
-                    />
+        <svg viewBox="0 0 64 64" aria-hidden="true">
 
-                    <circle cx="14" cy="43" r="4" fill="#61d4ff"/>
-                    <circle cx="50" cy="43" r="4" fill="#ff7ed4"/>
-                </svg>
-            </span>
+          <circle
+            cx="32"
+            cy="32"
+            r="27"
+            fill="#182336"
+            stroke="#cceaff"
+            stroke-width="3"
+          />
 
-            <span class="icon-label">DJ Studio</span>
-        </a>
+          <path
+            d="M12 37a21 21 0 0 1 11-19"
+            fill="none"
+            stroke="#56dc61"
+            stroke-width="5"
+          />
 
-        <!-- OLD-LOOKING TV -->
-        <a
-            class="desktop-icon"
-            id="tvIcon"
-            href="https://matthtmlprojects.github.io/RetroTV.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open Retro TV"
-            aria-label="Open Retro TV in a new tab"
-        >
-            <span class="icon-art">
-                <svg viewBox="0 0 64 64" aria-hidden="true">
-                    <path
-                        d="M22 11L12 2"
-                        stroke="#eef2f3"
-                        stroke-width="3"
-                        stroke-linecap="round"
-                    />
+          <path
+            d="M23 18a21 21 0 0 1 18 0"
+            fill="none"
+            stroke="#ffe04a"
+            stroke-width="5"
+          />
 
-                    <path
-                        d="M40 11L52 2"
-                        stroke="#eef2f3"
-                        stroke-width="3"
-                        stroke-linecap="round"
-                    />
+          <path
+            d="M41 18a21 21 0 0 1 11 19"
+            fill="none"
+            stroke="#ff5656"
+            stroke-width="5"
+          />
 
-                    <rect
-                        x="4"
-                        y="10"
-                        width="56"
-                        height="43"
-                        rx="8"
-                        fill="#5d4634"
-                        stroke="#251a12"
-                        stroke-width="3"
-                    />
+          <line
+            x1="32"
+            y1="36"
+            x2="44"
+            y2="22"
+            stroke="#fff"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
 
-                    <rect
-                        x="9"
-                        y="15"
-                        width="35"
-                        height="31"
-                        rx="7"
-                        fill="#14272f"
-                        stroke="#d8c6aa"
-                        stroke-width="3"
-                    />
+          <circle
+            cx="32"
+            cy="36"
+            r="4"
+            fill="#fff"
+          />
 
-                    <path
-                        d="M12 27h29M12 34h29M12 40h29"
-                        stroke="#76d5dc"
-                        stroke-width="1"
-                        opacity=".65"
-                    />
+          <text
+            x="32"
+            y="51"
+            text-anchor="middle"
+            fill="#d8f1ff"
+            font-size="8"
+            font-family="Arial"
+            font-weight="bold"
+          >
+            FPS
+          </text>
 
-                    <circle
-                        cx="52"
-                        cy="22"
-                        r="4"
-                        fill="#dcc8a2"
-                        stroke="#1f1812"
-                        stroke-width="2"
-                    />
+        </svg>
 
-                    <circle
-                        cx="52"
-                        cy="35"
-                        r="4"
-                        fill="#dcc8a2"
-                        stroke="#1f1812"
-                        stroke-width="2"
-                    />
+      </span>
 
-                    <path d="M15 53v7" stroke="#30231a" stroke-width="4"/>
-                    <path d="M49 53v7" stroke="#30231a" stroke-width="4"/>
-                </svg>
-            </span>
+      <span class="icon-label">
+        FPS Test
+      </span>
+    </a>
 
-            <span class="icon-label">Retro TV</span>
-        </a>
 
-        <!-- NERF BLASTER -->
-        <a
-            class="desktop-icon"
-            id="nerfIcon"
-            href="https://matthtmlprojects.github.io/NERFbattleground.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open NERF Battleground"
-            aria-label="Open NERF Battleground in a new tab"
-        >
-            <span class="icon-art">
-                <svg viewBox="0 0 64 64" aria-hidden="true">
-                    <path
-                        d="M15 18h25l10 7H15z"
-                        fill="#1b9bd7"
-                        stroke="#073c68"
-                        stroke-width="2"
-                    />
+    <!-- SYNTHESIZER -->
 
-                    <path
-                        d="M5 24h36l12 8-10 9H25l-8-6H5z"
-                        fill="#ff7b18"
-                        stroke="#542f18"
-                        stroke-width="2"
-                    />
+    <a
+      class="desktop-icon"
+      id="pianoIcon"
+      href="https://matthtmlprojects.github.io/Synthesizer.html"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Open Synthesizer"
+      aria-label="Open Synthesizer in a new tab"
+    >
+      <span class="icon-art">
 
-                    <path
-                        d="M40 27h19v9H40z"
-                        fill="#f1d02e"
-                        stroke="#624a08"
-                        stroke-width="2"
-                    />
+        <svg viewBox="0 0 64 64" aria-hidden="true">
 
-                    <path
-                        d="M58 27l6-4v16l-6-3z"
-                        fill="#ff6033"
-                    />
+          <rect
+            x="3"
+            y="12"
+            width="58"
+            height="42"
+            rx="6"
+            fill="#282c38"
+            stroke="#bd9cff"
+            stroke-width="3"
+          />
 
-                    <path
-                        d="M29 39l9 3-5 17H22l2-19z"
-                        fill="#245593"
-                        stroke="#092745"
-                        stroke-width="2"
-                    />
+          <rect
+            x="8"
+            y="20"
+            width="48"
+            height="27"
+            fill="#fff"
+          />
 
-                    <circle
-                        cx="31"
-                        cy="31"
-                        r="5"
-                        fill="#ffd32e"
-                        stroke="#664600"
-                        stroke-width="2"
-                    />
+          <g
+            fill="#fafafa"
+            stroke="#26282e"
+            stroke-width="1"
+          >
+            <rect x="8" y="20" width="8" height="27"/>
+            <rect x="16" y="20" width="8" height="27"/>
+            <rect x="24" y="20" width="8" height="27"/>
+            <rect x="32" y="20" width="8" height="27"/>
+            <rect x="40" y="20" width="8" height="27"/>
+            <rect x="48" y="20" width="8" height="27"/>
+          </g>
 
-                    <rect
-                        x="7"
-                        y="27"
-                        width="12"
-                        height="5"
-                        rx="2"
-                        fill="#d8e8ef"
-                    />
-                </svg>
-            </span>
+          <g fill="#11131a">
+            <rect x="13" y="20" width="5" height="16"/>
+            <rect x="21" y="20" width="5" height="16"/>
+            <rect x="37" y="20" width="5" height="16"/>
+            <rect x="45" y="20" width="5" height="16"/>
+          </g>
 
-            <span class="icon-label">NERF Battleground</span>
-        </a>
+          <circle
+            cx="12"
+            cy="16"
+            r="2.5"
+            fill="#62ffc3"
+          />
 
-    </div>
+          <circle
+            cx="20"
+            cy="16"
+            r="2.5"
+            fill="#fc6bc9"
+          />
 
-    <div class="notification" id="notification" role="status">
-        <span class="notification-symbol">🗑️</span>
-        <strong>Recycle Bin</strong><br>
-        This icon is decorative and does not open anything.
-    </div>
+          <path
+            d="M29 16h25"
+            stroke="#9467ff"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
 
-    <div class="vignette"></div>
+        </svg>
+
+      </span>
+
+      <span class="icon-label">
+        Synthesizer
+      </span>
+    </a>
+
+
+    <!-- DJ STUDIO -->
+
+    <a
+      class="desktop-icon"
+      id="djIcon"
+      href="https://matthtmlprojects.github.io/DJ.html"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Open DJ Studio"
+      aria-label="Open DJ Studio in a new tab"
+    >
+      <span class="icon-art">
+
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+
+          <defs>
+            <linearGradient
+              id="headphoneGradient"
+              x1="0"
+              y1="0"
+              x2="1"
+              y2="1"
+            >
+              <stop offset="0" stop-color="#56caff"/>
+              <stop offset=".5" stop-color="#9467ff"/>
+              <stop offset="1" stop-color="#ff5fc7"/>
+            </linearGradient>
+          </defs>
+
+          <path
+            d="M10 36v-8C10 15 20 6 32 6s22 9 22 22v8"
+            fill="none"
+            stroke="url(#headphoneGradient)"
+            stroke-width="8"
+            stroke-linecap="round"
+          />
+
+          <rect
+            x="6"
+            y="31"
+            width="16"
+            height="25"
+            rx="7"
+            fill="#252936"
+            stroke="#8c6aff"
+            stroke-width="3"
+          />
+
+          <rect
+            x="42"
+            y="31"
+            width="16"
+            height="25"
+            rx="7"
+            fill="#252936"
+            stroke="#ff61c7"
+            stroke-width="3"
+          />
+
+          <circle
+            cx="14"
+            cy="43"
+            r="4"
+            fill="#61d4ff"
+          />
+
+          <circle
+            cx="50"
+            cy="43"
+            r="4"
+            fill="#ff7ed4"
+          />
+
+        </svg>
+
+      </span>
+
+      <span class="icon-label">
+        DJ Studio
+      </span>
+    </a>
+
+
+    <!-- RETRO TV -->
+
+    <a
+      class="desktop-icon"
+      id="tvIcon"
+      href="https://matthtmlprojects.github.io/RetroTV.html"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Open Retro TV"
+      aria-label="Open Retro TV in a new tab"
+    >
+      <span class="icon-art">
+
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+
+          <path
+            d="M22 11L12 2"
+            stroke="#eef2f3"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+
+          <path
+            d="M40 11L52 2"
+            stroke="#eef2f3"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+
+          <rect
+            x="4"
+            y="10"
+            width="56"
+            height="43"
+            rx="8"
+            fill="#5d4634"
+            stroke="#251a12"
+            stroke-width="3"
+          />
+
+          <rect
+            x="9"
+            y="15"
+            width="35"
+            height="31"
+            rx="7"
+            fill="#14272f"
+            stroke="#d8c6aa"
+            stroke-width="3"
+          />
+
+          <path
+            d="M12 27h29M12 34h29M12 40h29"
+            stroke="#76d5dc"
+            stroke-width="1"
+            opacity=".65"
+          />
+
+          <circle
+            cx="52"
+            cy="22"
+            r="4"
+            fill="#dcc8a2"
+            stroke="#1f1812"
+            stroke-width="2"
+          />
+
+          <circle
+            cx="52"
+            cy="35"
+            r="4"
+            fill="#dcc8a2"
+            stroke="#1f1812"
+            stroke-width="2"
+          />
+
+          <path
+            d="M15 53v7"
+            stroke="#30231a"
+            stroke-width="4"
+          />
+
+          <path
+            d="M49 53v7"
+            stroke="#30231a"
+            stroke-width="4"
+          />
+
+        </svg>
+
+      </span>
+
+      <span class="icon-label">
+        Retro TV
+      </span>
+    </a>
+
+
+    <!-- NERF BATTLEGROUND -->
+
+    <a
+      class="desktop-icon"
+      id="nerfIcon"
+      href="https://matthtmlprojects.github.io/NERFbattleground.html"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Open NERF Battleground"
+      aria-label="Open NERF Battleground in a new tab"
+    >
+      <span class="icon-art">
+
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+
+          <path
+            d="M15 18h25l10 7H15z"
+            fill="#1b9bd7"
+            stroke="#073c68"
+            stroke-width="2"
+          />
+
+          <path
+            d="M5 24h36l12 8-10 9H25l-8-6H5z"
+            fill="#ff7b18"
+            stroke="#542f18"
+            stroke-width="2"
+          />
+
+          <path
+            d="M40 27h19v9H40z"
+            fill="#f1d02e"
+            stroke="#624a08"
+            stroke-width="2"
+          />
+
+          <path
+            d="M58 27l6-4v16l-6-3z"
+            fill="#ff6033"
+          />
+
+          <path
+            d="M29 39l9 3-5 17H22l2-19z"
+            fill="#245593"
+            stroke="#092745"
+            stroke-width="2"
+          />
+
+          <circle
+            cx="31"
+            cy="31"
+            r="5"
+            fill="#ffd32e"
+            stroke="#664600"
+            stroke-width="2"
+          />
+
+          <rect
+            x="7"
+            y="27"
+            width="12"
+            height="5"
+            rx="2"
+            fill="#d8e8ef"
+          />
+
+        </svg>
+
+      </span>
+
+      <span class="icon-label">
+        NERF Battleground
+      </span>
+    </a>
+
+
+    <!-- ===================================================
+         TINYDINO
+         Replace PASTELINKHERE with the TinyDino URL.
+         
+         Icon closely follows the TinyDino game appearance:
+         dark dino silhouette, white belly and muzzle,
+         oversized dark helmet, tiny arm and legs,
+         and understated skateboard.
+    ==================================================== -->
+
+<!-- TINYDINO -->
+<a
+  class="desktop-icon"
+  id="tinyDinoIcon"
+  href="https://matthtmlprojects.github.io/tinydino.html"
+  target="_blank"
+  rel="noopener noreferrer"
+  title="Open TinyDino"
+  aria-label="Open TinyDino in a new tab"
+>
+  <span class="icon-art">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+
+      <!-- Tail -->
+      <path
+        d="M25 34 C18 35 12 33 6 29 C13 30 19 27 25 25 Z"
+        fill="#111"
+      />
+
+      <!-- Body -->
+      <path
+        d="M24 25 C21 28 21 35 23 39 C25 43 30 45 34 42
+           C38 39 39 33 37 28 C35 24 29 22 24 25 Z"
+        fill="#111"
+      />
+
+      <!-- White chest -->
+      <path
+        d="M29 26 C27 29 27 34 28 37 C29 40 32 41 35 39
+           C37 36 37 31 35 28 C33 26 31 25 29 26 Z"
+        fill="#fff"
+      />
+
+      <!-- Neck -->
+      <path
+        d="M31 27 C31 22 32 18 36 15 L43 17 L39 30 Z"
+        fill="#111"
+      />
+
+      <!-- Head -->
+      <ellipse
+        cx="41"
+        cy="17"
+        rx="10"
+        ry="8"
+        fill="#111"
+      />
+
+      <!-- White snout -->
+      <path
+        d="M41 17 C45 15 51 16 55 19 C55 22 52 24 47 24
+           C44 24 42 22 41 20 C40 19 40 18 41 17 Z"
+        fill="#fff"
+      />
+
+      <!-- Helmet -->
+      <path
+        d="M31 15 C32 8 37 5 43 5 C49 5 54 9 55 15
+           C49 14 43 14 37 15 Z"
+        fill="#181818"
+        stroke="#888"
+        stroke-width="1.2"
+      />
+
+      <!-- Helmet highlight -->
+      <path
+        d="M36 9 C39 7 44 7 47 9"
+        fill="none"
+        stroke="#aaa"
+        stroke-width="1.5"
+        stroke-linecap="round"
+      />
+
+      <!-- Helmet brim -->
+      <path
+        d="M48 15 L56 17"
+        fill="none"
+        stroke="#111"
+        stroke-width="2"
+        stroke-linecap="round"
+      />
+
+      <!-- Eye -->
+      <circle cx="48" cy="19" r="1.4" fill="#111"/>
+
+      <!-- Arm -->
+      <path
+        d="M35 29 L41 31 L44 29"
+        fill="none"
+        stroke="#111"
+        stroke-width="2"
+        stroke-linecap="round"
+      />
+
+      <!-- Legs -->
+      <path
+        d="M27 39 L24 46 L19 47"
+        fill="none"
+        stroke="#111"
+        stroke-width="3"
+        stroke-linecap="round"
+      />
+
+      <path
+        d="M34 39 L39 45 L44 46"
+        fill="none"
+        stroke="#111"
+        stroke-width="3"
+        stroke-linecap="round"
+      />
+
+      <!-- Skateboard -->
+      <path
+        d="M13 49 C16 52 20 53 24 53 L43 53 C47 53 51 51 54 48"
+        fill="none"
+        stroke="#111"
+        stroke-width="2.6"
+        stroke-linecap="round"
+      />
+
+      <!-- Trucks -->
+      <path
+        d="M24 53 L24 55 M21 55 L27 55
+           M43 53 L43 55 M40 55 L46 55"
+        fill="none"
+        stroke="#333"
+        stroke-width="1.4"
+      />
+
+      <!-- Wheels -->
+      <circle cx="24" cy="58" r="2.4" fill="#111"/>
+      <circle cx="43" cy="58" r="2.4" fill="#111"/>
+
+      <!-- Hubs -->
+      <circle cx="24" cy="58" r=".7" fill="#aaa"/>
+      <circle cx="43" cy="58" r=".7" fill="#aaa"/>
+
+    </svg>
+  </span>
+
+  <span class="icon-label">TinyDino</span>
+</a>
+
+  </div>
+
+
+  <!-- RECYCLE BIN NOTICE -->
+
+  <div
+    class="notification"
+    id="notification"
+    role="status"
+  >
+    <span class="notification-symbol">
+      🗑️
+    </span>
+
+    <strong>Recycle Bin</strong>
+    <br>
+
+    This icon is decorative and does not open anything.
+  </div>
+
+
+  <div class="vignette"></div>
+
 </main>
 
+
 <div class="instructions">
-    Click a desktop icon to open a project in a new tab
+  Click a desktop icon to open a project in a new tab
 </div>
 
+
 <script>
-    const desktopIcons = document.querySelectorAll(".desktop-icon");
-    const recycleIcon = document.getElementById("recycleIcon");
-    const notification = document.getElementById("notification");
-    const scene = document.getElementById("scene");
+const desktopIcons =
+  document.querySelectorAll(".desktop-icon");
 
-    let notificationTimer;
+const recycleIcon =
+  document.getElementById("recycleIcon");
 
-    function clearIconSelection() {
-        desktopIcons.forEach(function (icon) {
-            icon.classList.remove("selected");
-        });
+const notification =
+  document.getElementById("notification");
+
+const scene =
+  document.getElementById("scene");
+
+let notificationTimer;
+
+
+function clearIconSelection() {
+  desktopIcons.forEach(function (icon) {
+    icon.classList.remove("selected");
+  });
+}
+
+
+function selectIcon(icon) {
+  clearIconSelection();
+  icon.classList.add("selected");
+}
+
+
+function showRecycleNotice() {
+  clearTimeout(notificationTimer);
+
+  notification.classList.add("show");
+
+  notificationTimer =
+    setTimeout(function () {
+      notification.classList.remove("show");
+    }, 3000);
+}
+
+
+desktopIcons.forEach(function (icon) {
+  icon.addEventListener(
+    "click",
+    function (event) {
+      selectIcon(icon);
+
+      if (icon === recycleIcon) {
+        event.preventDefault();
+        showRecycleNotice();
+      }
     }
+  );
+});
 
-    function selectIcon(icon) {
-        clearIconSelection();
-        icon.classList.add("selected");
+
+scene.addEventListener(
+  "click",
+  function (event) {
+    if (!event.target.closest(".desktop-icon")) {
+      clearIconSelection();
+      notification.classList.remove("show");
     }
+  }
+);
 
-    function showRecycleNotice() {
-        clearTimeout(notificationTimer);
 
-        notification.classList.add("show");
+/*
+Keyboard accessibility:
+Escape clears the selected icon
+and closes the Recycle Bin notice.
+*/
 
-        notificationTimer = setTimeout(function () {
-            notification.classList.remove("show");
-        }, 3000);
+document.addEventListener(
+  "keydown",
+  function (event) {
+    if (event.key === "Escape") {
+      clearIconSelection();
+      notification.classList.remove("show");
     }
-
-    desktopIcons.forEach(function (icon) {
-        icon.addEventListener("click", function (event) {
-            selectIcon(icon);
-
-            if (icon === recycleIcon) {
-                event.preventDefault();
-                showRecycleNotice();
-            }
-        });
-    });
-
-    scene.addEventListener("click", function (event) {
-        if (!event.target.closest(".desktop-icon")) {
-            clearIconSelection();
-            notification.classList.remove("show");
-        }
-    });
-
-    /*
-       Keyboard accessibility:
-       Escape clears the selected icon and closes the notice.
-    */
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") {
-            clearIconSelection();
-            notification.classList.remove("show");
-        }
-    });
+  }
+);
 </script>
 
 </body>
