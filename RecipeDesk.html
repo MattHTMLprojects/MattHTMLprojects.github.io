@@ -1,0 +1,2141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#5f3822">
+
+  <title>Recipe Desk</title>
+
+  <style>
+    :root {
+      --wood-dark: #5f3822;
+      --wood: #925d38;
+      --paper: #fffdf2;
+      --paper-line: rgba(71, 145, 203, 0.28);
+      --red-line: rgba(211, 70, 70, 0.48);
+      --ink: #193958;
+      --text: #34271f;
+      --muted: #796858;
+      --cream: #fff9ef;
+      --cream-dark: #efe0cc;
+      --green: #3f774d;
+      --green-dark: #2d5d39;
+      --blue: #276a9b;
+      --blue-dark: #1b5178;
+      --border: #dac5aa;
+      --shadow: rgba(38, 20, 9, 0.35);
+      --danger: #a63f3f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          #875331 0,
+          #9a6742 4px,
+          #885333 8px,
+          #a36e47 15px,
+          #8c5937 20px
+        );
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      min-height: 44px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid rgba(39, 106, 155, 0.28);
+      outline-offset: 2px;
+    }
+
+    .app {
+      width: min(1220px, calc(100% - 28px));
+      margin: 0 auto;
+      padding:
+        max(20px, env(safe-area-inset-top))
+        0
+        max(45px, env(safe-area-inset-bottom));
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+      padding: 17px 20px;
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 20px;
+      background: rgba(66, 37, 21, 0.88);
+      box-shadow: 0 13px 32px var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-width: 0;
+    }
+
+    .brand-icon {
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      font-size: 30px;
+      border-radius: 16px;
+      background: linear-gradient(145deg, #fff7de, #e9ba63);
+      box-shadow:
+        inset 0 1px 0 white,
+        0 6px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .brand h1 {
+      margin: 0;
+      overflow-wrap: anywhere;
+      font-family: Georgia, serif;
+      font-size: clamp(25px, 4vw, 36px);
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: #ecd9c8;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .status {
+      flex: 0 0 auto;
+      padding: 8px 13px;
+      color: #23452b;
+      border-radius: 999px;
+      background: #dcf2df;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(330px, 0.9fr) minmax(420px, 1.1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .chat-panel {
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 22px;
+      background: rgba(255, 250, 240, 0.97);
+      box-shadow: 0 18px 45px var(--shadow);
+    }
+
+    .panel-heading {
+      padding: 19px 21px 16px;
+      border-bottom: 1px solid #ead9c4;
+      background: linear-gradient(180deg, #fffaf0, #f2e3d0);
+    }
+
+    .panel-heading h2 {
+      margin: 0 0 5px;
+      font-size: 22px;
+    }
+
+    .panel-heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .conversation {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: min(485px, 52vh);
+      min-height: 360px;
+      padding: 18px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      max-width: 91%;
+      padding: 12px 15px;
+      overflow-wrap: anywhere;
+      line-height: 1.48;
+      border-radius: 16px;
+      animation: appear 0.2s ease-out;
+    }
+
+    .assistant-message {
+      align-self: flex-start;
+      border-bottom-left-radius: 5px;
+      background: #eee1d0;
+    }
+
+    .user-message {
+      align-self: flex-end;
+      color: white;
+      border-bottom-right-radius: 5px;
+      background: var(--green);
+    }
+
+    .voice-message {
+      color: white;
+      background: var(--blue);
+    }
+
+    .error-message {
+      color: #681f1f;
+      border: 1px solid #e0aaaa;
+      background: #ffe2e2;
+    }
+
+    .recipe-options {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #e3cfb6;
+      border-radius: 16px;
+      background: #fffdf8;
+    }
+
+    .options-label {
+      margin: 0 0 9px;
+      color: #6d543f;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.65px;
+      text-transform: uppercase;
+    }
+
+    .recipe-choice {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 56px;
+      margin: 8px 0;
+      padding: 9px 11px;
+      text-align: left;
+      color: var(--text);
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: #f5ecdf;
+      transition:
+        transform 0.14s ease,
+        background 0.14s ease,
+        border-color 0.14s ease;
+    }
+
+    .recipe-choice:hover,
+    .recipe-choice:focus-visible {
+      border-color: #9e7954;
+      background: #fff7e8;
+      transform: translateY(-1px);
+    }
+
+    .choice-number {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      color: white;
+      border-radius: 50%;
+      background: #865737;
+      font-weight: 800;
+    }
+
+    .choice-name {
+      overflow-wrap: anywhere;
+      font-weight: 750;
+      line-height: 1.3;
+    }
+
+    .choice-time {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .input-area {
+      padding: 16px 18px 19px;
+      border-top: 1px solid #ead9c4;
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    #moodInput {
+      width: 100%;
+      min-width: 0;
+      height: 50px;
+      padding: 12px 14px;
+      color: var(--text);
+      border: 2px solid var(--border);
+      border-radius: 13px;
+      background: white;
+      font-size: 16px;
+    }
+
+    #moodInput:focus {
+      border-color: var(--green);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(63, 119, 77, 0.13);
+    }
+
+    .find-button {
+      padding: 10px 17px;
+      color: white;
+      border: 0;
+      border-radius: 12px;
+      background: var(--green);
+      font-weight: 800;
+    }
+
+    .find-button:hover {
+      background: var(--green-dark);
+    }
+
+    .microphone-button {
+      position: relative;
+      width: 50px;
+      min-width: 50px;
+      padding: 0;
+      color: white;
+      border: 0;
+      border-radius: 50%;
+      background: var(--blue);
+      font-size: 23px;
+      line-height: 1;
+    }
+
+    .microphone-button:hover {
+      background: var(--blue-dark);
+    }
+
+    .microphone-button.listening {
+      background: var(--danger);
+      animation: pulse 1.15s infinite;
+    }
+
+    .microphone-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      animation: none;
+    }
+
+    .voice-status {
+      min-height: 20px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .voice-status.listening {
+      color: var(--danger);
+      font-weight: 800;
+    }
+
+    .chips {
+      display: flex;
+      gap: 7px;
+      margin-top: 9px;
+      padding-bottom: 2px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      min-height: 40px;
+      padding: 7px 11px;
+      color: #624e40;
+      border: 1px solid #dbc8b2;
+      border-radius: 999px;
+      background: #fff9ee;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .chip:hover {
+      background: #f0e2d1;
+    }
+
+    .paper-holder {
+      position: sticky;
+      top: 15px;
+    }
+
+    .paper {
+      position: relative;
+      min-height: 690px;
+      padding: 38px 37px 42px 74px;
+      overflow: hidden;
+      border-radius: 5px 17px 17px 5px;
+      background-color: var(--paper);
+      background-image:
+        linear-gradient(
+          to right,
+          transparent 0,
+          transparent 52px,
+          var(--red-line) 53px,
+          transparent 54px
+        ),
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent 29px,
+          var(--paper-line) 30px,
+          transparent 31px
+        );
+      box-shadow:
+        0 18px 50px var(--shadow),
+        inset 0 0 30px rgba(128, 101, 59, 0.08);
+    }
+
+    .paper-holes {
+      position: absolute;
+      top: 76px;
+      left: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 108px;
+    }
+
+    .paper-hole {
+      width: 18px;
+      height: 18px;
+      border: 1px solid #c9bc9f;
+      border-radius: 50%;
+      background: #e3d6bb;
+      box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.18);
+    }
+
+    .empty-paper {
+      display: grid;
+      place-items: center;
+      min-height: 580px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-paper-icon {
+      font-size: 64px;
+    }
+
+    .empty-paper h2 {
+      margin: 12px 0 7px;
+      color: var(--ink);
+      font-family: Georgia, serif;
+    }
+
+    .empty-paper p {
+      max-width: 330px;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .shopping-sheet {
+      display: none;
+    }
+
+    .shopping-title {
+      margin: 0;
+      overflow-wrap: anywhere;
+      color: var(--ink);
+      font-family: Georgia, serif;
+      font-size: clamp(27px, 4.5vw, 39px);
+      line-height: 1.1;
+    }
+
+    .shopping-subtitle {
+      margin: 9px 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 9px;
+      margin: 16px 0 18px;
+      padding: 11px 12px;
+      border: 1px solid rgba(94, 111, 122, 0.2);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.74);
+    }
+
+    .servings {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: auto;
+    }
+
+    .servings label {
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .serving-button {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      min-width: 44px;
+      height: 44px;
+      color: var(--ink);
+      border: 1px solid #b9aa91;
+      border-radius: 10px;
+      background: white;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    #servingCount {
+      min-width: 24px;
+      text-align: center;
+      font-weight: 800;
+    }
+
+    .secondary-button,
+    .print-button {
+      min-height: 44px;
+      padding: 9px 13px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .secondary-button {
+      color: #45392e;
+      border: 1px solid #b9aa91;
+      background: #fffdf7;
+    }
+
+    .print-button {
+      color: white;
+      border: 1px solid #254d30;
+      background: var(--green);
+    }
+
+    .section-title {
+      margin: 18px 0 9px;
+      color: var(--ink);
+      font-family: Georgia, serif;
+      font-size: 20px;
+    }
+
+    .ingredients {
+      display: grid;
+      gap: 2px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .ingredient {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      min-height: 34px;
+      padding: 4px 2px;
+      color: #273d50;
+      line-height: 1.45;
+    }
+
+    .ingredient input {
+      flex: 0 0 auto;
+      width: 21px;
+      height: 21px;
+      margin-top: 1px;
+      accent-color: var(--green);
+    }
+
+    .ingredient label {
+      overflow-wrap: anywhere;
+      cursor: pointer;
+    }
+
+    .ingredient.checked label {
+      color: #888;
+      text-decoration: line-through;
+    }
+
+    .notes {
+      width: 100%;
+      min-height: 116px;
+      padding: 5px 8px;
+      color: var(--ink);
+      border: 0;
+      outline: 0;
+      resize: vertical;
+      background: transparent;
+      font-size: 16px;
+      line-height: 31px;
+    }
+
+    .recipe-source {
+      margin-top: 17px;
+      padding: 12px;
+      border: 1px dashed rgba(42, 74, 101, 0.35);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .recipe-source p {
+      margin: 0 0 8px;
+      color: #6c6258;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .recipe-link {
+      display: inline-block;
+      color: #245c87;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .information {
+      margin-top: 22px;
+      padding: 13px 16px;
+      color: #f7e8d7;
+      border-radius: 13px;
+      background: rgba(60, 34, 20, 0.85);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .information strong {
+      color: white;
+    }
+
+    @keyframes appear {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(166, 63, 63, 0.55);
+      }
+
+      70% {
+        box-shadow: 0 0 0 11px rgba(166, 63, 63, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(166, 63, 63, 0);
+      }
+    }
+
+    /*
+      Tablet and smaller laptop layout
+    */
+    @media (max-width: 920px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .paper-holder {
+        position: static;
+      }
+
+      .conversation {
+        height: 430px;
+      }
+    }
+
+    /*
+      Phone layout
+    */
+    @media (max-width: 600px) {
+      .app {
+        width: min(100% - 14px, 1220px);
+        padding-top: max(8px, env(safe-area-inset-top));
+      }
+
+      .header {
+        align-items: flex-start;
+        margin-bottom: 12px;
+        padding: 13px;
+        border-radius: 15px;
+      }
+
+      .brand {
+        align-items: flex-start;
+      }
+
+      .brand-icon {
+        width: 46px;
+        height: 46px;
+        font-size: 25px;
+        border-radius: 13px;
+      }
+
+      .brand h1 {
+        font-size: 26px;
+      }
+
+      .brand p {
+        font-size: 12px;
+      }
+
+      .status {
+        display: none;
+      }
+
+      .layout {
+        gap: 15px;
+      }
+
+      .chat-panel {
+        border-radius: 16px;
+      }
+
+      .panel-heading {
+        padding: 16px;
+      }
+
+      .panel-heading h2 {
+        font-size: 20px;
+      }
+
+      .conversation {
+        height: 46vh;
+        min-height: 330px;
+        max-height: 490px;
+        padding: 14px;
+      }
+
+      .message {
+        max-width: 95%;
+        padding: 11px 13px;
+      }
+
+      .input-area {
+        padding: 13px;
+      }
+
+      .input-row {
+        grid-template-columns: minmax(0, 1fr) 50px;
+      }
+
+      .find-button {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        width: 100%;
+        min-height: 48px;
+      }
+
+      .microphone-button {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      #moodInput {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .recipe-choice {
+        grid-template-columns: 37px minmax(0, 1fr);
+        min-height: 62px;
+      }
+
+      .choice-time {
+        grid-column: 2;
+        white-space: normal;
+      }
+
+      .paper {
+        min-height: 590px;
+        padding: 29px 15px 34px 50px;
+        border-radius: 4px 13px 13px 4px;
+        background-image:
+          linear-gradient(
+            to right,
+            transparent 0,
+            transparent 36px,
+            var(--red-line) 37px,
+            transparent 38px
+          ),
+          repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 29px,
+            var(--paper-line) 30px,
+            transparent 31px
+          );
+      }
+
+      .paper-holes {
+        left: 8px;
+      }
+
+      .paper-hole {
+        width: 15px;
+        height: 15px;
+      }
+
+      .shopping-title {
+        font-size: 28px;
+      }
+
+      .toolbar {
+        align-items: stretch;
+      }
+
+      .servings {
+        width: 100%;
+        margin-right: 0;
+      }
+
+      .secondary-button,
+      .print-button {
+        flex: 1 1 120px;
+      }
+    }
+
+    /*
+      Narrow-phone adjustments
+    */
+    @media (max-width: 370px) {
+      .brand-icon {
+        display: none;
+      }
+
+      .paper {
+        padding-right: 10px;
+        padding-left: 43px;
+      }
+
+      .shopping-title {
+        font-size: 24px;
+      }
+    }
+
+    /*
+      Printable shopping sheet
+    */
+    @media print {
+      @page {
+        size: auto;
+        margin: 0.45in;
+      }
+
+      body {
+        background: white;
+      }
+
+      .header,
+      .chat-panel,
+      .information,
+      .toolbar,
+      .paper-holes,
+      .empty-paper,
+      .recipe-source {
+        display: none !important;
+      }
+
+      .app,
+      .layout,
+      .paper-holder {
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .paper {
+        min-height: auto;
+        padding: 0 0 0 42px;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background-color: white;
+        background-image:
+          linear-gradient(
+            to right,
+            transparent 0,
+            transparent 28px,
+            rgba(210, 75, 75, 0.45) 29px,
+            transparent 30px
+          ),
+          repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 29px,
+            rgba(80, 150, 205, 0.25) 30px,
+            transparent 31px
+          );
+      }
+
+      .shopping-sheet {
+        display: block !important;
+      }
+
+      .notes {
+        border: 0;
+        resize: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">🍽️</div>
+
+        <div>
+          <h1>Recipe Desk</h1>
+          <p>Speak or type what sounds good, then print your shopping list.</p>
+        </div>
+      </div>
+
+      <div class="status">● Ready</div>
+    </header>
+
+    <div class="layout">
+      <section class="chat-panel" aria-label="Recipe assistant">
+        <div class="panel-heading">
+          <h2>What are you in the mood for?</h2>
+
+          <p>
+            Type your request or tap the microphone and speak.
+            You can say something like “I am in the mood for pasta.”
+          </p>
+        </div>
+
+        <div
+          id="conversation"
+          class="conversation"
+          aria-live="polite"
+          aria-relevant="additions"
+        >
+          <div class="message assistant-message">
+            Hi! Tell me what sounds good today. You can type your request or tap
+            <strong>🎤</strong> and talk to me.
+          </div>
+        </div>
+
+        <div class="input-area">
+          <div class="input-row">
+            <input
+              id="moodInput"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              enterkeyhint="search"
+              placeholder="I am in the mood for pasta..."
+              aria-label="Describe what you want to eat"
+            >
+
+            <button
+              id="microphoneButton"
+              class="microphone-button"
+              type="button"
+              title="Speak your food request"
+              aria-label="Start microphone"
+            >
+              🎤
+            </button>
+
+            <button id="searchButton" class="find-button" type="button">
+              Find five ideas
+            </button>
+          </div>
+
+          <div
+            id="voiceStatus"
+            class="voice-status"
+            role="status"
+            aria-live="polite"
+          >
+            Tap the microphone to speak.
+          </div>
+
+          <div class="chips" aria-label="Quick food suggestions">
+            <button class="chip" data-query="pasta" type="button">
+              🍝 Pasta
+            </button>
+
+            <button class="chip" data-query="chicken" type="button">
+              🍗 Chicken
+            </button>
+
+            <button class="chip" data-query="Mexican" type="button">
+              🌮 Mexican
+            </button>
+
+            <button class="chip" data-query="soup" type="button">
+              🥣 Soup
+            </button>
+
+            <button class="chip" data-query="vegetarian" type="button">
+              🥦 Vegetarian
+            </button>
+
+            <button class="chip" data-query="quick dinner" type="button">
+              ⏱️ Quick dinner
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="paper-holder">
+        <section class="paper" id="paper" aria-label="Printable shopping list">
+          <div class="paper-holes" aria-hidden="true">
+            <div class="paper-hole"></div>
+            <div class="paper-hole"></div>
+            <div class="paper-hole"></div>
+            <div class="paper-hole"></div>
+            <div class="paper-hole"></div>
+          </div>
+
+          <div id="emptyPaper" class="empty-paper">
+            <div>
+              <div class="empty-paper-icon">📝</div>
+
+              <h2>Your shopping list will appear here</h2>
+
+              <p>
+                Choose one of the five recipe ideas. The ingredients will be
+                placed on this blue-lined printable notepad.
+              </p>
+            </div>
+          </div>
+
+          <div id="shoppingSheet" class="shopping-sheet">
+            <h1 id="shoppingTitle" class="shopping-title">
+              Shopping List
+            </h1>
+
+            <p id="shoppingSubtitle" class="shopping-subtitle"></p>
+
+            <div class="toolbar">
+              <div class="servings">
+                <label for="servingCount">Servings:</label>
+
+                <button
+                  id="decreaseServings"
+                  class="serving-button"
+                  type="button"
+                  aria-label="Decrease servings"
+                >
+                  −
+                </button>
+
+                <span id="servingCount">4</span>
+
+                <button
+                  id="increaseServings"
+                  class="serving-button"
+                  type="button"
+                  aria-label="Increase servings"
+                >
+                  +
+                </button>
+              </div>
+
+              <button
+                id="clearChecks"
+                class="secondary-button"
+                type="button"
+              >
+                Clear checks
+              </button>
+
+              <button id="printButton" class="print-button" type="button">
+                🖨 Print list
+              </button>
+            </div>
+
+            <h2 class="section-title">Ingredients to buy</h2>
+
+            <ul id="ingredientsList" class="ingredients"></ul>
+
+            <h2 class="section-title">Notes</h2>
+
+            <textarea
+              id="notes"
+              class="notes"
+              aria-label="Shopping notes"
+              placeholder="Add store notes, substitutions or other items..."
+            ></textarea>
+
+            <div class="recipe-source">
+              <p>
+                Open the matching search below for complete recipes, cooking
+                instructions, ratings and preparation details.
+              </p>
+
+              <a
+                id="allrecipesLink"
+                class="recipe-link"
+                href="https://www.allrecipes.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open Allrecipes ↗
+              </a>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+<div class="information">
+  🍽️ Happy cooking!
+</div>
+  </main>
+
+  <script>
+    "use strict";
+
+    /*
+      ============================================================
+      RECIPE DESK
+      Mobile-friendly, voice-enabled local HTML prototype
+      ============================================================
+    */
+
+    const recipes = {
+      pasta: [
+        {
+          name: "Creamy Chicken Alfredo",
+          icon: "🍝",
+          time: "About 35 minutes",
+          servings: 4,
+          ingredients: [
+            [12, "oz", "fettuccine pasta"],
+            [1, "lb", "boneless chicken breast"],
+            [2, "tbsp", "olive oil"],
+            [3, "cloves", "garlic, minced"],
+            [2, "cups", "heavy cream"],
+            [1.5, "cups", "grated Parmesan cheese"],
+            [2, "tbsp", "butter"],
+            [null, "", "salt and black pepper"],
+            [2, "tbsp", "chopped parsley"]
+          ]
+        },
+        {
+          name: "Classic Spaghetti Bolognese",
+          icon: "🍅",
+          time: "About 50 minutes",
+          servings: 4,
+          ingredients: [
+            [12, "oz", "spaghetti"],
+            [1, "lb", "ground beef"],
+            [1, "", "yellow onion, chopped"],
+            [3, "cloves", "garlic, minced"],
+            [28, "oz", "crushed tomatoes"],
+            [2, "tbsp", "tomato paste"],
+            [1, "tsp", "Italian seasoning"],
+            [2, "tbsp", "olive oil"],
+            [null, "", "salt and black pepper"],
+            [0.5, "cup", "grated Parmesan cheese"]
+          ]
+        },
+        {
+          name: "Cheesy Baked Ziti",
+          icon: "🧀",
+          time: "About 55 minutes",
+          servings: 6,
+          ingredients: [
+            [16, "oz", "ziti pasta"],
+            [1, "lb", "Italian sausage or ground beef"],
+            [24, "oz", "marinara sauce"],
+            [15, "oz", "ricotta cheese"],
+            [2, "cups", "shredded mozzarella"],
+            [0.75, "cup", "grated Parmesan cheese"],
+            [1, "", "egg"],
+            [2, "cloves", "garlic, minced"],
+            [1, "tsp", "Italian seasoning"],
+            [null, "", "fresh basil, optional"]
+          ]
+        },
+        {
+          name: "Fresh Basil Pesto Pasta",
+          icon: "🌿",
+          time: "About 25 minutes",
+          servings: 4,
+          ingredients: [
+            [12, "oz", "penne or rotini pasta"],
+            [2, "cups", "fresh basil leaves"],
+            [0.33, "cup", "pine nuts or walnuts"],
+            [2, "cloves", "garlic"],
+            [0.5, "cup", "grated Parmesan cheese"],
+            [0.5, "cup", "olive oil"],
+            [1, "tbsp", "lemon juice"],
+            [null, "", "salt and black pepper"],
+            [1, "cup", "cherry tomatoes, optional"]
+          ]
+        },
+        {
+          name: "Garlic Shrimp Scampi",
+          icon: "🍤",
+          time: "About 30 minutes",
+          servings: 4,
+          ingredients: [
+            [12, "oz", "linguine"],
+            [1, "lb", "large shrimp"],
+            [4, "tbsp", "butter"],
+            [2, "tbsp", "olive oil"],
+            [5, "cloves", "garlic, minced"],
+            [0.5, "cup", "chicken broth or dry white wine"],
+            [1, "", "lemon"],
+            [0.25, "tsp", "red pepper flakes"],
+            [0.25, "cup", "fresh parsley"],
+            [null, "", "salt and black pepper"]
+          ]
+        }
+      ],
+
+      chicken: [
+        {
+          name: "Oven-Baked Garlic Chicken",
+          icon: "🍗",
+          time: "About 45 minutes",
+          servings: 4,
+          ingredients: [
+            [4, "", "boneless chicken breasts"],
+            [3, "tbsp", "olive oil"],
+            [4, "cloves", "garlic, minced"],
+            [1, "tsp", "paprika"],
+            [1, "tsp", "Italian seasoning"],
+            [1, "", "lemon"],
+            [null, "", "salt and black pepper"],
+            [2, "tbsp", "fresh parsley"]
+          ]
+        },
+        {
+          name: "Honey Mustard Chicken",
+          icon: "🍯",
+          time: "About 40 minutes",
+          servings: 4,
+          ingredients: [
+            [4, "", "chicken breasts or thighs"],
+            [0.25, "cup", "Dijon mustard"],
+            [0.25, "cup", "honey"],
+            [2, "tbsp", "olive oil"],
+            [2, "cloves", "garlic, minced"],
+            [1, "tsp", "paprika"],
+            [null, "", "salt and black pepper"]
+          ]
+        },
+        {
+          name: "Chicken Parmesan",
+          icon: "🧀",
+          time: "About 50 minutes",
+          servings: 4,
+          ingredients: [
+            [4, "", "thin chicken breast cutlets"],
+            [1, "cup", "Italian breadcrumbs"],
+            [0.5, "cup", "grated Parmesan cheese"],
+            [2, "", "eggs"],
+            [2, "cups", "marinara sauce"],
+            [1.5, "cups", "shredded mozzarella"],
+            [3, "tbsp", "olive oil"],
+            [null, "", "fresh basil"]
+          ]
+        },
+        {
+          name: "Chicken and Rice Skillet",
+          icon: "🍚",
+          time: "About 40 minutes",
+          servings: 4,
+          ingredients: [
+            [1.5, "lb", "boneless chicken thighs"],
+            [1, "cup", "long-grain white rice"],
+            [2, "cups", "chicken broth"],
+            [1, "", "yellow onion, chopped"],
+            [2, "cloves", "garlic, minced"],
+            [1, "cup", "frozen peas and carrots"],
+            [1, "tsp", "paprika"],
+            [2, "tbsp", "olive oil"]
+          ]
+        },
+        {
+          name: "Lemon Herb Grilled Chicken",
+          icon: "🍋",
+          time: "About 30 minutes",
+          servings: 4,
+          ingredients: [
+            [4, "", "boneless chicken breasts"],
+            [2, "", "lemons"],
+            [3, "tbsp", "olive oil"],
+            [3, "cloves", "garlic, minced"],
+            [1, "tsp", "dried oregano"],
+            [1, "tsp", "dried thyme"],
+            [null, "", "salt and black pepper"]
+          ]
+        }
+      ],
+
+      mexican: [
+        {
+          name: "Easy Beef Tacos",
+          icon: "🌮",
+          time: "About 25 minutes",
+          servings: 4,
+          ingredients: [
+            [1, "lb", "ground beef"],
+            [1, "packet", "taco seasoning"],
+            [8, "", "taco shells or tortillas"],
+            [1, "cup", "shredded lettuce"],
+            [1, "cup", "shredded cheddar cheese"],
+            [2, "", "tomatoes, diced"],
+            [0.5, "cup", "salsa"],
+            [0.5, "cup", "sour cream"]
+          ]
+        },
+        {
+          name: "Chicken Quesadillas",
+          icon: "🫓",
+          time: "About 25 minutes",
+          servings: 4,
+          ingredients: [
+            [2, "cups", "cooked shredded chicken"],
+            [8, "", "flour tortillas"],
+            [2, "cups", "shredded Mexican-blend cheese"],
+            [1, "", "bell pepper, sliced"],
+            [0.5, "", "onion, sliced"],
+            [1, "tbsp", "taco seasoning"],
+            [1, "tbsp", "oil"],
+            [null, "", "salsa and sour cream"]
+          ]
+        },
+        {
+          name: "Black Bean Burrito Bowls",
+          icon: "🥑",
+          time: "About 30 minutes",
+          servings: 4,
+          ingredients: [
+            [2, "cups", "cooked rice"],
+            [15, "oz", "black beans"],
+            [1, "cup", "corn"],
+            [1, "cup", "salsa"],
+            [1, "", "avocado"],
+            [1, "cup", "shredded cheese"],
+            [1, "", "lime"],
+            [null, "", "fresh cilantro"]
+          ]
+        },
+        {
+          name: "Sheet-Pan Chicken Fajitas",
+          icon: "🫑",
+          time: "About 35 minutes",
+          servings: 4,
+          ingredients: [
+            [1.5, "lb", "chicken breast, sliced"],
+            [3, "", "bell peppers, sliced"],
+            [1, "", "large onion, sliced"],
+            [2, "tbsp", "olive oil"],
+            [1, "packet", "fajita seasoning"],
+            [8, "", "flour tortillas"],
+            [1, "", "lime"],
+            [null, "", "sour cream and salsa"]
+          ]
+        },
+        {
+          name: "Cheesy Beef Enchiladas",
+          icon: "🧀",
+          time: "About 50 minutes",
+          servings: 6,
+          ingredients: [
+            [1, "lb", "ground beef"],
+            [10, "", "corn or flour tortillas"],
+            [20, "oz", "enchilada sauce"],
+            [2, "cups", "shredded Mexican-blend cheese"],
+            [1, "", "small onion, chopped"],
+            [4, "oz", "diced green chiles"],
+            [1, "tsp", "ground cumin"]
+          ]
+        }
+      ],
+
+      soup: [
+        {
+          name: "Classic Chicken Noodle Soup",
+          icon: "🥣",
+          time: "About 45 minutes",
+          servings: 6,
+          ingredients: [
+            [2, "tbsp", "butter"],
+            [1, "", "onion, chopped"],
+            [3, "", "carrots, sliced"],
+            [3, "", "celery stalks, sliced"],
+            [8, "cups", "chicken broth"],
+            [3, "cups", "cooked shredded chicken"],
+            [2, "cups", "egg noodles"],
+            [1, "tsp", "dried thyme"],
+            [null, "", "salt and black pepper"]
+          ]
+        },
+        {
+          name: "Creamy Tomato Basil Soup",
+          icon: "🍅",
+          time: "About 35 minutes",
+          servings: 4,
+          ingredients: [
+            [28, "oz", "crushed tomatoes"],
+            [2, "cups", "vegetable or chicken broth"],
+            [1, "", "onion, chopped"],
+            [3, "cloves", "garlic, minced"],
+            [0.75, "cup", "heavy cream"],
+            [0.5, "cup", "fresh basil leaves"],
+            [2, "tbsp", "butter"],
+            [null, "", "salt and black pepper"]
+          ]
+        },
+        {
+          name: "Hearty Vegetable Soup",
+          icon: "🥕",
+          time: "About 50 minutes",
+          servings: 6,
+          ingredients: [
+            [1, "", "onion, chopped"],
+            [3, "", "carrots, sliced"],
+            [3, "", "celery stalks, sliced"],
+            [2, "", "potatoes, diced"],
+            [15, "oz", "diced tomatoes"],
+            [6, "cups", "vegetable broth"],
+            [1, "cup", "green beans"],
+            [1, "cup", "corn"],
+            [1, "cup", "peas"],
+            [1, "tsp", "Italian seasoning"]
+          ]
+        },
+        {
+          name: "Broccoli Cheddar Soup",
+          icon: "🥦",
+          time: "About 40 minutes",
+          servings: 4,
+          ingredients: [
+            [4, "tbsp", "butter"],
+            [1, "", "small onion, chopped"],
+            [0.25, "cup", "all-purpose flour"],
+            [2, "cups", "milk"],
+            [2, "cups", "chicken or vegetable broth"],
+            [3, "cups", "broccoli florets"],
+            [1, "", "carrot, shredded"],
+            [2, "cups", "shredded cheddar cheese"]
+          ]
+        },
+        {
+          name: "Beef and Potato Soup",
+          icon: "🥔",
+          time: "About 1 hour",
+          servings: 6,
+          ingredients: [
+            [1.5, "lb", "beef stew meat"],
+            [4, "", "potatoes, diced"],
+            [3, "", "carrots, sliced"],
+            [1, "", "onion, chopped"],
+            [6, "cups", "beef broth"],
+            [2, "tbsp", "tomato paste"],
+            [1, "tsp", "dried thyme"],
+            [2, "tbsp", "flour"]
+          ]
+        }
+      ],
+
+      vegetarian: [
+        {
+          name: "Roasted Vegetable Pasta",
+          icon: "🥦",
+          time: "About 40 minutes",
+          servings: 4,
+          ingredients: [
+            [12, "oz", "penne pasta"],
+            [1, "", "zucchini, chopped"],
+            [1, "", "red bell pepper, chopped"],
+            [1, "cup", "cherry tomatoes"],
+            [1, "", "red onion, chopped"],
+            [3, "tbsp", "olive oil"],
+            [3, "cloves", "garlic, minced"],
+            [0.5, "cup", "grated Parmesan cheese"],
+            [1, "tsp", "Italian seasoning"]
+          ]
+        },
+        {
+          name: "Black Bean Veggie Burgers",
+          icon: "🍔",
+          time: "About 30 minutes",
+          servings: 4,
+          ingredients: [
+            [15, "oz", "black beans"],
+            [0.5, "cup", "breadcrumbs"],
+            [1, "", "egg"],
+            [0.25, "cup", "finely chopped onion"],
+            [1, "tsp", "chili powder"],
+            [1, "tsp", "ground cumin"],
+            [4, "", "burger buns"],
+            [null, "", "lettuce, tomato and cheese"]
+          ]
+        },
+        {
+          name: "Chickpea Coconut Curry",
+          icon: "🍛",
+          time: "About 35 minutes",
+          servings: 4,
+          ingredients: [
+            [2, "cans", "chickpeas"],
+            [14, "oz", "coconut milk"],
+            [14, "oz", "diced tomatoes"],
+            [1, "", "onion, chopped"],
+            [3, "cloves", "garlic, minced"],
+            [1, "tbsp", "curry powder"],
+            [1, "tsp", "ground cumin"],
+            [2, "cups", "fresh spinach"],
+            [null, "", "cooked rice"]
+          ]
+        },
+        {
+          name: "Spinach Mushroom Quesadillas",
+          icon: "🍄",
+          time: "About 25 minutes",
+          servings: 4,
+          ingredients: [
+            [8, "", "flour tortillas"],
+            [8, "oz", "mushrooms, sliced"],
+            [3, "cups", "fresh spinach"],
+            [2, "cups", "shredded cheese"],
+            [1, "", "small onion, sliced"],
+            [1, "tbsp", "olive oil"],
+            [null, "", "salsa"]
+          ]
+        },
+        {
+          name: "Mediterranean Quinoa Bowls",
+          icon: "🥗",
+          time: "About 30 minutes",
+          servings: 4,
+          ingredients: [
+            [1, "cup", "uncooked quinoa"],
+            [15, "oz", "chickpeas"],
+            [1, "", "cucumber, chopped"],
+            [1, "cup", "cherry tomatoes"],
+            [0.5, "cup", "crumbled feta cheese"],
+            [0.25, "cup", "sliced olives"],
+            [1, "", "lemon"],
+            [3, "tbsp", "olive oil"]
+          ]
+        }
+      ]
+    };
+
+    recipes.quick = [
+      recipes.mexican[0],
+      recipes.chicken[3],
+      recipes.vegetarian[3],
+      recipes.pasta[3],
+      recipes.soup[1]
+    ];
+
+    const conversation = document.getElementById("conversation");
+    const moodInput = document.getElementById("moodInput");
+    const searchButton = document.getElementById("searchButton");
+    const microphoneButton = document.getElementById("microphoneButton");
+    const voiceStatus = document.getElementById("voiceStatus");
+
+    const emptyPaper = document.getElementById("emptyPaper");
+    const shoppingSheet = document.getElementById("shoppingSheet");
+    const shoppingTitle = document.getElementById("shoppingTitle");
+    const shoppingSubtitle = document.getElementById("shoppingSubtitle");
+    const ingredientsList = document.getElementById("ingredientsList");
+    const servingCount = document.getElementById("servingCount");
+    const allrecipesLink = document.getElementById("allrecipesLink");
+    const notes = document.getElementById("notes");
+
+    let currentChoices = [];
+    let selectedRecipe = null;
+    let currentServings = 4;
+    let recognition = null;
+    let listening = false;
+
+    function addMessage(text, sender = "assistant", extraClass = "") {
+      const message = document.createElement("div");
+
+      message.className =
+        "message " +
+        (sender === "user" ? "user-message" : "assistant-message") +
+        (extraClass ? " " + extraClass : "");
+
+      message.textContent = text;
+      conversation.appendChild(message);
+      scrollConversation();
+    }
+
+    function scrollConversation() {
+      requestAnimationFrame(function () {
+        conversation.scrollTop = conversation.scrollHeight;
+      });
+    }
+
+    function determineCategory(request) {
+      const text = request.toLowerCase();
+
+      if (
+        text.includes("pasta") ||
+        text.includes("spaghetti") ||
+        text.includes("noodle") ||
+        text.includes("italian") ||
+        text.includes("alfredo") ||
+        text.includes("ziti") ||
+        text.includes("linguine")
+      ) {
+        return "pasta";
+      }
+
+      if (
+        text.includes("mexican") ||
+        text.includes("taco") ||
+        text.includes("burrito") ||
+        text.includes("fajita") ||
+        text.includes("quesadilla") ||
+        text.includes("enchilada")
+      ) {
+        return "mexican";
+      }
+
+      if (
+        text.includes("soup") ||
+        text.includes("stew") ||
+        text.includes("warm bowl")
+      ) {
+        return "soup";
+      }
+
+      if (
+        text.includes("vegetarian") ||
+        text.includes("vegetable") ||
+        text.includes("veggie") ||
+        text.includes("meatless") ||
+        text.includes("plant")
+      ) {
+        return "vegetarian";
+      }
+
+      if (
+        text.includes("chicken") ||
+        text.includes("poultry")
+      ) {
+        return "chicken";
+      }
+
+      if (
+        text.includes("quick") ||
+        text.includes("fast") ||
+        text.includes("easy") ||
+        text.includes("simple") ||
+        text.includes("30 minute") ||
+        text.includes("thirty minute")
+      ) {
+        return "quick";
+      }
+
+      return "quick";
+    }
+
+    function searchRecipes(request, voiceRequest = false) {
+      const cleanRequest = request.trim();
+
+      if (!cleanRequest) {
+        moodInput.focus();
+        return;
+      }
+
+      addMessage(cleanRequest, "user", voiceRequest ? "voice-message" : "");
+      moodInput.value = "";
+
+      const category = determineCategory(cleanRequest);
+      currentChoices = recipes[category];
+
+      window.setTimeout(function () {
+        if (category === "quick") {
+          addMessage(
+            "Here are five easy meal ideas. Tap one or type a number from 1 to 5."
+          );
+        } else {
+          addMessage(
+            "That sounds good! Here are five ideas. Tap one or type a number from 1 to 5."
+          );
+        }
+
+        displayChoices(currentChoices);
+      }, 200);
+    }
+
+    function displayChoices(recipeList) {
+      const box = document.createElement("div");
+      box.className = "recipe-options";
+
+      const heading = document.createElement("p");
+      heading.className = "options-label";
+      heading.textContent = "Choose a recipe";
+      box.appendChild(heading);
+
+      recipeList.forEach(function (recipe, index) {
+        const button = document.createElement("button");
+        button.className = "recipe-choice";
+        button.type = "button";
+
+        const number = document.createElement("span");
+        number.className = "choice-number";
+        number.textContent = String(index + 1);
+
+        const name = document.createElement("span");
+        name.className = "choice-name";
+        name.textContent = recipe.icon + " " + recipe.name;
+
+        const time = document.createElement("span");
+        time.className = "choice-time";
+        time.textContent = recipe.time;
+
+        button.appendChild(number);
+        button.appendChild(name);
+        button.appendChild(time);
+
+        button.addEventListener("click", function () {
+          selectRecipe(index);
+        });
+
+        box.appendChild(button);
+      });
+
+      conversation.appendChild(box);
+
+      addMessage(
+        "Which sounds best? Tap a recipe, type 1 through 5, or say a number."
+      );
+
+      scrollConversation();
+    }
+
+    function selectRecipe(index) {
+      const recipe = currentChoices[index];
+
+      if (!recipe) {
+        return;
+      }
+
+      selectedRecipe = recipe;
+      currentServings = recipe.servings;
+
+      addMessage(String(index + 1), "user");
+
+      window.setTimeout(function () {
+        addMessage(
+          recipe.name +
+          " sounds great. I placed the ingredients on your shopping notepad."
+        );
+
+        displayShoppingList();
+      }, 180);
+    }
+
+    function displayShoppingList() {
+      if (!selectedRecipe) {
+        return;
+      }
+
+      emptyPaper.style.display = "none";
+      shoppingSheet.style.display = "block";
+
+      shoppingTitle.textContent =
+        selectedRecipe.icon + " " + selectedRecipe.name;
+
+      shoppingSubtitle.textContent =
+        selectedRecipe.time +
+        " • Shopping list for " +
+        currentServings +
+        (currentServings === 1 ? " serving" : " servings");
+
+      servingCount.textContent = String(currentServings);
+
+      allrecipesLink.href =
+        "https://www.allrecipes.com/search?q=" +
+        encodeURIComponent(selectedRecipe.name);
+
+      allrecipesLink.textContent =
+        "Search Allrecipes for “" + selectedRecipe.name + "” ↗";
+
+      ingredientsList.innerHTML = "";
+
+      const scale = currentServings / selectedRecipe.servings;
+
+      selectedRecipe.ingredients.forEach(function (ingredient, index) {
+        const item = document.createElement("li");
+        item.className = "ingredient";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = "ingredient-" + index;
+
+        const label = document.createElement("label");
+        label.htmlFor = checkbox.id;
+        label.textContent = formatIngredient(ingredient, scale);
+
+        checkbox.addEventListener("change", function () {
+          item.classList.toggle("checked", checkbox.checked);
+        });
+
+        item.appendChild(checkbox);
+        item.appendChild(label);
+        ingredientsList.appendChild(item);
+      });
+
+      if (window.innerWidth <= 920) {
+        document.getElementById("paper").scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }
+    }
+
+    function formatIngredient(ingredient, scale) {
+      const quantity = ingredient[0];
+      const unit = ingredient[1];
+      const item = ingredient[2];
+
+      if (quantity === null) {
+        return item;
+      }
+
+      return (
+        formatQuantity(quantity * scale) +
+        (unit ? " " + unit : "") +
+        " " +
+        item
+      ).trim();
+    }
+
+    function formatQuantity(number) {
+      const rounded = Math.round(number * 12) / 12;
+      const whole = Math.floor(rounded);
+      const decimal = rounded - whole;
+
+      const fractions = [
+        [0.125, "⅛"],
+        [1 / 6, "⅙"],
+        [0.25, "¼"],
+        [1 / 3, "⅓"],
+        [0.5, "½"],
+        [2 / 3, "⅔"],
+        [0.75, "¾"]
+      ];
+
+      if (Math.abs(decimal) < 0.03) {
+        return String(whole);
+      }
+
+      let closest = fractions[0];
+
+      fractions.forEach(function (fraction) {
+        if (
+          Math.abs(decimal - fraction[0]) <
+          Math.abs(decimal - closest[0])
+        ) {
+          closest = fraction;
+        }
+      });
+
+      if (Math.abs(decimal - closest[0]) < 0.08) {
+        return whole > 0 ? whole + " " + closest[1] : closest[1];
+      }
+
+      return String(Math.round(rounded * 10) / 10);
+    }
+
+    function handleTypedInput() {
+      const text = moodInput.value.trim();
+
+      if (/^[1-5]$/.test(text) && currentChoices.length === 5) {
+        moodInput.value = "";
+        selectRecipe(Number(text) - 1);
+        return;
+      }
+
+      searchRecipes(text);
+    }
+
+    function spokenNumberToIndex(text) {
+      const cleanText = text.toLowerCase().trim();
+
+      const numberWords = {
+        "one": 0,
+        "number one": 0,
+        "first": 0,
+        "two": 1,
+        "number two": 1,
+        "second": 1,
+        "three": 2,
+        "number three": 2,
+        "third": 2,
+        "four": 3,
+        "number four": 3,
+        "fourth": 3,
+        "five": 4,
+        "number five": 4,
+        "fifth": 4
+      };
+
+      if (Object.prototype.hasOwnProperty.call(numberWords, cleanText)) {
+        return numberWords[cleanText];
+      }
+
+      const digitMatch = cleanText.match(/\b([1-5])\b/);
+
+      if (digitMatch) {
+        return Number(digitMatch[1]) - 1;
+      }
+
+      return -1;
+    }
+
+    function setupVoiceRecognition() {
+      const Recognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!Recognition) {
+        microphoneButton.disabled = true;
+        microphoneButton.title =
+          "Voice recognition is not supported by this browser";
+
+        voiceStatus.textContent =
+          "Voice input is unavailable in this browser. You can still type.";
+
+        return;
+      }
+
+      recognition = new Recognition();
+      recognition.lang = "en-US";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = function () {
+        listening = true;
+        microphoneButton.classList.add("listening");
+        microphoneButton.textContent = "■";
+        microphoneButton.setAttribute("aria-label", "Stop microphone");
+
+        voiceStatus.classList.add("listening");
+        voiceStatus.textContent = "Listening... Say what you want to eat.";
+      };
+
+      recognition.onresult = function (event) {
+        let transcript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
+          transcript += event.results[i][0].transcript;
+        }
+
+        moodInput.value = transcript.trim();
+
+        const finalResult =
+          event.results[event.results.length - 1].isFinal;
+
+        if (finalResult) {
+          const spokenText = transcript.trim();
+          const selectedIndex = spokenNumberToIndex(spokenText);
+
+          if (selectedIndex >= 0 && currentChoices.length === 5) {
+            moodInput.value = "";
+            selectRecipe(selectedIndex);
+          } else {
+            searchRecipes(spokenText, true);
+          }
+        }
+      };
+
+      recognition.onerror = function (event) {
+        let message = "I could not hear that. Please try again or type it.";
+
+        if (event.error === "not-allowed") {
+          message =
+            "Microphone permission was blocked. Allow microphone access in your browser settings.";
+        }
+
+        if (event.error === "no-speech") {
+          message = "I did not hear any speech. Tap the microphone and try again.";
+        }
+
+        if (event.error === "network") {
+          message =
+            "Voice recognition could not connect. Check your internet connection.";
+        }
+
+        voiceStatus.textContent = message;
+        voiceStatus.classList.remove("listening");
+      };
+
+      recognition.onend = function () {
+        listening = false;
+        microphoneButton.classList.remove("listening");
+        microphoneButton.textContent = "🎤";
+        microphoneButton.setAttribute("aria-label", "Start microphone");
+
+        voiceStatus.classList.remove("listening");
+
+        if (
+          !voiceStatus.textContent.includes("blocked") &&
+          !voiceStatus.textContent.includes("could not") &&
+          !voiceStatus.textContent.includes("did not")
+        ) {
+          voiceStatus.textContent = "Tap the microphone to speak again.";
+        }
+      };
+    }
+
+    microphoneButton.addEventListener("click", function () {
+      if (!recognition) {
+        return;
+      }
+
+      if (listening) {
+        recognition.stop();
+        return;
+      }
+
+      try {
+        recognition.start();
+      } catch (error) {
+        voiceStatus.textContent =
+          "The microphone is already starting. Please wait a moment.";
+      }
+    });
+
+    searchButton.addEventListener("click", handleTypedInput);
+
+    moodInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleTypedInput();
+      }
+    });
+
+    document.querySelectorAll(".chip").forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        searchRecipes(chip.dataset.query);
+      });
+    });
+
+    document
+      .getElementById("decreaseServings")
+      .addEventListener("click", function () {
+        if (!selectedRecipe || currentServings <= 1) {
+          return;
+        }
+
+        currentServings -= 1;
+        displayShoppingList();
+      });
+
+    document
+      .getElementById("increaseServings")
+      .addEventListener("click", function () {
+        if (!selectedRecipe || currentServings >= 24) {
+          return;
+        }
+
+        currentServings += 1;
+        displayShoppingList();
+      });
+
+    document
+      .getElementById("clearChecks")
+      .addEventListener("click", function () {
+        document
+          .querySelectorAll(".ingredient input[type='checkbox']")
+          .forEach(function (checkbox) {
+            checkbox.checked = false;
+            checkbox.closest(".ingredient").classList.remove("checked");
+          });
+      });
+
+    document
+      .getElementById("printButton")
+      .addEventListener("click", function () {
+        window.print();
+      });
+
+    try {
+      const savedNotes = localStorage.getItem("recipeDeskNotes");
+
+      if (savedNotes) {
+        notes.value = savedNotes;
+      }
+
+      notes.addEventListener("input", function () {
+        localStorage.setItem("recipeDeskNotes", notes.value);
+      });
+    } catch (error) {
+      /*
+        The app still works if a browser blocks local storage.
+      */
+    }
+
+    setupVoiceRecognition();
+    moodInput.focus();
+  </script>
+</body>
+</html>
