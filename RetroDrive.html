@@ -1,0 +1,2254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Retro Drive 2020</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#05070b;color:#fff;font-family:Consolas,monospace}
+body{display:grid;place-items:center}
+#wrap{position:relative;width:min(100vw,calc(100vh * 1.6));aspect-ratio:16/10;background:#000;box-shadow:0 0 40px #000}
+canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+#help{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#000c;text-align:center;padding:24px;box-sizing:border-box}
+#help>div{max-width:660px;border:3px solid #b9f3ff;background:#071321;padding:20px;box-shadow:8px 8px 0 #173c56}
+h1{margin:0 0 10px;color:#ffd44a;font-size:clamp(25px,5vw,52px)}
+p{line-height:1.45}
+.key{color:#77e6ff}.warn{color:#ffba72}.small{font-size:12px;color:#a9c2cc}
+button{font:inherit;font-weight:bold;padding:10px 18px;background:#ffd44a;color:#101010;border:0;box-shadow:4px 4px 0 #a16a00;cursor:pointer}
+#status{position:absolute;top:5px;right:7px;font-size:11px;color:#9ff;text-shadow:1px 1px #000;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="wrap">
+<canvas id="game" width="640" height="400"></canvas>
+<div id="status">KEYBOARD</div>
+<div id="help"><div>
+<h1>RETRO DRIVE 2020</h1>
+<p>A clean-room, single-file DOS-style road challenge.</p>
+<p>
+<span class="key">W / UP</span> accelerate &nbsp;
+<span class="key">S / DOWN</span> brake<br>
+<span class="key">A D / LEFT RIGHT</span> steer &nbsp;
+<span class="key">P / ESC</span> pause<br>
+<span class="key">R</span> restart &nbsp;
+<span class="key">F</span> fullscreen
+</p>
+<p><b>Xbox:</b> left stick steers, RT accelerates, LT brakes, Menu pauses, View restarts.</p>
+<p class="warn">Reach the finish before 2:45. Stay on the road and avoid traffic.</p>
+<button id="start">START ENGINE</button>
+<p class="small">Controller support uses the browser Gamepad API. Press any controller button after connecting.</p>
+</div></div>
+</div>
+
+<script>
+'use strict';
+
+const C=document.getElementById('game');
+const X=C.getContext('2d');
+const help=document.getElementById('help');
+const statusEl=document.getElementById('status');
+
+const W=C.width,H=C.height;
+const keys={};
+
+let running=false;
+let paused=false;
+let last=0;
+let gameTime=0;
+let finished=false;
+let lost=false;
+let controller=false;
+let score=0;
+let nextCheckpoint=0;
+let checkpointFlash=0;
+
+const checkpoints=[
+  0.20,
+  0.40,
+  0.60,
+  0.80
+];
+let crashed=false;
+let crashX=W/2;
+let crashY=205;
+
+const COLORS={
+ sky:'#55a7d9',
+ sky2:'#bbe9f3',
+ grass:'#248b3a',
+ grass2:'#1d7431',
+ road:'#64646a',
+ road2:'#595960',
+ rumble:'#f3efdc',
+ red:'#d7443e',
+ dash:'#11171e',
+ dash2:'#26323e'
+};
+
+const SEG=180;
+const DRAW=180;
+const ROAD=1850;
+const CAMERA=900;
+const LANES=2;
+
+const track=[];
+let trackLength=0;
+
+function add(n,curve=0,hill=0,scene='plain'){
+ for(let i=0;i<n;i++){
+  track.push({
+   curve:curve*Math.sin(Math.PI*i/n),
+   hill:hill*Math.sin(Math.PI*i/n),
+   scene,
+   traffic:[]
+  });
+ }
+}
+
+add(45,0,0,'start');
+add(55,.55,120,'pines');
+add(35,0,-80,'farms');
+add(70,-.8,170,'rocks');
+add(42,.35,-150,'lake');
+add(70,.95,80,'desert');
+add(40,0,-130,'town');
+add(75,-.7,200,'pines');
+add(55,.45,-90,'farms');
+add(60,-1.0,110,'rocks');
+add(65,.65,-110,'lake');
+add(60,0,40,'finish');
+
+trackLength=track.length*SEG;
+
+const car={
+ z:0,
+ x:0.42,
+ speed:0,
+ max:146/2.237,
+accel:22,
+brake:32,
+drag:3.2,
+ steer:0,
+ visualSteer:0,
+ damage:0,
+ gear:1,
+ rpm:900,
+ fuel:100
+};
+
+
+// =========================================================
+// SIMPLIFIED TWO-WAY TRAFFIC
+// =========================================================
+
+const roadTraffic=[];
+
+function createRoadTraffic(){
+
+  roadTraffic.length=0;
+
+  const colors=[
+    '#e64b43',
+    '#f1cf45',
+    '#48bdec',
+    '#e8e8df',
+    '#9861d7',
+    '#56c980'
+  ];
+
+  // -----------------------------------------
+  // SAME-DIRECTION TRAFFIC
+  // Sparse traffic so player can pass
+  // -----------------------------------------
+
+  for(let i=0;i<3;i++){
+
+    roadTraffic.push({
+
+      distance:
+        2200+
+        i*5200+
+        Math.random()*1800,
+
+      lane:0.42,
+
+      direction:1,
+
+      speed:
+        12+
+        Math.random()*7,
+
+      color:
+        colors[i%colors.length],
+
+      active:true
+    });
+
+  }
+
+  // -----------------------------------------
+  // ONCOMING TRAFFIC
+  // -----------------------------------------
+
+  for(let i=0;i<4;i++){
+
+    roadTraffic.push({
+
+      distance:
+        3200+
+        i*4700+
+        Math.random()*2200,
+
+      lane:-0.42,
+
+      direction:-1,
+
+      speed:
+        25+
+        Math.random()*10,
+
+      color:
+        colors[(i+2)%colors.length],
+
+      active:true
+    });
+
+  }
+}
+
+createRoadTraffic();
+
+function reset(){
+
+  car.z=0;
+  car.x=0.42;
+  car.speed=0;
+  car.steer=0;
+  car.visualSteer=0;
+  car.damage=0;
+  car.fuel=100;
+  car.gear=1;
+  car.rpm=900;
+
+  gameTime=0;
+  finished=false;
+  lost=false;
+  crashed=false;
+  paused=false;
+
+score=0;
+nextCheckpoint=0;
+checkpointFlash=0;
+
+  crashX=W/2;
+  crashY=205;
+
+  createRoadTraffic();
+
+  last=performance.now();
+
+}
+
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function lerp(a,b,t){return a+(b-a)*t}
+
+addEventListener('keydown',e=>{
+ keys[e.code]=1;
+
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))
+  e.preventDefault();
+
+ if(e.code==='KeyP'||e.code==='Escape')
+  paused=!paused;
+
+ if(e.code==='KeyR')
+  reset();
+
+ if(e.code==='KeyF')
+  document.documentElement.requestFullscreen?.();
+});
+
+addEventListener('keyup',e=>keys[e.code]=0);
+
+document.getElementById('start').onclick=()=>{
+ help.style.display='none';
+ running=true;
+ reset();
+};
+
+function input(){
+ let steer=(keys.ArrowRight||keys.KeyD?1:0)-
+           (keys.ArrowLeft||keys.KeyA?1:0);
+
+ let throttle=(keys.ArrowUp||keys.KeyW)?1:0;
+ let brake=(keys.ArrowDown||keys.KeyS)?1:0;
+
+ controller=false;
+
+ for(const g of navigator.getGamepads?navigator.getGamepads():[]){
+  if(!g)continue;
+
+  controller=true;
+
+let dz=Math.abs(g.axes[0])>.12?g.axes[0]:0;
+
+  steer=Math.abs(dz)>Math.abs(steer)?dz:steer;
+  throttle=Math.max(throttle,g.buttons[7]?.value||0);
+  brake=Math.max(brake,g.buttons[6]?.value||0);
+
+  if(g.buttons[9]?.pressed&&!input.pauseLock){
+   paused=!paused;
+   input.pauseLock=true;
+  }
+
+  if(!g.buttons[9]?.pressed)
+   input.pauseLock=false;
+
+  if(g.buttons[8]?.pressed&&!input.resetLock){
+   reset();
+   input.resetLock=true;
+  }
+
+  if(!g.buttons[8]?.pressed)
+   input.resetLock=false;
+
+  break;
+ }
+
+ statusEl.textContent=controller?'XBOX CONTROLLER':'KEYBOARD';
+
+ return{steer,throttle,brake};
+}
+
+function update(dt){
+if(!running||paused||finished||lost||crashed)return;
+
+ gameTime+=dt;
+
+ const inp=input();
+ const speedRatio=car.speed/car.max;
+
+ car.steer=lerp(
+  car.steer,
+  inp.steer,
+  clamp(dt*7,0,1)
+ );
+
+ car.visualSteer=lerp(
+  car.visualSteer,
+  car.steer,
+  clamp(dt*10,0,1)
+ );
+
+ let onRoad=Math.abs(car.x)<1.05;
+
+ car.speed+=inp.throttle*car.accel*dt;
+ car.speed-=inp.brake*car.brake*dt;
+
+ car.speed-=car.drag*(.25+speedRatio*.75)*dt;
+
+ if(!onRoad){
+  car.speed-=19*dt;
+  car.damage+=dt*1.2;
+ }
+
+ car.speed=clamp(
+  car.speed,
+  0,
+  car.max*(1-car.damage*.003)
+ );
+
+ let turnStrength=(.55-speedRatio*.28);
+
+ car.x+=car.steer*
+        turnStrength*
+        (.4+speedRatio*1.5)*
+        dt*2.2;
+
+ let idx=Math.floor(car.z/SEG)%track.length;
+
+ car.x-=track[idx].curve*
+        speedRatio*
+        dt*.38;
+
+car.z+=car.speed*dt*8.5;
+
+ car.fuel=Math.max(
+  0,
+  car.fuel-inp.throttle*dt*.16
+ );
+
+ if(car.fuel<=0)
+  car.speed=Math.max(0,car.speed-20*dt);
+
+ let mph=car.speed*2.237;
+
+ car.gear=
+  mph<18?1:
+  mph<35?2:
+  mph<58?3:
+  mph<86?4:
+  mph<116?5:6;
+
+ car.rpm=
+  900+
+  (mph-[0,0,15,32,54,82,110][car.gear])*115+
+  inp.throttle*700;
+
+ car.rpm=clamp(car.rpm,800,7200);
+
+ 
+// =========================================================
+// UPDATE TRAFFIC AND COLLISIONS
+// =========================================================
+
+for(const trafficCar of roadTraffic){
+
+  if(!trafficCar.active)continue;
+
+  const previousDistance =
+    trafficCar.distance - car.z;
+
+  if(trafficCar.direction === 1){
+
+    trafficCar.distance +=
+      trafficCar.speed *
+      dt *
+      8.5;
+
+  }else{
+
+    trafficCar.distance -=
+      trafficCar.speed *
+      dt *
+      8.5;
+  }
+
+  const relativeDistance =
+    trafficCar.distance - car.z;
+
+  const laneDifference =
+    Math.abs(
+      car.x - trafficCar.lane
+    );
+
+  const lateralHit =
+    laneDifference < 0.42;
+
+  /*
+    A collision occurs when the traffic car
+    crosses the area directly in front of us.
+
+    Testing both previousDistance and
+    relativeDistance prevents fast movement
+    from skipping through the collision zone.
+  */
+
+  const crossedCollisionPoint =
+    previousDistance > 90 &&
+    relativeDistance <= 180;
+
+  const alreadyInCollisionZone =
+    relativeDistance > -120 &&
+    relativeDistance <= 180;
+
+  if(
+    lateralHit &&
+    (
+      crossedCollisionPoint ||
+      alreadyInCollisionZone
+    )
+  ){
+
+    crashed=true;
+    car.speed=0;
+    car.damage=100;
+
+    crashX =
+      W/2 +
+      (
+        trafficCar.lane -
+        car.x
+      ) * 180;
+
+    crashX=clamp(
+      crashX,
+      145,
+      W-145
+    );
+
+    crashY=
+      185+
+      Math.random()*35;
+
+    break;
+  }
+
+  if(relativeDistance < -400){
+
+    if(trafficCar.direction === 1){
+
+      trafficCar.distance =
+        car.z +
+        8500 +
+        Math.random()*8500;
+
+    }else{
+
+      trafficCar.distance =
+        car.z +
+        7000 +
+        Math.random()*9000;
+    }
+  }
+}
+
+// =========================================================
+// CHECKPOINTS
+// =========================================================
+
+if(nextCheckpoint < checkpoints.length){
+
+  const levelProgress =
+    car.z / (trackLength-SEG*5);
+
+  if(levelProgress >= checkpoints[nextCheckpoint]){
+
+    score += 100;
+
+    nextCheckpoint++;
+
+    checkpointFlash = 1.8;
+  }
+}
+
+if(checkpointFlash > 0){
+  checkpointFlash -= dt;
+}
+
+ if(car.z>=trackLength-SEG*5){
+  finished=true;
+  car.speed=0;
+ }
+
+ if(gameTime>=165&&!finished){
+  lost=true;
+  car.speed=0;
+ }
+}
+
+function project(worldX,worldY,worldZ,camX,camY,camZ){
+ let dz=worldZ-camZ;
+ let scale=CAMERA/dz;
+
+ return{
+  x:W/2+scale*(worldX-camX)*W/2,
+  y:H*.48-scale*(worldY-camY)*H/2,
+  w:scale*ROAD*W/2,
+  scale
+ };
+}
+
+function poly(color,...p){
+ X.fillStyle=color;
+ X.beginPath();
+ X.moveTo(p[0].x,p[0].y);
+
+ for(let i=1;i<p.length;i++)
+  X.lineTo(p[i].x,p[i].y);
+
+ X.closePath();
+ X.fill();
+}
+
+function drawScene(type,x,y,s,i){
+  if(s<.035)return;
+
+  let size=clamp(s*620,2,80);
+  let side=i%2?-1:1;
+  let px=x+side*(size*2.8+(i%3)*size);
+
+  if(type==='pines'){
+    X.fillStyle='#16592d';
+    X.beginPath();
+    X.moveTo(px,y-size*1.8);
+    X.lineTo(px-size*.7,y);
+    X.lineTo(px+size*.7,y);
+    X.fill();
+
+    X.fillStyle='#6b4727';
+    X.fillRect(
+      px-size*.12,
+      y-size*.2,
+      size*.24,
+      size*.55
+    );
+  }
+
+  else if(type==='rocks'){
+    poly(
+      '#8d765f',
+      {x:px-size, y:y},
+      {x:px-size*.5, y:y-size*.8},
+      {x:px+size*.35, y:y-size},
+      {x:px+size, y:y}
+    );
+  }
+
+  else if(type==='town'){
+    X.fillStyle=i%2?'#d8c4a5':'#b8d1d5';
+
+    X.fillRect(
+      px-size,
+      y-size*1.2,
+      size*2,
+      size*1.2
+    );
+
+    poly(
+      '#654637',
+      {x:px-size*1.2, y:y-size*1.2},
+      {x:px, y:y-size*1.8},
+      {x:px+size*1.2, y:y-size*1.2}
+    );
+  }
+
+  else if(type==='farms'){
+    X.fillStyle='#e6d7ba';
+
+    X.fillRect(
+      px-size*.8,
+      y-size*.7,
+      size*1.6,
+      size*.7
+    );
+
+    poly(
+      '#a34232',
+      {x:px-size, y:y-size*.7},
+      {x:px, y:y-size*1.2},
+      {x:px+size, y:y-size*.7}
+    );
+  }
+
+  else if(type==='lake'){
+    X.fillStyle='#4a9ac7';
+
+    X.fillRect(
+      px-size*1.8,
+      y-size*.15,
+      size*3.6,
+      size*.22
+    );
+  }
+
+  else if(type==='desert'){
+    X.fillStyle='#377a3a';
+
+    X.fillRect(
+      px-size*.12,
+      y-size,
+      size*.24,
+      size
+    );
+
+    X.fillRect(
+      px-size*.45,
+      y-size*.72,
+      size*.8,
+      size*.16
+    );
+  }
+}
+
+function drawTree(x,y,size){
+
+  if(size < 2)return;
+
+  // Trunk
+  X.fillStyle='#5b3821';
+
+  X.fillRect(
+    x-size*.10,
+    y-size*.34,
+    size*.20,
+    size*.34
+  );
+
+  // Dark outer foliage
+  poly(
+    '#123e23',
+    {x:x,          y:y-size*1.65},
+    {x:x-size*.62, y:y-size*.72},
+    {x:x-size*.36, y:y-size*.72},
+    {x:x-size*.80, y:y-size*.18},
+    {x:x+size*.80, y:y-size*.18},
+    {x:x+size*.36, y:y-size*.72},
+    {x:x+size*.62, y:y-size*.72}
+  );
+
+  // Brighter inner foliage
+  poly(
+    '#20713a',
+    {x:x,          y:y-size*1.48},
+    {x:x-size*.42, y:y-size*.75},
+    {x:x+size*.42, y:y-size*.75}
+  );
+
+  // Pixel highlight
+  X.fillStyle='#32964d';
+
+  X.fillRect(
+    x-size*.12,
+    y-size*1.15,
+    size*.12,
+    size*.22
+  );
+}
+
+function renderRoad(){
+
+  const horizon=185;
+  const roadBottom=305;
+
+  // =========================================================
+  // SKY
+  // =========================================================
+
+  X.fillStyle='#58a8d8';
+  X.fillRect(
+    0,
+    0,
+    W,
+    horizon
+  );
+
+  // Sun
+  X.fillStyle='#f4e5a4';
+  X.beginPath();
+  X.arc(
+    78,
+    65,
+    25,
+    0,
+    Math.PI*2
+  );
+  X.fill();
+
+  // Distant horizon strip
+  X.fillStyle='#3c8462';
+  X.fillRect(
+    0,
+    horizon-5,
+    W,
+    10
+  );
+
+  // =========================================================
+  // GRASS
+  // =========================================================
+
+  X.fillStyle='#23863a';
+  X.fillRect(
+    0,
+    horizon,
+    W,
+    roadBottom-horizon
+  );
+
+  const base=
+    Math.floor(car.z/SEG)%
+    track.length;
+
+  const current=
+    track[base];
+
+  const speedRatio=
+    car.speed/car.max;
+
+  const curveOffset=
+    current.curve*
+    speedRatio*
+    90;
+
+  const playerOffset=
+    car.x*70;
+
+  const centerBottom=
+    W/2-playerOffset;
+
+  const centerTop=
+    W/2-
+    playerOffset*.05-
+    curveOffset;
+
+  const roadTopWidth=22;
+  const roadBottomWidth=265;
+
+  // =========================================================
+  // ROAD SHOULDERS
+  // =========================================================
+
+  poly(
+    '#eee5cc',
+    {x:centerTop-roadTopWidth-5, y:horizon},
+    {x:centerTop-roadTopWidth, y:horizon},
+    {x:centerBottom-roadBottomWidth, y:roadBottom},
+    {x:centerBottom-roadBottomWidth-18, y:roadBottom}
+  );
+
+  poly(
+    '#eee5cc',
+    {x:centerTop+roadTopWidth, y:horizon},
+    {x:centerTop+roadTopWidth+5, y:horizon},
+    {x:centerBottom+roadBottomWidth+18, y:roadBottom},
+    {x:centerBottom+roadBottomWidth, y:roadBottom}
+  );
+
+  // =========================================================
+  // ROAD
+  // =========================================================
+
+  poly(
+    '#595960',
+    {x:centerTop-roadTopWidth, y:horizon},
+    {x:centerTop+roadTopWidth, y:horizon},
+    {x:centerBottom+roadBottomWidth, y:roadBottom},
+    {x:centerBottom-roadBottomWidth, y:roadBottom}
+  );
+
+  // Center line
+  poly(
+    '#eee6cb',
+    {x:centerTop-1, y:horizon},
+    {x:centerTop+1, y:horizon},
+    {x:centerBottom+4, y:roadBottom},
+    {x:centerBottom-4, y:roadBottom}
+  );
+
+  // Moving shoulder strips
+  const movement=
+    (car.z*.15)%40;
+
+  for(let i=0;i<10;i++){
+
+    let depth=
+      ((i*40+movement)%400)/400;
+
+    depth*=depth;
+
+    const yy=
+      horizon+
+      depth*(roadBottom-horizon);
+
+    const half=
+      roadTopWidth+
+      depth*
+      (roadBottomWidth-roadTopWidth);
+
+    const center=
+      centerTop+
+      depth*
+      (centerBottom-centerTop);
+
+    const stripeWidth=
+      2+depth*7;
+
+    if(i%2===0){
+
+      X.fillStyle='#d5413c';
+
+      X.fillRect(
+        center-half-7,
+        yy,
+        stripeWidth,
+        6+depth*10
+      );
+
+      X.fillRect(
+        center+half,
+        yy,
+        stripeWidth,
+        6+depth*10
+      );
+
+    }
+
+  }
+
+// =========================================================
+// ROADSIDE TREES
+// =========================================================
+
+const treeMovement =
+  (car.z * .025) % 1;
+
+for(let i=0;i<18;i++){
+
+  let depth =
+    (i / 18 + treeMovement) % 1;
+
+  // Perspective curve
+  const perspective =
+    depth * depth;
+
+  const treeY =
+    horizon +
+    perspective *
+    (roadBottom-horizon);
+
+  const roadCenter =
+    lerp(
+      centerTop,
+      centerBottom,
+      perspective
+    );
+
+  const roadHalf =
+    lerp(
+      roadTopWidth,
+      roadBottomWidth,
+      perspective
+    );
+
+  const treeSize =
+    3 +
+    perspective * 52;
+
+  // Slight irregular spacing so it doesn't
+  // look like trees planted by a machine.
+  const variation =
+    Math.sin(i * 8.31) * 18;
+
+  // LEFT SIDE
+  drawTree(
+    roadCenter -
+    roadHalf -
+    32 -
+    perspective*75 +
+    variation,
+    treeY,
+    treeSize
+  );
+
+  // RIGHT SIDE
+  drawTree(
+    roadCenter +
+    roadHalf +
+    32 +
+    perspective*75 -
+    variation,
+    treeY,
+    treeSize
+  );
+}
+
+  // Traffic must render after the road
+  drawRoadTraffic(
+    horizon,
+    roadBottom,
+    centerTop,
+    centerBottom,
+    roadTopWidth,
+    roadBottomWidth
+  );
+
+}
+
+function drawRoadTraffic(
+  horizon,
+  roadBottom,
+  centerTop,
+  centerBottom,
+  roadTopWidth,
+  roadBottomWidth
+){
+
+  const visible=[];
+
+  for(const trafficCar of roadTraffic){
+
+    let distance=
+      trafficCar.distance-car.z;
+
+    if(
+      distance<=20 ||
+      distance>5000
+    )continue;
+
+    visible.push({
+      trafficCar,
+      distance
+    });
+
+  }
+
+  // Draw distant cars first
+  visible.sort(
+    (a,b)=>
+      b.distance-a.distance
+  );
+
+  for(const item of visible){
+
+    const trafficCar=
+      item.trafficCar;
+
+    const distance=
+      item.distance;
+
+    let depth=
+      1-distance/5000;
+
+    depth=clamp(
+      depth,
+      0,
+      1
+    );
+
+    // Perspective exaggeration
+const perspective=
+  Math.pow(depth,1.55);
+
+    const roadCenter=
+      lerp(
+        centerTop,
+        centerBottom,
+        perspective
+      );
+
+    const roadHalf=
+      lerp(
+        roadTopWidth,
+        roadBottomWidth,
+        perspective
+      );
+
+const screenX =
+  roadCenter +
+  trafficCar.lane *
+  roadHalf *
+  1.12;
+
+    const screenY=
+      horizon+
+      perspective*
+      (roadBottom-horizon);
+
+const vehicleWidth =
+  6 +
+  perspective * 125;
+
+const vehicleHeight =
+  vehicleWidth * .58;
+
+    drawPerspectiveCar(
+      screenX,
+      screenY,
+      vehicleWidth,
+      vehicleHeight,
+      trafficCar.color,
+      trafficCar.direction===-1
+    );
+
+  }
+
+}
+
+function drawPerspectiveCar(
+  x,
+  y,
+  w,
+  h,
+  color,
+  oncoming
+){
+
+  // Tire shadows
+  X.fillStyle='#090909';
+
+  X.fillRect(
+    x-w*.47,
+    y-h*.12,
+    w*.17,
+    h*.26
+  );
+
+  X.fillRect(
+    x+w*.30,
+    y-h*.12,
+    w*.17,
+    h*.26
+  );
+
+  // Main vehicle body
+  poly(
+    color,
+    {x:x-w*.50, y:y},
+    {x:x-w*.43, y:y-h*.50},
+    {x:x-w*.23, y:y-h*.86},
+    {x:x+w*.23, y:y-h*.86},
+    {x:x+w*.43, y:y-h*.50},
+    {x:x+w*.50, y:y}
+  );
+
+  // Glass
+  poly(
+    '#80c7d7',
+    {x:x-w*.22, y:y-h*.78},
+    {x:x+w*.22, y:y-h*.78},
+    {x:x+w*.34, y:y-h*.48},
+    {x:x-w*.34, y:y-h*.48}
+  );
+
+  // Roof highlight
+  X.fillStyle='#ffffff55';
+
+  X.fillRect(
+    x-w*.18,
+    y-h*.82,
+    w*.36,
+    Math.max(1,h*.04)
+  );
+
+  if(oncoming){
+
+    // Headlights for oncoming traffic
+    X.fillStyle='#fff3a2';
+
+    X.fillRect(
+      x-w*.37,
+      y-h*.22,
+      w*.14,
+      Math.max(2,h*.10)
+    );
+
+    X.fillRect(
+      x+w*.23,
+      y-h*.22,
+      w*.14,
+      Math.max(2,h*.10)
+    );
+
+    // Bright center grille
+    X.fillStyle='#1c2224';
+
+    X.fillRect(
+      x-w*.17,
+      y-h*.18,
+      w*.34,
+      Math.max(2,h*.12)
+    );
+
+  }else{
+
+    // Rear lights for traffic traveling our direction
+    X.fillStyle='#ff413d';
+
+    X.fillRect(
+      x-w*.37,
+      y-h*.20,
+      w*.14,
+      Math.max(2,h*.09)
+    );
+
+    X.fillRect(
+      x+w*.23,
+      y-h*.20,
+      w*.14,
+      Math.max(2,h*.09)
+    );
+
+  }
+
+}
+
+function needle(cx,cy,len,value,min,max,color){
+ let a=lerp(
+  Math.PI*.75,
+  Math.PI*2.25,
+  clamp((value-min)/(max-min),0,1)
+ );
+
+ X.strokeStyle=color;
+ X.lineWidth=2;
+
+ X.beginPath();
+ X.moveTo(cx,cy);
+
+ X.lineTo(
+  cx+Math.cos(a)*len,
+  cy+Math.sin(a)*len
+ );
+
+ X.stroke();
+
+ X.fillStyle='#ddd';
+ X.beginPath();
+ X.arc(cx,cy,3,0,Math.PI*2);
+ X.fill();
+}
+
+function gauge(
+ cx,cy,r,label,val,min,max,color='#ffdd55'
+){
+ X.fillStyle='#091017';
+
+ X.beginPath();
+ X.arc(cx,cy,r,0,Math.PI*2);
+ X.fill();
+
+ X.strokeStyle='#6f8797';
+ X.lineWidth=2;
+ X.stroke();
+
+ for(let i=0;i<=8;i++){
+  let a=lerp(
+   Math.PI*.75,
+   Math.PI*2.25,
+   i/8
+  );
+
+  X.strokeStyle='#cbd6dc';
+
+  X.beginPath();
+
+  X.moveTo(
+   cx+Math.cos(a)*(r-5),
+   cy+Math.sin(a)*(r-5)
+  );
+
+  X.lineTo(
+   cx+Math.cos(a)*(r-2),
+   cy+Math.sin(a)*(r-2)
+  );
+
+  X.stroke();
+ }
+
+ needle(
+  cx,cy,
+  r-8,
+  val,min,max,
+  color
+ );
+
+ X.fillStyle='#a8c1ce';
+ X.font='8px monospace';
+ X.textAlign='center';
+
+ X.fillText(
+  label,
+  cx,
+  cy+r*.55
+ );
+}
+
+function cockpit(){
+
+  const mph = car.speed * 2.237;
+
+  // =========================================================
+  // WINDSHIELD / DASH TOP
+  // =========================================================
+
+  // Deep shadow directly beneath windshield
+  X.fillStyle='#090c0f';
+  poly(
+    '#090c0f',
+    {x:0,y:286},
+    {x:93,y:278},
+    {x:160,y:273},
+    {x:480,y:273},
+    {x:548,y:278},
+    {x:640,y:286},
+    {x:640,y:400},
+    {x:0,y:400}
+  );
+
+  // Upper dashboard surface
+  poly(
+    '#242a2d',
+    {x:0,y:297},
+    {x:100,y:283},
+    {x:185,y:278},
+    {x:455,y:278},
+    {x:545,y:283},
+    {x:640,y:297},
+    {x:640,y:330},
+    {x:0,y:330}
+  );
+
+  // Pixel highlight across dashboard
+  X.fillStyle='#50575a';
+  X.fillRect(20,294,145,2);
+  X.fillRect(476,294,145,2);
+
+  // =========================================================
+  // LEFT WINDSHIELD PILLAR
+  // =========================================================
+
+  poly(
+    '#181d21',
+    {x:0,y:180},
+    {x:18,y:180},
+    {x:75,y:294},
+    {x:34,y:303},
+    {x:0,y:266}
+  );
+
+  X.fillStyle='#4b5052';
+  X.fillRect(15,202,3,65);
+
+  // =========================================================
+  // RIGHT WINDSHIELD PILLAR
+  // =========================================================
+
+  poly(
+    '#181d21',
+    {x:640,y:180},
+    {x:623,y:180},
+    {x:566,y:294},
+    {x:606,y:303},
+    {x:640,y:266}
+  );
+
+  X.fillStyle='#4b5052';
+  X.fillRect(622,202,3,65);
+
+  // =========================================================
+// REAR VIEW MIRROR
+// Mounted high against top of windshield
+// =========================================================
+
+// Mirror mount
+X.fillStyle='#090c0e';
+
+X.fillRect(
+  316,
+  0,
+  8,
+  13
+);
+
+// Outer mirror housing
+poly(
+  '#0c1012',
+  {x:251,y:12},
+  {x:389,y:12},
+  {x:381,y:37},
+  {x:259,y:37}
+);
+
+// Gray lower housing edge
+X.strokeStyle='#454c4f';
+X.lineWidth=2;
+
+X.beginPath();
+X.moveTo(259,37);
+X.lineTo(381,37);
+X.stroke();
+
+// Mirror glass
+poly(
+  '#65aebe',
+  {x:259,y:17},
+  {x:381,y:17},
+  {x:375,y:32},
+  {x:265,y:32}
+);
+
+// Sky reflection
+X.fillStyle='#9ddbe4';
+
+X.fillRect(
+  279,
+  19,
+  38,
+  3
+);
+
+// Dark road reflection
+X.fillStyle='#202e31';
+
+poly(
+  '#202e31',
+  {x:302,y:32},
+  {x:338,y:32},
+  {x:328,y:25},
+  {x:312,y:25}
+);
+
+  // =========================================================
+  // DRIVER INSTRUMENT POD
+  // =========================================================
+
+  // Main hood
+  poly(
+    '#111518',
+    {x:45,y:350},
+    {x:62,y:311},
+    {x:100,y:284},
+    {x:145,y:273},
+    {x:218,y:276},
+    {x:252,y:293},
+    {x:273,y:350}
+  );
+
+  // Gray trim around instrument hood
+  X.strokeStyle='#62696b';
+  X.lineWidth=4;
+
+  X.beginPath();
+  X.moveTo(49,347);
+  X.quadraticCurveTo(73,278,146,276);
+  X.quadraticCurveTo(231,274,269,347);
+  X.stroke();
+
+  // Inner black cluster
+  poly(
+    '#050708',
+    {x:66,y:344},
+    {x:81,y:308},
+    {x:107,y:288},
+    {x:151,y:282},
+    {x:205,y:288},
+    {x:238,y:310},
+    {x:253,y:344}
+  );
+
+  // =========================================================
+  // LARGE SPEEDOMETER
+  // =========================================================
+
+  gauge(
+    184,
+    315,
+    32,
+    'MPH',
+    mph,
+    0,
+    160,
+    '#e8e8d8'
+  );
+
+  // =========================================================
+  // LARGE TACHOMETER
+  // =========================================================
+
+  gauge(
+    119,
+    315,
+    32,
+    'RPM',
+    car.rpm,
+    0,
+    8000,
+    '#76ff7c'
+  );
+
+  // =========================================================
+  // SMALL FUEL GAUGE
+  // =========================================================
+
+  gauge(
+    73,
+    323,
+    18,
+    'F',
+    car.fuel,
+    0,
+    100,
+    '#67dbff'
+  );
+
+  // =========================================================
+  // SMALL ENGINE / DAMAGE GAUGE
+  // In this futuristic dash, this represents SYS condition.
+  // =========================================================
+
+  gauge(
+    229,
+    323,
+    18,
+    'SYS',
+    100-car.damage,
+    0,
+    100,
+    '#ff875f'
+  );
+
+  // =========================================================
+  // CENTER DIGITAL STATUS DISPLAY
+  // "1987 imagining 2020"
+  // =========================================================
+
+  X.fillStyle='#040806';
+  X.fillRect(135,340,65,22);
+
+  X.strokeStyle='#38443e';
+  X.lineWidth=2;
+  X.strokeRect(135,340,65,22);
+
+  X.fillStyle='#67ff8a';
+  X.font='bold 9px monospace';
+  X.textAlign='left';
+
+  X.fillText(
+    'G'+car.gear,
+    140,
+    350
+  );
+
+  X.fillText(
+    String(Math.round(mph)).padStart(3,'0'),
+    163,
+    350
+  );
+
+  X.font='6px monospace';
+
+  X.fillText(
+    'ROAD COMPUTER',
+    141,
+    358
+  );
+
+  // =========================================================
+  // WARNING LIGHTS
+  // =========================================================
+
+  X.fillStyle=
+    car.damage>60 ?
+    '#ff3333' :
+    '#482424';
+
+  X.fillRect(89,350,8,5);
+
+  X.fillStyle=
+    car.fuel<20 ?
+    '#ffc52c' :
+    '#493f24';
+
+  X.fillRect(102,350,8,5);
+
+  X.fillStyle='#236f38';
+  X.fillRect(115,350,8,5);
+
+  // =========================================================
+  // CENTER CONSOLE
+  // =========================================================
+
+  // Console body
+  poly(
+    '#181d20',
+    {x:265,y:302},
+    {x:420,y:302},
+    {x:456,y:400},
+    {x:249,y:400}
+  );
+
+  // Metallic trim
+  X.strokeStyle='#62696b';
+  X.lineWidth=3;
+  X.strokeRect(279,309,129,39);
+
+  // Upper display
+  X.fillStyle='#050a09';
+  X.fillRect(287,315,113,25);
+
+  // futuristic green display
+  X.fillStyle='#55f59a';
+  X.font='8px monospace';
+  X.textAlign='center';
+
+  X.fillText(
+    'VECTOR DRIVE',
+    343,
+    326
+  );
+
+  X.font='6px monospace';
+
+  X.fillText(
+    'AUTO // '+car.gear+
+    ' // '+
+    Math.round(mph)+' MPH',
+    343,
+    336
+  );
+
+  // =========================================================
+  // AIR VENTS
+  // =========================================================
+
+  X.fillStyle='#080a0b';
+
+  X.fillRect(280,352,59,23);
+  X.fillRect(347,352,59,23);
+
+  X.strokeStyle='#6c7274';
+  X.lineWidth=1;
+
+  for(let i=0;i<4;i++){
+
+    X.beginPath();
+    X.moveTo(
+      286,
+      357+i*4
+    );
+
+    X.lineTo(
+      333,
+      357+i*4
+    );
+
+    X.stroke();
+
+    X.beginPath();
+    X.moveTo(
+      353,
+      357+i*4
+    );
+
+    X.lineTo(
+      400,
+      357+i*4
+    );
+
+    X.stroke();
+  }
+
+  // =========================================================
+  // CENTER CONSOLE BUTTONS
+  // =========================================================
+
+  X.fillStyle='#353a3d';
+
+  for(let i=0;i<4;i++){
+
+    X.fillRect(
+      285+i*29,
+      382,
+      22,
+      8
+    );
+
+  }
+
+  // Fake futuristic indicator LEDs
+  X.fillStyle='#65ff78';
+  X.fillRect(290,384,4,3);
+
+  X.fillStyle='#ffb43f';
+  X.fillRect(319,384,4,3);
+
+  X.fillStyle='#47d7ff';
+  X.fillRect(348,384,4,3);
+
+  X.fillStyle='#ff5f5f';
+  X.fillRect(377,384,4,3);
+
+  // =========================================================
+  // PASSENGER DASH
+  // =========================================================
+
+  poly(
+    '#202629',
+    {x:423,y:303},
+    {x:610,y:298},
+    {x:640,y:314},
+    {x:640,y:400},
+    {x:459,y:400}
+  );
+
+  // Passenger side trim
+  X.fillStyle='#4b5254';
+  X.fillRect(468,319,145,3);
+
+  X.fillStyle='#111517';
+  X.fillRect(482,333,118,28);
+
+  // Passenger air vent
+  X.strokeStyle='#687174';
+
+  for(let i=0;i<5;i++){
+
+    X.beginPath();
+
+    X.moveTo(
+      488,
+      338+i*4
+    );
+
+    X.lineTo(
+      594,
+      338+i*4
+    );
+
+    X.stroke();
+
+  }
+
+  // glove compartment outline
+  X.strokeStyle='#41494c';
+  X.strokeRect(483,369,119,25);
+
+  // =========================================================
+  // STEERING WHEEL
+  // =========================================================
+
+  let cx=151;
+  let cy=375;
+
+  // actual steering position
+  let ang=car.visualSteer*.90;
+
+  X.save();
+
+  X.translate(cx,cy);
+  X.rotate(ang);
+
+  // outer shadow
+  X.strokeStyle='#070809';
+  X.lineWidth=19;
+
+  X.beginPath();
+  X.arc(
+    0,0,
+    65,
+    Math.PI*.92,
+    Math.PI*2.08
+  );
+  X.stroke();
+
+  // wheel rim
+  X.strokeStyle='#34383a';
+  X.lineWidth=13;
+
+  X.beginPath();
+  X.arc(
+    0,0,
+    65,
+    Math.PI*.92,
+    Math.PI*2.08
+  );
+  X.stroke();
+
+  // wheel highlight
+  X.strokeStyle='#686d6e';
+  X.lineWidth=2;
+
+  X.beginPath();
+  X.arc(
+    0,0,
+    61,
+    Math.PI*1.08,
+    Math.PI*1.92
+  );
+  X.stroke();
+
+  // futuristic horizontal spokes
+  X.fillStyle='#262b2e';
+
+  X.fillRect(
+    -55,-14,
+    110,18
+  );
+
+  // lower spoke
+  poly(
+    '#262b2e',
+    {x:-10,y:-4},
+    {x:10,y:-4},
+    {x:21,y:45},
+    {x:-21,y:45}
+  );
+
+  // center hub
+  X.fillStyle='#0e1113';
+
+  X.beginPath();
+
+  X.arc(
+    0,-5,
+    22,
+    0,
+    Math.PI*2
+  );
+
+  X.fill();
+
+  X.strokeStyle='#62696b';
+  X.lineWidth=3;
+  X.stroke();
+
+  // 1987-future logo
+  X.fillStyle='#5eff91';
+  X.font='bold 9px monospace';
+  X.textAlign='center';
+
+  X.fillText(
+    'V',
+    0,
+    -2
+  );
+
+  X.restore();
+
+  // =========================================================
+  // LOWER CABIN SHADOW
+  // =========================================================
+
+  X.fillStyle='#060708';
+
+  X.fillRect(
+    0,
+    397,
+    W,
+    3
+  );
+}
+
+function hud(){
+ let remain=Math.max(
+  0,
+  165-gameTime
+ );
+
+ let dist=Math.max(
+  0,
+  (trackLength-car.z)/1000
+ );
+
+ X.textAlign='left';
+ X.font='bold 12px monospace';
+
+ X.fillStyle='#0009';
+ X.fillRect(
+  8,8,
+  215,54
+ );
+
+ X.fillStyle='#fff';
+ X.fillText(
+  'COASTAL RUN',
+  17,24
+ );
+
+ X.fillStyle=
+  remain<30?
+  '#ff5959':
+  '#ffe46b';
+
+ X.fillText(
+  'TIME '+
+  Math.floor(remain/60)+
+  ':'+
+  String(
+   Math.floor(remain%60)
+  ).padStart(2,'0'),
+  17,42
+ );
+
+ X.fillStyle='#a7f3ff';
+
+ X.fillText(
+  'FINISH '+
+  dist.toFixed(1)+
+  ' KM',
+  110,42
+ );
+
+ let pct=clamp(
+  car.z/(trackLength-SEG*5),
+  0,1
+ );
+
+ X.fillStyle='#14212a';
+
+ X.fillRect(
+  17,50,
+  190,5
+ );
+
+ X.fillStyle='#70e88f';
+
+ X.fillRect(
+  17,50,
+  190*pct,
+  5
+ );
+
+// =========================================================
+// SCORE
+// =========================================================
+
+X.textAlign='right';
+
+X.font='bold 11px monospace';
+
+X.fillStyle='#0009';
+
+X.fillRect(
+  W-132,
+  10,
+  120,
+  36
+);
+
+X.strokeStyle='#4f6b73';
+X.lineWidth=1;
+
+X.strokeRect(
+  W-132,
+  10,
+  120,
+  36
+);
+
+X.fillStyle='#70f5a0';
+
+X.fillText(
+  'SCORE',
+  W-20,
+  24
+);
+
+X.font='bold 15px monospace';
+
+X.fillStyle='#ffffff';
+
+X.fillText(
+  String(score).padStart(6,'0'),
+  W-20,
+  40
+);
+
+// Checkpoint notification
+if(checkpointFlash > 0){
+
+  X.textAlign='center';
+
+  X.font='bold 20px monospace';
+
+  X.fillStyle='#000a';
+
+  X.fillRect(
+    W/2-115,
+    70,
+    230,
+    52
+  );
+
+  X.strokeStyle='#6cff95';
+  X.lineWidth=2;
+
+  X.strokeRect(
+    W/2-115,
+    70,
+    230,
+    52
+  );
+
+  X.fillStyle='#6cff95';
+
+  X.fillText(
+    'CHECKPOINT',
+    W/2,
+    92
+  );
+
+  X.font='bold 13px monospace';
+
+  X.fillStyle='#ffe67a';
+
+  X.fillText(
+    '+100 POINTS',
+    W/2,
+    111
+  );
+}
+}
+
+function crackBranch(
+  startX,
+  startY,
+  angle,
+  length,
+  segments,
+  seed
+){
+
+  let x=startX;
+  let y=startY;
+
+  X.beginPath();
+  X.moveTo(x,y);
+
+  for(let i=0;i<segments;i++){
+
+    const wobble=
+      Math.sin(
+        seed+i*2.31
+      )*.30;
+
+    angle+=wobble;
+
+    const part=
+      length/segments;
+
+    x+=Math.cos(angle)*part;
+    y+=Math.sin(angle)*part;
+
+    X.lineTo(x,y);
+
+  }
+
+  X.stroke();
+
+}
+
+function drawCrackedWindshield(){
+
+  // Slight white impact flash
+  X.fillStyle='#d7f4ff18';
+  X.fillRect(
+    0,
+    0,
+    W,
+    292
+  );
+
+  // Central impact mark
+  X.fillStyle='#e8fbff';
+
+  X.beginPath();
+  X.arc(
+    crashX,
+    crashY,
+    4,
+    0,
+    Math.PI*2
+  );
+  X.fill();
+
+  // Dark crack shadow
+  X.strokeStyle='#14242c';
+  X.lineWidth=3;
+
+  for(let i=0;i<14;i++){
+
+    const angle=
+      (Math.PI*2/14)*i+
+      Math.sin(i*3.7)*.15;
+
+    const length=
+      45+
+      (i%4)*25;
+
+    crackBranch(
+      crashX+1,
+      crashY+1,
+      angle,
+      length,
+      5+(i%4),
+      i*1.7
+    );
+
+  }
+
+  // Bright crack surface
+  X.strokeStyle='#d7f4ff';
+  X.lineWidth=1;
+
+  for(let i=0;i<14;i++){
+
+    const angle=
+      (Math.PI*2/14)*i+
+      Math.sin(i*3.7)*.15;
+
+    const length=
+      45+
+      (i%4)*25;
+
+    crackBranch(
+      crashX,
+      crashY,
+      angle,
+      length,
+      5+(i%4),
+      i*1.7
+    );
+
+  }
+
+  // Small spiderweb rings
+  X.strokeStyle='#c9edf5';
+  X.lineWidth=1;
+
+  X.beginPath();
+  X.arc(
+    crashX,
+    crashY,
+    13,
+    0,
+    Math.PI*2
+  );
+  X.stroke();
+
+  X.beginPath();
+  X.arc(
+    crashX,
+    crashY,
+    24,
+    0,
+    Math.PI*2
+  );
+  X.stroke();
+
+}
+
+function overlay(){
+
+  if(crashed){
+
+    drawCrackedWindshield();
+
+    X.fillStyle='#000b';
+
+    X.fillRect(
+      125,
+      115,
+      390,
+      112
+    );
+
+    X.strokeStyle='#ff554f';
+    X.lineWidth=3;
+
+    X.strokeRect(
+      125,
+      115,
+      390,
+      112
+    );
+
+    X.textAlign='center';
+
+    X.font='bold 31px monospace';
+    X.fillStyle='#ff554f';
+
+    X.fillText(
+      'COLLISION',
+      W/2,
+      154
+    );
+
+    X.font='bold 14px monospace';
+    X.fillStyle='#ffffff';
+
+    X.fillText(
+      'VEHICLE DISABLED',
+      W/2,
+      181
+    );
+
+    X.font='12px monospace';
+    X.fillStyle='#ffe778';
+
+    X.fillText(
+      'PRESS R OR XBOX VIEW TO RESTART',
+      W/2,
+      207
+    );
+
+    return;
+
+  }
+
+  if(paused||finished||lost){
+
+    X.fillStyle='#000b';
+    X.fillRect(0,0,W,H);
+
+    X.textAlign='center';
+    X.font='bold 34px monospace';
+
+    X.fillStyle=
+      finished?
+      '#62f298':
+      lost?
+      '#ff625f':
+      '#ffe058';
+
+    X.fillText(
+      finished?
+      'LEVEL COMPLETE':
+      lost?
+      'TIME EXPIRED':
+      'PAUSED',
+      W/2,
+      175
+    );
+
+    X.font='14px monospace';
+    X.fillStyle='#fff';
+
+    if(finished){
+
+      X.fillText(
+        'Time '+
+        Math.floor(gameTime/60)+
+        ':'+
+        String(
+          Math.floor(gameTime%60)
+        ).padStart(2,'0')+
+        '   Damage '+
+        car.damage.toFixed(0)+
+        '%',
+        W/2,
+        205
+      );
+
+    }
+
+    X.fillText(
+      'Press R / View to restart'+
+      (
+        paused?
+        '   P / Menu to resume':
+        ''
+      ),
+      W/2,
+      235
+    );
+
+  }
+
+}
+
+function frame(t){
+ let dt=Math.min(
+  .035,
+  (t-last)/1000||0
+ );
+
+ last=t;
+
+ input();
+ update(dt);
+
+ renderRoad();
+ cockpit();
+ hud();
+ overlay();
+
+ requestAnimationFrame(frame);
+}
+
+requestAnimationFrame(frame);
+
+</script>
+</body>
+</html>
