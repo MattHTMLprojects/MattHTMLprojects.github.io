@@ -14,23 +14,18 @@
 
   <style>
     :root {
-      --wood-dark: #5f3822;
-      --wood: #925d38;
       --paper: #fffdf2;
       --paper-line: rgba(71, 145, 203, 0.28);
       --red-line: rgba(211, 70, 70, 0.48);
       --ink: #193958;
       --text: #34271f;
       --muted: #796858;
-      --cream: #fff9ef;
-      --cream-dark: #efe0cc;
       --green: #3f774d;
       --green-dark: #2d5d39;
       --blue: #276a9b;
       --blue-dark: #1b5178;
       --border: #dac5aa;
       --shadow: rgba(38, 20, 9, 0.35);
-      --danger: #a63f3f;
     }
 
     * {
@@ -72,15 +67,21 @@
       touch-action: manipulation;
     }
 
+    button:disabled {
+      cursor: wait;
+      opacity: 0.55;
+    }
+
     button:focus-visible,
     input:focus-visible,
-    textarea:focus-visible {
-      outline: 3px solid rgba(39, 106, 155, 0.28);
+    textarea:focus-visible,
+    a:focus-visible {
+      outline: 3px solid rgba(39, 106, 155, 0.34);
       outline-offset: 2px;
     }
 
     .app {
-      width: min(1220px, calc(100% - 28px));
+      width: min(1220px, calc(100% - 40px));
       margin: 0 auto;
       padding:
         max(20px, env(safe-area-inset-top))
@@ -148,17 +149,35 @@
       white-space: nowrap;
     }
 
+    .status.searching {
+      color: #674a15;
+      background: #fff0bd;
+    }
+
+    .status.error {
+      color: #681f1f;
+      background: #ffe2e2;
+    }
+
     .layout {
       display: grid;
-      grid-template-columns: minmax(330px, 0.9fr) minmax(420px, 1.1fr);
-      gap: 24px;
+      grid-template-columns:
+        minmax(330px, 0.9fr)
+        minmax(420px, 1.1fr);
+      gap: 30px;
       align-items: start;
     }
+
+.paper-holder {
+  position: sticky;
+  top: 15px;
+  margin-top: 25px;
+}
 
     .chat-panel {
       overflow: hidden;
       border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 22px;
+      border-radius: 10px;
       background: rgba(255, 250, 240, 0.97);
       box-shadow: 0 18px 45px var(--shadow);
     }
@@ -187,11 +206,12 @@
       gap: 12px;
       height: min(485px, 52vh);
       min-height: 360px;
-      padding: 18px;
+      padding: 18px 30px 18px 18px;
       overflow-x: hidden;
       overflow-y: auto;
       overscroll-behavior: contain;
       scroll-behavior: smooth;
+      scrollbar-gutter: stable;
     }
 
     .message {
@@ -216,11 +236,6 @@
       background: var(--green);
     }
 
-    .voice-message {
-      color: white;
-      background: var(--blue);
-    }
-
     .error-message {
       color: #681f1f;
       border: 1px solid #e0aaaa;
@@ -233,6 +248,7 @@
       border: 1px solid #e3cfb6;
       border-radius: 16px;
       background: #fffdf8;
+      animation: appear 0.2s ease-out;
     }
 
     .options-label {
@@ -288,7 +304,7 @@
       line-height: 1.3;
     }
 
-    .choice-time {
+    .choice-details {
       color: var(--muted);
       font-size: 12px;
       white-space: nowrap;
@@ -300,12 +316,12 @@
       background: rgba(255, 255, 255, 0.8);
     }
 
-    .input-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      gap: 8px;
-      align-items: stretch;
-    }
+.input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: stretch;
+}
 
     #moodInput {
       width: 100%;
@@ -322,8 +338,23 @@
     #moodInput:focus {
       border-color: var(--green);
       outline: none;
-      box-shadow: 0 0 0 3px rgba(63, 119, 77, 0.13);
+      box-shadow:
+        0 0 0 3px rgba(63, 119, 77, 0.13);
     }
+
+.reset-button {
+  padding: 10px 14px;
+  color: #315a78;
+  border: 1px solid rgba(39, 106, 155, 0.4);
+  border-radius: 12px;
+  background: #edf6fb;
+  font-weight: 800;
+}
+
+.reset-button:hover {
+  color: white;
+  background: var(--blue);
+}
 
     .find-button {
       padding: 10px 17px;
@@ -334,86 +365,22 @@
       font-weight: 800;
     }
 
-    .find-button:hover {
+    .find-button:hover:not(:disabled) {
       background: var(--green-dark);
-    }
-
-    .microphone-button {
-      position: relative;
-      width: 50px;
-      min-width: 50px;
-      padding: 0;
-      color: white;
-      border: 0;
-      border-radius: 50%;
-      background: var(--blue);
-      font-size: 23px;
-      line-height: 1;
-    }
-
-    .microphone-button:hover {
-      background: var(--blue-dark);
-    }
-
-    .microphone-button.listening {
-      background: var(--danger);
-      animation: pulse 1.15s infinite;
-    }
-
-    .microphone-button:disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-      animation: none;
-    }
-
-    .voice-status {
-      min-height: 20px;
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    .voice-status.listening {
-      color: var(--danger);
-      font-weight: 800;
-    }
-
-    .chips {
-      display: flex;
-      gap: 7px;
-      margin-top: 9px;
-      padding-bottom: 2px;
-      overflow-x: auto;
-      scrollbar-width: thin;
-    }
-
-    .chip {
-      flex: 0 0 auto;
-      min-height: 40px;
-      padding: 7px 11px;
-      color: #624e40;
-      border: 1px solid #dbc8b2;
-      border-radius: 999px;
-      background: #fff9ee;
-      font-size: 13px;
-      white-space: nowrap;
-    }
-
-    .chip:hover {
-      background: #f0e2d1;
     }
 
     .paper-holder {
       position: sticky;
       top: 15px;
+      perspective: 1400px;
     }
 
     .paper {
       position: relative;
       min-height: 690px;
-      padding: 38px 37px 42px 74px;
+      padding: 66px 48px 42px 74px;
       overflow: hidden;
+      transform-style: preserve-3d;
       border-radius: 5px 17px 17px 5px;
       background-color: var(--paper);
       background-image:
@@ -436,6 +403,10 @@
         inset 0 0 30px rgba(128, 101, 59, 0.08);
     }
 
+    .paper.flip-animation {
+      animation: flipPaper 0.5s ease-in-out;
+    }
+
     .paper-holes {
       position: absolute;
       top: 76px;
@@ -451,13 +422,39 @@
       border: 1px solid #c9bc9f;
       border-radius: 50%;
       background: #e3d6bb;
-      box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.18);
+      box-shadow:
+        inset 2px 2px 4px rgba(0, 0, 0, 0.18);
+    }
+
+    .flip-paper-button {
+      position: absolute;
+      top: 10px;
+      left: 72px;
+      right: 26px;
+      z-index: 5;
+      display: none;
+      min-height: 46px;
+      padding: 10px 15px;
+      color: white;
+      border: 1px solid rgba(14, 59, 91, 0.8);
+      border-radius: 11px;
+      background: rgba(39, 106, 155, 0.9);
+      box-shadow:
+        0 5px 12px rgba(25, 57, 88, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      font-size: 14px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .flip-paper-button:hover:not(:disabled) {
+      background: rgba(27, 81, 120, 0.98);
     }
 
     .empty-paper {
       display: grid;
       place-items: center;
-      min-height: 580px;
+      min-height: 540px;
       text-align: center;
       color: var(--muted);
     }
@@ -478,7 +475,8 @@
       line-height: 1.6;
     }
 
-    .shopping-sheet {
+    .shopping-sheet,
+    .cooking-sheet {
       display: none;
     }
 
@@ -510,35 +508,49 @@
       background: rgba(255, 255, 255, 0.74);
     }
 
-    .servings {
+    .servings-control {
       display: flex;
       align-items: center;
       gap: 8px;
       margin-right: auto;
     }
 
-    .servings label {
+    .servings-label {
       color: var(--ink);
+      font-size: 13px;
       font-weight: 800;
     }
 
     .serving-button {
       display: grid;
       place-items: center;
-      width: 44px;
-      min-width: 44px;
-      height: 44px;
-      color: var(--ink);
-      border: 1px solid #b9aa91;
+      width: 42px;
+      min-width: 42px;
+      height: 42px;
+      min-height: 42px;
+      padding: 0;
+      color: white;
+      border: 1px solid var(--blue-dark);
       border-radius: 10px;
-      background: white;
-      font-size: 20px;
+      background: var(--blue);
+      font-size: 21px;
       font-weight: 800;
     }
 
-    #servingCount {
-      min-width: 24px;
-      text-align: center;
+    .serving-button:hover:not(:disabled) {
+      background: var(--blue-dark);
+    }
+
+    .serving-count {
+      display: inline-grid;
+      place-items: center;
+      min-width: 40px;
+      height: 38px;
+      padding: 0 8px;
+      color: var(--ink);
+      border: 1px solid rgba(39, 106, 155, 0.3);
+      border-radius: 8px;
+      background: white;
       font-weight: 800;
     }
 
@@ -619,6 +631,39 @@
       line-height: 31px;
     }
 
+    .instructions {
+      color: #273d50;
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .instruction-step {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 11px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(39, 106, 155, 0.14);
+    }
+
+    .step-number {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      color: white;
+      border-radius: 50%;
+      background: var(--green);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .step-text {
+      min-width: 0;
+      padding-top: 3px;
+      overflow-wrap: anywhere;
+    }
+
     .recipe-source {
       margin-top: 17px;
       padding: 12px;
@@ -652,8 +697,44 @@
       line-height: 1.55;
     }
 
-    .information strong {
+    .mobile-scroll-controls {
+      position: fixed;
+      right: max(7px, env(safe-area-inset-right));
+      top: 50%;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      gap: 9px;
+      transform: translateY(-50%);
+    }
+
+    .mobile-scroll-button {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      min-width: 46px;
+      height: 58px;
+      min-height: 58px;
+      padding: 0;
       color: white;
+      border: 1px solid rgba(20, 73, 111, 0.55);
+      border-radius: 13px;
+      background: rgba(39, 106, 155, 0.7);
+      box-shadow: 0 5px 14px rgba(29, 57, 80, 0.24);
+      font-size: 18px;
+      font-weight: 900;
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    }
+
+    .mobile-scroll-button:hover:not(:disabled),
+    .mobile-scroll-button:active:not(:disabled) {
+      background: rgba(27, 81, 120, 0.9);
+    }
+
+    .mobile-scroll-button:disabled {
+      cursor: default;
+      opacity: 0.25;
     }
 
     @keyframes appear {
@@ -668,27 +749,32 @@
       }
     }
 
-    @keyframes pulse {
+    @keyframes flipPaper {
       0% {
-        box-shadow: 0 0 0 0 rgba(166, 63, 63, 0.55);
+        transform: rotateY(0deg);
       }
 
-      70% {
-        box-shadow: 0 0 0 11px rgba(166, 63, 63, 0);
+      49% {
+        opacity: 0.45;
+        transform: rotateY(90deg);
+      }
+
+      50% {
+        opacity: 0.45;
+        transform: rotateY(-90deg);
       }
 
       100% {
-        box-shadow: 0 0 0 0 rgba(166, 63, 63, 0);
+        opacity: 1;
+        transform: rotateY(0deg);
       }
     }
 
-    /*
-      Tablet and smaller laptop layout
-    */
-    @media (max-width: 920px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
+@media (max-width: 920px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
 
       .paper-holder {
         position: static;
@@ -699,13 +785,15 @@
       }
     }
 
-    /*
-      Phone layout
-    */
     @media (max-width: 600px) {
+      body {
+        padding-right: 50px;
+      }
+
       .app {
-        width: min(100% - 14px, 1220px);
-        padding-top: max(8px, env(safe-area-inset-top));
+        width: min(100% - 12px, 1220px);
+        padding-top:
+          max(8px, env(safe-area-inset-top));
       }
 
       .header {
@@ -758,7 +846,7 @@
         height: 46vh;
         min-height: 330px;
         max-height: 490px;
-        padding: 14px;
+        padding: 14px 28px 14px 14px;
       }
 
       .message {
@@ -767,43 +855,43 @@
       }
 
       .input-area {
-        padding: 13px;
+        padding: 13px 28px 13px 13px;
       }
 
-      .input-row {
-        grid-template-columns: minmax(0, 1fr) 50px;
-      }
+.input-row {
+  grid-template-columns: 1fr 1fr;
+}
 
-      .find-button {
-        grid-column: 1 / -1;
-        grid-row: 2;
-        width: 100%;
-        min-height: 48px;
-      }
+#moodInput {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
 
-      .microphone-button {
-        grid-column: 2;
-        grid-row: 1;
-      }
+.find-button {
+  grid-column: 1;
+  grid-row: 2;
+  width: 100%;
+}
 
-      #moodInput {
-        grid-column: 1;
-        grid-row: 1;
-      }
+.reset-button {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+}
 
       .recipe-choice {
         grid-template-columns: 37px minmax(0, 1fr);
         min-height: 62px;
       }
 
-      .choice-time {
+      .choice-details {
         grid-column: 2;
         white-space: normal;
       }
 
       .paper {
         min-height: 590px;
-        padding: 29px 15px 34px 50px;
+        padding: 68px 30px 34px 50px;
         border-radius: 4px 13px 13px 4px;
         background-image:
           linear-gradient(
@@ -831,6 +919,14 @@
         height: 15px;
       }
 
+      .flip-paper-button {
+        left: 48px;
+        right: 18px;
+        min-height: 48px;
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+
       .shopping-title {
         font-size: 28px;
       }
@@ -839,28 +935,39 @@
         align-items: stretch;
       }
 
-      .servings {
+      .servings-control {
         width: 100%;
+        justify-content: space-between;
         margin-right: 0;
+        padding-bottom: 5px;
+      }
+
+      .servings-label {
+        margin-right: auto;
       }
 
       .secondary-button,
       .print-button {
-        flex: 1 1 120px;
+        flex: 1 1 125px;
+      }
+
+      .mobile-scroll-controls {
+        display: flex;
       }
     }
 
-    /*
-      Narrow-phone adjustments
-    */
     @media (max-width: 370px) {
       .brand-icon {
         display: none;
       }
 
       .paper {
-        padding-right: 10px;
+        padding-right: 24px;
         padding-left: 43px;
+      }
+
+      .flip-paper-button {
+        left: 42px;
       }
 
       .shopping-title {
@@ -868,9 +975,6 @@
       }
     }
 
-    /*
-      Printable shopping sheet
-    */
     @media print {
       @page {
         size: auto;
@@ -878,6 +982,7 @@
       }
 
       body {
+        padding-right: 0;
         background: white;
       }
 
@@ -887,7 +992,9 @@
       .toolbar,
       .paper-holes,
       .empty-paper,
-      .recipe-source {
+      .flip-paper-button,
+      .recipe-source,
+      .mobile-scroll-controls {
         display: none !important;
       }
 
@@ -907,6 +1014,8 @@
         border: 0;
         border-radius: 0;
         box-shadow: none;
+        transform: none !important;
+        animation: none !important;
         background-color: white;
         background-image:
           linear-gradient(
@@ -925,10 +1034,6 @@
           );
       }
 
-      .shopping-sheet {
-        display: block !important;
-      }
-
       .notes {
         border: 0;
         resize: none;
@@ -945,11 +1050,13 @@
 
         <div>
           <h1>Recipe Desk</h1>
-          <p>Speak or type what sounds good, then print your shopping list.</p>
+          <p>
+            Find something good to cook, then print your shopping list.
+          </p>
         </div>
       </div>
 
-      <div class="status">● Ready</div>
+      <div id="appStatus" class="status">● Ready</div>
     </header>
 
     <div class="layout">
@@ -958,8 +1065,8 @@
           <h2>What are you in the mood for?</h2>
 
           <p>
-            Type your request or tap the microphone and speak.
-            You can say something like “I am in the mood for pasta.”
+            Enter a meal or ingredient to see up to five online
+            recipe ideas.
           </p>
         </div>
 
@@ -969,78 +1076,59 @@
           aria-live="polite"
           aria-relevant="additions"
         >
-          <div class="message assistant-message">
-            Hi! Tell me what sounds good today. You can type your request or tap
-            <strong>🎤</strong> and talk to me.
-          </div>
+<div class="message assistant-message">
+  <div>Let's get cooking.</div>
+  <div class="try-search">
+    Try searching for chicken, salmon, pasta, beef, curry, soup, or pizza.
+  </div>
+</div>
         </div>
 
-        <div class="input-area">
-          <div class="input-row">
-            <input
-              id="moodInput"
-              type="text"
-              inputmode="text"
-              autocomplete="off"
-              enterkeyhint="search"
-              placeholder="I am in the mood for pasta..."
-              aria-label="Describe what you want to eat"
-            >
+<div class="input-row">
+  <input
+    id="moodInput"
+    type="text"
+    autocomplete="off"
+    enterkeyhint="search"
+    placeholder="What are you in the mood for?"
+    aria-label="Search for recipes"
+  >
 
-            <button
-              id="microphoneButton"
-              class="microphone-button"
-              type="button"
-              title="Speak your food request"
-              aria-label="Start microphone"
-            >
-              🎤
-            </button>
+  <button
+    id="searchButton"
+    class="find-button"
+    type="button"
+  >
+    Find recipes
+  </button>
 
-            <button id="searchButton" class="find-button" type="button">
-              Find five ideas
-            </button>
-          </div>
+  <button
+    id="resetButton"
+    class="reset-button"
+    type="button"
+  >
+    ↻ Reset
+  </button>
+</div>
 
-          <div
-            id="voiceStatus"
-            class="voice-status"
-            role="status"
-            aria-live="polite"
-          >
-            Tap the microphone to speak.
-          </div>
-
-          <div class="chips" aria-label="Quick food suggestions">
-            <button class="chip" data-query="pasta" type="button">
-              🍝 Pasta
-            </button>
-
-            <button class="chip" data-query="chicken" type="button">
-              🍗 Chicken
-            </button>
-
-            <button class="chip" data-query="Mexican" type="button">
-              🌮 Mexican
-            </button>
-
-            <button class="chip" data-query="soup" type="button">
-              🥣 Soup
-            </button>
-
-            <button class="chip" data-query="vegetarian" type="button">
-              🥦 Vegetarian
-            </button>
-
-            <button class="chip" data-query="quick dinner" type="button">
-              ⏱️ Quick dinner
-            </button>
-          </div>
         </div>
       </section>
 
       <aside class="paper-holder">
-        <section class="paper" id="paper" aria-label="Printable shopping list">
+        <section
+          class="paper"
+          id="paper"
+          aria-label="Recipe paper"
+        >
+          <button
+            id="flipPaperButton"
+            class="flip-paper-button"
+            type="button"
+            aria-label="Flip paper for cooking instructions"
+          >
+            ↻ Flip paper for cooking instructions
+          </button>
+
           <div class="paper-holes" aria-hidden="true">
             <div class="paper-hole"></div>
             <div class="paper-hole"></div>
@@ -1056,8 +1144,8 @@
               <h2>Your shopping list will appear here</h2>
 
               <p>
-                Choose one of the five recipe ideas. The ingredients will be
-                placed on this blue-lined printable notepad.
+                Search for food, choose a recipe, and its ingredients
+                will be placed on this printable notepad.
               </p>
             </div>
           </div>
@@ -1067,28 +1155,39 @@
               Shopping List
             </h1>
 
-            <p id="shoppingSubtitle" class="shopping-subtitle"></p>
+            <p
+              id="shoppingSubtitle"
+              class="shopping-subtitle"
+            ></p>
 
             <div class="toolbar">
-              <div class="servings">
-                <label for="servingCount">Servings:</label>
+              <div class="servings-control">
+                <span class="servings-label">
+                  Recipe multiplier:
+                </span>
 
                 <button
                   id="decreaseServings"
                   class="serving-button"
                   type="button"
-                  aria-label="Decrease servings"
+                  aria-label="Decrease recipe multiplier"
                 >
                   −
                 </button>
 
-                <span id="servingCount">4</span>
+                <span
+                  id="servingCount"
+                  class="serving-count"
+                  aria-live="polite"
+                >
+                  1×
+                </span>
 
                 <button
                   id="increaseServings"
                   class="serving-button"
                   type="button"
-                  aria-label="Increase servings"
+                  aria-label="Increase recipe multiplier"
                 >
                   +
                 </button>
@@ -1102,14 +1201,21 @@
                 Clear checks
               </button>
 
-              <button id="printButton" class="print-button" type="button">
-                🖨 Print list
+              <button
+                id="printButton"
+                class="print-button"
+                type="button"
+              >
+                🖨 Print this side
               </button>
             </div>
 
             <h2 class="section-title">Ingredients to buy</h2>
 
-            <ul id="ingredientsList" class="ingredients"></ul>
+            <ul
+              id="ingredientsList"
+              class="ingredients"
+            ></ul>
 
             <h2 class="section-title">Notes</h2>
 
@@ -1117,23 +1223,68 @@
               id="notes"
               class="notes"
               aria-label="Shopping notes"
-              placeholder="Add store notes, substitutions or other items..."
+              placeholder="Add store notes, substitutions, or other items..."
             ></textarea>
 
             <div class="recipe-source">
               <p>
-                Open the matching search below for complete recipes, cooking
-                instructions, ratings and preparation details.
+                Quantities with recognizable numbers or fractions
+                are adjusted using the recipe multiplier.
               </p>
 
               <a
-                id="allrecipesLink"
+                id="recipeSourceLink"
                 class="recipe-link"
-                href="https://www.allrecipes.com/"
+                href="https://www.themealdb.com/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Open Allrecipes ↗
+                Open recipe source ↗
+              </a>
+            </div>
+          </div>
+
+          <div id="cookingSheet" class="cooking-sheet">
+            <h1 id="cookingTitle" class="shopping-title">
+              Cooking Instructions
+            </h1>
+
+            <p
+              id="cookingSubtitle"
+              class="shopping-subtitle"
+            ></p>
+
+            <div class="toolbar">
+              <button
+                id="printCookingButton"
+                class="print-button"
+                type="button"
+              >
+                🖨 Print this side
+              </button>
+            </div>
+
+            <h2 class="section-title">Let's cook</h2>
+
+            <div
+              id="instructionsList"
+              class="instructions"
+            ></div>
+
+            <div class="recipe-source">
+              <p>
+                These instructions came with the online recipe.
+                Open the original source for any additional details.
+              </p>
+
+              <a
+                id="cookingSourceLink"
+                class="recipe-link"
+                href="https://www.themealdb.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open original recipe ↗
               </a>
             </div>
           </div>
@@ -1141,655 +1292,904 @@
       </aside>
     </div>
 
-<div class="information">
-  🍽️ Happy cooking!
-</div>
+    <div class="information">
+      🍽️ Recipe results require an internet connection.
+      The multiplier starts at 1× for each newly selected recipe.
+    </div>
   </main>
+
+  <div
+    id="mobileScrollControls"
+    class="mobile-scroll-controls"
+    aria-label="Page scrolling controls"
+  >
+    <button
+      id="scrollUpButton"
+      class="mobile-scroll-button"
+      type="button"
+      aria-label="Scroll up"
+      title="Scroll up"
+    >
+      ▲
+    </button>
+
+    <button
+      id="scrollDownButton"
+      class="mobile-scroll-button"
+      type="button"
+      aria-label="Scroll down"
+      title="Scroll down"
+    >
+      ▼
+    </button>
+  </div>
 
   <script>
     "use strict";
 
-    /*
-      ============================================================
-      RECIPE DESK
-      Mobile-friendly, voice-enabled local HTML prototype
-      ============================================================
-    */
+    const recipeApiBase =
+      "https://www.themealdb.com/api/json/v1/1";
 
-    const recipes = {
-      pasta: [
-        {
-          name: "Creamy Chicken Alfredo",
-          icon: "🍝",
-          time: "About 35 minutes",
-          servings: 4,
-          ingredients: [
-            [12, "oz", "fettuccine pasta"],
-            [1, "lb", "boneless chicken breast"],
-            [2, "tbsp", "olive oil"],
-            [3, "cloves", "garlic, minced"],
-            [2, "cups", "heavy cream"],
-            [1.5, "cups", "grated Parmesan cheese"],
-            [2, "tbsp", "butter"],
-            [null, "", "salt and black pepper"],
-            [2, "tbsp", "chopped parsley"]
-          ]
-        },
-        {
-          name: "Classic Spaghetti Bolognese",
-          icon: "🍅",
-          time: "About 50 minutes",
-          servings: 4,
-          ingredients: [
-            [12, "oz", "spaghetti"],
-            [1, "lb", "ground beef"],
-            [1, "", "yellow onion, chopped"],
-            [3, "cloves", "garlic, minced"],
-            [28, "oz", "crushed tomatoes"],
-            [2, "tbsp", "tomato paste"],
-            [1, "tsp", "Italian seasoning"],
-            [2, "tbsp", "olive oil"],
-            [null, "", "salt and black pepper"],
-            [0.5, "cup", "grated Parmesan cheese"]
-          ]
-        },
-        {
-          name: "Cheesy Baked Ziti",
-          icon: "🧀",
-          time: "About 55 minutes",
-          servings: 6,
-          ingredients: [
-            [16, "oz", "ziti pasta"],
-            [1, "lb", "Italian sausage or ground beef"],
-            [24, "oz", "marinara sauce"],
-            [15, "oz", "ricotta cheese"],
-            [2, "cups", "shredded mozzarella"],
-            [0.75, "cup", "grated Parmesan cheese"],
-            [1, "", "egg"],
-            [2, "cloves", "garlic, minced"],
-            [1, "tsp", "Italian seasoning"],
-            [null, "", "fresh basil, optional"]
-          ]
-        },
-        {
-          name: "Fresh Basil Pesto Pasta",
-          icon: "🌿",
-          time: "About 25 minutes",
-          servings: 4,
-          ingredients: [
-            [12, "oz", "penne or rotini pasta"],
-            [2, "cups", "fresh basil leaves"],
-            [0.33, "cup", "pine nuts or walnuts"],
-            [2, "cloves", "garlic"],
-            [0.5, "cup", "grated Parmesan cheese"],
-            [0.5, "cup", "olive oil"],
-            [1, "tbsp", "lemon juice"],
-            [null, "", "salt and black pepper"],
-            [1, "cup", "cherry tomatoes, optional"]
-          ]
-        },
-        {
-          name: "Garlic Shrimp Scampi",
-          icon: "🍤",
-          time: "About 30 minutes",
-          servings: 4,
-          ingredients: [
-            [12, "oz", "linguine"],
-            [1, "lb", "large shrimp"],
-            [4, "tbsp", "butter"],
-            [2, "tbsp", "olive oil"],
-            [5, "cloves", "garlic, minced"],
-            [0.5, "cup", "chicken broth or dry white wine"],
-            [1, "", "lemon"],
-            [0.25, "tsp", "red pepper flakes"],
-            [0.25, "cup", "fresh parsley"],
-            [null, "", "salt and black pepper"]
-          ]
-        }
-      ],
+    const paper =
+      document.getElementById("paper");
 
-      chicken: [
-        {
-          name: "Oven-Baked Garlic Chicken",
-          icon: "🍗",
-          time: "About 45 minutes",
-          servings: 4,
-          ingredients: [
-            [4, "", "boneless chicken breasts"],
-            [3, "tbsp", "olive oil"],
-            [4, "cloves", "garlic, minced"],
-            [1, "tsp", "paprika"],
-            [1, "tsp", "Italian seasoning"],
-            [1, "", "lemon"],
-            [null, "", "salt and black pepper"],
-            [2, "tbsp", "fresh parsley"]
-          ]
-        },
-        {
-          name: "Honey Mustard Chicken",
-          icon: "🍯",
-          time: "About 40 minutes",
-          servings: 4,
-          ingredients: [
-            [4, "", "chicken breasts or thighs"],
-            [0.25, "cup", "Dijon mustard"],
-            [0.25, "cup", "honey"],
-            [2, "tbsp", "olive oil"],
-            [2, "cloves", "garlic, minced"],
-            [1, "tsp", "paprika"],
-            [null, "", "salt and black pepper"]
-          ]
-        },
-        {
-          name: "Chicken Parmesan",
-          icon: "🧀",
-          time: "About 50 minutes",
-          servings: 4,
-          ingredients: [
-            [4, "", "thin chicken breast cutlets"],
-            [1, "cup", "Italian breadcrumbs"],
-            [0.5, "cup", "grated Parmesan cheese"],
-            [2, "", "eggs"],
-            [2, "cups", "marinara sauce"],
-            [1.5, "cups", "shredded mozzarella"],
-            [3, "tbsp", "olive oil"],
-            [null, "", "fresh basil"]
-          ]
-        },
-        {
-          name: "Chicken and Rice Skillet",
-          icon: "🍚",
-          time: "About 40 minutes",
-          servings: 4,
-          ingredients: [
-            [1.5, "lb", "boneless chicken thighs"],
-            [1, "cup", "long-grain white rice"],
-            [2, "cups", "chicken broth"],
-            [1, "", "yellow onion, chopped"],
-            [2, "cloves", "garlic, minced"],
-            [1, "cup", "frozen peas and carrots"],
-            [1, "tsp", "paprika"],
-            [2, "tbsp", "olive oil"]
-          ]
-        },
-        {
-          name: "Lemon Herb Grilled Chicken",
-          icon: "🍋",
-          time: "About 30 minutes",
-          servings: 4,
-          ingredients: [
-            [4, "", "boneless chicken breasts"],
-            [2, "", "lemons"],
-            [3, "tbsp", "olive oil"],
-            [3, "cloves", "garlic, minced"],
-            [1, "tsp", "dried oregano"],
-            [1, "tsp", "dried thyme"],
-            [null, "", "salt and black pepper"]
-          ]
-        }
-      ],
+    const flipPaperButton =
+      document.getElementById("flipPaperButton");
 
-      mexican: [
-        {
-          name: "Easy Beef Tacos",
-          icon: "🌮",
-          time: "About 25 minutes",
-          servings: 4,
-          ingredients: [
-            [1, "lb", "ground beef"],
-            [1, "packet", "taco seasoning"],
-            [8, "", "taco shells or tortillas"],
-            [1, "cup", "shredded lettuce"],
-            [1, "cup", "shredded cheddar cheese"],
-            [2, "", "tomatoes, diced"],
-            [0.5, "cup", "salsa"],
-            [0.5, "cup", "sour cream"]
-          ]
-        },
-        {
-          name: "Chicken Quesadillas",
-          icon: "🫓",
-          time: "About 25 minutes",
-          servings: 4,
-          ingredients: [
-            [2, "cups", "cooked shredded chicken"],
-            [8, "", "flour tortillas"],
-            [2, "cups", "shredded Mexican-blend cheese"],
-            [1, "", "bell pepper, sliced"],
-            [0.5, "", "onion, sliced"],
-            [1, "tbsp", "taco seasoning"],
-            [1, "tbsp", "oil"],
-            [null, "", "salsa and sour cream"]
-          ]
-        },
-        {
-          name: "Black Bean Burrito Bowls",
-          icon: "🥑",
-          time: "About 30 minutes",
-          servings: 4,
-          ingredients: [
-            [2, "cups", "cooked rice"],
-            [15, "oz", "black beans"],
-            [1, "cup", "corn"],
-            [1, "cup", "salsa"],
-            [1, "", "avocado"],
-            [1, "cup", "shredded cheese"],
-            [1, "", "lime"],
-            [null, "", "fresh cilantro"]
-          ]
-        },
-        {
-          name: "Sheet-Pan Chicken Fajitas",
-          icon: "🫑",
-          time: "About 35 minutes",
-          servings: 4,
-          ingredients: [
-            [1.5, "lb", "chicken breast, sliced"],
-            [3, "", "bell peppers, sliced"],
-            [1, "", "large onion, sliced"],
-            [2, "tbsp", "olive oil"],
-            [1, "packet", "fajita seasoning"],
-            [8, "", "flour tortillas"],
-            [1, "", "lime"],
-            [null, "", "sour cream and salsa"]
-          ]
-        },
-        {
-          name: "Cheesy Beef Enchiladas",
-          icon: "🧀",
-          time: "About 50 minutes",
-          servings: 6,
-          ingredients: [
-            [1, "lb", "ground beef"],
-            [10, "", "corn or flour tortillas"],
-            [20, "oz", "enchilada sauce"],
-            [2, "cups", "shredded Mexican-blend cheese"],
-            [1, "", "small onion, chopped"],
-            [4, "oz", "diced green chiles"],
-            [1, "tsp", "ground cumin"]
-          ]
-        }
-      ],
+const resetButton =
+  document.getElementById("resetButton");
 
-      soup: [
-        {
-          name: "Classic Chicken Noodle Soup",
-          icon: "🥣",
-          time: "About 45 minutes",
-          servings: 6,
-          ingredients: [
-            [2, "tbsp", "butter"],
-            [1, "", "onion, chopped"],
-            [3, "", "carrots, sliced"],
-            [3, "", "celery stalks, sliced"],
-            [8, "cups", "chicken broth"],
-            [3, "cups", "cooked shredded chicken"],
-            [2, "cups", "egg noodles"],
-            [1, "tsp", "dried thyme"],
-            [null, "", "salt and black pepper"]
-          ]
-        },
-        {
-          name: "Creamy Tomato Basil Soup",
-          icon: "🍅",
-          time: "About 35 minutes",
-          servings: 4,
-          ingredients: [
-            [28, "oz", "crushed tomatoes"],
-            [2, "cups", "vegetable or chicken broth"],
-            [1, "", "onion, chopped"],
-            [3, "cloves", "garlic, minced"],
-            [0.75, "cup", "heavy cream"],
-            [0.5, "cup", "fresh basil leaves"],
-            [2, "tbsp", "butter"],
-            [null, "", "salt and black pepper"]
-          ]
-        },
-        {
-          name: "Hearty Vegetable Soup",
-          icon: "🥕",
-          time: "About 50 minutes",
-          servings: 6,
-          ingredients: [
-            [1, "", "onion, chopped"],
-            [3, "", "carrots, sliced"],
-            [3, "", "celery stalks, sliced"],
-            [2, "", "potatoes, diced"],
-            [15, "oz", "diced tomatoes"],
-            [6, "cups", "vegetable broth"],
-            [1, "cup", "green beans"],
-            [1, "cup", "corn"],
-            [1, "cup", "peas"],
-            [1, "tsp", "Italian seasoning"]
-          ]
-        },
-        {
-          name: "Broccoli Cheddar Soup",
-          icon: "🥦",
-          time: "About 40 minutes",
-          servings: 4,
-          ingredients: [
-            [4, "tbsp", "butter"],
-            [1, "", "small onion, chopped"],
-            [0.25, "cup", "all-purpose flour"],
-            [2, "cups", "milk"],
-            [2, "cups", "chicken or vegetable broth"],
-            [3, "cups", "broccoli florets"],
-            [1, "", "carrot, shredded"],
-            [2, "cups", "shredded cheddar cheese"]
-          ]
-        },
-        {
-          name: "Beef and Potato Soup",
-          icon: "🥔",
-          time: "About 1 hour",
-          servings: 6,
-          ingredients: [
-            [1.5, "lb", "beef stew meat"],
-            [4, "", "potatoes, diced"],
-            [3, "", "carrots, sliced"],
-            [1, "", "onion, chopped"],
-            [6, "cups", "beef broth"],
-            [2, "tbsp", "tomato paste"],
-            [1, "tsp", "dried thyme"],
-            [2, "tbsp", "flour"]
-          ]
-        }
-      ],
+    const conversation =
+      document.getElementById("conversation");
 
-      vegetarian: [
-        {
-          name: "Roasted Vegetable Pasta",
-          icon: "🥦",
-          time: "About 40 minutes",
-          servings: 4,
-          ingredients: [
-            [12, "oz", "penne pasta"],
-            [1, "", "zucchini, chopped"],
-            [1, "", "red bell pepper, chopped"],
-            [1, "cup", "cherry tomatoes"],
-            [1, "", "red onion, chopped"],
-            [3, "tbsp", "olive oil"],
-            [3, "cloves", "garlic, minced"],
-            [0.5, "cup", "grated Parmesan cheese"],
-            [1, "tsp", "Italian seasoning"]
-          ]
-        },
-        {
-          name: "Black Bean Veggie Burgers",
-          icon: "🍔",
-          time: "About 30 minutes",
-          servings: 4,
-          ingredients: [
-            [15, "oz", "black beans"],
-            [0.5, "cup", "breadcrumbs"],
-            [1, "", "egg"],
-            [0.25, "cup", "finely chopped onion"],
-            [1, "tsp", "chili powder"],
-            [1, "tsp", "ground cumin"],
-            [4, "", "burger buns"],
-            [null, "", "lettuce, tomato and cheese"]
-          ]
-        },
-        {
-          name: "Chickpea Coconut Curry",
-          icon: "🍛",
-          time: "About 35 minutes",
-          servings: 4,
-          ingredients: [
-            [2, "cans", "chickpeas"],
-            [14, "oz", "coconut milk"],
-            [14, "oz", "diced tomatoes"],
-            [1, "", "onion, chopped"],
-            [3, "cloves", "garlic, minced"],
-            [1, "tbsp", "curry powder"],
-            [1, "tsp", "ground cumin"],
-            [2, "cups", "fresh spinach"],
-            [null, "", "cooked rice"]
-          ]
-        },
-        {
-          name: "Spinach Mushroom Quesadillas",
-          icon: "🍄",
-          time: "About 25 minutes",
-          servings: 4,
-          ingredients: [
-            [8, "", "flour tortillas"],
-            [8, "oz", "mushrooms, sliced"],
-            [3, "cups", "fresh spinach"],
-            [2, "cups", "shredded cheese"],
-            [1, "", "small onion, sliced"],
-            [1, "tbsp", "olive oil"],
-            [null, "", "salsa"]
-          ]
-        },
-        {
-          name: "Mediterranean Quinoa Bowls",
-          icon: "🥗",
-          time: "About 30 minutes",
-          servings: 4,
-          ingredients: [
-            [1, "cup", "uncooked quinoa"],
-            [15, "oz", "chickpeas"],
-            [1, "", "cucumber, chopped"],
-            [1, "cup", "cherry tomatoes"],
-            [0.5, "cup", "crumbled feta cheese"],
-            [0.25, "cup", "sliced olives"],
-            [1, "", "lemon"],
-            [3, "tbsp", "olive oil"]
-          ]
-        }
-      ]
-    };
+    const moodInput =
+      document.getElementById("moodInput");
 
-    recipes.quick = [
-      recipes.mexican[0],
-      recipes.chicken[3],
-      recipes.vegetarian[3],
-      recipes.pasta[3],
-      recipes.soup[1]
-    ];
+    const searchButton =
+      document.getElementById("searchButton");
 
-    const conversation = document.getElementById("conversation");
-    const moodInput = document.getElementById("moodInput");
-    const searchButton = document.getElementById("searchButton");
-    const microphoneButton = document.getElementById("microphoneButton");
-    const voiceStatus = document.getElementById("voiceStatus");
+    const appStatus =
+      document.getElementById("appStatus");
 
-    const emptyPaper = document.getElementById("emptyPaper");
-    const shoppingSheet = document.getElementById("shoppingSheet");
-    const shoppingTitle = document.getElementById("shoppingTitle");
-    const shoppingSubtitle = document.getElementById("shoppingSubtitle");
-    const ingredientsList = document.getElementById("ingredientsList");
-    const servingCount = document.getElementById("servingCount");
-    const allrecipesLink = document.getElementById("allrecipesLink");
-    const notes = document.getElementById("notes");
+    const emptyPaper =
+      document.getElementById("emptyPaper");
+
+    const shoppingSheet =
+      document.getElementById("shoppingSheet");
+
+    const shoppingTitle =
+      document.getElementById("shoppingTitle");
+
+    const shoppingSubtitle =
+      document.getElementById("shoppingSubtitle");
+
+    const ingredientsList =
+      document.getElementById("ingredientsList");
+
+    const recipeSourceLink =
+      document.getElementById("recipeSourceLink");
+
+    const cookingSheet =
+      document.getElementById("cookingSheet");
+
+    const cookingTitle =
+      document.getElementById("cookingTitle");
+
+    const cookingSubtitle =
+      document.getElementById("cookingSubtitle");
+
+    const instructionsList =
+      document.getElementById("instructionsList");
+
+    const cookingSourceLink =
+      document.getElementById("cookingSourceLink");
+
+    const notes =
+      document.getElementById("notes");
+
+    const decreaseServings =
+      document.getElementById("decreaseServings");
+
+    const increaseServings =
+      document.getElementById("increaseServings");
+
+    const servingCount =
+      document.getElementById("servingCount");
+
+    const scrollUpButton =
+      document.getElementById("scrollUpButton");
+
+    const scrollDownButton =
+      document.getElementById("scrollDownButton");
 
     let currentChoices = [];
     let selectedRecipe = null;
-    let currentServings = 4;
-    let recognition = null;
-    let listening = false;
+    let showingCookingSide = false;
+    let paperIsFlipping = false;
+    let recipeMultiplier = 1;
 
-    function addMessage(text, sender = "assistant", extraClass = "") {
-      const message = document.createElement("div");
+    const unicodeFractions = {
+      "⅛": 1 / 8,
+      "¼": 1 / 4,
+      "⅓": 1 / 3,
+      "⅜": 3 / 8,
+      "½": 1 / 2,
+      "⅝": 5 / 8,
+      "⅔": 2 / 3,
+      "¾": 3 / 4,
+      "⅞": 7 / 8
+    };
+
+    function setStatus(type, text) {
+      appStatus.className = "status";
+
+      if (type) {
+        appStatus.classList.add(type);
+      }
+
+      appStatus.textContent = text;
+    }
+
+    function addMessage(
+      text,
+      sender = "assistant",
+      extraClass = ""
+    ) {
+      const message =
+        document.createElement("div");
 
       message.className =
         "message " +
-        (sender === "user" ? "user-message" : "assistant-message") +
+        (
+          sender === "user"
+            ? "user-message"
+            : "assistant-message"
+        ) +
         (extraClass ? " " + extraClass : "");
 
       message.textContent = text;
+
       conversation.appendChild(message);
       scrollConversation();
     }
 
     function scrollConversation() {
       requestAnimationFrame(function () {
-        conversation.scrollTop = conversation.scrollHeight;
+        conversation.scrollTop =
+          conversation.scrollHeight;
       });
     }
 
-    function determineCategory(request) {
-      const text = request.toLowerCase();
+function resetRecipeDesk() {
+  moodInput.value = "";
 
-      if (
-        text.includes("pasta") ||
-        text.includes("spaghetti") ||
-        text.includes("noodle") ||
-        text.includes("italian") ||
-        text.includes("alfredo") ||
-        text.includes("ziti") ||
-        text.includes("linguine")
-      ) {
-        return "pasta";
-      }
+  currentChoices = [];
+  selectedRecipe = null;
+  showingCookingSide = false;
+  paperIsFlipping = false;
+  recipeMultiplier = 1;
 
-      if (
-        text.includes("mexican") ||
-        text.includes("taco") ||
-        text.includes("burrito") ||
-        text.includes("fajita") ||
-        text.includes("quesadilla") ||
-        text.includes("enchilada")
-      ) {
-        return "mexican";
-      }
+  conversation.innerHTML = "";
 
-      if (
-        text.includes("soup") ||
-        text.includes("stew") ||
-        text.includes("warm bowl")
-      ) {
-        return "soup";
-      }
+  const welcomeMessage =
+    document.createElement("div");
 
-      if (
-        text.includes("vegetarian") ||
-        text.includes("vegetable") ||
-        text.includes("veggie") ||
-        text.includes("meatless") ||
-        text.includes("plant")
-      ) {
-        return "vegetarian";
-      }
+  welcomeMessage.className =
+    "message assistant-message";
 
-      if (
-        text.includes("chicken") ||
-        text.includes("poultry")
-      ) {
-        return "chicken";
-      }
+  welcomeMessage.textContent =
+    "Let's get cooking. Try searching for chicken, salmon, pasta, beef, curry, soup, or pizza.";
 
-      if (
-        text.includes("quick") ||
-        text.includes("fast") ||
-        text.includes("easy") ||
-        text.includes("simple") ||
-        text.includes("30 minute") ||
-        text.includes("thirty minute")
-      ) {
-        return "quick";
-      }
+  conversation.appendChild(
+    welcomeMessage
+  );
 
-      return "quick";
+  emptyPaper.style.display =
+    "grid";
+
+  shoppingSheet.style.display =
+    "none";
+
+  cookingSheet.style.display =
+    "none";
+
+  flipPaperButton.style.display =
+    "none";
+
+  flipPaperButton.disabled =
+    false;
+
+  paper.classList.remove(
+    "flip-animation"
+  );
+
+  ingredientsList.innerHTML = "";
+  instructionsList.innerHTML = "";
+
+  servingCount.textContent = "1×";
+
+  setStatus("", "● Ready");
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+  moodInput.focus();
+
+  updateScrollButtons();
+}
+
+    function removeOldRecipeChoices() {
+      document
+        .querySelectorAll(".recipe-options")
+        .forEach(function (element) {
+          element.remove();
+        });
     }
 
-    function searchRecipes(request, voiceRequest = false) {
-      const cleanRequest = request.trim();
+    async function fetchJson(url) {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(
+          "Recipe service returned status " +
+            response.status
+        );
+      }
+
+      return response.json();
+    }
+
+    async function lookupRecipe(recipeId) {
+      const url =
+        recipeApiBase +
+        "/lookup.php?i=" +
+        encodeURIComponent(recipeId);
+
+      const data = await fetchJson(url);
+
+      if (!data.meals || data.meals.length === 0) {
+        return null;
+      }
+
+      return data.meals[0];
+    }
+
+    function convertApiRecipe(meal) {
+      const ingredients = [];
+
+      for (
+        let number = 1;
+        number <= 20;
+        number += 1
+      ) {
+        const ingredient =
+          meal["strIngredient" + number];
+
+        const measure =
+          meal["strMeasure" + number];
+
+        if (
+          !ingredient ||
+          !ingredient.trim()
+        ) {
+          continue;
+        }
+
+        const ingredientText = [
+          measure ? measure.trim() : "",
+          ingredient.trim()
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+        ingredients.push(ingredientText);
+      }
+
+      const details = [
+        meal.strCategory,
+        meal.strArea
+      ].filter(Boolean);
+
+      return {
+        id: meal.idMeal,
+        name:
+          meal.strMeal ||
+          "Untitled recipe",
+        icon: "🍽️",
+        details:
+          details.join(" • ") ||
+          "Online recipe",
+        ingredients: ingredients,
+        originalIngredients:
+          ingredients.slice(),
+        instructions:
+          meal.strInstructions || "",
+        image:
+          meal.strMealThumb || "",
+        sourceUrl:
+          meal.strSource ||
+          (
+            "https://www.themealdb.com/meal/" +
+            meal.idMeal
+          )
+      };
+    }
+
+    async function findByName(searchText) {
+      const url =
+        recipeApiBase +
+        "/search.php?s=" +
+        encodeURIComponent(searchText);
+
+      const data = await fetchJson(url);
+
+      if (!data.meals) {
+        return [];
+      }
+
+      return data.meals
+        .slice(0, 5)
+        .map(convertApiRecipe);
+    }
+
+    async function findByIngredient(searchText) {
+      const normalizedIngredient =
+        searchText
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, "_");
+
+      const url =
+        recipeApiBase +
+        "/filter.php?i=" +
+        encodeURIComponent(
+          normalizedIngredient
+        );
+
+      const data = await fetchJson(url);
+
+      if (!data.meals) {
+        return [];
+      }
+
+      const mealSummaries =
+        data.meals.slice(0, 5);
+
+      const completeMeals =
+        await Promise.all(
+          mealSummaries.map(
+            function (meal) {
+              return lookupRecipe(
+                meal.idMeal
+              );
+            }
+          )
+        );
+
+      return completeMeals
+        .filter(Boolean)
+        .map(convertApiRecipe);
+    }
+
+    async function findOnlineRecipes(
+      searchText
+    ) {
+      const nameResults =
+        await findByName(searchText);
+
+      if (nameResults.length > 0) {
+        return nameResults;
+      }
+
+      return findByIngredient(searchText);
+    }
+
+    async function searchRecipes(request) {
+      const cleanRequest =
+        request.trim();
 
       if (!cleanRequest) {
         moodInput.focus();
         return;
       }
 
-      addMessage(cleanRequest, "user", voiceRequest ? "voice-message" : "");
+      addMessage(
+        cleanRequest,
+        "user"
+      );
+
       moodInput.value = "";
+      currentChoices = [];
 
-      const category = determineCategory(cleanRequest);
-      currentChoices = recipes[category];
+      removeOldRecipeChoices();
 
-      window.setTimeout(function () {
-        if (category === "quick") {
-          addMessage(
-            "Here are five easy meal ideas. Tap one or type a number from 1 to 5."
+      searchButton.disabled = true;
+      searchButton.textContent =
+        "Searching...";
+
+      setStatus(
+        "searching",
+        "● Searching"
+      );
+
+      addMessage(
+        "Searching online for “" +
+          cleanRequest +
+          "” recipes..."
+      );
+
+      try {
+        const recipeResults =
+          await findOnlineRecipes(
+            cleanRequest
           );
-        } else {
+
+        if (
+          recipeResults.length === 0
+        ) {
           addMessage(
-            "That sounds good! Here are five ideas. Tap one or type a number from 1 to 5."
+            "I couldn't find recipes for “" +
+              cleanRequest +
+              ".” Try a simpler meal or ingredient, such as chicken, salmon, beef, curry, pasta, or soup.",
+            "assistant",
+            "error-message"
           );
+
+          setStatus(
+            "error",
+            "● No results"
+          );
+
+          return;
         }
 
-        displayChoices(currentChoices);
-      }, 200);
+        currentChoices =
+          recipeResults;
+
+        addMessage(
+          "I found " +
+            recipeResults.length +
+            (
+              recipeResults.length === 1
+                ? " matching recipe."
+                : " matching recipes."
+            )
+        );
+
+        displayChoices(
+          recipeResults
+        );
+
+        setStatus(
+          "",
+          "● Ready"
+        );
+      } catch (error) {
+        console.error(
+          "Recipe search failed:",
+          error
+        );
+
+        addMessage(
+          "The online recipe search could not be reached. Check your internet connection, then try again.",
+          "assistant",
+          "error-message"
+        );
+
+        setStatus(
+          "error",
+          "● Search error"
+        );
+      } finally {
+        searchButton.disabled = false;
+        searchButton.textContent =
+          "Find recipes";
+
+        moodInput.focus();
+      }
     }
 
     function displayChoices(recipeList) {
-      const box = document.createElement("div");
-      box.className = "recipe-options";
+      const box =
+        document.createElement("div");
 
-      const heading = document.createElement("p");
-      heading.className = "options-label";
-      heading.textContent = "Choose a recipe";
+      box.className =
+        "recipe-options";
+
+      const heading =
+        document.createElement("p");
+
+      heading.className =
+        "options-label";
+
+      heading.textContent =
+        "Choose a recipe";
+
       box.appendChild(heading);
 
-      recipeList.forEach(function (recipe, index) {
-        const button = document.createElement("button");
-        button.className = "recipe-choice";
-        button.type = "button";
+      recipeList.forEach(
+        function (recipe, index) {
+          const button =
+            document.createElement(
+              "button"
+            );
 
-        const number = document.createElement("span");
-        number.className = "choice-number";
-        number.textContent = String(index + 1);
+          button.className =
+            "recipe-choice";
 
-        const name = document.createElement("span");
-        name.className = "choice-name";
-        name.textContent = recipe.icon + " " + recipe.name;
+          button.type = "button";
 
-        const time = document.createElement("span");
-        time.className = "choice-time";
-        time.textContent = recipe.time;
+          const number =
+            document.createElement(
+              "span"
+            );
 
-        button.appendChild(number);
-        button.appendChild(name);
-        button.appendChild(time);
+          number.className =
+            "choice-number";
 
-        button.addEventListener("click", function () {
-          selectRecipe(index);
-        });
+          number.textContent =
+            String(index + 1);
 
-        box.appendChild(button);
-      });
+          const name =
+            document.createElement(
+              "span"
+            );
+
+          name.className =
+            "choice-name";
+
+          name.textContent =
+            recipe.icon +
+            " " +
+            recipe.name;
+
+          const details =
+            document.createElement(
+              "span"
+            );
+
+          details.className =
+            "choice-details";
+
+          details.textContent =
+            recipe.details;
+
+          button.appendChild(number);
+          button.appendChild(name);
+          button.appendChild(details);
+
+          button.addEventListener(
+            "click",
+            function () {
+              selectRecipe(index);
+            }
+          );
+
+          box.appendChild(button);
+        }
+      );
 
       conversation.appendChild(box);
 
       addMessage(
-        "Which sounds best? Tap a recipe, type 1 through 5, or say a number."
+        "Which sounds best? Tap a recipe or type a number from 1 to " +
+          recipeList.length +
+          "."
       );
 
       scrollConversation();
     }
 
     function selectRecipe(index) {
-      const recipe = currentChoices[index];
+      const recipe =
+        currentChoices[index];
 
       if (!recipe) {
         return;
       }
 
       selectedRecipe = recipe;
-      currentServings = recipe.servings;
+      recipeMultiplier = 1;
 
-      addMessage(String(index + 1), "user");
+      addMessage(
+        String(index + 1),
+        "user"
+      );
 
-      window.setTimeout(function () {
-        addMessage(
-          recipe.name +
-          " sounds great. I placed the ingredients on your shopping notepad."
+      window.setTimeout(
+        function () {
+          addMessage(
+            recipe.name +
+              " sounds great. I placed its ingredients on your shopping notepad."
+          );
+
+          displayShoppingList();
+        },
+        150
+      );
+    }
+
+    function parseLeadingQuantity(text) {
+      const cleanText = text.trim();
+
+      const mixedNumberMatch =
+        cleanText.match(
+          /^(\d+)\s+(\d+)\/(\d+)\b/
         );
 
-        displayShoppingList();
-      }, 180);
+      if (mixedNumberMatch) {
+        return {
+          quantity:
+            Number(
+              mixedNumberMatch[1]
+            ) +
+            Number(
+              mixedNumberMatch[2]
+            ) /
+            Number(
+              mixedNumberMatch[3]
+            ),
+          matchedText:
+            mixedNumberMatch[0]
+        };
+      }
+
+      const fractionMatch =
+        cleanText.match(
+          /^(\d+)\/(\d+)\b/
+        );
+
+      if (fractionMatch) {
+        return {
+          quantity:
+            Number(
+              fractionMatch[1]
+            ) /
+            Number(
+              fractionMatch[2]
+            ),
+          matchedText:
+            fractionMatch[0]
+        };
+      }
+
+      const unicodeMixedMatch =
+        cleanText.match(
+          /^(\d+)\s*([⅛¼⅓⅜½⅝⅔¾⅞])/
+        );
+
+      if (unicodeMixedMatch) {
+        return {
+          quantity:
+            Number(
+              unicodeMixedMatch[1]
+            ) +
+            unicodeFractions[
+              unicodeMixedMatch[2]
+            ],
+          matchedText:
+            unicodeMixedMatch[0]
+        };
+      }
+
+      const unicodeMatch =
+        cleanText.match(
+          /^([⅛¼⅓⅜½⅝⅔¾⅞])/
+        );
+
+      if (unicodeMatch) {
+        return {
+          quantity:
+            unicodeFractions[
+              unicodeMatch[1]
+            ],
+          matchedText:
+            unicodeMatch[0]
+        };
+      }
+
+      const decimalMatch =
+        cleanText.match(
+          /^\d+(?:\.\d+)?\b/
+        );
+
+      if (decimalMatch) {
+        return {
+          quantity:
+            Number(
+              decimalMatch[0]
+            ),
+          matchedText:
+            decimalMatch[0]
+        };
+      }
+
+      return null;
+    }
+
+    function formatScaledNumber(number) {
+      const rounded =
+        Math.round(number * 100) /
+        100;
+
+      const whole =
+        Math.floor(rounded);
+
+      const decimal =
+        rounded - whole;
+
+      const fractions = [
+        [0.125, "⅛"],
+        [0.25, "¼"],
+        [0.333, "⅓"],
+        [0.375, "⅜"],
+        [0.5, "½"],
+        [0.625, "⅝"],
+        [0.667, "⅔"],
+        [0.75, "¾"],
+        [0.875, "⅞"]
+      ];
+
+      if (
+        Math.abs(decimal) < 0.025
+      ) {
+        return String(whole);
+      }
+
+      let closest = null;
+
+      fractions.forEach(
+        function (fraction) {
+          if (
+            !closest ||
+            Math.abs(
+              decimal -
+                fraction[0]
+            ) <
+              Math.abs(
+                decimal -
+                  closest[0]
+              )
+          ) {
+            closest = fraction;
+          }
+        }
+      );
+
+      if (
+        closest &&
+        Math.abs(
+          decimal - closest[0]
+        ) < 0.045
+      ) {
+        return whole > 0
+          ? (
+              whole +
+              " " +
+              closest[1]
+            )
+          : closest[1];
+      }
+
+      return String(rounded);
+    }
+
+    function scaleIngredientText(
+      ingredientText,
+      multiplier
+    ) {
+      if (multiplier === 1) {
+        return ingredientText;
+      }
+
+      const parsed =
+        parseLeadingQuantity(
+          ingredientText
+        );
+
+      if (!parsed) {
+        return ingredientText;
+      }
+
+      const scaledQuantity =
+        parsed.quantity *
+        multiplier;
+
+      return (
+        formatScaledNumber(
+          scaledQuantity
+        ) +
+        ingredientText.slice(
+          parsed.matchedText.length
+        )
+      ).trim();
+    }
+
+    function renderIngredients() {
+      if (!selectedRecipe) {
+        return;
+      }
+
+      servingCount.textContent =
+        recipeMultiplier + "×";
+
+      decreaseServings.disabled =
+        recipeMultiplier <= 1;
+
+      increaseServings.disabled =
+        recipeMultiplier >= 12;
+
+      ingredientsList.innerHTML = "";
+
+      const sourceIngredients =
+        selectedRecipe
+          .originalIngredients ||
+        selectedRecipe.ingredients;
+
+      sourceIngredients.forEach(
+        function (
+          ingredient,
+          index
+        ) {
+          const item =
+            document.createElement(
+              "li"
+            );
+
+          item.className =
+            "ingredient";
+
+          const checkbox =
+            document.createElement(
+              "input"
+            );
+
+          checkbox.type =
+            "checkbox";
+
+          checkbox.id =
+            "ingredient-" +
+            index;
+
+          const label =
+            document.createElement(
+              "label"
+            );
+
+          label.htmlFor =
+            checkbox.id;
+
+          label.textContent =
+            scaleIngredientText(
+              ingredient,
+              recipeMultiplier
+            );
+
+          checkbox.addEventListener(
+            "change",
+            function () {
+              item.classList.toggle(
+                "checked",
+                checkbox.checked
+              );
+            }
+          );
+
+          item.appendChild(
+            checkbox
+          );
+
+          item.appendChild(
+            label
+          );
+
+          ingredientsList.appendChild(
+            item
+          );
+        }
+      );
     }
 
     function displayShoppingList() {
@@ -1797,344 +2197,546 @@
         return;
       }
 
-      emptyPaper.style.display = "none";
-      shoppingSheet.style.display = "block";
+      emptyPaper.style.display =
+        "none";
+
+      flipPaperButton.style.display =
+        "block";
+
+      showingCookingSide = false;
+
+      shoppingSheet.style.display =
+        "block";
+
+      cookingSheet.style.display =
+        "none";
+
+      flipPaperButton.textContent =
+        "↻ Flip paper for cooking instructions";
+
+      flipPaperButton.setAttribute(
+        "aria-label",
+        "Flip paper for cooking instructions"
+      );
 
       shoppingTitle.textContent =
-        selectedRecipe.icon + " " + selectedRecipe.name;
+        selectedRecipe.icon +
+        " " +
+        selectedRecipe.name;
 
       shoppingSubtitle.textContent =
-        selectedRecipe.time +
-        " • Shopping list for " +
-        currentServings +
-        (currentServings === 1 ? " serving" : " servings");
+        selectedRecipe.details +
+        " • Ingredient list • " +
+        recipeMultiplier +
+        "× recipe";
 
-      servingCount.textContent = String(currentServings);
+      recipeSourceLink.href =
+        selectedRecipe.sourceUrl;
 
-      allrecipesLink.href =
-        "https://www.allrecipes.com/search?q=" +
-        encodeURIComponent(selectedRecipe.name);
+      recipeSourceLink.textContent =
+        "Open the original recipe for “" +
+        selectedRecipe.name +
+        "” ↗";
 
-      allrecipesLink.textContent =
-        "Search Allrecipes for “" + selectedRecipe.name + "” ↗";
+      renderIngredients();
+      buildCookingInstructions();
 
-      ingredientsList.innerHTML = "";
-
-      const scale = currentServings / selectedRecipe.servings;
-
-      selectedRecipe.ingredients.forEach(function (ingredient, index) {
-        const item = document.createElement("li");
-        item.className = "ingredient";
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.id = "ingredient-" + index;
-
-        const label = document.createElement("label");
-        label.htmlFor = checkbox.id;
-        label.textContent = formatIngredient(ingredient, scale);
-
-        checkbox.addEventListener("change", function () {
-          item.classList.toggle("checked", checkbox.checked);
-        });
-
-        item.appendChild(checkbox);
-        item.appendChild(label);
-        ingredientsList.appendChild(item);
-      });
-
-      if (window.innerWidth <= 920) {
-        document.getElementById("paper").scrollIntoView({
+      if (
+        window.innerWidth <= 920
+      ) {
+        paper.scrollIntoView({
           behavior: "smooth",
           block: "start"
         });
       }
+
+      updateScrollButtons();
     }
 
-    function formatIngredient(ingredient, scale) {
-      const quantity = ingredient[0];
-      const unit = ingredient[1];
-      const item = ingredient[2];
+    function splitInstructions(
+      rawInstructions
+    ) {
+      const cleaned =
+        rawInstructions
+          .replace(/\r/g, "")
+          .trim();
 
-      if (quantity === null) {
-        return item;
+      if (!cleaned) {
+        return [];
       }
 
-      return (
-        formatQuantity(quantity * scale) +
-        (unit ? " " + unit : "") +
-        " " +
-        item
-      ).trim();
+      let steps = cleaned
+        .split(/\n+/)
+        .map(function (step) {
+          return step.trim();
+        })
+        .filter(Boolean);
+
+      if (steps.length === 1) {
+        steps = cleaned
+          .split(
+            /(?:\.\s+|\!\s+|\?\s+)/
+          )
+          .map(function (step) {
+            const cleanedStep =
+              step.trim();
+
+            if (!cleanedStep) {
+              return "";
+            }
+
+            return /[.!?]$/.test(
+              cleanedStep
+            )
+              ? cleanedStep
+              : cleanedStep + ".";
+          })
+          .filter(Boolean);
+      }
+
+      return steps;
     }
 
-    function formatQuantity(number) {
-      const rounded = Math.round(number * 12) / 12;
-      const whole = Math.floor(rounded);
-      const decimal = rounded - whole;
-
-      const fractions = [
-        [0.125, "⅛"],
-        [1 / 6, "⅙"],
-        [0.25, "¼"],
-        [1 / 3, "⅓"],
-        [0.5, "½"],
-        [2 / 3, "⅔"],
-        [0.75, "¾"]
-      ];
-
-      if (Math.abs(decimal) < 0.03) {
-        return String(whole);
+    function buildCookingInstructions() {
+      if (!selectedRecipe) {
+        return;
       }
 
-      let closest = fractions[0];
+      cookingTitle.textContent =
+        "🍳 " +
+        selectedRecipe.name;
 
-      fractions.forEach(function (fraction) {
-        if (
-          Math.abs(decimal - fraction[0]) <
-          Math.abs(decimal - closest[0])
-        ) {
-          closest = fraction;
+      cookingSubtitle.textContent =
+        selectedRecipe.details +
+        " • Cooking instructions";
+
+      cookingSourceLink.href =
+        selectedRecipe.sourceUrl;
+
+      cookingSourceLink.textContent =
+        "Open the original recipe for “" +
+        selectedRecipe.name +
+        "” ↗";
+
+      instructionsList.innerHTML = "";
+
+      const steps =
+        splitInstructions(
+          selectedRecipe.instructions ||
+            ""
+        );
+
+      if (steps.length === 0) {
+        const message =
+          document.createElement(
+            "p"
+          );
+
+        message.textContent =
+          "Cooking instructions are not available for this recipe.";
+
+        instructionsList.appendChild(
+          message
+        );
+
+        return;
+      }
+
+      steps.forEach(
+        function (step, index) {
+          const row =
+            document.createElement(
+              "div"
+            );
+
+          row.className =
+            "instruction-step";
+
+          const number =
+            document.createElement(
+              "span"
+            );
+
+          number.className =
+            "step-number";
+
+          number.textContent =
+            String(index + 1);
+
+          const text =
+            document.createElement(
+              "div"
+            );
+
+          text.className =
+            "step-text";
+
+          text.textContent =
+            step.replace(
+              /^(step\s*)?\d+[\s.):\-]+/i,
+              ""
+            );
+
+          row.appendChild(number);
+          row.appendChild(text);
+
+          instructionsList.appendChild(
+            row
+          );
         }
-      });
+      );
+    }
 
-      if (Math.abs(decimal - closest[0]) < 0.08) {
-        return whole > 0 ? whole + " " + closest[1] : closest[1];
+    function showIngredientsSide() {
+      showingCookingSide = false;
+
+      shoppingSheet.style.display =
+        "block";
+
+      cookingSheet.style.display =
+        "none";
+
+      flipPaperButton.textContent =
+        "↻ Flip paper for cooking instructions";
+
+      flipPaperButton.setAttribute(
+        "aria-label",
+        "Flip paper for cooking instructions"
+      );
+
+      paper.setAttribute(
+        "aria-label",
+        "Recipe ingredients"
+      );
+    }
+
+    function showCookingSide() {
+      if (!selectedRecipe) {
+        return;
       }
 
-      return String(Math.round(rounded * 10) / 10);
+      showingCookingSide = true;
+
+      buildCookingInstructions();
+
+      shoppingSheet.style.display =
+        "none";
+
+      cookingSheet.style.display =
+        "block";
+
+      flipPaperButton.textContent =
+        "↻ Flip back to ingredients";
+
+      flipPaperButton.setAttribute(
+        "aria-label",
+        "Flip paper back to ingredients"
+      );
+
+      paper.setAttribute(
+        "aria-label",
+        "Recipe cooking instructions"
+      );
+    }
+
+    function flipPaper() {
+      if (
+        !selectedRecipe ||
+        paperIsFlipping
+      ) {
+        return;
+      }
+
+      paperIsFlipping = true;
+
+      paper.classList.add(
+        "flip-animation"
+      );
+
+      flipPaperButton.disabled = true;
+
+      window.setTimeout(
+        function () {
+          if (
+            showingCookingSide
+          ) {
+            showIngredientsSide();
+          } else {
+            showCookingSide();
+          }
+        },
+        250
+      );
+
+      window.setTimeout(
+        function () {
+          paper.classList.remove(
+            "flip-animation"
+          );
+
+          flipPaperButton.disabled =
+            false;
+
+          paperIsFlipping = false;
+
+          updateScrollButtons();
+        },
+        520
+      );
     }
 
     function handleTypedInput() {
-      const text = moodInput.value.trim();
+      const text =
+        moodInput.value.trim();
 
-      if (/^[1-5]$/.test(text) && currentChoices.length === 5) {
+      if (!text) {
+        moodInput.focus();
+        return;
+      }
+
+      if (
+        /^[1-5]$/.test(text) &&
+        currentChoices.length > 0
+      ) {
+        const selectedIndex =
+          Number(text) - 1;
+
+        if (
+          selectedIndex >= 0 &&
+          selectedIndex <
+            currentChoices.length
+        ) {
+          moodInput.value = "";
+
+          selectRecipe(
+            selectedIndex
+          );
+
+          return;
+        }
+
+        addMessage(
+          "Please choose a number from 1 to " +
+            currentChoices.length +
+            ".",
+          "assistant",
+          "error-message"
+        );
+
         moodInput.value = "";
-        selectRecipe(Number(text) - 1);
         return;
       }
 
       searchRecipes(text);
     }
 
-    function spokenNumberToIndex(text) {
-      const cleanText = text.toLowerCase().trim();
+    function scrollPageByAmount(
+      direction
+    ) {
+      const distance =
+        Math.max(
+          window.innerHeight * 0.72,
+          320
+        );
 
-      const numberWords = {
-        "one": 0,
-        "number one": 0,
-        "first": 0,
-        "two": 1,
-        "number two": 1,
-        "second": 1,
-        "three": 2,
-        "number three": 2,
-        "third": 2,
-        "four": 3,
-        "number four": 3,
-        "fourth": 3,
-        "five": 4,
-        "number five": 4,
-        "fifth": 4
-      };
-
-      if (Object.prototype.hasOwnProperty.call(numberWords, cleanText)) {
-        return numberWords[cleanText];
-      }
-
-      const digitMatch = cleanText.match(/\b([1-5])\b/);
-
-      if (digitMatch) {
-        return Number(digitMatch[1]) - 1;
-      }
-
-      return -1;
+      window.scrollBy({
+        top:
+          distance *
+          direction,
+        behavior: "smooth"
+      });
     }
 
-    function setupVoiceRecognition() {
-      const Recognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
+    function updateScrollButtons() {
+      const currentScroll =
+        window.scrollY ||
+        document.documentElement
+          .scrollTop;
 
-      if (!Recognition) {
-        microphoneButton.disabled = true;
-        microphoneButton.title =
-          "Voice recognition is not supported by this browser";
+      const maximumScroll =
+        document.documentElement
+          .scrollHeight -
+        window.innerHeight;
 
-        voiceStatus.textContent =
-          "Voice input is unavailable in this browser. You can still type.";
+      scrollUpButton.disabled =
+        currentScroll <= 5;
 
-        return;
+      scrollDownButton.disabled =
+        maximumScroll <= 0 ||
+        currentScroll >=
+          maximumScroll - 5;
+    }
+
+    searchButton.addEventListener(
+      "click",
+      handleTypedInput
+    );
+
+resetButton.addEventListener(
+  "click",
+  resetRecipeDesk
+);
+
+    moodInput.addEventListener(
+      "keydown",
+      function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleTypedInput();
+        }
       }
+    );
 
-      recognition = new Recognition();
-      recognition.lang = "en-US";
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.maxAlternatives = 1;
+    flipPaperButton.addEventListener(
+      "click",
+      flipPaper
+    );
 
-      recognition.onstart = function () {
-        listening = true;
-        microphoneButton.classList.add("listening");
-        microphoneButton.textContent = "■";
-        microphoneButton.setAttribute("aria-label", "Stop microphone");
-
-        voiceStatus.classList.add("listening");
-        voiceStatus.textContent = "Listening... Say what you want to eat.";
-      };
-
-      recognition.onresult = function (event) {
-        let transcript = "";
-
-        for (let i = event.resultIndex; i < event.results.length; i += 1) {
-          transcript += event.results[i][0].transcript;
-        }
-
-        moodInput.value = transcript.trim();
-
-        const finalResult =
-          event.results[event.results.length - 1].isFinal;
-
-        if (finalResult) {
-          const spokenText = transcript.trim();
-          const selectedIndex = spokenNumberToIndex(spokenText);
-
-          if (selectedIndex >= 0 && currentChoices.length === 5) {
-            moodInput.value = "";
-            selectRecipe(selectedIndex);
-          } else {
-            searchRecipes(spokenText, true);
-          }
-        }
-      };
-
-      recognition.onerror = function (event) {
-        let message = "I could not hear that. Please try again or type it.";
-
-        if (event.error === "not-allowed") {
-          message =
-            "Microphone permission was blocked. Allow microphone access in your browser settings.";
-        }
-
-        if (event.error === "no-speech") {
-          message = "I did not hear any speech. Tap the microphone and try again.";
-        }
-
-        if (event.error === "network") {
-          message =
-            "Voice recognition could not connect. Check your internet connection.";
-        }
-
-        voiceStatus.textContent = message;
-        voiceStatus.classList.remove("listening");
-      };
-
-      recognition.onend = function () {
-        listening = false;
-        microphoneButton.classList.remove("listening");
-        microphoneButton.textContent = "🎤";
-        microphoneButton.setAttribute("aria-label", "Start microphone");
-
-        voiceStatus.classList.remove("listening");
-
+    decreaseServings.addEventListener(
+      "click",
+      function () {
         if (
-          !voiceStatus.textContent.includes("blocked") &&
-          !voiceStatus.textContent.includes("could not") &&
-          !voiceStatus.textContent.includes("did not")
+          !selectedRecipe ||
+          recipeMultiplier <= 1
         ) {
-          voiceStatus.textContent = "Tap the microphone to speak again.";
-        }
-      };
-    }
-
-    microphoneButton.addEventListener("click", function () {
-      if (!recognition) {
-        return;
-      }
-
-      if (listening) {
-        recognition.stop();
-        return;
-      }
-
-      try {
-        recognition.start();
-      } catch (error) {
-        voiceStatus.textContent =
-          "The microphone is already starting. Please wait a moment.";
-      }
-    });
-
-    searchButton.addEventListener("click", handleTypedInput);
-
-    moodInput.addEventListener("keydown", function (event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        handleTypedInput();
-      }
-    });
-
-    document.querySelectorAll(".chip").forEach(function (chip) {
-      chip.addEventListener("click", function () {
-        searchRecipes(chip.dataset.query);
-      });
-    });
-
-    document
-      .getElementById("decreaseServings")
-      .addEventListener("click", function () {
-        if (!selectedRecipe || currentServings <= 1) {
           return;
         }
 
-        currentServings -= 1;
-        displayShoppingList();
-      });
+        recipeMultiplier -= 1;
 
-    document
-      .getElementById("increaseServings")
-      .addEventListener("click", function () {
-        if (!selectedRecipe || currentServings >= 24) {
+        shoppingSubtitle.textContent =
+          selectedRecipe.details +
+          " • Ingredient list • " +
+          recipeMultiplier +
+          "× recipe";
+
+        renderIngredients();
+      }
+    );
+
+    increaseServings.addEventListener(
+      "click",
+      function () {
+        if (
+          !selectedRecipe ||
+          recipeMultiplier >= 12
+        ) {
           return;
         }
 
-        currentServings += 1;
-        displayShoppingList();
-      });
+        recipeMultiplier += 1;
+
+        shoppingSubtitle.textContent =
+          selectedRecipe.details +
+          " • Ingredient list • " +
+          recipeMultiplier +
+          "× recipe";
+
+        renderIngredients();
+      }
+    );
 
     document
-      .getElementById("clearChecks")
-      .addEventListener("click", function () {
-        document
-          .querySelectorAll(".ingredient input[type='checkbox']")
-          .forEach(function (checkbox) {
-            checkbox.checked = false;
-            checkbox.closest(".ingredient").classList.remove("checked");
-          });
-      });
+      .getElementById(
+        "clearChecks"
+      )
+      .addEventListener(
+        "click",
+        function () {
+          document
+            .querySelectorAll(
+              ".ingredient input[type='checkbox']"
+            )
+            .forEach(
+              function (checkbox) {
+                checkbox.checked =
+                  false;
+
+                checkbox
+                  .closest(
+                    ".ingredient"
+                  )
+                  .classList.remove(
+                    "checked"
+                  );
+              }
+            );
+        }
+      );
 
     document
-      .getElementById("printButton")
-      .addEventListener("click", function () {
-        window.print();
-      });
+      .getElementById(
+        "printButton"
+      )
+      .addEventListener(
+        "click",
+        function () {
+          window.print();
+        }
+      );
+
+    document
+      .getElementById(
+        "printCookingButton"
+      )
+      .addEventListener(
+        "click",
+        function () {
+          window.print();
+        }
+      );
+
+    scrollUpButton.addEventListener(
+      "click",
+      function () {
+        scrollPageByAmount(-1);
+      }
+    );
+
+    scrollDownButton.addEventListener(
+      "click",
+      function () {
+        scrollPageByAmount(1);
+      }
+    );
+
+    window.addEventListener(
+      "scroll",
+      updateScrollButtons,
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "resize",
+      updateScrollButtons
+    );
 
     try {
-      const savedNotes = localStorage.getItem("recipeDeskNotes");
+      const savedNotes =
+        localStorage.getItem(
+          "recipeDeskNotes"
+        );
 
       if (savedNotes) {
         notes.value = savedNotes;
       }
 
-      notes.addEventListener("input", function () {
-        localStorage.setItem("recipeDeskNotes", notes.value);
-      });
+      notes.addEventListener(
+        "input",
+        function () {
+          localStorage.setItem(
+            "recipeDeskNotes",
+            notes.value
+          );
+        }
+      );
     } catch (error) {
-      /*
-        The app still works if a browser blocks local storage.
-      */
+      console.log(
+        "Local storage is unavailable."
+      );
     }
 
-    setupVoiceRecognition();
+    updateScrollButtons();
     moodInput.focus();
   </script>
 </body>
