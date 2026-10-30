@@ -1,2785 +1,3400 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
-
-  <meta name="theme-color" content="#5f3822">
-
-  <title>Recipe Desk</title>
-
-  <style>
-    :root {
-      --paper: #fffdf2;
-      --paper-line: rgba(71, 145, 203, 0.28);
-      --red-line: rgba(211, 70, 70, 0.48);
-      --ink: #193958;
-      --text: #34271f;
-      --muted: #796858;
-      --green: #3f774d;
-      --green-dark: #2d5d39;
-      --blue: #276a9b;
-      --blue-dark: #1b5178;
-      --border: #dac5aa;
-      --shadow: rgba(38, 20, 9, 0.35);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      -webkit-text-size-adjust: 100%;
-      scroll-behavior: smooth;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      min-height: 100dvh;
-      color: var(--text);
-      font-family: "Segoe UI", Arial, sans-serif;
-      background:
-        repeating-linear-gradient(
-          0deg,
-          #875331 0,
-          #9a6742 4px,
-          #885333 8px,
-          #a36e47 15px,
-          #8c5937 20px
-        );
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    button,
-    input,
-    textarea {
-      font: inherit;
-    }
-
-    button {
-      min-height: 44px;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-
-    button:disabled {
-      cursor: wait;
-      opacity: 0.55;
-    }
-
-    button:focus-visible,
-    input:focus-visible,
-    textarea:focus-visible,
-    a:focus-visible {
-      outline: 3px solid rgba(39, 106, 155, 0.34);
-      outline-offset: 2px;
-    }
-
-    .app {
-      width: min(1220px, calc(100% - 40px));
-      margin: 0 auto;
-      padding:
-        max(20px, env(safe-area-inset-top))
-        0
-        max(45px, env(safe-area-inset-bottom));
-    }
-
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 22px;
-      padding: 17px 20px;
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 20px;
-      background: rgba(66, 37, 21, 0.88);
-      box-shadow: 0 13px 32px var(--shadow);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      min-width: 0;
-    }
-
-    .brand-icon {
-      display: grid;
-      flex: 0 0 auto;
-      place-items: center;
-      width: 54px;
-      height: 54px;
-      font-size: 30px;
-      border-radius: 16px;
-      background: linear-gradient(145deg, #fff7de, #e9ba63);
-      box-shadow:
-        inset 0 1px 0 white,
-        0 6px 12px rgba(0, 0, 0, 0.25);
-    }
-
-    .brand h1 {
-      margin: 0;
-      overflow-wrap: anywhere;
-      font-family: Georgia, serif;
-      font-size: clamp(25px, 4vw, 36px);
-    }
-
-    .brand p {
-      margin: 4px 0 0;
-      color: #ecd9c8;
-      font-size: 14px;
-      line-height: 1.4;
-    }
-
-    .status {
-      flex: 0 0 auto;
-      padding: 8px 13px;
-      color: #23452b;
-      border-radius: 999px;
-      background: #dcf2df;
-      font-size: 13px;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .status.searching {
-      color: #674a15;
-      background: #fff0bd;
-    }
-
-    .status.error {
-      color: #681f1f;
-      background: #ffe2e2;
-    }
-
-    /*
-      The two columns are exactly equal width.
-    */
-    .layout {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 30px;
-      align-items: start;
-    }
-
-    /*
-      Both main sections fill their grid columns.
-    */
-    .chat-panel,
-    .paper-holder {
-      width: 100%;
-      min-width: 0;
-    }
-
-    .chat-panel {
-      display: flex;
-      flex-direction: column;
-      height: 690px;
-      min-height: 690px;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 10px;
-      background: rgba(255, 250, 240, 0.97);
-      box-shadow: 0 18px 45px var(--shadow);
-    }
-
-    .panel-heading {
-      flex: 0 0 auto;
-      padding: 19px 21px 16px;
-      border-bottom: 1px solid #ead9c4;
-      background:
-        linear-gradient(
-          180deg,
-          #fffaf0,
-          #f2e3d0
-        );
-    }
-
-    .panel-heading h2 {
-      margin: 0 0 5px;
-      font-size: 22px;
-    }
-
-    .panel-heading p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .conversation {
-      display: flex;
-      flex: 1 1 auto;
-      flex-direction: column;
-      gap: 12px;
-      min-height: 0;
-      padding: 18px 30px 18px 18px;
-      overflow-x: hidden;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      scroll-behavior: smooth;
-      scrollbar-gutter: stable;
-    }
-
-    .message {
-      max-width: 91%;
-      padding: 12px 15px;
-      overflow-wrap: anywhere;
-      line-height: 1.48;
-      border-radius: 16px;
-      animation: appear 0.2s ease-out;
-    }
-
-    .assistant-message {
-      align-self: flex-start;
-      border-bottom-left-radius: 5px;
-      background: #eee1d0;
-    }
-
-    .user-message {
-      align-self: flex-end;
-      color: white;
-      border-bottom-right-radius: 5px;
-      background: var(--green);
-    }
-
-    .error-message {
-      color: #681f1f;
-      border: 1px solid #e0aaaa;
-      background: #ffe2e2;
-    }
-
-    .try-search {
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .recipe-options {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid #e3cfb6;
-      border-radius: 16px;
-      background: #fffdf8;
-      animation: appear 0.2s ease-out;
-    }
-
-    .options-label {
-      margin: 0 0 9px;
-      color: #6d543f;
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 0.65px;
-      text-transform: uppercase;
-    }
-
-    .recipe-choice {
-      display: grid;
-      grid-template-columns: 38px minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      min-height: 56px;
-      margin: 8px 0;
-      padding: 9px 11px;
-      text-align: left;
-      color: var(--text);
-      border: 1px solid transparent;
-      border-radius: 12px;
-      background: #f5ecdf;
-      transition:
-        transform 0.14s ease,
-        background 0.14s ease,
-        border-color 0.14s ease;
-    }
-
-    .recipe-choice:hover,
-    .recipe-choice:focus-visible {
-      border-color: #9e7954;
-      background: #fff7e8;
-      transform: translateY(-1px);
-    }
-
-    .choice-number {
-      display: grid;
-      place-items: center;
-      width: 34px;
-      height: 34px;
-      color: white;
-      border-radius: 50%;
-      background: #865737;
-      font-weight: 800;
-    }
-
-    .choice-name {
-      overflow-wrap: anywhere;
-      font-weight: 750;
-      line-height: 1.3;
-    }
-
-    .choice-details {
-      color: var(--muted);
-      font-size: 12px;
-      white-space: nowrap;
-    }
-
-    .input-area {
-      flex: 0 0 auto;
-      padding: 16px 18px 19px;
-      border-top: 1px solid #ead9c4;
-      background: rgba(255, 255, 255, 0.8);
-    }
-
-    .input-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      gap: 8px;
-      align-items: stretch;
-    }
-
-    #moodInput {
-      width: 100%;
-      min-width: 0;
-      height: 50px;
-      padding: 12px 14px;
-      color: var(--text);
-      border: 2px solid var(--border);
-      border-radius: 7px;
-      background: white;
-      font-size: 16px;
-    }
-
-    #moodInput:focus {
-      border-color: var(--green);
-      outline: none;
-      box-shadow:
-        0 0 0 3px rgba(63, 119, 77, 0.13);
-    }
-
-    .find-button {
-      padding: 10px 17px;
-      color: white;
-      border: 0;
-      border-radius: 9px;
-      background: var(--green);
-      font-weight: 800;
-    }
-
-    .find-button:hover:not(:disabled) {
-      background: var(--green-dark);
-    }
-
-    .reset-button {
-      padding: 10px 14px;
-      color: #315a78;
-      border: 1px solid rgba(39, 106, 155, 0.4);
-      border-radius: 9px;
-      background: #edf6fb;
-      font-weight: 800;
-    }
-
-    .reset-button:hover {
-      color: white;
-      background: var(--blue);
-    }
-
-    .paper-holder {
-      position: sticky;
-      top: 15px;
-      perspective: 1400px;
-    }
-
-    .paper {
-      position: relative;
-      width: 100%;
-      min-width: 0;
-      min-height: 690px;
-      padding: 66px 48px 42px 74px;
-      overflow: hidden;
-      transform-style: preserve-3d;
-      border-radius: 5px 17px 17px 5px;
-      background-color: var(--paper);
-      background-image:
-        linear-gradient(
-          to right,
-          transparent 0,
-          transparent 52px,
-          var(--red-line) 53px,
-          transparent 54px
-        ),
-        repeating-linear-gradient(
-          to bottom,
-          transparent 0,
-          transparent 29px,
-          var(--paper-line) 30px,
-          transparent 31px
-        );
-      box-shadow:
-        0 18px 50px var(--shadow),
-        inset 0 0 30px rgba(128, 101, 59, 0.08);
-    }
-
-    .paper.flip-animation {
-      animation: flipPaper 0.5s ease-in-out;
-    }
-
-    .paper-holes {
-      position: absolute;
-      top: 76px;
-      left: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 108px;
-    }
-
-    .paper-hole {
-      width: 18px;
-      height: 18px;
-      border: 1px solid #c9bc9f;
-      border-radius: 50%;
-      background: #e3d6bb;
-      box-shadow:
-        inset 2px 2px 4px rgba(0, 0, 0, 0.18);
-    }
-
-    .flip-paper-button {
-      position: absolute;
-      top: 10px;
-      left: 72px;
-      right: 26px;
-      z-index: 5;
-      display: none;
-      min-height: 46px;
-      padding: 10px 15px;
-      color: white;
-      border: 1px solid rgba(14, 59, 91, 0.8);
-      border-radius: 11px;
-      background: rgba(39, 106, 155, 0.9);
-      box-shadow:
-        0 5px 12px rgba(25, 57, 88, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.25);
-      font-size: 14px;
-      font-weight: 800;
-      text-align: center;
-    }
-
-    .flip-paper-button:hover:not(:disabled) {
-      background: rgba(27, 81, 120, 0.98);
-    }
-
-    .empty-paper {
-      display: grid;
-      place-items: center;
-      min-height: 540px;
-      text-align: center;
-      color: var(--muted);
-    }
-
-    .empty-paper-icon {
-      font-size: 64px;
-    }
-
-    .empty-paper h2 {
-      margin: 12px 0 7px;
-      color: var(--ink);
-      font-family: Georgia, serif;
-    }
-
-    .empty-paper p {
-      max-width: 330px;
-      margin: 0;
-      line-height: 1.6;
-    }
-
-    .shopping-sheet,
-    .cooking-sheet {
-      display: none;
-    }
-
-    .shopping-title {
-      margin: 0;
-      overflow-wrap: anywhere;
-      color: var(--ink);
-      font-family: Georgia, serif;
-      font-size: clamp(27px, 4.5vw, 39px);
-      line-height: 1.1;
-    }
-
-    .shopping-subtitle {
-      margin: 9px 0 18px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.4;
-    }
-
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 9px;
-      margin: 16px 0 18px;
-      padding: 11px 12px;
-      border: 1px solid rgba(94, 111, 122, 0.2);
-      border-radius: 11px;
-      background: rgba(255, 255, 255, 0.74);
-    }
-
-    .servings-control {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-right: auto;
-    }
-
-    .servings-label {
-      color: var(--ink);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .serving-button {
-      display: grid;
-      place-items: center;
-      width: 42px;
-      min-width: 42px;
-      height: 42px;
-      min-height: 42px;
-      padding: 0;
-      color: white;
-      border: 1px solid var(--blue-dark);
-      border-radius: 10px;
-      background: var(--blue);
-      font-size: 21px;
-      font-weight: 800;
-    }
-
-    .serving-button:hover:not(:disabled) {
-      background: var(--blue-dark);
-    }
-
-    .serving-count {
-      display: inline-grid;
-      place-items: center;
-      min-width: 40px;
-      height: 38px;
-      padding: 0 8px;
-      color: var(--ink);
-      border: 1px solid rgba(39, 106, 155, 0.3);
-      border-radius: 8px;
-      background: white;
-      font-weight: 800;
-    }
-
-    .secondary-button,
-    .print-button {
-      min-height: 44px;
-      padding: 9px 13px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .secondary-button {
-      color: #45392e;
-      border: 1px solid #b9aa91;
-      background: #fffdf7;
-    }
-
-    .print-button {
-      color: white;
-      border: 1px solid #254d30;
-      background: var(--green);
-    }
-
-    .section-title {
-      margin: 18px 0 9px;
-      color: var(--ink);
-      font-family: Georgia, serif;
-      font-size: 20px;
-    }
-
-    .ingredients {
-      display: grid;
-      gap: 2px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .ingredient {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      min-height: 34px;
-      padding: 4px 2px;
-      color: #273d50;
-      line-height: 1.45;
-    }
-
-    .ingredient input {
-      flex: 0 0 auto;
-      width: 21px;
-      height: 21px;
-      margin-top: 1px;
-      accent-color: var(--green);
-    }
-
-    .ingredient label {
-      overflow-wrap: anywhere;
-      cursor: pointer;
-    }
-
-    .ingredient.checked label {
-      color: #888;
-      text-decoration: line-through;
-    }
-
-    .notes {
-      width: 100%;
-      min-height: 116px;
-      padding: 5px 8px;
-      color: var(--ink);
-      border: 0;
-      outline: 0;
-      resize: vertical;
-      background: transparent;
-      font-size: 16px;
-      line-height: 31px;
-    }
-
-    .instructions {
-      color: #273d50;
-      font-size: 16px;
-      line-height: 1.65;
-    }
-
-    .instruction-step {
-      display: grid;
-      grid-template-columns: 34px minmax(0, 1fr);
-      gap: 11px;
-      margin-bottom: 16px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid rgba(39, 106, 155, 0.14);
-    }
-
-    .step-number {
-      display: grid;
-      place-items: center;
-      width: 30px;
-      height: 30px;
-      color: white;
-      border-radius: 50%;
-      background: var(--green);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .step-text {
-      min-width: 0;
-      padding-top: 3px;
-      overflow-wrap: anywhere;
-    }
-
-    .recipe-source {
-      margin-top: 17px;
-      padding: 12px;
-      border: 1px dashed rgba(42, 74, 101, 0.35);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.6);
-    }
-
-    .recipe-source p {
-      margin: 0 0 8px;
-      color: #6c6258;
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .recipe-link {
-      display: inline-block;
-      color: #245c87;
-      font-weight: 800;
-      overflow-wrap: anywhere;
-    }
-
-    .information {
-      margin-top: 22px;
-      padding: 13px 16px;
-      color: #f7e8d7;
-      border-radius: 13px;
-      background: rgba(60, 34, 20, 0.85);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
-      font-size: 12px;
-      line-height: 1.55;
-    }
-
-    .mobile-scroll-controls {
-      position: fixed;
-      right: max(7px, env(safe-area-inset-right));
-      top: 50%;
-      z-index: 100;
-      display: none;
-      flex-direction: column;
-      gap: 9px;
-      transform: translateY(-50%);
-    }
-
-    .mobile-scroll-button {
-      display: grid;
-      place-items: center;
-      width: 46px;
-      min-width: 46px;
-      height: 58px;
-      min-height: 58px;
-      padding: 0;
-      color: white;
-      border: 1px solid rgba(20, 73, 111, 0.55);
-      border-radius: 13px;
-      background: rgba(39, 106, 155, 0.7);
-      box-shadow: 0 5px 14px rgba(29, 57, 80, 0.24);
-      font-size: 18px;
-      font-weight: 900;
-      backdrop-filter: blur(3px);
-      -webkit-backdrop-filter: blur(3px);
-    }
-
-    .mobile-scroll-button:hover:not(:disabled),
-    .mobile-scroll-button:active:not(:disabled) {
-      background: rgba(27, 81, 120, 0.9);
-    }
-
-    .mobile-scroll-button:disabled {
-      cursor: default;
-      opacity: 0.25;
-    }
-
-    @keyframes appear {
-      from {
-        opacity: 0;
-        transform: translateY(5px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes flipPaper {
-      0% {
-        transform: rotateY(0deg);
-      }
-
-      49% {
-        opacity: 0.45;
-        transform: rotateY(90deg);
-      }
-
-      50% {
-        opacity: 0.45;
-        transform: rotateY(-90deg);
-      }
-
-      100% {
-        opacity: 1;
-        transform: rotateY(0deg);
-      }
-    }
-
-    @media (max-width: 920px) {
-      .layout {
-        grid-template-columns: 1fr;
-        gap: 28px;
-      }
-
-      .chat-panel {
-        width: 100%;
-        height: 690px;
-      }
-
-      .paper-holder {
-        position: static;
-        width: 100%;
-      }
-    }
-
-    @media (max-width: 600px) {
-      body {
-        padding-right: 50px;
-      }
-
-      .app {
-        width: min(100% - 12px, 1220px);
-        padding-top:
-          max(8px, env(safe-area-inset-top));
-      }
-
-      .header {
-        align-items: flex-start;
-        margin-bottom: 12px;
-        padding: 13px;
-        border-radius: 15px;
-      }
-
-      .brand {
-        align-items: flex-start;
-      }
-
-      .brand-icon {
-        width: 46px;
-        height: 46px;
-        font-size: 25px;
-        border-radius: 13px;
-      }
-
-      .brand h1 {
-        font-size: 26px;
-      }
-
-      .brand p {
-        font-size: 12px;
-      }
-
-      .status {
-        display: none;
-      }
-
-      .layout {
-        gap: 20px;
-      }
-
-      .chat-panel {
-        height: 590px;
-        min-height: 590px;
-        border-radius: 10px;
-      }
-
-      .panel-heading {
-        padding: 16px;
-      }
-
-      .panel-heading h2 {
-        font-size: 20px;
-      }
-
-      .conversation {
-        padding: 14px 28px 14px 14px;
-      }
-
-      .message {
-        max-width: 95%;
-        padding: 11px 13px;
-      }
-
-      .input-area {
-        padding: 13px 28px 13px 13px;
-      }
-
-      .input-row {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      #moodInput {
-        grid-column: 1 / -1;
-        grid-row: 1;
-      }
-
-      .find-button {
-        grid-column: 1;
-        grid-row: 2;
-        width: 100%;
-      }
-
-      .reset-button {
-        grid-column: 2;
-        grid-row: 2;
-        width: 100%;
-      }
-
-      .recipe-choice {
-        grid-template-columns: 37px minmax(0, 1fr);
-        min-height: 62px;
-      }
-
-      .choice-details {
-        grid-column: 2;
-        white-space: normal;
-      }
-
-      .paper {
-        min-height: 590px;
-        padding: 68px 30px 34px 50px;
-        border-radius: 4px 13px 13px 4px;
-        background-image:
-          linear-gradient(
-            to right,
-            transparent 0,
-            transparent 36px,
-            var(--red-line) 37px,
-            transparent 38px
-          ),
-          repeating-linear-gradient(
-            to bottom,
-            transparent 0,
-            transparent 29px,
-            var(--paper-line) 30px,
-            transparent 31px
-          );
-      }
-
-      .paper-holes {
-        left: 8px;
-      }
-
-      .paper-hole {
-        width: 15px;
-        height: 15px;
-      }
-
-      .flip-paper-button {
-        left: 48px;
-        right: 18px;
-        min-height: 48px;
-        padding: 10px 12px;
-        font-size: 13px;
-      }
-
-      .shopping-title {
-        font-size: 28px;
-      }
-
-      .toolbar {
-        align-items: stretch;
-      }
-
-      .servings-control {
-        width: 100%;
-        justify-content: space-between;
-        margin-right: 0;
-        padding-bottom: 5px;
-      }
-
-      .servings-label {
-        margin-right: auto;
-      }
-
-      .secondary-button,
-      .print-button {
-        flex: 1 1 125px;
-      }
-
-      .mobile-scroll-controls {
-        display: flex;
-      }
-    }
-
-    @media (max-width: 370px) {
-      .brand-icon {
-        display: none;
-      }
-
-      .paper {
-        padding-right: 24px;
-        padding-left: 43px;
-      }
-
-      .flip-paper-button {
-        left: 42px;
-      }
-
-      .shopping-title {
-        font-size: 24px;
-      }
-    }
-
-    @media print {
-      @page {
-        size: auto;
-        margin: 0.45in;
-      }
-
-      body {
-        padding-right: 0;
-        background: white;
-      }
-
-      .header,
-      .chat-panel,
-      .information,
-      .toolbar,
-      .paper-holes,
-      .empty-paper,
-      .flip-paper-button,
-      .recipe-source,
-      .mobile-scroll-controls {
-        display: none !important;
-      }
-
-      .app,
-      .layout,
-      .paper-holder {
-        display: block;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-      }
-
-      .paper {
-        min-height: auto;
-        padding: 0 0 0 42px;
-        overflow: visible;
-        border: 0;
-        border-radius: 0;
-        box-shadow: none;
-        transform: none !important;
-        animation: none !important;
-        background-color: white;
-        background-image:
-          linear-gradient(
-            to right,
-            transparent 0,
-            transparent 28px,
-            rgba(210, 75, 75, 0.45) 29px,
-            transparent 30px
-          ),
-          repeating-linear-gradient(
-            to bottom,
-            transparent 0,
-            transparent 29px,
-            rgba(80, 150, 205, 0.25) 30px,
-            transparent 31px
-          );
-      }
-
-      .notes {
-        border: 0;
-        resize: none;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, viewport-fit=cover"
+>
+<meta name="theme-color" content="#5f3822">
+<title>Recipe Desk by Matt</title>
+
+<style>
+:root {
+  --paper: #fffdf2;
+  --paper-line: rgba(71, 145, 203, 0.28);
+  --red-line: rgba(211, 70, 70, 0.48);
+  --ink: #193958;
+  --text: #34271f;
+  --muted: #796858;
+  --green: #3f774d;
+  --green-dark: #2d5d39;
+  --blue: #276a9b;
+  --blue-dark: #1b5178;
+  --border: #dac5aa;
+  --shadow: rgba(38, 20, 9, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--text);
+  font-family: "Segoe UI", Arial, sans-serif;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      #875331 0,
+      #9a6742 4px,
+      #885333 8px,
+      #a36e47 15px,
+      #8c5937 20px
+    );
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  min-height: 44px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(39, 106, 155, 0.34);
+  outline-offset: 2px;
+}
+
+.app {
+  width: min(1220px, calc(100% - 40px));
+  margin: 0 auto;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    0
+    max(45px, env(safe-area-inset-bottom));
+}
+
+/* HEADER */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding: 17px 20px;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  background: rgba(66, 37, 21, 0.88);
+  box-shadow: 0 13px 32px var(--shadow);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+.brand-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  font-size: 30px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fff7de, #e9ba63);
+  box-shadow:
+    inset 0 1px 0 white,
+    0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+.brand h1 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: Georgia, serif;
+  font-size: clamp(25px, 4vw, 36px);
+}
+
+.brand p {
+  margin: 4px 0 0;
+  color: #ecd9c8;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.status {
+  flex: 0 0 auto;
+  padding: 8px 13px;
+  color: #23452b;
+  border-radius: 999px;
+  background: #dcf2df;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.status.searching {
+  color: #674a15;
+  background: #fff0bd;
+}
+
+.status.error {
+  color: #681f1f;
+  background: #ffe2e2;
+}
+
+/* LAYOUT */
+
+.layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px;
+  align-items: start;
+}
+
+.chat-panel,
+.paper-holder {
+  width: 100%;
+  min-width: 0;
+}
+
+/* CHAT */
+
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  height: 690px;
+  min-height: 690px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  background: rgba(255, 250, 240, 0.97);
+  box-shadow: 0 18px 45px var(--shadow);
+}
+
+.panel-heading {
+  flex: 0 0 auto;
+  padding: 19px 21px 16px;
+  border-bottom: 1px solid #ead9c4;
+  background: linear-gradient(180deg, #fffaf0, #f2e3d0);
+}
+
+.panel-heading h2 {
+  margin: 0 0 5px;
+  font-size: 22px;
+}
+
+.panel-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.conversation {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 18px 30px 18px 18px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+.message {
+  max-width: 91%;
+  padding: 12px 15px;
+  overflow-wrap: anywhere;
+  line-height: 1.48;
+  border-radius: 16px;
+  animation: appear 0.2s ease-out;
+}
+
+.assistant-message {
+  align-self: flex-start;
+  border-bottom-left-radius: 5px;
+  background: #eee1d0;
+}
+
+.user-message {
+  align-self: flex-end;
+  color: white;
+  border-bottom-right-radius: 5px;
+  background: var(--green);
+}
+
+.error-message {
+  color: #681f1f;
+  border: 1px solid #e0aaaa;
+  background: #ffe2e2;
+}
+
+.try-search {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* RECIPE RESULTS */
+
+.recipe-options {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #e3cfb6;
+  border-radius: 16px;
+  background: #fffdf8;
+  animation: appear 0.2s ease-out;
+}
+
+.options-label {
+  margin: 0 0 9px;
+  color: #6d543f;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.65px;
+  text-transform: uppercase;
+}
+
+.recipe-choice {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  margin: 8px 0;
+  padding: 9px 11px;
+  text-align: left;
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: #f5ecdf;
+}
+
+.recipe-choice:hover,
+.recipe-choice:focus-visible {
+  border-color: #9e7954;
+  background: #fff7e8;
+  transform: translateY(-1px);
+}
+
+.choice-number {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: white;
+  border-radius: 50%;
+  background: #865737;
+  font-weight: 800;
+}
+
+.choice-name {
+  overflow-wrap: anywhere;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.choice-details {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* NORMAL SEARCH FALLBACK */
+
+.normal-search-box {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #d8c4a9;
+  border-radius: 16px;
+  background: #fffdf8;
+  box-shadow: 0 4px 12px rgba(72, 46, 25, 0.08);
+  animation: appear 0.2s ease-out;
+}
+
+.normal-search-title {
+  margin: 0 0 5px;
+  color: var(--ink);
+  font-family: Georgia, serif;
+  font-size: 20px;
+}
+
+.normal-search-description {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.normal-field {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.normal-field label {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.normal-field input {
+  width: 100%;
+  min-width: 0;
+  height: 43px;
+  padding: 9px 11px;
+  color: var(--text);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  font-size: 15px;
+}
+
+.normal-field input::placeholder {
+  color: #aaa097;
+  font-style: italic;
+  opacity: 1;
+}
+
+.normal-field input:focus {
+  border-color: var(--green);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(63, 119, 77, 0.13);
+}
+
+.normal-search-button {
+  width: 100%;
+  margin-top: 7px;
+  padding: 11px 15px;
+  color: white;
+  border: 0;
+  border-radius: 9px;
+  background: var(--green);
+  font-weight: 800;
+}
+
+.normal-search-button:hover {
+  background: var(--green-dark);
+}
+
+.normal-search-note {
+  margin: 10px 0 0;
+  color: #8a7767;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* MAIN SEARCH INPUT */
+
+.input-area {
+  flex: 0 0 auto;
+  padding: 16px 18px 19px;
+  border-top: 1px solid #ead9c4;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+#moodInput {
+  width: 100%;
+  min-width: 0;
+  height: 50px;
+  padding: 12px 14px;
+  color: var(--text);
+  border: 2px solid var(--border);
+  border-radius: 7px;
+  background: white;
+  font-size: 16px;
+}
+
+#moodInput:focus {
+  border-color: var(--green);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(63, 119, 77, 0.13);
+}
+
+.find-button {
+  padding: 10px 17px;
+  color: white;
+  border: 0;
+  border-radius: 9px;
+  background: var(--green);
+  font-weight: 800;
+}
+
+.find-button:hover:not(:disabled) {
+  background: var(--green-dark);
+}
+
+.reset-button {
+  padding: 10px 14px;
+  color: #315a78;
+  border: 1px solid rgba(39, 106, 155, 0.4);
+  border-radius: 9px;
+  background: #edf6fb;
+  font-weight: 800;
+}
+
+.reset-button:hover {
+  color: white;
+  background: var(--blue);
+}
+
+/* PAPER */
+
+.paper-holder {
+  position: sticky;
+  top: 15px;
+  perspective: 1400px;
+}
+
+.paper {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 690px;
+  padding: 66px 48px 42px 74px;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  border-radius: 5px 17px 17px 5px;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 0,
+      transparent 52px,
+      var(--red-line) 53px,
+      transparent 54px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 29px,
+      var(--paper-line) 30px,
+      transparent 31px
+    );
+  box-shadow:
+    0 18px 50px var(--shadow),
+    inset 0 0 30px rgba(128, 101, 59, 0.08);
+}
+
+.paper.flip-animation {
+  animation: flipPaper 0.5s ease-in-out;
+}
+
+.paper-holes {
+  position: absolute;
+  top: 76px;
+  left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 108px;
+}
+
+.paper-hole {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #c9bc9f;
+  border-radius: 50%;
+  background: #e3d6bb;
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.18);
+}
+
+.flip-paper-button {
+  position: absolute;
+  top: 10px;
+  left: 72px;
+  right: 26px;
+  z-index: 5;
+  display: none;
+  min-height: 46px;
+  padding: 10px 15px;
+  color: white;
+  border: 1px solid rgba(14, 59, 91, 0.8);
+  border-radius: 11px;
+  background: rgba(39, 106, 155, 0.9);
+  box-shadow:
+    0 5px 12px rgba(25, 57, 88, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.flip-paper-button:hover:not(:disabled) {
+  background: rgba(27, 81, 120, 0.98);
+}
+
+.empty-paper {
+  display: grid;
+  place-items: center;
+  min-height: 540px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.empty-paper-icon {
+  font-size: 64px;
+}
+
+.empty-paper h2 {
+  margin: 12px 0 7px;
+  color: var(--ink);
+  font-family: Georgia, serif;
+}
+
+.empty-paper p {
+  max-width: 330px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.shopping-sheet,
+.cooking-sheet {
+  display: none;
+}
+
+.shopping-title {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-family: Georgia, serif;
+  font-size: clamp(27px, 4.5vw, 39px);
+  line-height: 1.1;
+}
+
+.shopping-subtitle {
+  margin: 9px 0 18px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin: 16px 0 18px;
+  padding: 11px 12px;
+  border: 1px solid rgba(94, 111, 122, 0.2);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.servings-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+}
+
+.servings-label {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.serving-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0;
+  color: white;
+  border: 1px solid var(--blue-dark);
+  border-radius: 10px;
+  background: var(--blue);
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.serving-button:hover:not(:disabled) {
+  background: var(--blue-dark);
+}
+
+.serving-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 40px;
+  height: 38px;
+  padding: 0 8px;
+  color: var(--ink);
+  border: 1px solid rgba(39, 106, 155, 0.3);
+  border-radius: 8px;
+  background: white;
+  font-weight: 800;
+}
+
+.secondary-button,
+.print-button {
+  min-height: 44px;
+  padding: 9px 13px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.secondary-button {
+  color: #45392e;
+  border: 1px solid #b9aa91;
+  background: #fffdf7;
+}
+
+.print-button {
+  color: white;
+  border: 1px solid #254d30;
+  background: var(--green);
+}
+
+.section-title {
+  margin: 18px 0 9px;
+  color: var(--ink);
+  font-family: Georgia, serif;
+  font-size: 20px;
+}
+
+.ingredients {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ingredient {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 34px;
+  padding: 4px 2px;
+  color: #273d50;
+  line-height: 1.45;
+}
+
+.ingredient input {
+  flex: 0 0 auto;
+  width: 21px;
+  height: 21px;
+  margin-top: 1px;
+  accent-color: var(--green);
+}
+
+.ingredient label {
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.ingredient.checked label {
+  color: #888;
+  text-decoration: line-through;
+}
+
+.notes {
+  width: 100%;
+  min-height: 116px;
+  padding: 5px 8px;
+  color: var(--ink);
+  border: 0;
+  outline: 0;
+  resize: vertical;
+  background: transparent;
+  font-size: 16px;
+  line-height: 31px;
+}
+
+.instructions {
+  color: #273d50;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.instruction-step {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 11px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(39, 106, 155, 0.14);
+}
+
+.step-number {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: white;
+  border-radius: 50%;
+  background: var(--green);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.step-text {
+  min-width: 0;
+  padding-top: 3px;
+  overflow-wrap: anywhere;
+}
+
+.recipe-source {
+  margin-top: 17px;
+  padding: 12px;
+  border: 1px dashed rgba(42, 74, 101, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.recipe-source p {
+  margin: 0 0 8px;
+  color: #6c6258;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.recipe-link {
+  display: inline-block;
+  color: #245c87;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.information {
+  margin-top: 22px;
+  padding: 13px 16px;
+  color: #f7e8d7;
+  border-radius: 13px;
+  background: rgba(60, 34, 20, 0.85);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* MOBILE SCROLL */
+
+.mobile-scroll-controls {
+  position: fixed;
+  right: max(7px, env(safe-area-inset-right));
+  top: 50%;
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  gap: 9px;
+  transform: translateY(-50%);
+}
+
+.mobile-scroll-button {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  min-width: 46px;
+  height: 58px;
+  min-height: 58px;
+  padding: 0;
+  color: white;
+  border: 1px solid rgba(20, 73, 111, 0.55);
+  border-radius: 13px;
+  background: rgba(39, 106, 155, 0.7);
+  box-shadow: 0 5px 14px rgba(29, 57, 80, 0.24);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.mobile-scroll-button:disabled {
+  cursor: default;
+  opacity: 0.25;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flipPaper {
+  0% {
+    transform: rotateY(0deg);
+  }
+  49% {
+    opacity: 0.45;
+    transform: rotateY(90deg);
+  }
+  50% {
+    opacity: 0.45;
+    transform: rotateY(-90deg);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateY(0deg);
+  }
+}
+
+/* QUICK SEARCH SUCCESS CONFETTI */
+
+
+
+@media (max-width: 920px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .chat-panel {
+    width: 100%;
+    height: 690px;
+  }
+
+  .paper-holder {
+    position: static;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    padding-right: 50px;
+  }
+
+  .app {
+    width: min(100% - 12px, 1220px);
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+
+  .header {
+    align-items: flex-start;
+    margin-bottom: 12px;
+    padding: 13px;
+    border-radius: 15px;
+  }
+
+  .brand-icon {
+    width: 46px;
+    height: 46px;
+    font-size: 25px;
+  }
+
+  .brand h1 {
+    font-size: 26px;
+  }
+
+  .brand p {
+    font-size: 12px;
+  }
+
+  .status {
+    display: none;
+  }
+
+  .layout {
+    gap: 20px;
+  }
+
+  .chat-panel {
+    height: 590px;
+    min-height: 590px;
+  }
+
+  .panel-heading {
+    padding: 16px;
+  }
+
+  .conversation {
+    padding: 14px 28px 14px 14px;
+  }
+
+  .message {
+    max-width: 95%;
+    padding: 11px 13px;
+  }
+
+  .input-area {
+    padding: 13px 28px 13px 13px;
+  }
+
+  .input-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #moodInput {
+    grid-column: 1 / -1;
+  }
+
+  .find-button {
+    width: 100%;
+  }
+
+  .reset-button {
+    width: 100%;
+  }
+
+  .recipe-choice {
+    grid-template-columns: 37px minmax(0, 1fr);
+    min-height: 62px;
+  }
+
+  .choice-details {
+    grid-column: 2;
+    white-space: normal;
+  }
+
+  .normal-field {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .paper {
+    min-height: 590px;
+    padding: 68px 30px 34px 50px;
+    background-image:
+      linear-gradient(
+        to right,
+        transparent 0,
+        transparent 36px,
+        var(--red-line) 37px,
+        transparent 38px
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 29px,
+        var(--paper-line) 30px,
+        transparent 31px
+      );
+  }
+
+  .paper-holes {
+    left: 8px;
+  }
+
+  .paper-hole {
+    width: 15px;
+    height: 15px;
+  }
+
+  .flip-paper-button {
+    left: 48px;
+    right: 18px;
+  }
+
+  .toolbar {
+    align-items: stretch;
+  }
+
+  .servings-control {
+    width: 100%;
+    justify-content: space-between;
+    margin-right: 0;
+  }
+
+  .mobile-scroll-controls {
+    display: flex;
+  }
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 0.45in;
+  }
+
+  body {
+    padding-right: 0;
+    background: white;
+  }
+
+  .header,
+  .chat-panel,
+  .information,
+  .toolbar,
+  .paper-holes,
+  .empty-paper,
+  .flip-paper-button,
+  .recipe-source,
+  .mobile-scroll-controls {
+    display: none !important;
+  }
+
+  .app,
+  .layout,
+  .paper-holder {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .paper {
+    min-height: auto;
+    padding: 0 0 0 42px;
+    overflow: visible;
+    border: 0;
+    box-shadow: none;
+    transform: none !important;
+    animation: none !important;
+    background-color: white;
+  }
+}
+</style>
 </head>
 
 <body>
-  <main class="app">
-    <header class="header">
-      <div class="brand">
-        <div class="brand-icon" aria-hidden="true">🍽️</div>
 
-        <div>
-          <h1>Recipe Desk</h1>
+<main class="app">
 
-          <p>
-            Find something good to cook, then print your shopping list.
-          </p>
-        </div>
-      </div>
+<header class="header">
+  <div class="brand">
+    <div class="brand-icon" aria-hidden="true">🍽️</div>
 
-      <div id="appStatus" class="status">● Ready</div>
-    </header>
-
-    <div class="layout">
-      <section
-        class="chat-panel"
-        aria-label="Recipe assistant"
-      >
-        <div class="panel-heading">
-          <h2>What are you in the mood for?</h2>
-
-          <p>
-            Enter a meal or ingredient to see up to five online
-            recipe ideas.
-          </p>
-        </div>
-
-        <div
-          id="conversation"
-          class="conversation"
-          aria-live="polite"
-          aria-relevant="additions"
-        >
-          <div class="message assistant-message">
-            <div>Let's get cooking.</div>
-
-            <div class="try-search">
-              Try searching for chicken, salmon, pasta, beef, curry,
-              soup, or pizza.
-            </div>
-          </div>
-        </div>
-
-        <div class="input-area">
-          <div class="input-row">
-            <input
-              id="moodInput"
-              type="text"
-              autocomplete="off"
-              enterkeyhint="search"
-              placeholder="What are you in the mood for?"
-              aria-label="Search for recipes"
-            >
-
-            <button
-              id="searchButton"
-              class="find-button"
-              type="button"
-            >
-              Find recipes
-            </button>
-
-            <button
-              id="resetButton"
-              class="reset-button"
-              type="button"
-            >
-              ↻ Reset
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <aside class="paper-holder">
-        <section
-          class="paper"
-          id="paper"
-          aria-label="Recipe paper"
-        >
-          <button
-            id="flipPaperButton"
-            class="flip-paper-button"
-            type="button"
-            aria-label="Flip paper for cooking instructions"
-          >
-            ↻ Flip paper for cooking instructions
-          </button>
-
-          <div class="paper-holes" aria-hidden="true">
-            <div class="paper-hole"></div>
-            <div class="paper-hole"></div>
-            <div class="paper-hole"></div>
-            <div class="paper-hole"></div>
-            <div class="paper-hole"></div>
-          </div>
-
-          <div id="emptyPaper" class="empty-paper">
-            <div>
-              <div class="empty-paper-icon">📝</div>
-
-              <h2>Your shopping list will appear here</h2>
-
-              <p>
-                Search for food, choose a recipe, and its ingredients
-                will be placed on this printable notepad.
-              </p>
-            </div>
-          </div>
-
-          <div id="shoppingSheet" class="shopping-sheet">
-            <h1 id="shoppingTitle" class="shopping-title">
-              Shopping List
-            </h1>
-
-            <p
-              id="shoppingSubtitle"
-              class="shopping-subtitle"
-            ></p>
-
-            <div class="toolbar">
-              <div class="servings-control">
-                <span class="servings-label">
-                  Recipe multiplier:
-                </span>
-
-                <button
-                  id="decreaseServings"
-                  class="serving-button"
-                  type="button"
-                  aria-label="Decrease recipe multiplier"
-                >
-                  −
-                </button>
-
-                <span
-                  id="servingCount"
-                  class="serving-count"
-                  aria-live="polite"
-                >
-                  1×
-                </span>
-
-                <button
-                  id="increaseServings"
-                  class="serving-button"
-                  type="button"
-                  aria-label="Increase recipe multiplier"
-                >
-                  +
-                </button>
-              </div>
-
-              <button
-                id="clearChecks"
-                class="secondary-button"
-                type="button"
-              >
-                Clear checks
-              </button>
-
-              <button
-                id="printButton"
-                class="print-button"
-                type="button"
-              >
-                🖨 Print this side
-              </button>
-            </div>
-
-            <h2 class="section-title">Ingredients to buy</h2>
-
-            <ul
-              id="ingredientsList"
-              class="ingredients"
-            ></ul>
-
-            <h2 class="section-title">Notes</h2>
-
-            <textarea
-              id="notes"
-              class="notes"
-              aria-label="Shopping notes"
-              placeholder="Add store notes, substitutions, or other items..."
-            ></textarea>
-
-            <div class="recipe-source">
-              <p>
-                Quantities with recognizable numbers or fractions
-                are adjusted using the recipe multiplier.
-              </p>
-
-              <a
-                id="recipeSourceLink"
-                class="recipe-link"
-                href="https://www.themealdb.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Open recipe source ↗
-              </a>
-            </div>
-          </div>
-
-          <div id="cookingSheet" class="cooking-sheet">
-            <h1 id="cookingTitle" class="shopping-title">
-              Cooking Instructions
-            </h1>
-
-            <p
-              id="cookingSubtitle"
-              class="shopping-subtitle"
-            ></p>
-
-            <div class="toolbar">
-              <button
-                id="printCookingButton"
-                class="print-button"
-                type="button"
-              >
-                🖨 Print this side
-              </button>
-            </div>
-
-            <h2 class="section-title">Let's cook</h2>
-
-            <div
-              id="instructionsList"
-              class="instructions"
-            ></div>
-
-            <div class="recipe-source">
-              <p>
-                These instructions came with the online recipe.
-                Open the original source for additional details.
-              </p>
-
-              <a
-                id="cookingSourceLink"
-                class="recipe-link"
-                href="https://www.themealdb.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Open original recipe ↗
-              </a>
-            </div>
-          </div>
-        </section>
-      </aside>
+    <div>
+      <h1>Recipe Desk</h1>
+      <p>
+        Find something good to cook, then print your shopping list.
+      </p>
     </div>
-
-    <div class="information">
-      🍽️ Recipe results require an internet connection.
-      The multiplier starts at 1× for each newly selected recipe.
-    </div>
-  </main>
-
-  <div
-    id="mobileScrollControls"
-    class="mobile-scroll-controls"
-    aria-label="Page scrolling controls"
-  >
-    <button
-      id="scrollUpButton"
-      class="mobile-scroll-button"
-      type="button"
-      aria-label="Scroll up"
-      title="Scroll up"
-    >
-      ▲
-    </button>
-
-    <button
-      id="scrollDownButton"
-      class="mobile-scroll-button"
-      type="button"
-      aria-label="Scroll down"
-      title="Scroll down"
-    >
-      ▼
-    </button>
   </div>
 
-  <script>
-    "use strict";
+  <div id="appStatus" class="status">
+    ● Ready
+  </div>
+</header>
 
-    const recipeApiBase =
-      "https://www.themealdb.com/api/json/v1/1";
+<div class="layout">
 
-    const paper =
-      document.getElementById("paper");
+<section
+  class="chat-panel"
+  aria-label="Recipe assistant"
+>
 
-    const flipPaperButton =
-      document.getElementById("flipPaperButton");
+  <div class="panel-heading">
+    <h2>What are you in the mood for?</h2>
+    <p>
+      Enter a meal or ingredient and I'll look for some recipe ideas.
+    </p>
+  </div>
 
-    const resetButton =
-      document.getElementById("resetButton");
+  <div
+    id="conversation"
+    class="conversation"
+    aria-live="polite"
+    aria-relevant="additions"
+  >
+    <div class="message assistant-message">
+      <div>Let's get cooking.</div>
+      <div class="try-search">
+        Try searching for chicken, salmon, pasta, beef, curry,
+        soup, pizza, or anything you're hungry for.
+      </div>
+    </div>
+  </div>
 
-    const conversation =
-      document.getElementById("conversation");
+  <div class="input-area">
+    <div class="input-row">
 
-    const moodInput =
-      document.getElementById("moodInput");
+      <input
+        id="moodInput"
+        type="text"
+        autocomplete="off"
+        enterkeyhint="search"
+        placeholder="What are you in the mood for?"
+        aria-label="Search for recipes"
+      >
 
-    const searchButton =
-      document.getElementById("searchButton");
+      <button
+        id="searchButton"
+        class="find-button"
+        type="button"
+      >
+        Find recipes
+      </button>
 
-    const appStatus =
-      document.getElementById("appStatus");
+      <button
+        id="resetButton"
+        class="reset-button"
+        type="button"
+      >
+        ↻ Reset
+      </button>
 
-    const emptyPaper =
-      document.getElementById("emptyPaper");
+    </div>
+  </div>
 
-    const shoppingSheet =
-      document.getElementById("shoppingSheet");
+</section>
 
-    const shoppingTitle =
-      document.getElementById("shoppingTitle");
+<aside class="paper-holder">
 
-    const shoppingSubtitle =
-      document.getElementById("shoppingSubtitle");
+<section
+  class="paper"
+  id="paper"
+  aria-label="Recipe paper"
+>
 
-    const ingredientsList =
-      document.getElementById("ingredientsList");
+<button
+  id="flipPaperButton"
+  class="flip-paper-button"
+  type="button"
+>
+  ↻ Flip paper for cooking instructions
+</button>
 
-    const recipeSourceLink =
-      document.getElementById("recipeSourceLink");
+<div class="paper-holes" aria-hidden="true">
+  <div class="paper-hole"></div>
+  <div class="paper-hole"></div>
+  <div class="paper-hole"></div>
+  <div class="paper-hole"></div>
+  <div class="paper-hole"></div>
+</div>
 
-    const cookingSheet =
-      document.getElementById("cookingSheet");
+<div id="emptyPaper" class="empty-paper">
+  <div>
+    <div class="empty-paper-icon">📝</div>
 
-    const cookingTitle =
-      document.getElementById("cookingTitle");
+    <h2>Your shopping list will appear here</h2>
 
-    const cookingSubtitle =
-      document.getElementById("cookingSubtitle");
+    <p>
+      Search for food, choose a recipe, and its ingredients
+      will be placed on this printable notepad.
+    </p>
+  </div>
+</div>
 
-    const instructionsList =
-      document.getElementById("instructionsList");
+<div id="shoppingSheet" class="shopping-sheet">
 
-    const cookingSourceLink =
-      document.getElementById("cookingSourceLink");
+  <h1 id="shoppingTitle" class="shopping-title">
+    Shopping List
+  </h1>
 
-    const notes =
-      document.getElementById("notes");
+  <p
+    id="shoppingSubtitle"
+    class="shopping-subtitle"
+  ></p>
 
-    const decreaseServings =
-      document.getElementById("decreaseServings");
+  <div class="toolbar">
 
-    const increaseServings =
-      document.getElementById("increaseServings");
+    <div class="servings-control">
 
-    const servingCount =
-      document.getElementById("servingCount");
+      <span class="servings-label">
+        Recipe multiplier:
+      </span>
 
-    const scrollUpButton =
-      document.getElementById("scrollUpButton");
+      <button
+        id="decreaseServings"
+        class="serving-button"
+        type="button"
+      >
+        −
+      </button>
 
-    const scrollDownButton =
-      document.getElementById("scrollDownButton");
+      <span
+        id="servingCount"
+        class="serving-count"
+      >
+        1×
+      </span>
 
-    let currentChoices = [];
-    let selectedRecipe = null;
-    let showingCookingSide = false;
-    let paperIsFlipping = false;
-    let recipeMultiplier = 1;
+      <button
+        id="increaseServings"
+        class="serving-button"
+        type="button"
+      >
+        +
+      </button>
 
-    const unicodeFractions = {
-      "⅛": 1 / 8,
-      "¼": 1 / 4,
-      "⅓": 1 / 3,
-      "⅜": 3 / 8,
-      "½": 1 / 2,
-      "⅝": 5 / 8,
-      "⅔": 2 / 3,
-      "¾": 3 / 4,
-      "⅞": 7 / 8
-    };
+    </div>
 
-    function setStatus(type, text) {
-      appStatus.className = "status";
+    <button
+      id="clearChecks"
+      class="secondary-button"
+      type="button"
+    >
+      Clear checks
+    </button>
 
-      if (type) {
-        appStatus.classList.add(type);
-      }
+    <button
+      id="printButton"
+      class="print-button"
+      type="button"
+    >
+      🖨 Print this side
+    </button>
 
-      appStatus.textContent = text;
+  </div>
+
+  <h2 class="section-title">
+    Ingredients to buy
+  </h2>
+
+  <ul
+    id="ingredientsList"
+    class="ingredients"
+  ></ul>
+
+  <h2 class="section-title">
+    Notes
+  </h2>
+
+  <textarea
+    id="notes"
+    class="notes"
+    placeholder="Add store notes, substitutions, or other items..."
+  ></textarea>
+
+  <div class="recipe-source">
+
+    <p>
+      Quantities with recognizable numbers or fractions
+      are adjusted using the recipe multiplier.
+    </p>
+
+    <a
+      id="recipeSourceLink"
+      class="recipe-link"
+      href="https://www.themealdb.com/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Open recipe source ↗
+    </a>
+
+  </div>
+
+</div>
+
+<div id="cookingSheet" class="cooking-sheet">
+
+  <h1
+    id="cookingTitle"
+    class="shopping-title"
+  >
+    Cooking Instructions
+  </h1>
+
+  <p
+    id="cookingSubtitle"
+    class="shopping-subtitle"
+  ></p>
+
+  <div class="toolbar">
+
+    <button
+      id="printCookingButton"
+      class="print-button"
+      type="button"
+    >
+      🖨 Print this side
+    </button>
+
+  </div>
+
+  <h2 class="section-title">
+    Let's cook
+  </h2>
+
+  <div
+    id="instructionsList"
+    class="instructions"
+  ></div>
+
+  <div class="recipe-source">
+
+    <p>
+      These instructions came with the online recipe.
+      Open the original source for additional details.
+    </p>
+
+    <a
+      id="cookingSourceLink"
+      class="recipe-link"
+      href="https://www.themealdb.com/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Open original recipe ↗
+    </a>
+
+  </div>
+
+</div>
+
+</section>
+</aside>
+
+</div>
+
+<div class="information">
+  🍽️ Recipe results require an internet connection.
+  If Quick Search doesn't find a match, Recipe Desk will
+  offer Normal Search automatically.
+</div>
+
+</main>
+
+<div
+  class="mobile-scroll-controls"
+  aria-label="Page scrolling controls"
+>
+
+<button
+  id="scrollUpButton"
+  class="mobile-scroll-button"
+  type="button"
+>
+  ▲
+</button>
+
+<button
+  id="scrollDownButton"
+  class="mobile-scroll-button"
+  type="button"
+>
+  ▼
+</button>
+
+</div>
+
+<script>
+"use strict";
+
+/* ================================
+   CONFIGURATION
+================================ */
+
+const recipeApiBase =
+  "https://www.themealdb.com/api/json/v1/1";
+
+/* ================================
+   ELEMENTS
+================================ */
+
+const paper =
+  document.getElementById("paper");
+
+const flipPaperButton =
+  document.getElementById("flipPaperButton");
+
+const resetButton =
+  document.getElementById("resetButton");
+
+const conversation =
+  document.getElementById("conversation");
+
+const moodInput =
+  document.getElementById("moodInput");
+
+const searchButton =
+  document.getElementById("searchButton");
+
+const appStatus =
+  document.getElementById("appStatus");
+
+const emptyPaper =
+  document.getElementById("emptyPaper");
+
+const shoppingSheet =
+  document.getElementById("shoppingSheet");
+
+const shoppingTitle =
+  document.getElementById("shoppingTitle");
+
+const shoppingSubtitle =
+  document.getElementById("shoppingSubtitle");
+
+const ingredientsList =
+  document.getElementById("ingredientsList");
+
+const recipeSourceLink =
+  document.getElementById("recipeSourceLink");
+
+const cookingSheet =
+  document.getElementById("cookingSheet");
+
+const cookingTitle =
+  document.getElementById("cookingTitle");
+
+const cookingSubtitle =
+  document.getElementById("cookingSubtitle");
+
+const instructionsList =
+  document.getElementById("instructionsList");
+
+const cookingSourceLink =
+  document.getElementById("cookingSourceLink");
+
+const notes =
+  document.getElementById("notes");
+
+const decreaseServings =
+  document.getElementById("decreaseServings");
+
+const increaseServings =
+  document.getElementById("increaseServings");
+
+const servingCount =
+  document.getElementById("servingCount");
+
+const scrollUpButton =
+  document.getElementById("scrollUpButton");
+
+const scrollDownButton =
+  document.getElementById("scrollDownButton");
+
+/* ================================
+   STATE
+================================ */
+
+let currentChoices = [];
+let selectedRecipe = null;
+let showingCookingSide = false;
+let paperIsFlipping = false;
+let recipeMultiplier = 1;
+
+/* ================================
+   FRACTIONS
+================================ */
+
+const unicodeFractions = {
+  "⅛": 1 / 8,
+  "¼": 1 / 4,
+  "⅓": 1 / 3,
+  "⅜": 3 / 8,
+  "½": 1 / 2,
+  "⅝": 5 / 8,
+  "⅔": 2 / 3,
+  "¾": 3 / 4,
+  "⅞": 7 / 8
+};
+
+/* ================================
+   BASIC UI
+================================ */
+
+function setStatus(type, text) {
+  appStatus.className = "status";
+
+  if (type) {
+    appStatus.classList.add(type);
+  }
+
+  appStatus.textContent = text;
+}
+
+function createWelcomeMessage() {
+
+  const welcomeMessage =
+    document.createElement("div");
+
+  welcomeMessage.className =
+    "message assistant-message";
+
+  const firstLine =
+    document.createElement("div");
+
+  firstLine.textContent =
+    "Let's get cooking.";
+
+  const secondLine =
+    document.createElement("div");
+
+  secondLine.className =
+    "try-search";
+
+  secondLine.textContent =
+    "Try searching for chicken, salmon, pasta, beef, curry, soup, pizza, or anything you're hungry for.";
+
+  welcomeMessage.appendChild(firstLine);
+  welcomeMessage.appendChild(secondLine);
+
+  return welcomeMessage;
+}
+
+function addMessage(
+  text,
+  sender = "assistant",
+  extraClass = ""
+) {
+
+  const message =
+    document.createElement("div");
+
+  message.className =
+    "message " +
+    (
+      sender === "user"
+        ? "user-message"
+        : "assistant-message"
+    ) +
+    (
+      extraClass
+        ? " " + extraClass
+        : ""
+    );
+
+  message.textContent = text;
+
+  conversation.appendChild(message);
+
+  scrollConversation();
+}
+
+function scrollConversation() {
+  requestAnimationFrame(function () {
+    conversation.scrollTop =
+      conversation.scrollHeight;
+  });
+}
+
+/* ================================
+   RESET
+================================ */
+
+function resetRecipeDesk() {
+
+  moodInput.value = "";
+
+  currentChoices = [];
+  selectedRecipe = null;
+
+  showingCookingSide = false;
+  paperIsFlipping = false;
+
+  recipeMultiplier = 1;
+
+  conversation.innerHTML = "";
+
+  conversation.appendChild(
+    createWelcomeMessage()
+  );
+
+  emptyPaper.style.display = "grid";
+  shoppingSheet.style.display = "none";
+  cookingSheet.style.display = "none";
+
+  flipPaperButton.style.display = "none";
+  flipPaperButton.disabled = false;
+
+  paper.classList.remove(
+    "flip-animation"
+  );
+
+  ingredientsList.innerHTML = "";
+  instructionsList.innerHTML = "";
+
+  servingCount.textContent = "1×";
+
+  decreaseServings.disabled = true;
+  increaseServings.disabled = false;
+
+  setStatus("", "● Ready");
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+  moodInput.focus();
+
+  updateScrollButtons();
+}
+
+function removeOldRecipeChoices() {
+
+  document
+    .querySelectorAll(
+      ".recipe-options, .normal-search-box"
+    )
+    .forEach(function (element) {
+      element.remove();
+    });
+}
+
+/* ================================
+   NORMAL SEARCH
+================================ */
+
+function showNormalSearch(searchText) {
+
+  const box =
+    document.createElement("div");
+
+  box.className =
+    "normal-search-box";
+
+  const title =
+    document.createElement("h3");
+
+  title.className =
+    "normal-search-title";
+
+  title.textContent =
+    "Normal Search";
+
+  const description =
+    document.createElement("p");
+
+  description.className =
+    "normal-search-description";
+
+  description.textContent =
+    "Add anything else you know, or just press Normal Search.";
+
+  box.appendChild(title);
+  box.appendChild(description);
+
+  const fields = [
+    {
+      label: "Style",
+      id: "normalStyle",
+      value: "",
+      placeholder: "can be left blank"
+    },
+    {
+      label: "Food",
+      id: "normalFood",
+      value: searchText,
+      placeholder: "can be left blank"
+    },
+    {
+      label: "Ingredients",
+      id: "normalIngredients",
+      value: "",
+      placeholder: "can be left blank"
     }
+  ];
 
-    function createWelcomeMessage() {
-      const welcomeMessage =
-        document.createElement("div");
+  const inputs = {};
 
-      welcomeMessage.className =
-        "message assistant-message";
+  fields.forEach(function (field) {
 
-      const firstLine =
-        document.createElement("div");
+    const row =
+      document.createElement("div");
 
-      firstLine.textContent =
-        "Let's get cooking.";
+    row.className =
+      "normal-field";
 
-      const secondLine =
-        document.createElement("div");
+    const label =
+      document.createElement("label");
 
-      secondLine.className =
-        "try-search";
+    label.htmlFor = field.id;
+    label.textContent = field.label;
 
-      secondLine.textContent =
-        "Try searching for chicken, salmon, pasta, beef, curry, soup, or pizza.";
+    const input =
+      document.createElement("input");
 
-      welcomeMessage.appendChild(firstLine);
-      welcomeMessage.appendChild(secondLine);
+    input.type = "text";
+    input.id = field.id;
+    input.value = field.value;
+    input.placeholder = field.placeholder;
+    input.autocomplete = "off";
 
-      return welcomeMessage;
-    }
+    row.appendChild(label);
+    row.appendChild(input);
 
-    function addMessage(
-      text,
-      sender = "assistant",
-      extraClass = ""
+    box.appendChild(row);
+
+    inputs[field.id] = input;
+  });
+
+  const button =
+    document.createElement("button");
+
+  button.type = "button";
+  button.className =
+    "normal-search-button";
+
+  button.textContent =
+    "🔎 Normal Search";
+
+  const note =
+    document.createElement("p");
+
+  note.className =
+    "normal-search-note";
+
+  note.textContent =
+    "Style and Ingredients are optional.";
+
+  box.appendChild(button);
+  box.appendChild(note);
+
+  conversation.appendChild(box);
+
+  function performNormalSearch() {
+
+    const style =
+      inputs.normalStyle.value.trim();
+
+    const food =
+      inputs.normalFood.value.trim();
+
+    const ingredients =
+      inputs.normalIngredients.value.trim();
+
+    if (
+      !style &&
+      !food &&
+      !ingredients
     ) {
-      const message =
-        document.createElement("div");
-
-      message.className =
-        "message " +
-        (
-          sender === "user"
-            ? "user-message"
-            : "assistant-message"
-        ) +
-        (extraClass ? " " + extraClass : "");
-
-      message.textContent = text;
-
-      conversation.appendChild(message);
-      scrollConversation();
+      inputs.normalFood.focus();
+      return;
     }
 
-    function scrollConversation() {
-      requestAnimationFrame(function () {
-        conversation.scrollTop =
-          conversation.scrollHeight;
-      });
+    const query =
+      "From allrecipes.com top 5 rated " +
+      "[Style: " + style + "] " +
+      "[Food: " + food + "] " +
+      "[Ingredients: " + ingredients + "]";
+
+    const googleUrl =
+      "https://www.google.com/search?q=" +
+      encodeURIComponent(query);
+
+    window.open(
+      googleUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    setStatus(
+      "",
+      "● Normal Search"
+    );
+  }
+
+  button.addEventListener(
+    "click",
+    performNormalSearch
+  );
+
+  Object.values(inputs).forEach(
+    function (input) {
+
+      input.addEventListener(
+        "keydown",
+        function (event) {
+
+          if (event.key === "Enter") {
+
+            event.preventDefault();
+
+            performNormalSearch();
+          }
+        }
+      );
+    }
+  );
+
+  scrollConversation();
+}
+
+/* ================================
+   API
+================================ */
+
+async function fetchJson(url) {
+
+  const response =
+    await fetch(url);
+
+  if (!response.ok) {
+
+    throw new Error(
+      "Recipe service returned status " +
+      response.status
+    );
+  }
+
+  return response.json();
+}
+
+async function lookupRecipe(recipeId) {
+
+  const url =
+    recipeApiBase +
+    "/lookup.php?i=" +
+    encodeURIComponent(recipeId);
+
+  const data =
+    await fetchJson(url);
+
+  if (
+    !data.meals ||
+    data.meals.length === 0
+  ) {
+    return null;
+  }
+
+  return data.meals[0];
+}
+
+function convertApiRecipe(meal) {
+
+  const ingredients = [];
+
+  for (
+    let number = 1;
+    number <= 20;
+    number += 1
+  ) {
+
+    const ingredient =
+      meal["strIngredient" + number];
+
+    const measure =
+      meal["strMeasure" + number];
+
+    if (
+      !ingredient ||
+      !ingredient.trim()
+    ) {
+      continue;
     }
 
-    function resetRecipeDesk() {
-      moodInput.value = "";
+    const ingredientText = [
+      measure
+        ? measure.trim()
+        : "",
+      ingredient.trim()
+    ]
+      .filter(Boolean)
+      .join(" ");
 
-      currentChoices = [];
-      selectedRecipe = null;
-      showingCookingSide = false;
-      paperIsFlipping = false;
-      recipeMultiplier = 1;
+    ingredients.push(
+      ingredientText
+    );
+  }
 
-      conversation.innerHTML = "";
-      conversation.appendChild(
-        createWelcomeMessage()
+  const details = [
+    meal.strCategory,
+    meal.strArea
+  ].filter(Boolean);
+
+  return {
+
+    id:
+      meal.idMeal,
+
+    name:
+      meal.strMeal ||
+      "Untitled recipe",
+
+    icon:
+      "🍽️",
+
+    details:
+      details.join(" • ") ||
+      "Online recipe",
+
+    ingredients:
+      ingredients,
+
+    originalIngredients:
+      ingredients.slice(),
+
+    instructions:
+      meal.strInstructions ||
+      "",
+
+    image:
+      meal.strMealThumb ||
+      "",
+
+    sourceUrl:
+      meal.strSource ||
+      (
+        "https://www.themealdb.com/meal/" +
+        meal.idMeal
+      )
+  };
+}
+
+async function findByName(searchText) {
+
+  const url =
+    recipeApiBase +
+    "/search.php?s=" +
+    encodeURIComponent(searchText);
+
+  const data =
+    await fetchJson(url);
+
+  if (!data.meals) {
+    return [];
+  }
+
+  return data.meals
+    .slice(0, 5)
+    .map(convertApiRecipe);
+}
+
+async function findByIngredient(
+  searchText
+) {
+
+  const normalizedIngredient =
+    searchText
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_");
+
+  const url =
+    recipeApiBase +
+    "/filter.php?i=" +
+    encodeURIComponent(
+      normalizedIngredient
+    );
+
+  const data =
+    await fetchJson(url);
+
+  if (!data.meals) {
+    return [];
+  }
+
+  const completeMeals =
+    await Promise.all(
+      data.meals
+        .slice(0, 5)
+        .map(function (meal) {
+          return lookupRecipe(
+            meal.idMeal
+          );
+        })
+    );
+
+  return completeMeals
+    .filter(Boolean)
+    .map(convertApiRecipe);
+}
+
+async function findOnlineRecipes(
+  searchText
+) {
+
+  const nameResults =
+    await findByName(
+      searchText
+    );
+
+  if (
+    nameResults.length > 0
+  ) {
+    return nameResults;
+  }
+
+  return findByIngredient(
+    searchText
+  );
+}
+
+function celebrateQuickSearch() {
+  const colors = [
+    "#ff3b5c",
+    "#ffd43b",
+    "#24c985",
+    "#38a7ff",
+    "#a855f7",
+    "#ff74c8",
+    "#ff8a2a"
+  ];
+
+  const shapes = [
+    "■",
+    "●",
+    "▲",
+    "★"
+  ];
+
+  const effectsLayer =
+    document.createElement("div");
+
+  effectsLayer.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  Object.assign(
+    effectsLayer.style,
+    {
+      position: "fixed",
+      inset: "0",
+      zIndex: "99999",
+      overflow: "hidden",
+      pointerEvents: "none"
+    }
+  );
+
+  document.body.appendChild(
+    effectsLayer
+  );
+
+  const pieceCount = 90;
+
+  for (
+    let index = 0;
+    index < pieceCount;
+    index += 1
+  ) {
+    const piece =
+      document.createElement("span");
+
+    piece.textContent =
+      shapes[
+        Math.floor(
+          Math.random() *
+          shapes.length
+        )
+      ];
+
+    const startingX =
+      Math.random() *
+      window.innerWidth;
+
+    const horizontalDrift =
+      Math.random() * 300 -
+      150;
+
+    const duration =
+      2200 +
+      Math.random() * 1800;
+
+    const delay =
+      Math.random() * 600;
+
+    Object.assign(
+      piece.style,
+      {
+        position: "absolute",
+        top: "-30px",
+        left: startingX + "px",
+        display: "block",
+        color:
+          colors[
+            Math.floor(
+              Math.random() *
+              colors.length
+            )
+          ],
+        fontSize:
+          8 +
+          Math.random() * 13 +
+          "px",
+        lineHeight: "1",
+        opacity: "1",
+        willChange:
+          "transform, opacity"
+      }
+    );
+
+    effectsLayer.appendChild(
+      piece
+    );
+
+    piece.animate(
+      [
+        {
+          transform:
+            "translate3d(0, 0, 0) " +
+            "rotate(0deg) " +
+            "scale(1)",
+          opacity: 1
+        },
+        {
+          transform:
+            "translate3d(" +
+            horizontalDrift * 0.55 +
+            "px, " +
+            window.innerHeight * 0.55 +
+            "px, 0) " +
+            "rotate(420deg) " +
+            "scale(1.15)",
+          opacity: 1,
+          offset: 0.7
+        },
+        {
+          transform:
+            "translate3d(" +
+            horizontalDrift +
+            "px, " +
+            (
+              window.innerHeight +
+              80
+            ) +
+            "px, 0) " +
+            "rotate(900deg) " +
+            "scale(0.8)",
+          opacity: 0
+        }
+      ],
+      {
+        duration: duration,
+        delay: delay,
+        easing:
+          "cubic-bezier(0.18, 0.72, 0.3, 1)",
+        fill: "forwards"
+      }
+    );
+  }
+
+  window.setTimeout(
+    function () {
+      effectsLayer.remove();
+    },
+    5000
+  );
+}
+
+/* ================================
+   QUICK SEARCH
+================================ */
+
+async function searchRecipes(request) {
+
+  const cleanRequest =
+    request.trim();
+
+  if (!cleanRequest) {
+    moodInput.focus();
+    return;
+  }
+
+  addMessage(
+    cleanRequest,
+    "user"
+  );
+
+  moodInput.value = "";
+
+  currentChoices = [];
+
+  removeOldRecipeChoices();
+
+  searchButton.disabled = true;
+
+  searchButton.textContent =
+    "Searching...";
+
+  setStatus(
+    "searching",
+    "● Quick Search"
+  );
+
+  addMessage(
+    "Searching for “" +
+    cleanRequest +
+    "”..."
+  );
+
+  try {
+
+    const recipeResults =
+      await findOnlineRecipes(
+        cleanRequest
       );
 
-      emptyPaper.style.display = "grid";
-      shoppingSheet.style.display = "none";
-      cookingSheet.style.display = "none";
-      flipPaperButton.style.display = "none";
-      flipPaperButton.disabled = false;
+    /* --------------------------------
+       QUICK SEARCH FOUND NOTHING
+
+       This is intentionally NOT
+       treated as an error.
+    -------------------------------- */
+
+    if (
+      recipeResults.length === 0
+    ) {
+
+      addMessage(
+        "Quick Search couldn't find that recipe. Let's try Normal Search."
+      );
+
+      showNormalSearch(
+        cleanRequest
+      );
+
+      setStatus(
+        "",
+        "● Normal Search"
+      );
+
+      return;
+    }
+
+    /* --------------------------------
+       QUICK SEARCH SUCCESS
+    -------------------------------- */
+
+currentChoices =
+  recipeResults;
+
+/* 🎉 Quick Search success! */
+celebrateQuickSearch();
+
+addMessage(
+  "🎉 I found " +
+  recipeResults.length +
+  (
+    recipeResults.length === 1
+      ? " matching recipe!"
+      : " matching recipes!"
+  )
+);
+
+displayChoices(
+  recipeResults
+);
+
+setStatus(
+  "",
+  "● Ready"
+);
+
+  } catch (error) {
+
+    console.error(
+      "Recipe search failed:",
+      error
+    );
+
+    /*
+      A real connection/service failure
+      is still shown as an error.
+    */
+
+    addMessage(
+      "The recipe search could not be reached. Check your internet connection, then try again.",
+      "assistant",
+      "error-message"
+    );
+
+    setStatus(
+      "error",
+      "● Search error"
+    );
+
+  } finally {
+
+    searchButton.disabled = false;
+
+    searchButton.textContent =
+      "Find recipes";
+
+    moodInput.focus();
+  }
+}
+
+/* ================================
+   RECIPE OPTIONS
+================================ */
+
+function displayChoices(
+  recipeList
+) {
+
+  const box =
+    document.createElement("div");
+
+  box.className =
+    "recipe-options";
+
+  const heading =
+    document.createElement("p");
+
+  heading.className =
+    "options-label";
+
+  heading.textContent =
+    "Choose a recipe";
+
+  box.appendChild(
+    heading
+  );
+
+  recipeList.forEach(
+    function (recipe, index) {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.className =
+        "recipe-choice";
+
+      button.type =
+        "button";
+
+      const number =
+        document.createElement(
+          "span"
+        );
+
+      number.className =
+        "choice-number";
+
+      number.textContent =
+        String(index + 1);
+
+      const name =
+        document.createElement(
+          "span"
+        );
+
+      name.className =
+        "choice-name";
+
+      name.textContent =
+        recipe.icon +
+        " " +
+        recipe.name;
+
+      const details =
+        document.createElement(
+          "span"
+        );
+
+      details.className =
+        "choice-details";
+
+      details.textContent =
+        recipe.details;
+
+      button.appendChild(
+        number
+      );
+
+      button.appendChild(
+        name
+      );
+
+      button.appendChild(
+        details
+      );
+
+      button.addEventListener(
+        "click",
+        function () {
+          selectRecipe(index);
+        }
+      );
+
+      box.appendChild(
+        button
+      );
+    }
+  );
+
+  conversation.appendChild(
+    box
+  );
+
+  addMessage(
+    "Which sounds best? Tap a recipe or type a number from 1 to " +
+    recipeList.length +
+    "."
+  );
+
+  scrollConversation();
+}
+
+function selectRecipe(index) {
+
+  const recipe =
+    currentChoices[index];
+
+  if (!recipe) {
+    return;
+  }
+
+  selectedRecipe =
+    recipe;
+
+  recipeMultiplier = 1;
+
+  addMessage(
+    String(index + 1),
+    "user"
+  );
+
+  window.setTimeout(
+    function () {
+
+      addMessage(
+        recipe.name +
+        " sounds great. I placed its ingredients on your shopping notepad."
+      );
+
+      displayShoppingList();
+    },
+    150
+  );
+}
+
+/* ================================
+   INGREDIENT MULTIPLIER
+================================ */
+
+function parseLeadingQuantity(text) {
+
+  const cleanText =
+    text.trim();
+
+  const mixedNumberMatch =
+    cleanText.match(
+      /^(\d+)\s+(\d+)\/(\d+)\b/
+    );
+
+  if (mixedNumberMatch) {
+
+    return {
+      quantity:
+        Number(
+          mixedNumberMatch[1]
+        ) +
+        Number(
+          mixedNumberMatch[2]
+        ) /
+        Number(
+          mixedNumberMatch[3]
+        ),
+
+      matchedText:
+        mixedNumberMatch[0]
+    };
+  }
+
+  const fractionMatch =
+    cleanText.match(
+      /^(\d+)\/(\d+)\b/
+    );
+
+  if (fractionMatch) {
+
+    return {
+      quantity:
+        Number(
+          fractionMatch[1]
+        ) /
+        Number(
+          fractionMatch[2]
+        ),
+
+      matchedText:
+        fractionMatch[0]
+    };
+  }
+
+  const unicodeMixedMatch =
+    cleanText.match(
+      /^(\d+)\s*([⅛¼⅓⅜½⅝⅔¾⅞])/
+    );
+
+  if (unicodeMixedMatch) {
+
+    return {
+      quantity:
+        Number(
+          unicodeMixedMatch[1]
+        ) +
+        unicodeFractions[
+          unicodeMixedMatch[2]
+        ],
+
+      matchedText:
+        unicodeMixedMatch[0]
+    };
+  }
+
+  const unicodeMatch =
+    cleanText.match(
+      /^([⅛¼⅓⅜½⅝⅔¾⅞])/
+    );
+
+  if (unicodeMatch) {
+
+    return {
+      quantity:
+        unicodeFractions[
+          unicodeMatch[1]
+        ],
+
+      matchedText:
+        unicodeMatch[0]
+    };
+  }
+
+  const decimalMatch =
+    cleanText.match(
+      /^\d+(?:\.\d+)?\b/
+    );
+
+  if (decimalMatch) {
+
+    return {
+      quantity:
+        Number(
+          decimalMatch[0]
+        ),
+
+      matchedText:
+        decimalMatch[0]
+    };
+  }
+
+  return null;
+}
+
+function formatScaledNumber(number) {
+
+  const rounded =
+    Math.round(
+      number * 100
+    ) / 100;
+
+  const whole =
+    Math.floor(
+      rounded
+    );
+
+  const decimal =
+    rounded - whole;
+
+  const fractions = [
+    [0.125, "⅛"],
+    [0.25, "¼"],
+    [0.333, "⅓"],
+    [0.375, "⅜"],
+    [0.5, "½"],
+    [0.625, "⅝"],
+    [0.667, "⅔"],
+    [0.75, "¾"],
+    [0.875, "⅞"]
+  ];
+
+  if (
+    Math.abs(decimal) <
+    0.025
+  ) {
+    return String(whole);
+  }
+
+  let closest = null;
+
+  fractions.forEach(
+    function (fraction) {
+
+      if (
+        !closest ||
+        Math.abs(
+          decimal -
+          fraction[0]
+        ) <
+        Math.abs(
+          decimal -
+          closest[0]
+        )
+      ) {
+        closest =
+          fraction;
+      }
+    }
+  );
+
+  if (
+    closest &&
+    Math.abs(
+      decimal -
+      closest[0]
+    ) < 0.045
+  ) {
+
+    return whole > 0
+      ? whole + " " + closest[1]
+      : closest[1];
+  }
+
+  return String(
+    rounded
+  );
+}
+
+function scaleIngredientText(
+  ingredientText,
+  multiplier
+) {
+
+  if (
+    multiplier === 1
+  ) {
+    return ingredientText;
+  }
+
+  const parsed =
+    parseLeadingQuantity(
+      ingredientText
+    );
+
+  if (!parsed) {
+    return ingredientText;
+  }
+
+  const scaledQuantity =
+    parsed.quantity *
+    multiplier;
+
+  return (
+    formatScaledNumber(
+      scaledQuantity
+    ) +
+    ingredientText.slice(
+      parsed.matchedText.length
+    )
+  ).trim();
+}
+
+function renderIngredients() {
+
+  if (!selectedRecipe) {
+    return;
+  }
+
+  servingCount.textContent =
+    recipeMultiplier + "×";
+
+  decreaseServings.disabled =
+    recipeMultiplier <= 1;
+
+  increaseServings.disabled =
+    recipeMultiplier >= 12;
+
+  ingredientsList.innerHTML =
+    "";
+
+  const sourceIngredients =
+    selectedRecipe
+      .originalIngredients ||
+    selectedRecipe.ingredients;
+
+  sourceIngredients.forEach(
+    function (
+      ingredient,
+      index
+    ) {
+
+      const item =
+        document.createElement(
+          "li"
+        );
+
+      item.className =
+        "ingredient";
+
+      const checkbox =
+        document.createElement(
+          "input"
+        );
+
+      checkbox.type =
+        "checkbox";
+
+      checkbox.id =
+        "ingredient-" +
+        index;
+
+      const label =
+        document.createElement(
+          "label"
+        );
+
+      label.htmlFor =
+        checkbox.id;
+
+      label.textContent =
+        scaleIngredientText(
+          ingredient,
+          recipeMultiplier
+        );
+
+      checkbox.addEventListener(
+        "change",
+        function () {
+
+          item.classList.toggle(
+            "checked",
+            checkbox.checked
+          );
+        }
+      );
+
+      item.appendChild(
+        checkbox
+      );
+
+      item.appendChild(
+        label
+      );
+
+      ingredientsList.appendChild(
+        item
+      );
+    }
+  );
+}
+
+/* ================================
+   SHOPPING LIST
+================================ */
+
+function displayShoppingList() {
+
+  if (!selectedRecipe) {
+    return;
+  }
+
+  emptyPaper.style.display =
+    "none";
+
+  flipPaperButton.style.display =
+    "block";
+
+  showingCookingSide =
+    false;
+
+  shoppingSheet.style.display =
+    "block";
+
+  cookingSheet.style.display =
+    "none";
+
+  flipPaperButton.textContent =
+    "↻ Flip paper for cooking instructions";
+
+  shoppingTitle.textContent =
+    selectedRecipe.icon +
+    " " +
+    selectedRecipe.name;
+
+  shoppingSubtitle.textContent =
+    selectedRecipe.details +
+    " • Ingredient list • " +
+    recipeMultiplier +
+    "× recipe";
+
+  recipeSourceLink.href =
+    selectedRecipe.sourceUrl;
+
+  recipeSourceLink.textContent =
+    "Open the original recipe for “" +
+    selectedRecipe.name +
+    "” ↗";
+
+  renderIngredients();
+
+  buildCookingInstructions();
+
+  if (
+    window.innerWidth <= 920
+  ) {
+
+    paper.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+
+  updateScrollButtons();
+}
+
+/* ================================
+   COOKING INSTRUCTIONS
+================================ */
+
+function splitInstructions(
+  rawInstructions
+) {
+
+  const cleaned =
+    rawInstructions
+      .replace(/\r/g, "")
+      .trim();
+
+  if (!cleaned) {
+    return [];
+  }
+
+  let steps =
+    cleaned
+      .split(/\n+/)
+      .map(function (step) {
+        return step.trim();
+      })
+      .filter(Boolean);
+
+  if (
+    steps.length === 1
+  ) {
+
+    steps =
+      cleaned
+        .split(
+          /(?:\.\s+|\!\s+|\?\s+)/
+        )
+        .map(function (step) {
+
+          const cleanedStep =
+            step.trim();
+
+          if (!cleanedStep) {
+            return "";
+          }
+
+          return /[.!?]$/.test(
+            cleanedStep
+          )
+            ? cleanedStep
+            : cleanedStep + ".";
+        })
+        .filter(Boolean);
+  }
+
+  return steps;
+}
+
+function buildCookingInstructions() {
+
+  if (!selectedRecipe) {
+    return;
+  }
+
+  cookingTitle.textContent =
+    "🍳 " +
+    selectedRecipe.name;
+
+  cookingSubtitle.textContent =
+    selectedRecipe.details +
+    " • Cooking instructions";
+
+  cookingSourceLink.href =
+    selectedRecipe.sourceUrl;
+
+  cookingSourceLink.textContent =
+    "Open the original recipe for “" +
+    selectedRecipe.name +
+    "” ↗";
+
+  instructionsList.innerHTML =
+    "";
+
+  const steps =
+    splitInstructions(
+      selectedRecipe.instructions ||
+      ""
+    );
+
+  if (
+    steps.length === 0
+  ) {
+
+    const message =
+      document.createElement(
+        "p"
+      );
+
+    message.textContent =
+      "Cooking instructions are not available for this recipe.";
+
+    instructionsList.appendChild(
+      message
+    );
+
+    return;
+  }
+
+  steps.forEach(
+    function (step, index) {
+
+      const row =
+        document.createElement(
+          "div"
+        );
+
+      row.className =
+        "instruction-step";
+
+      const number =
+        document.createElement(
+          "span"
+        );
+
+      number.className =
+        "step-number";
+
+      number.textContent =
+        String(index + 1);
+
+      const text =
+        document.createElement(
+          "div"
+        );
+
+      text.className =
+        "step-text";
+
+      text.textContent =
+        step.replace(
+          /^(step\s*)?\d+[\s.):\-]+/i,
+          ""
+        );
+
+      row.appendChild(
+        number
+      );
+
+      row.appendChild(
+        text
+      );
+
+      instructionsList.appendChild(
+        row
+      );
+    }
+  );
+}
+
+/* ================================
+   PAPER FLIP
+================================ */
+
+function showIngredientsSide() {
+
+  showingCookingSide =
+    false;
+
+  shoppingSheet.style.display =
+    "block";
+
+  cookingSheet.style.display =
+    "none";
+
+  flipPaperButton.textContent =
+    "↻ Flip paper for cooking instructions";
+
+  paper.setAttribute(
+    "aria-label",
+    "Recipe ingredients"
+  );
+}
+
+function showCookingSide() {
+
+  if (!selectedRecipe) {
+    return;
+  }
+
+  showingCookingSide =
+    true;
+
+  buildCookingInstructions();
+
+  shoppingSheet.style.display =
+    "none";
+
+  cookingSheet.style.display =
+    "block";
+
+  flipPaperButton.textContent =
+    "↻ Flip back to ingredients";
+
+  paper.setAttribute(
+    "aria-label",
+    "Recipe cooking instructions"
+  );
+}
+
+function flipPaper() {
+
+  if (
+    !selectedRecipe ||
+    paperIsFlipping
+  ) {
+    return;
+  }
+
+  paperIsFlipping =
+    true;
+
+  paper.classList.add(
+    "flip-animation"
+  );
+
+  flipPaperButton.disabled =
+    true;
+
+  window.setTimeout(
+    function () {
+
+      if (
+        showingCookingSide
+      ) {
+        showIngredientsSide();
+      } else {
+        showCookingSide();
+      }
+    },
+    250
+  );
+
+  window.setTimeout(
+    function () {
 
       paper.classList.remove(
         "flip-animation"
       );
 
-      ingredientsList.innerHTML = "";
-      instructionsList.innerHTML = "";
-
-      servingCount.textContent = "1×";
-      decreaseServings.disabled = true;
-      increaseServings.disabled = false;
-
-      setStatus("", "● Ready");
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-      });
-
-      moodInput.focus();
-      updateScrollButtons();
-    }
-
-    function removeOldRecipeChoices() {
-      document
-        .querySelectorAll(".recipe-options")
-        .forEach(function (element) {
-          element.remove();
-        });
-    }
-
-    async function fetchJson(url) {
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(
-          "Recipe service returned status " +
-            response.status
-        );
-      }
-
-      return response.json();
-    }
-
-    async function lookupRecipe(recipeId) {
-      const url =
-        recipeApiBase +
-        "/lookup.php?i=" +
-        encodeURIComponent(recipeId);
-
-      const data = await fetchJson(url);
-
-      if (!data.meals || data.meals.length === 0) {
-        return null;
-      }
-
-      return data.meals[0];
-    }
-
-    function convertApiRecipe(meal) {
-      const ingredients = [];
-
-      for (
-        let number = 1;
-        number <= 20;
-        number += 1
-      ) {
-        const ingredient =
-          meal["strIngredient" + number];
-
-        const measure =
-          meal["strMeasure" + number];
-
-        if (
-          !ingredient ||
-          !ingredient.trim()
-        ) {
-          continue;
-        }
-
-        const ingredientText = [
-          measure ? measure.trim() : "",
-          ingredient.trim()
-        ]
-          .filter(Boolean)
-          .join(" ");
-
-        ingredients.push(
-          ingredientText
-        );
-      }
-
-      const details = [
-        meal.strCategory,
-        meal.strArea
-      ].filter(Boolean);
-
-      return {
-        id: meal.idMeal,
-        name:
-          meal.strMeal ||
-          "Untitled recipe",
-        icon: "🍽️",
-        details:
-          details.join(" • ") ||
-          "Online recipe",
-        ingredients: ingredients,
-        originalIngredients:
-          ingredients.slice(),
-        instructions:
-          meal.strInstructions || "",
-        image:
-          meal.strMealThumb || "",
-        sourceUrl:
-          meal.strSource ||
-          (
-            "https://www.themealdb.com/meal/" +
-            meal.idMeal
-          )
-      };
-    }
-
-    async function findByName(searchText) {
-      const url =
-        recipeApiBase +
-        "/search.php?s=" +
-        encodeURIComponent(searchText);
-
-      const data = await fetchJson(url);
-
-      if (!data.meals) {
-        return [];
-      }
-
-      return data.meals
-        .slice(0, 5)
-        .map(convertApiRecipe);
-    }
-
-    async function findByIngredient(
-      searchText
-    ) {
-      const normalizedIngredient =
-        searchText
-          .trim()
-          .toLowerCase()
-          .replace(/\s+/g, "_");
-
-      const url =
-        recipeApiBase +
-        "/filter.php?i=" +
-        encodeURIComponent(
-          normalizedIngredient
-        );
-
-      const data = await fetchJson(url);
-
-      if (!data.meals) {
-        return [];
-      }
-
-      const completeMeals =
-        await Promise.all(
-          data.meals
-            .slice(0, 5)
-            .map(function (meal) {
-              return lookupRecipe(
-                meal.idMeal
-              );
-            })
-        );
-
-      return completeMeals
-        .filter(Boolean)
-        .map(convertApiRecipe);
-    }
-
-    async function findOnlineRecipes(
-      searchText
-    ) {
-      const nameResults =
-        await findByName(searchText);
-
-      if (nameResults.length > 0) {
-        return nameResults;
-      }
-
-      return findByIngredient(
-        searchText
-      );
-    }
-
-    async function searchRecipes(request) {
-      const cleanRequest =
-        request.trim();
-
-      if (!cleanRequest) {
-        moodInput.focus();
-        return;
-      }
-
-      addMessage(
-        cleanRequest,
-        "user"
-      );
-
-      moodInput.value = "";
-      currentChoices = [];
-
-      removeOldRecipeChoices();
-
-      searchButton.disabled = true;
-      searchButton.textContent =
-        "Searching...";
-
-      setStatus(
-        "searching",
-        "● Searching"
-      );
-
-      addMessage(
-        "Searching online for “" +
-          cleanRequest +
-          "” recipes..."
-      );
-
-      try {
-        const recipeResults =
-          await findOnlineRecipes(
-            cleanRequest
-          );
-
-        if (
-          recipeResults.length === 0
-        ) {
-          addMessage(
-            "I couldn't find recipes for “" +
-              cleanRequest +
-              ".” Try a simpler meal or ingredient, such as chicken, salmon, beef, curry, pasta, or soup.",
-            "assistant",
-            "error-message"
-          );
-
-          setStatus(
-            "error",
-            "● No results"
-          );
-
-          return;
-        }
-
-        currentChoices =
-          recipeResults;
-
-        addMessage(
-          "I found " +
-            recipeResults.length +
-            (
-              recipeResults.length === 1
-                ? " matching recipe."
-                : " matching recipes."
-            )
-        );
-
-        displayChoices(
-          recipeResults
-        );
-
-        setStatus("", "● Ready");
-      } catch (error) {
-        console.error(
-          "Recipe search failed:",
-          error
-        );
-
-        addMessage(
-          "The online recipe search could not be reached. Check your internet connection, then try again.",
-          "assistant",
-          "error-message"
-        );
-
-        setStatus(
-          "error",
-          "● Search error"
-        );
-      } finally {
-        searchButton.disabled = false;
-        searchButton.textContent =
-          "Find recipes";
-
-        moodInput.focus();
-      }
-    }
-
-    function displayChoices(recipeList) {
-      const box =
-        document.createElement("div");
-
-      box.className =
-        "recipe-options";
-
-      const heading =
-        document.createElement("p");
-
-      heading.className =
-        "options-label";
-
-      heading.textContent =
-        "Choose a recipe";
-
-      box.appendChild(heading);
-
-      recipeList.forEach(
-        function (recipe, index) {
-          const button =
-            document.createElement(
-              "button"
-            );
-
-          button.className =
-            "recipe-choice";
-
-          button.type = "button";
-
-          const number =
-            document.createElement(
-              "span"
-            );
-
-          number.className =
-            "choice-number";
-
-          number.textContent =
-            String(index + 1);
-
-          const name =
-            document.createElement(
-              "span"
-            );
-
-          name.className =
-            "choice-name";
-
-          name.textContent =
-            recipe.icon +
-            " " +
-            recipe.name;
-
-          const details =
-            document.createElement(
-              "span"
-            );
-
-          details.className =
-            "choice-details";
-
-          details.textContent =
-            recipe.details;
-
-          button.appendChild(number);
-          button.appendChild(name);
-          button.appendChild(details);
-
-          button.addEventListener(
-            "click",
-            function () {
-              selectRecipe(index);
-            }
-          );
-
-          box.appendChild(button);
-        }
-      );
-
-      conversation.appendChild(box);
-
-      addMessage(
-        "Which sounds best? Tap a recipe or type a number from 1 to " +
-          recipeList.length +
-          "."
-      );
-
-      scrollConversation();
-    }
-
-    function selectRecipe(index) {
-      const recipe =
-        currentChoices[index];
-
-      if (!recipe) {
-        return;
-      }
-
-      selectedRecipe = recipe;
-      recipeMultiplier = 1;
-
-      addMessage(
-        String(index + 1),
-        "user"
-      );
-
-      window.setTimeout(
-        function () {
-          addMessage(
-            recipe.name +
-              " sounds great. I placed its ingredients on your shopping notepad."
-          );
-
-          displayShoppingList();
-        },
-        150
-      );
-    }
-
-    function parseLeadingQuantity(text) {
-      const cleanText = text.trim();
-
-      const mixedNumberMatch =
-        cleanText.match(
-          /^(\d+)\s+(\d+)\/(\d+)\b/
-        );
-
-      if (mixedNumberMatch) {
-        return {
-          quantity:
-            Number(
-              mixedNumberMatch[1]
-            ) +
-            Number(
-              mixedNumberMatch[2]
-            ) /
-            Number(
-              mixedNumberMatch[3]
-            ),
-          matchedText:
-            mixedNumberMatch[0]
-        };
-      }
-
-      const fractionMatch =
-        cleanText.match(
-          /^(\d+)\/(\d+)\b/
-        );
-
-      if (fractionMatch) {
-        return {
-          quantity:
-            Number(
-              fractionMatch[1]
-            ) /
-            Number(
-              fractionMatch[2]
-            ),
-          matchedText:
-            fractionMatch[0]
-        };
-      }
-
-      const unicodeMixedMatch =
-        cleanText.match(
-          /^(\d+)\s*([⅛¼⅓⅜½⅝⅔¾⅞])/
-        );
-
-      if (unicodeMixedMatch) {
-        return {
-          quantity:
-            Number(
-              unicodeMixedMatch[1]
-            ) +
-            unicodeFractions[
-              unicodeMixedMatch[2]
-            ],
-          matchedText:
-            unicodeMixedMatch[0]
-        };
-      }
-
-      const unicodeMatch =
-        cleanText.match(
-          /^([⅛¼⅓⅜½⅝⅔¾⅞])/
-        );
-
-      if (unicodeMatch) {
-        return {
-          quantity:
-            unicodeFractions[
-              unicodeMatch[1]
-            ],
-          matchedText:
-            unicodeMatch[0]
-        };
-      }
-
-      const decimalMatch =
-        cleanText.match(
-          /^\d+(?:\.\d+)?\b/
-        );
-
-      if (decimalMatch) {
-        return {
-          quantity:
-            Number(
-              decimalMatch[0]
-            ),
-          matchedText:
-            decimalMatch[0]
-        };
-      }
-
-      return null;
-    }
-
-    function formatScaledNumber(number) {
-      const rounded =
-        Math.round(number * 100) /
-        100;
-
-      const whole =
-        Math.floor(rounded);
-
-      const decimal =
-        rounded - whole;
-
-      const fractions = [
-        [0.125, "⅛"],
-        [0.25, "¼"],
-        [0.333, "⅓"],
-        [0.375, "⅜"],
-        [0.5, "½"],
-        [0.625, "⅝"],
-        [0.667, "⅔"],
-        [0.75, "¾"],
-        [0.875, "⅞"]
-      ];
-
-      if (
-        Math.abs(decimal) < 0.025
-      ) {
-        return String(whole);
-      }
-
-      let closest = null;
-
-      fractions.forEach(
-        function (fraction) {
-          if (
-            !closest ||
-            Math.abs(
-              decimal -
-                fraction[0]
-            ) <
-              Math.abs(
-                decimal -
-                  closest[0]
-              )
-          ) {
-            closest = fraction;
-          }
-        }
-      );
-
-      if (
-        closest &&
-        Math.abs(
-          decimal - closest[0]
-        ) < 0.045
-      ) {
-        return whole > 0
-          ? (
-              whole +
-              " " +
-              closest[1]
-            )
-          : closest[1];
-      }
-
-      return String(rounded);
-    }
-
-    function scaleIngredientText(
-      ingredientText,
-      multiplier
-    ) {
-      if (multiplier === 1) {
-        return ingredientText;
-      }
-
-      const parsed =
-        parseLeadingQuantity(
-          ingredientText
-        );
-
-      if (!parsed) {
-        return ingredientText;
-      }
-
-      const scaledQuantity =
-        parsed.quantity *
-        multiplier;
-
-      return (
-        formatScaledNumber(
-          scaledQuantity
-        ) +
-        ingredientText.slice(
-          parsed.matchedText.length
-        )
-      ).trim();
-    }
-
-    function renderIngredients() {
-      if (!selectedRecipe) {
-        return;
-      }
-
-      servingCount.textContent =
-        recipeMultiplier + "×";
-
-      decreaseServings.disabled =
-        recipeMultiplier <= 1;
-
-      increaseServings.disabled =
-        recipeMultiplier >= 12;
-
-      ingredientsList.innerHTML = "";
-
-      const sourceIngredients =
-        selectedRecipe
-          .originalIngredients ||
-        selectedRecipe.ingredients;
-
-      sourceIngredients.forEach(
-        function (
-          ingredient,
-          index
-        ) {
-          const item =
-            document.createElement(
-              "li"
-            );
-
-          item.className =
-            "ingredient";
-
-          const checkbox =
-            document.createElement(
-              "input"
-            );
-
-          checkbox.type =
-            "checkbox";
-
-          checkbox.id =
-            "ingredient-" +
-            index;
-
-          const label =
-            document.createElement(
-              "label"
-            );
-
-          label.htmlFor =
-            checkbox.id;
-
-          label.textContent =
-            scaleIngredientText(
-              ingredient,
-              recipeMultiplier
-            );
-
-          checkbox.addEventListener(
-            "change",
-            function () {
-              item.classList.toggle(
-                "checked",
-                checkbox.checked
-              );
-            }
-          );
-
-          item.appendChild(
-            checkbox
-          );
-
-          item.appendChild(
-            label
-          );
-
-          ingredientsList.appendChild(
-            item
-          );
-        }
-      );
-    }
-
-    function displayShoppingList() {
-      if (!selectedRecipe) {
-        return;
-      }
-
-      emptyPaper.style.display =
-        "none";
-
-      flipPaperButton.style.display =
-        "block";
-
-      showingCookingSide = false;
-
-      shoppingSheet.style.display =
-        "block";
-
-      cookingSheet.style.display =
-        "none";
-
-      flipPaperButton.textContent =
-        "↻ Flip paper for cooking instructions";
-
-      flipPaperButton.setAttribute(
-        "aria-label",
-        "Flip paper for cooking instructions"
-      );
-
-      shoppingTitle.textContent =
-        selectedRecipe.icon +
-        " " +
-        selectedRecipe.name;
-
-      shoppingSubtitle.textContent =
-        selectedRecipe.details +
-        " • Ingredient list • " +
-        recipeMultiplier +
-        "× recipe";
-
-      recipeSourceLink.href =
-        selectedRecipe.sourceUrl;
-
-      recipeSourceLink.textContent =
-        "Open the original recipe for “" +
-        selectedRecipe.name +
-        "” ↗";
-
-      renderIngredients();
-      buildCookingInstructions();
-
-      if (
-        window.innerWidth <= 920
-      ) {
-        paper.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
-      }
+      flipPaperButton.disabled =
+        false;
+
+      paperIsFlipping =
+        false;
 
       updateScrollButtons();
-    }
+    },
+    520
+  );
+}
 
-    function splitInstructions(
-      rawInstructions
-    ) {
-      const cleaned =
-        rawInstructions
-          .replace(/\r/g, "")
-          .trim();
+/* ================================
+   INPUT HANDLING
+================================ */
 
-      if (!cleaned) {
-        return [];
-      }
+function handleTypedInput() {
 
-      let steps = cleaned
-        .split(/\n+/)
-        .map(function (step) {
-          return step.trim();
-        })
-        .filter(Boolean);
+  const text =
+    moodInput.value.trim();
 
-      if (steps.length === 1) {
-        steps = cleaned
-          .split(
-            /(?:\.\s+|\!\s+|\?\s+)/
-          )
-          .map(function (step) {
-            const cleanedStep =
-              step.trim();
+  if (!text) {
 
-            if (!cleanedStep) {
-              return "";
-            }
-
-            return /[.!?]$/.test(
-              cleanedStep
-            )
-              ? cleanedStep
-              : cleanedStep + ".";
-          })
-          .filter(Boolean);
-      }
-
-      return steps;
-    }
-
-    function buildCookingInstructions() {
-      if (!selectedRecipe) {
-        return;
-      }
-
-      cookingTitle.textContent =
-        "🍳 " +
-        selectedRecipe.name;
-
-      cookingSubtitle.textContent =
-        selectedRecipe.details +
-        " • Cooking instructions";
-
-      cookingSourceLink.href =
-        selectedRecipe.sourceUrl;
-
-      cookingSourceLink.textContent =
-        "Open the original recipe for “" +
-        selectedRecipe.name +
-        "” ↗";
-
-      instructionsList.innerHTML = "";
-
-      const steps =
-        splitInstructions(
-          selectedRecipe.instructions ||
-            ""
-        );
-
-      if (steps.length === 0) {
-        const message =
-          document.createElement(
-            "p"
-          );
-
-        message.textContent =
-          "Cooking instructions are not available for this recipe.";
-
-        instructionsList.appendChild(
-          message
-        );
-
-        return;
-      }
-
-      steps.forEach(
-        function (step, index) {
-          const row =
-            document.createElement(
-              "div"
-            );
-
-          row.className =
-            "instruction-step";
-
-          const number =
-            document.createElement(
-              "span"
-            );
-
-          number.className =
-            "step-number";
-
-          number.textContent =
-            String(index + 1);
-
-          const text =
-            document.createElement(
-              "div"
-            );
-
-          text.className =
-            "step-text";
-
-          text.textContent =
-            step.replace(
-              /^(step\s*)?\d+[\s.):\-]+/i,
-              ""
-            );
-
-          row.appendChild(number);
-          row.appendChild(text);
-
-          instructionsList.appendChild(
-            row
-          );
-        }
-      );
-    }
-
-    function showIngredientsSide() {
-      showingCookingSide = false;
-
-      shoppingSheet.style.display =
-        "block";
-
-      cookingSheet.style.display =
-        "none";
-
-      flipPaperButton.textContent =
-        "↻ Flip paper for cooking instructions";
-
-      flipPaperButton.setAttribute(
-        "aria-label",
-        "Flip paper for cooking instructions"
-      );
-
-      paper.setAttribute(
-        "aria-label",
-        "Recipe ingredients"
-      );
-    }
-
-    function showCookingSide() {
-      if (!selectedRecipe) {
-        return;
-      }
-
-      showingCookingSide = true;
-
-      buildCookingInstructions();
-
-      shoppingSheet.style.display =
-        "none";
-
-      cookingSheet.style.display =
-        "block";
-
-      flipPaperButton.textContent =
-        "↻ Flip back to ingredients";
-
-      flipPaperButton.setAttribute(
-        "aria-label",
-        "Flip paper back to ingredients"
-      );
-
-      paper.setAttribute(
-        "aria-label",
-        "Recipe cooking instructions"
-      );
-    }
-
-    function flipPaper() {
-      if (
-        !selectedRecipe ||
-        paperIsFlipping
-      ) {
-        return;
-      }
-
-      paperIsFlipping = true;
-
-      paper.classList.add(
-        "flip-animation"
-      );
-
-      flipPaperButton.disabled = true;
-
-      window.setTimeout(
-        function () {
-          if (
-            showingCookingSide
-          ) {
-            showIngredientsSide();
-          } else {
-            showCookingSide();
-          }
-        },
-        250
-      );
-
-      window.setTimeout(
-        function () {
-          paper.classList.remove(
-            "flip-animation"
-          );
-
-          flipPaperButton.disabled =
-            false;
-
-          paperIsFlipping = false;
-
-          updateScrollButtons();
-        },
-        520
-      );
-    }
-
-    function handleTypedInput() {
-      const text =
-        moodInput.value.trim();
-
-      if (!text) {
-        moodInput.focus();
-        return;
-      }
-
-      if (
-        /^[1-5]$/.test(text) &&
-        currentChoices.length > 0
-      ) {
-        const selectedIndex =
-          Number(text) - 1;
-
-        if (
-          selectedIndex >= 0 &&
-          selectedIndex <
-            currentChoices.length
-        ) {
-          moodInput.value = "";
-
-          selectRecipe(
-            selectedIndex
-          );
-
-          return;
-        }
-
-        addMessage(
-          "Please choose a number from 1 to " +
-            currentChoices.length +
-            ".",
-          "assistant",
-          "error-message"
-        );
-
-        moodInput.value = "";
-        return;
-      }
-
-      searchRecipes(text);
-    }
-
-    function scrollPageByAmount(
-      direction
-    ) {
-      const distance =
-        Math.max(
-          window.innerHeight * 0.72,
-          320
-        );
-
-      window.scrollBy({
-        top:
-          distance *
-          direction,
-        behavior: "smooth"
-      });
-    }
-
-    function updateScrollButtons() {
-      const currentScroll =
-        window.scrollY ||
-        document.documentElement
-          .scrollTop;
-
-      const maximumScroll =
-        document.documentElement
-          .scrollHeight -
-        window.innerHeight;
-
-      scrollUpButton.disabled =
-        currentScroll <= 5;
-
-      scrollDownButton.disabled =
-        maximumScroll <= 0 ||
-        currentScroll >=
-          maximumScroll - 5;
-    }
-
-    searchButton.addEventListener(
-      "click",
-      handleTypedInput
-    );
-
-    resetButton.addEventListener(
-      "click",
-      resetRecipeDesk
-    );
-
-    moodInput.addEventListener(
-      "keydown",
-      function (event) {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          handleTypedInput();
-        }
-      }
-    );
-
-    flipPaperButton.addEventListener(
-      "click",
-      flipPaper
-    );
-
-    decreaseServings.addEventListener(
-      "click",
-      function () {
-        if (
-          !selectedRecipe ||
-          recipeMultiplier <= 1
-        ) {
-          return;
-        }
-
-        recipeMultiplier -= 1;
-
-        shoppingSubtitle.textContent =
-          selectedRecipe.details +
-          " • Ingredient list • " +
-          recipeMultiplier +
-          "× recipe";
-
-        renderIngredients();
-      }
-    );
-
-    increaseServings.addEventListener(
-      "click",
-      function () {
-        if (
-          !selectedRecipe ||
-          recipeMultiplier >= 12
-        ) {
-          return;
-        }
-
-        recipeMultiplier += 1;
-
-        shoppingSubtitle.textContent =
-          selectedRecipe.details +
-          " • Ingredient list • " +
-          recipeMultiplier +
-          "× recipe";
-
-        renderIngredients();
-      }
-    );
-
-    document
-      .getElementById(
-        "clearChecks"
-      )
-      .addEventListener(
-        "click",
-        function () {
-          document
-            .querySelectorAll(
-              ".ingredient input[type='checkbox']"
-            )
-            .forEach(
-              function (checkbox) {
-                checkbox.checked =
-                  false;
-
-                checkbox
-                  .closest(
-                    ".ingredient"
-                  )
-                  .classList.remove(
-                    "checked"
-                  );
-              }
-            );
-        }
-      );
-
-    document
-      .getElementById(
-        "printButton"
-      )
-      .addEventListener(
-        "click",
-        function () {
-          window.print();
-        }
-      );
-
-    document
-      .getElementById(
-        "printCookingButton"
-      )
-      .addEventListener(
-        "click",
-        function () {
-          window.print();
-        }
-      );
-
-    scrollUpButton.addEventListener(
-      "click",
-      function () {
-        scrollPageByAmount(-1);
-      }
-    );
-
-    scrollDownButton.addEventListener(
-      "click",
-      function () {
-        scrollPageByAmount(1);
-      }
-    );
-
-    window.addEventListener(
-      "scroll",
-      updateScrollButtons,
-      { passive: true }
-    );
-
-    window.addEventListener(
-      "resize",
-      updateScrollButtons
-    );
-
-    try {
-      const savedNotes =
-        localStorage.getItem(
-          "recipeDeskNotes"
-        );
-
-      if (savedNotes) {
-        notes.value = savedNotes;
-      }
-
-      notes.addEventListener(
-        "input",
-        function () {
-          localStorage.setItem(
-            "recipeDeskNotes",
-            notes.value
-          );
-        }
-      );
-    } catch (error) {
-      console.log(
-        "Local storage is unavailable."
-      );
-    }
-
-    decreaseServings.disabled = true;
-
-    updateScrollButtons();
     moodInput.focus();
-  </script>
+
+    return;
+  }
+
+  if (
+    /^[1-5]$/.test(text) &&
+    currentChoices.length > 0
+  ) {
+
+    const selectedIndex =
+      Number(text) - 1;
+
+    if (
+      selectedIndex >= 0 &&
+      selectedIndex <
+      currentChoices.length
+    ) {
+
+      moodInput.value =
+        "";
+
+      selectRecipe(
+        selectedIndex
+      );
+
+      return;
+    }
+
+    addMessage(
+      "Please choose a number from 1 to " +
+      currentChoices.length +
+      ".",
+      "assistant",
+      "error-message"
+    );
+
+    moodInput.value = "";
+
+    return;
+  }
+
+  searchRecipes(text);
+}
+
+/* ================================
+   MOBILE SCROLL
+================================ */
+
+function scrollPageByAmount(
+  direction
+) {
+
+  const distance =
+    Math.max(
+      window.innerHeight *
+      0.72,
+      320
+    );
+
+  window.scrollBy({
+    top:
+      distance *
+      direction,
+    behavior: "smooth"
+  });
+}
+
+function updateScrollButtons() {
+
+  const currentScroll =
+    window.scrollY ||
+    document.documentElement.scrollTop;
+
+  const maximumScroll =
+    document.documentElement.scrollHeight -
+    window.innerHeight;
+
+  scrollUpButton.disabled =
+    currentScroll <= 5;
+
+  scrollDownButton.disabled =
+    maximumScroll <= 0 ||
+    currentScroll >=
+    maximumScroll - 5;
+}
+
+/* ================================
+   EVENTS
+================================ */
+
+searchButton.addEventListener(
+  "click",
+  handleTypedInput
+);
+
+resetButton.addEventListener(
+  "click",
+  resetRecipeDesk
+);
+
+moodInput.addEventListener(
+  "keydown",
+  function (event) {
+
+    if (
+      event.key === "Enter"
+    ) {
+
+      event.preventDefault();
+
+      handleTypedInput();
+    }
+  }
+);
+
+flipPaperButton.addEventListener(
+  "click",
+  flipPaper
+);
+
+decreaseServings.addEventListener(
+  "click",
+  function () {
+
+    if (
+      !selectedRecipe ||
+      recipeMultiplier <= 1
+    ) {
+      return;
+    }
+
+    recipeMultiplier -= 1;
+
+    shoppingSubtitle.textContent =
+      selectedRecipe.details +
+      " • Ingredient list • " +
+      recipeMultiplier +
+      "× recipe";
+
+    renderIngredients();
+  }
+);
+
+increaseServings.addEventListener(
+  "click",
+  function () {
+
+    if (
+      !selectedRecipe ||
+      recipeMultiplier >= 12
+    ) {
+      return;
+    }
+
+    recipeMultiplier += 1;
+
+    shoppingSubtitle.textContent =
+      selectedRecipe.details +
+      " • Ingredient list • " +
+      recipeMultiplier +
+      "× recipe";
+
+    renderIngredients();
+  }
+);
+
+document
+  .getElementById(
+    "clearChecks"
+  )
+  .addEventListener(
+    "click",
+    function () {
+
+      document
+        .querySelectorAll(
+          ".ingredient input[type='checkbox']"
+        )
+        .forEach(
+          function (checkbox) {
+
+            checkbox.checked =
+              false;
+
+            checkbox
+              .closest(
+                ".ingredient"
+              )
+              .classList.remove(
+                "checked"
+              );
+          }
+        );
+    }
+  );
+
+document
+  .getElementById(
+    "printButton"
+  )
+  .addEventListener(
+    "click",
+    function () {
+      window.print();
+    }
+  );
+
+document
+  .getElementById(
+    "printCookingButton"
+  )
+  .addEventListener(
+    "click",
+    function () {
+      window.print();
+    }
+  );
+
+scrollUpButton.addEventListener(
+  "click",
+  function () {
+    scrollPageByAmount(-1);
+  }
+);
+
+scrollDownButton.addEventListener(
+  "click",
+  function () {
+    scrollPageByAmount(1);
+  }
+);
+
+window.addEventListener(
+  "scroll",
+  updateScrollButtons,
+  { passive: true }
+);
+
+window.addEventListener(
+  "resize",
+  updateScrollButtons
+);
+
+/* ================================
+   SAVED NOTES
+================================ */
+
+try {
+
+  const savedNotes =
+    localStorage.getItem(
+      "recipeDeskNotes"
+    );
+
+  if (savedNotes) {
+    notes.value =
+      savedNotes;
+  }
+
+  notes.addEventListener(
+    "input",
+    function () {
+
+      localStorage.setItem(
+        "recipeDeskNotes",
+        notes.value
+      );
+    }
+  );
+
+} catch (error) {
+
+  console.log(
+    "Local storage is unavailable."
+  );
+}
+
+/* ================================
+   START
+================================ */
+
+decreaseServings.disabled =
+  true;
+
+updateScrollButtons();
+
+moodInput.focus();
+
+</script>
+
 </body>
 </html>
