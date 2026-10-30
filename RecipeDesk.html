@@ -159,22 +159,30 @@
       background: #ffe2e2;
     }
 
+    /*
+      The two columns are exactly equal width.
+    */
     .layout {
       display: grid;
-      grid-template-columns:
-        minmax(330px, 0.9fr)
-        minmax(420px, 1.1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 30px;
       align-items: start;
     }
 
-.paper-holder {
-  position: sticky;
-  top: 15px;
-  margin-top: 25px;
-}
+    /*
+      Both main sections fill their grid columns.
+    */
+    .chat-panel,
+    .paper-holder {
+      width: 100%;
+      min-width: 0;
+    }
 
     .chat-panel {
+      display: flex;
+      flex-direction: column;
+      height: 690px;
+      min-height: 690px;
       overflow: hidden;
       border: 1px solid rgba(255, 255, 255, 0.25);
       border-radius: 10px;
@@ -183,9 +191,15 @@
     }
 
     .panel-heading {
+      flex: 0 0 auto;
       padding: 19px 21px 16px;
       border-bottom: 1px solid #ead9c4;
-      background: linear-gradient(180deg, #fffaf0, #f2e3d0);
+      background:
+        linear-gradient(
+          180deg,
+          #fffaf0,
+          #f2e3d0
+        );
     }
 
     .panel-heading h2 {
@@ -202,10 +216,10 @@
 
     .conversation {
       display: flex;
+      flex: 1 1 auto;
       flex-direction: column;
       gap: 12px;
-      height: min(485px, 52vh);
-      min-height: 360px;
+      min-height: 0;
       padding: 18px 30px 18px 18px;
       overflow-x: hidden;
       overflow-y: auto;
@@ -240,6 +254,12 @@
       color: #681f1f;
       border: 1px solid #e0aaaa;
       background: #ffe2e2;
+    }
+
+    .try-search {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
     }
 
     .recipe-options {
@@ -311,17 +331,18 @@
     }
 
     .input-area {
+      flex: 0 0 auto;
       padding: 16px 18px 19px;
       border-top: 1px solid #ead9c4;
       background: rgba(255, 255, 255, 0.8);
     }
 
-.input-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 8px;
-  align-items: stretch;
-}
+    .input-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: stretch;
+    }
 
     #moodInput {
       width: 100%;
@@ -330,7 +351,7 @@
       padding: 12px 14px;
       color: var(--text);
       border: 2px solid var(--border);
-      border-radius: 13px;
+      border-radius: 7px;
       background: white;
       font-size: 16px;
     }
@@ -342,31 +363,31 @@
         0 0 0 3px rgba(63, 119, 77, 0.13);
     }
 
-.reset-button {
-  padding: 10px 14px;
-  color: #315a78;
-  border: 1px solid rgba(39, 106, 155, 0.4);
-  border-radius: 12px;
-  background: #edf6fb;
-  font-weight: 800;
-}
-
-.reset-button:hover {
-  color: white;
-  background: var(--blue);
-}
-
     .find-button {
       padding: 10px 17px;
       color: white;
       border: 0;
-      border-radius: 12px;
+      border-radius: 9px;
       background: var(--green);
       font-weight: 800;
     }
 
     .find-button:hover:not(:disabled) {
       background: var(--green-dark);
+    }
+
+    .reset-button {
+      padding: 10px 14px;
+      color: #315a78;
+      border: 1px solid rgba(39, 106, 155, 0.4);
+      border-radius: 9px;
+      background: #edf6fb;
+      font-weight: 800;
+    }
+
+    .reset-button:hover {
+      color: white;
+      background: var(--blue);
     }
 
     .paper-holder {
@@ -377,6 +398,8 @@
 
     .paper {
       position: relative;
+      width: 100%;
+      min-width: 0;
       min-height: 690px;
       padding: 66px 48px 42px 74px;
       overflow: hidden;
@@ -770,18 +793,20 @@
       }
     }
 
-@media (max-width: 920px) {
-  .layout {
-    grid-template-columns: 1fr;
-    gap: 28px;
-  }
+    @media (max-width: 920px) {
+      .layout {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+
+      .chat-panel {
+        width: 100%;
+        height: 690px;
+      }
 
       .paper-holder {
         position: static;
-      }
-
-      .conversation {
-        height: 430px;
+        width: 100%;
       }
     }
 
@@ -827,11 +852,13 @@
       }
 
       .layout {
-        gap: 15px;
+        gap: 20px;
       }
 
       .chat-panel {
-        border-radius: 16px;
+        height: 590px;
+        min-height: 590px;
+        border-radius: 10px;
       }
 
       .panel-heading {
@@ -843,9 +870,6 @@
       }
 
       .conversation {
-        height: 46vh;
-        min-height: 330px;
-        max-height: 490px;
         padding: 14px 28px 14px 14px;
       }
 
@@ -858,26 +882,26 @@
         padding: 13px 28px 13px 13px;
       }
 
-.input-row {
-  grid-template-columns: 1fr 1fr;
-}
+      .input-row {
+        grid-template-columns: 1fr 1fr;
+      }
 
-#moodInput {
-  grid-column: 1 / -1;
-  grid-row: 1;
-}
+      #moodInput {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
 
-.find-button {
-  grid-column: 1;
-  grid-row: 2;
-  width: 100%;
-}
+      .find-button {
+        grid-column: 1;
+        grid-row: 2;
+        width: 100%;
+      }
 
-.reset-button {
-  grid-column: 2;
-  grid-row: 2;
-  width: 100%;
-}
+      .reset-button {
+        grid-column: 2;
+        grid-row: 2;
+        width: 100%;
+      }
 
       .recipe-choice {
         grid-template-columns: 37px minmax(0, 1fr);
@@ -1050,6 +1074,7 @@
 
         <div>
           <h1>Recipe Desk</h1>
+
           <p>
             Find something good to cook, then print your shopping list.
           </p>
@@ -1060,7 +1085,10 @@
     </header>
 
     <div class="layout">
-      <section class="chat-panel" aria-label="Recipe assistant">
+      <section
+        class="chat-panel"
+        aria-label="Recipe assistant"
+      >
         <div class="panel-heading">
           <h2>What are you in the mood for?</h2>
 
@@ -1076,41 +1104,43 @@
           aria-live="polite"
           aria-relevant="additions"
         >
-<div class="message assistant-message">
-  <div>Let's get cooking.</div>
-  <div class="try-search">
-    Try searching for chicken, salmon, pasta, beef, curry, soup, or pizza.
-  </div>
-</div>
+          <div class="message assistant-message">
+            <div>Let's get cooking.</div>
+
+            <div class="try-search">
+              Try searching for chicken, salmon, pasta, beef, curry,
+              soup, or pizza.
+            </div>
+          </div>
         </div>
 
-<div class="input-row">
-  <input
-    id="moodInput"
-    type="text"
-    autocomplete="off"
-    enterkeyhint="search"
-    placeholder="What are you in the mood for?"
-    aria-label="Search for recipes"
-  >
+        <div class="input-area">
+          <div class="input-row">
+            <input
+              id="moodInput"
+              type="text"
+              autocomplete="off"
+              enterkeyhint="search"
+              placeholder="What are you in the mood for?"
+              aria-label="Search for recipes"
+            >
 
-  <button
-    id="searchButton"
-    class="find-button"
-    type="button"
-  >
-    Find recipes
-  </button>
+            <button
+              id="searchButton"
+              class="find-button"
+              type="button"
+            >
+              Find recipes
+            </button>
 
-  <button
-    id="resetButton"
-    class="reset-button"
-    type="button"
-  >
-    ↻ Reset
-  </button>
-</div>
-
+            <button
+              id="resetButton"
+              class="reset-button"
+              type="button"
+            >
+              ↻ Reset
+            </button>
+          </div>
         </div>
       </section>
 
@@ -1274,7 +1304,7 @@
             <div class="recipe-source">
               <p>
                 These instructions came with the online recipe.
-                Open the original source for any additional details.
+                Open the original source for additional details.
               </p>
 
               <a
@@ -1336,8 +1366,8 @@
     const flipPaperButton =
       document.getElementById("flipPaperButton");
 
-const resetButton =
-  document.getElementById("resetButton");
+    const resetButton =
+      document.getElementById("resetButton");
 
     const conversation =
       document.getElementById("conversation");
@@ -1430,6 +1460,34 @@ const resetButton =
       appStatus.textContent = text;
     }
 
+    function createWelcomeMessage() {
+      const welcomeMessage =
+        document.createElement("div");
+
+      welcomeMessage.className =
+        "message assistant-message";
+
+      const firstLine =
+        document.createElement("div");
+
+      firstLine.textContent =
+        "Let's get cooking.";
+
+      const secondLine =
+        document.createElement("div");
+
+      secondLine.className =
+        "try-search";
+
+      secondLine.textContent =
+        "Try searching for chicken, salmon, pasta, beef, curry, soup, or pizza.";
+
+      welcomeMessage.appendChild(firstLine);
+      welcomeMessage.appendChild(secondLine);
+
+      return welcomeMessage;
+    }
+
     function addMessage(
       text,
       sender = "assistant",
@@ -1460,65 +1518,47 @@ const resetButton =
       });
     }
 
-function resetRecipeDesk() {
-  moodInput.value = "";
+    function resetRecipeDesk() {
+      moodInput.value = "";
 
-  currentChoices = [];
-  selectedRecipe = null;
-  showingCookingSide = false;
-  paperIsFlipping = false;
-  recipeMultiplier = 1;
+      currentChoices = [];
+      selectedRecipe = null;
+      showingCookingSide = false;
+      paperIsFlipping = false;
+      recipeMultiplier = 1;
 
-  conversation.innerHTML = "";
+      conversation.innerHTML = "";
+      conversation.appendChild(
+        createWelcomeMessage()
+      );
 
-  const welcomeMessage =
-    document.createElement("div");
+      emptyPaper.style.display = "grid";
+      shoppingSheet.style.display = "none";
+      cookingSheet.style.display = "none";
+      flipPaperButton.style.display = "none";
+      flipPaperButton.disabled = false;
 
-  welcomeMessage.className =
-    "message assistant-message";
+      paper.classList.remove(
+        "flip-animation"
+      );
 
-  welcomeMessage.textContent =
-    "Let's get cooking. Try searching for chicken, salmon, pasta, beef, curry, soup, or pizza.";
+      ingredientsList.innerHTML = "";
+      instructionsList.innerHTML = "";
 
-  conversation.appendChild(
-    welcomeMessage
-  );
+      servingCount.textContent = "1×";
+      decreaseServings.disabled = true;
+      increaseServings.disabled = false;
 
-  emptyPaper.style.display =
-    "grid";
+      setStatus("", "● Ready");
 
-  shoppingSheet.style.display =
-    "none";
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
 
-  cookingSheet.style.display =
-    "none";
-
-  flipPaperButton.style.display =
-    "none";
-
-  flipPaperButton.disabled =
-    false;
-
-  paper.classList.remove(
-    "flip-animation"
-  );
-
-  ingredientsList.innerHTML = "";
-  instructionsList.innerHTML = "";
-
-  servingCount.textContent = "1×";
-
-  setStatus("", "● Ready");
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-
-  moodInput.focus();
-
-  updateScrollButtons();
-}
+      moodInput.focus();
+      updateScrollButtons();
+    }
 
     function removeOldRecipeChoices() {
       document
@@ -1584,7 +1624,9 @@ function resetRecipeDesk() {
           .filter(Boolean)
           .join(" ");
 
-        ingredients.push(ingredientText);
+        ingredients.push(
+          ingredientText
+        );
       }
 
       const details = [
@@ -1634,7 +1676,9 @@ function resetRecipeDesk() {
         .map(convertApiRecipe);
     }
 
-    async function findByIngredient(searchText) {
+    async function findByIngredient(
+      searchText
+    ) {
       const normalizedIngredient =
         searchText
           .trim()
@@ -1654,18 +1698,15 @@ function resetRecipeDesk() {
         return [];
       }
 
-      const mealSummaries =
-        data.meals.slice(0, 5);
-
       const completeMeals =
         await Promise.all(
-          mealSummaries.map(
-            function (meal) {
+          data.meals
+            .slice(0, 5)
+            .map(function (meal) {
               return lookupRecipe(
                 meal.idMeal
               );
-            }
-          )
+            })
         );
 
       return completeMeals
@@ -1683,7 +1724,9 @@ function resetRecipeDesk() {
         return nameResults;
       }
 
-      return findByIngredient(searchText);
+      return findByIngredient(
+        searchText
+      );
     }
 
     async function searchRecipes(request) {
@@ -1762,10 +1805,7 @@ function resetRecipeDesk() {
           recipeResults
         );
 
-        setStatus(
-          "",
-          "● Ready"
-        );
+        setStatus("", "● Ready");
       } catch (error) {
         console.error(
           "Recipe search failed:",
@@ -2572,10 +2612,10 @@ function resetRecipeDesk() {
       handleTypedInput
     );
 
-resetButton.addEventListener(
-  "click",
-  resetRecipeDesk
-);
+    resetButton.addEventListener(
+      "click",
+      resetRecipeDesk
+    );
 
     moodInput.addEventListener(
       "keydown",
@@ -2735,6 +2775,8 @@ resetButton.addEventListener(
         "Local storage is unavailable."
       );
     }
+
+    decreaseServings.disabled = true;
 
     updateScrollButtons();
     moodInput.focus();
