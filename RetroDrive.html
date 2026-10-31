@@ -15,7 +15,24 @@ h1{margin:0 0 10px;color:#ffd44a;font-size:clamp(25px,5vw,52px)}
 p{line-height:1.45}
 .key{color:#77e6ff}.warn{color:#ffba72}.small{font-size:12px;color:#a9c2cc}
 button{font:inherit;font-weight:bold;padding:10px 18px;background:#ffd44a;color:#101010;border:0;box-shadow:4px 4px 0 #a16a00;cursor:pointer}
+
 #status{position:absolute;top:5px;right:7px;font-size:11px;color:#9ff;text-shadow:1px 1px #000;pointer-events:none}
+
+/* Difficulty selector buttons */
+.difficulty{
+  padding:6px 10px;
+  background:#26323e;
+  color:#b9f3ff;
+  box-shadow:none;
+  border:2px solid #526675;
+}
+
+/* Currently selected difficulty */
+.difficulty.selected{
+  background:#ffd44a;
+  color:#101010;
+  border-color:#ffd44a;
+}
 </style>
 </head>
 <body>
@@ -35,6 +52,13 @@ button{font:inherit;font-weight:bold;padding:10px 18px;background:#ffd44a;color:
 </p>
 <p><b>Xbox:</b> left stick steers, RT accelerates, LT brakes, Menu pauses, View restarts.</p>
 <p class="warn">Reach the finish before 2:45. Stay on the road and avoid traffic.</p>
+<p>
+DIFFICULTY:
+<button class="difficulty" data-width="15" data-multiplier="1">EASY</button>
+<button class="difficulty selected" data-width="45" data-multiplier="2">NORMAL</button>
+<button class="difficulty" data-width="90" data-multiplier="4">HARD</button>
+</p>
+
 <button id="start">START ENGINE</button>
 <p class="small">Controller support uses the browser Gamepad API. Press any controller button after connecting.</p>
 </div></div>
@@ -47,6 +71,10 @@ const C=document.getElementById('game');
 const X=C.getContext('2d');
 const help=document.getElementById('help');
 const statusEl=document.getElementById('status');
+
+// Victory-screen artwork
+const victoryImage=new Image();
+victoryImage.src='vintage2door.png';
 
 const W=C.width,H=C.height;
 const keys={};
@@ -61,6 +89,17 @@ let controller=false;
 let score=0;
 let nextCheckpoint=0;
 let checkpointFlash=0;
+let playerCollisionWidth=45;
+let difficultyMultiplier=2;
+
+// =========================================================
+// RUN STATISTICS
+// =========================================================
+
+let topSpeedMph=0;
+let speedSampleTotal=0;
+let speedSampleTime=0;
+let finalRunStats=null;
 
 const checkpoints=[
   0.20,
@@ -91,6 +130,29 @@ const ROAD=1850;
 const CAMERA=900;
 const LANES=2;
 
+// Shared world movement multiplier
+const WORLD_SPEED_SCALE=22;
+
+// =========================================================
+// LANE AND COLLISION DEFINITIONS
+// =========================================================
+
+const SAME_DIRECTION_LANE_X=0.42;
+const ONCOMING_LANE_X=-0.42;
+
+const SAME_DIRECTION_LANE='same-direction';
+const ONCOMING_LANE='oncoming';
+
+/*
+  Traffic cars receive simple rectangular hitboxes.
+
+  Width measures left/right overlap using car.x.
+  Front and back measure distance along the road.
+*/
+const TRAFFIC_HITBOX_WIDTH=0.30;
+const TRAFFIC_HITBOX_FRONT=85;
+const TRAFFIC_HITBOX_BACK=20;
+
 const track=[];
 let trackLength=0;
 
@@ -120,20 +182,34 @@ add(60,0,40,'finish');
 
 trackLength=track.length*SEG;
 
-const car={
- z:0,
- x:0.42,
- speed:0,
- max:146/2.237,
-accel:22,
-brake:32,
-drag:3.2,
- steer:0,
- visualSteer:0,
- damage:0,
- gear:1,
- rpm:900,
- fuel:100
+const car = {
+  z: 0,
+  x: 0.42,
+
+  // Speed is stored in meters per second.
+  speed: 0,
+
+  // Approximately 168 MPH.
+  max: 75,
+
+  // More gradual and controllable acceleration.
+  accel: 25,
+
+  // Strong braking.
+  brake: 38,
+
+  // Rolling resistance when throttle is released.
+  coastDrag: 3.5,
+
+  // Small resistance while accelerating.
+  powerDrag: 0.45,
+
+  steer: 0,
+  visualSteer: 0,
+  damage: 0,
+  gear: 1,
+  rpm: 900,
+  fuel: 100
 };
 
 
@@ -156,63 +232,113 @@ function createRoadTraffic(){
     '#56c980'
   ];
 
-  // -----------------------------------------
+  // =======================================================
   // SAME-DIRECTION TRAFFIC
-  // Sparse traffic so player can pass
-  // -----------------------------------------
+  // =======================================================
 
-  for(let i=0;i<3;i++){
+  for(let i=0;i<4;i++){
+
+    const startDistance=
+      2200+
+      i*4300+
+      Math.random()*1600;
 
     roadTraffic.push({
 
-      distance:
-        2200+
-        i*5200+
-        Math.random()*1800,
+      distance:startDistance,
+      previousDistance:startDistance,
 
-      lane:0.42,
+lane:SAME_DIRECTION_LANE_X,
+baseLane:SAME_DIRECTION_LANE_X,
+laneId:SAME_DIRECTION_LANE,
 
-      direction:1,
+// Small natural wandering inside the lane.
+weaveAmount:
+  0.035+
+  Math.random()*0.025,
 
+weaveSpeed:
+  0.7+
+  Math.random()*0.5,
+
+weaveOffset:
+  Math.random()*Math.PI*2,
+
+direction:1,
+
+      // Slow enough for the player to catch and pass.
       speed:
-        12+
-        Math.random()*7,
+        16+
+        Math.random()*5,
+
+      hitboxWidth:
+        TRAFFIC_HITBOX_WIDTH,
+
+      hitboxFront:
+        TRAFFIC_HITBOX_FRONT,
+
+      hitboxBack:
+        TRAFFIC_HITBOX_BACK,
 
       color:
         colors[i%colors.length],
 
       active:true
     });
-
   }
 
-  // -----------------------------------------
+  // =======================================================
   // ONCOMING TRAFFIC
-  // -----------------------------------------
+  // =======================================================
 
-  for(let i=0;i<4;i++){
+  for(let i=0;i<5;i++){
+
+    const startDistance=
+      3200+
+      i*4000+
+      Math.random()*1800;
 
     roadTraffic.push({
 
-      distance:
-        3200+
-        i*4700+
-        Math.random()*2200,
+      distance:startDistance,
+      previousDistance:startDistance,
 
-      lane:-0.42,
+lane:ONCOMING_LANE_X,
+baseLane:ONCOMING_LANE_X,
+laneId:ONCOMING_LANE,
 
-      direction:-1,
+// Small natural wandering inside the lane.
+weaveAmount:
+  0.035+
+  Math.random()*0.025,
+
+weaveSpeed:
+  0.7+
+  Math.random()*0.5,
+
+weaveOffset:
+  Math.random()*Math.PI*2,
+
+direction:-1,
 
       speed:
-        25+
-        Math.random()*10,
+        30+
+        Math.random()*9,
+
+      hitboxWidth:
+        TRAFFIC_HITBOX_WIDTH,
+
+      hitboxFront:
+        TRAFFIC_HITBOX_FRONT,
+
+      hitboxBack:
+        TRAFFIC_HITBOX_BACK,
 
       color:
         colors[(i+2)%colors.length],
 
       active:true
     });
-
   }
 }
 
@@ -221,7 +347,7 @@ createRoadTraffic();
 function reset(){
 
   car.z=0;
-  car.x=0.42;
+  car.x=SAME_DIRECTION_LANE_X;
   car.speed=0;
   car.steer=0;
   car.visualSteer=0;
@@ -240,6 +366,12 @@ score=0;
 nextCheckpoint=0;
 checkpointFlash=0;
 
+// Reset statistics for the new drive.
+topSpeedMph=0;
+speedSampleTotal=0;
+speedSampleTime=0;
+finalRunStats=null;
+
   crashX=W/2;
   crashY=205;
 
@@ -247,6 +379,26 @@ checkpointFlash=0;
 
   last=performance.now();
 
+}
+
+function returnToStart(){
+
+  // Stop the current game.
+  running=false;
+  paused=false;
+  finished=false;
+  lost=false;
+  crashed=false;
+
+  // Reset the car/run data.
+  reset();
+
+  // reset() sets the game state,
+  // so make sure the game remains stopped.
+  running=false;
+
+  // Show the start/difficulty screen again.
+  help.style.display='flex';
 }
 
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
@@ -261,8 +413,8 @@ addEventListener('keydown',e=>{
  if(e.code==='KeyP'||e.code==='Escape')
   paused=!paused;
 
- if(e.code==='KeyR')
-  reset();
+if(e.code==='KeyR')
+  returnToStart();
 
  if(e.code==='KeyF')
   document.documentElement.requestFullscreen?.();
@@ -270,11 +422,73 @@ addEventListener('keydown',e=>{
 
 addEventListener('keyup',e=>keys[e.code]=0);
 
+document.querySelectorAll('.difficulty').forEach(button=>{
+
+  button.onclick=()=>{
+
+    playerCollisionWidth=
+      Number(button.dataset.width);
+
+    difficultyMultiplier=
+      Number(button.dataset.multiplier);
+
+    document
+      .querySelectorAll('.difficulty')
+      .forEach(b=>
+        b.classList.remove('selected')
+      );
+
+    button.classList.add('selected');
+  };
+});
+
 document.getElementById('start').onclick=()=>{
  help.style.display='none';
  running=true;
  reset();
 };
+
+function blendColor(colorA,colorB,t){
+
+  t=clamp(t,0,1);
+
+  const a=parseInt(
+    colorA.slice(1),
+    16
+  );
+
+  const b=parseInt(
+    colorB.slice(1),
+    16
+  );
+
+  const ar=(a>>16)&255;
+  const ag=(a>>8)&255;
+  const ab=a&255;
+
+  const br=(b>>16)&255;
+  const bg=(b>>8)&255;
+  const bb=b&255;
+
+  const r=Math.round(
+    lerp(ar,br,t)
+  );
+
+  const g=Math.round(
+    lerp(ag,bg,t)
+  );
+
+  const blue=Math.round(
+    lerp(ab,bb,t)
+  );
+
+  return(
+    '#'+
+    r.toString(16).padStart(2,'0')+
+    g.toString(16).padStart(2,'0')+
+    blue.toString(16).padStart(2,'0')
+  );
+}
 
 function input(){
  let steer=(keys.ArrowRight||keys.KeyD?1:0)-
@@ -304,10 +518,10 @@ let dz=Math.abs(g.axes[0])>.12?g.axes[0]:0;
   if(!g.buttons[9]?.pressed)
    input.pauseLock=false;
 
-  if(g.buttons[8]?.pressed&&!input.resetLock){
-   reset();
+if(g.buttons[8]?.pressed&&!input.resetLock){
+   returnToStart();
    input.resetLock=true;
-  }
+}
 
   if(!g.buttons[8]?.pressed)
    input.resetLock=false;
@@ -323,65 +537,146 @@ let dz=Math.abs(g.axes[0])>.12?g.axes[0]:0;
 function update(dt){
 if(!running||paused||finished||lost||crashed)return;
 
- gameTime+=dt;
+gameTime+=dt;
 
- const inp=input();
- const speedRatio=car.speed/car.max;
+const inp=input();
 
- car.steer=lerp(
+// Player position before this frame moves.
+const previousPlayerZ=car.z;
+
+car.steer = lerp(
   car.steer,
   inp.steer,
-  clamp(dt*7,0,1)
- );
+  clamp(dt * 7, 0, 1)
+);
 
- car.visualSteer=lerp(
+car.visualSteer = lerp(
   car.visualSteer,
   car.steer,
-  clamp(dt*10,0,1)
- );
+  clamp(dt * 10, 0, 1)
+);
 
- let onRoad=Math.abs(car.x)<1.05;
+const onRoad = Math.abs(car.x) < 1.05;
 
- car.speed+=inp.throttle*car.accel*dt;
- car.speed-=inp.brake*car.brake*dt;
+// ---------------------------------------------------------
+// ENGINE, BRAKING, AND DRAG
+// ---------------------------------------------------------
 
- car.speed-=car.drag*(.25+speedRatio*.75)*dt;
+if (inp.throttle > 0 && car.fuel > 0) {
+  // Acceleration gently reduces near maximum speed.
+  const accelerationFade =
+    1 - Math.pow(car.speed / car.max, 1.8);
 
- if(!onRoad){
-  car.speed-=19*dt;
-  car.damage+=dt*1.2;
- }
+  car.speed +=
+    inp.throttle *
+    car.accel *
+    Math.max(0.12, accelerationFade) *
+    dt;
 
- car.speed=clamp(
+  // Only light resistance while accelerating.
+  car.speed -= car.powerDrag * dt;
+} else {
+  // Natural coast-down only when throttle is released.
+  car.speed -= car.coastDrag * dt;
+}
+
+// Braking is separate from normal drag.
+car.speed -=
+  inp.brake *
+  car.brake *
+  dt;
+
+// Grass produces substantial resistance.
+if (!onRoad) {
+  car.speed -= 15 * dt;
+  car.damage += dt * 1.2;
+}
+
+// Running out of fuel prevents further acceleration
+// and gradually slows the vehicle.
+if (car.fuel <= 0) {
+  car.speed -= 7 * dt;
+}
+
+const damageLimitedMax =
+  car.max *
+  clamp(1 - car.damage * 0.003, 0.55, 1);
+
+car.speed = clamp(
   car.speed,
   0,
-  car.max*(1-car.damage*.003)
- );
+  damageLimitedMax
+);
 
- let turnStrength=(.55-speedRatio*.28);
+const speedRatio =
+  clamp(car.speed / car.max, 0, 1);
 
- car.x+=car.steer*
-        turnStrength*
-        (.4+speedRatio*1.5)*
-        dt*2.2;
+// ---------------------------------------------------------
+// STEERING
+// ---------------------------------------------------------
 
- let idx=Math.floor(car.z/SEG)%track.length;
+// Steering remains responsive enough for traffic avoidance,
+// but becomes a little less sensitive at high speed.
+const turnStrength=
+  lerp(1.5,0.82,speedRatio);
 
- car.x-=track[idx].curve*
-        speedRatio*
-        dt*.38;
+car.x +=
+  car.steer *
+  turnStrength *
+  (0.35 + speedRatio * 1.15) *
+  dt *
+  2.15;
 
-car.z+=car.speed*dt*8.5;
+// Prevent the player from traveling infinitely off-screen.
+car.x = clamp(car.x, -1.65, 1.65);
+
+const idx =
+  Math.floor(car.z / SEG) %
+  track.length;
+
+// Road curves pull the vehicle toward the outside.
+car.x -=
+  track[idx].curve *
+  speedRatio *
+  dt *
+  0.38;
+
+// All vehicles use the same world scale.
+car.z +=
+  car.speed *
+  dt *
+  WORLD_SPEED_SCALE;
 
  car.fuel=Math.max(
   0,
   car.fuel-inp.throttle*dt*.16
  );
 
- if(car.fuel<=0)
-  car.speed=Math.max(0,car.speed-20*dt);
 
- let mph=car.speed*2.237;
+
+let mph=car.speed*2.237;
+
+// =========================================================
+// TRACK RUN STATISTICS
+// =========================================================
+
+// Highest speed reached during this drive.
+topSpeedMph=Math.max(
+  topSpeedMph,
+  mph
+);
+
+/*
+  Time-weighted speed tracking.
+
+  Multiplying speed by dt gives a more accurate average
+  even when the frame rate changes.
+*/
+speedSampleTotal+=
+  mph*
+  dt;
+
+speedSampleTime+=dt;
 
  car.gear=
   mph<18?1:
@@ -397,111 +692,274 @@ car.z+=car.speed*dt*8.5;
 
  car.rpm=clamp(car.rpm,800,7200);
 
- 
 // =========================================================
 // UPDATE TRAFFIC AND COLLISIONS
 // =========================================================
 
 for(const trafficCar of roadTraffic){
 
-  if(!trafficCar.active)continue;
-
-  const previousDistance =
-    trafficCar.distance - car.z;
-
-  if(trafficCar.direction === 1){
-
-    trafficCar.distance +=
-      trafficCar.speed *
-      dt *
-      8.5;
-
-  }else{
-
-    trafficCar.distance -=
-      trafficCar.speed *
-      dt *
-      8.5;
+  if(!trafficCar.active){
+    continue;
   }
 
-  const relativeDistance =
-    trafficCar.distance - car.z;
+// -------------------------------------------------------
+// SMALL NATURAL TRAFFIC WEAVE
+// -------------------------------------------------------
 
-  const laneDifference =
-    Math.abs(
-      car.x - trafficCar.lane
-    );
-
-  const lateralHit =
-    laneDifference < 0.42;
+trafficCar.lane=
+  trafficCar.baseLane+
+  Math.sin(
+    gameTime*
+    trafficCar.weaveSpeed+
+    trafficCar.weaveOffset
+  )*
+  trafficCar.weaveAmount;
 
   /*
-    A collision occurs when the traffic car
-    crosses the area directly in front of us.
-
-    Testing both previousDistance and
-    relativeDistance prevents fast movement
-    from skipping through the collision zone.
+    Save the traffic car's position before movement.
   */
+  const previousTrafficZ=
+    trafficCar.distance;
 
-  const crossedCollisionPoint =
-    previousDistance > 90 &&
-    relativeDistance <= 180;
+  /*
+    Determine the distance between the traffic car and
+    player before either vehicle completes this frame.
+  */
+  const previousRelativeDistance=
+    previousTrafficZ-
+    previousPlayerZ;
 
-  const alreadyInCollisionZone =
-    relativeDistance > -120 &&
-    relativeDistance <= 180;
+  /*
+    Move the traffic car.
+  */
+  trafficCar.distance+=
+    trafficCar.direction*
+    trafficCar.speed*
+    dt*
+    WORLD_SPEED_SCALE;
 
-  if(
-    lateralHit &&
+  /*
+    Determine the distance after player and traffic movement.
+  */
+  const relativeDistance=
+    trafficCar.distance-
+    car.z;
+
+  /*
+    Calculate the traffic car's previous and current
+    visible positions.
+  */
+  const previousScreen=
+    getTrafficScreenState(
+      previousRelativeDistance,
+      trafficCar.lane
+    );
+
+  const currentScreen=
+    getTrafficScreenState(
+      relativeDistance,
+      trafficCar.lane
+    );
+
+  // =======================================================
+  // HORIZONTAL COLLISION
+  // =======================================================
+
+  /*
+    The player's visible driving position is the center
+    of the windshield.
+
+    The traffic car's visible position already accounts
+    for road perspective and steering position.
+  */
+  const playerScreenX=
+    W/2;
+
+const playerHalfWidth=
+  playerCollisionWidth;
+
+  const trafficHalfWidth=
+    currentScreen.width*
+    0.42;
+
+  const horizontalCollision=
+    Math.abs(
+      currentScreen.x-
+      playerScreenX
+    )<=
     (
-      crossedCollisionPoint ||
-      alreadyInCollisionZone
-    )
-  ){
+      playerHalfWidth+
+      trafficHalfWidth
+    );
+
+  /*
+    Also test the previous horizontal position. This helps
+    when an oncoming car moves a large distance in one frame.
+  */
+  const previousHorizontalCollision=
+    Math.abs(
+      previousScreen.x-
+      playerScreenX
+    )<=
+    (
+      playerHalfWidth+
+      previousScreen.width*
+      0.42
+    );
+
+  // =======================================================
+  // FORWARD COLLISION
+  // =======================================================
+
+  /*
+    This is the visual contact line near the bottom of the
+    road, just before the vehicle disappears behind the
+    dashboard.
+  */
+  const CONTACT_SCREEN_Y=
+    301;
+
+  const currentlyAtPlayer=
+    currentScreen.y>=
+      CONTACT_SCREEN_Y&&
+    relativeDistance>0;
+
+  /*
+    Detect a vehicle crossing the visual contact line
+    during one animation frame.
+  */
+  const crossedPlayerScreen=
+    previousScreen.y<
+      CONTACT_SCREEN_Y&&
+    currentScreen.y>=
+      CONTACT_SCREEN_Y;
+
+  /*
+    World-position fallback.
+
+    The renderer stops showing traffic at relative
+    distance 20, so crossing that position must also
+    be treated as contact.
+  */
+const crossedPlayerPosition=
+  previousRelativeDistance>20&&
+  relativeDistance<=20;
+
+  // =======================================================
+  // COLLISION RESPONSE
+  // =======================================================
+
+  const collisionDetected=
+    (
+      horizontalCollision&&
+      currentlyAtPlayer
+    )||
+    (
+      (
+        horizontalCollision||
+        previousHorizontalCollision
+      )&&
+      (
+        crossedPlayerScreen||
+        crossedPlayerPosition
+      )
+    );
+
+  if(collisionDetected){
 
     crashed=true;
     car.speed=0;
     car.damage=100;
 
-    crashX =
-      W/2 +
+    const impactX=
       (
-        trafficCar.lane -
-        car.x
-      ) * 180;
+        currentScreen.x+
+        previousScreen.x
+      )/
+      2;
 
-    crashX=clamp(
-      crashX,
-      145,
-      W-145
-    );
+    crashX=
+      clamp(
+        impactX,
+        W/2-45,
+        W/2+45
+      );
 
-    crashY=
-      185+
-      Math.random()*35;
+    crashY=220;
 
     break;
   }
 
-  if(relativeDistance < -400){
+  // =======================================================
+  // RECYCLE TRAFFIC
+  // =======================================================
 
-    if(trafficCar.direction === 1){
+  if(relativeDistance<-700){
 
-      trafficCar.distance =
-        car.z +
-        8500 +
-        Math.random()*8500;
+    if(trafficCar.direction===1){
+
+      const newDistance=
+        car.z+
+        6500+
+        Math.random()*7500;
+
+      trafficCar.distance=
+        newDistance;
+
+      trafficCar.previousDistance=
+        newDistance;
+
+      /*
+        Keep same-direction traffic slow enough to pass.
+      */
+      trafficCar.speed=
+        16+
+        Math.random()*5;
+
+trafficCar.baseLane=
+  SAME_DIRECTION_LANE_X;
+
+trafficCar.lane=
+  SAME_DIRECTION_LANE_X;
+
+trafficCar.weaveOffset=
+  Math.random()*Math.PI*2;
+
+      trafficCar.laneId=
+        SAME_DIRECTION_LANE;
 
     }else{
 
-      trafficCar.distance =
-        car.z +
-        7000 +
-        Math.random()*9000;
+      const newDistance=
+        car.z+
+        5500+
+        Math.random()*8000;
+
+      trafficCar.distance=
+        newDistance;
+
+      trafficCar.previousDistance=
+        newDistance;
+
+      trafficCar.speed=
+        30+
+        Math.random()*9;
+
+trafficCar.baseLane=
+  ONCOMING_LANE_X;
+
+trafficCar.lane=
+  ONCOMING_LANE_X;
+
+trafficCar.weaveOffset=
+  Math.random()*Math.PI*2;
+
+      trafficCar.laneId=
+        ONCOMING_LANE;
     }
   }
 }
+
 
 // =========================================================
 // CHECKPOINTS
@@ -526,10 +984,52 @@ if(checkpointFlash > 0){
   checkpointFlash -= dt;
 }
 
- if(car.z>=trackLength-SEG*5){
+if(car.z>=trackLength-SEG*5){
+
   finished=true;
   car.speed=0;
- }
+
+  const averageSpeedMph=
+    speedSampleTime>0
+      ? speedSampleTotal/speedSampleTime
+      : 0;
+
+  const condition=
+    Math.max(
+      0,
+      100-car.damage
+    );
+
+  /*
+    Save the results at the instant the player finishes.
+    This prevents the displayed numbers from continuing
+    to change while viewing the victory screen.
+  */
+  finalRunStats={
+
+    time:gameTime,
+
+    averageSpeed:
+      averageSpeedMph,
+
+    topSpeed:
+      topSpeedMph,
+
+    distanceMiles:
+      car.z/1609.344,
+
+    checkpoints:
+      nextCheckpoint,
+
+    score:
+  score*difficultyMultiplier,
+
+    fuel:
+      car.fuel,
+
+    condition
+  };
+}
 
  if(gameTime>=165&&!finished){
   lost=true;
@@ -712,49 +1212,301 @@ function renderRoad(){
   const roadBottom=305;
 
   // =========================================================
-  // SKY
-  // =========================================================
+// CHANGING SKY: DAY TO SUNSET TO NIGHT
+// Visual only. Does not affect gameplay.
+// =========================================================
 
-  X.fillStyle='#58a8d8';
-  X.fillRect(
+const levelProgress=
+  clamp(
+    car.z/(trackLength-SEG*5),
+    0,
+    1
+  );
+
+/*
+  Sunset begins around 35% through the level.
+  Night begins around 72% through the level.
+*/
+const sunsetAmount=
+  clamp(
+    (levelProgress-0.35)/0.37,
+    0,
+    1
+  );
+
+const nightAmount=
+  clamp(
+    (levelProgress-0.72)/0.28,
+    0,
+    1
+  );
+
+// ---------------------------------------------------------
+// SKY GRADIENT
+// ---------------------------------------------------------
+
+const skyGradient=
+  X.createLinearGradient(
     0,
     0,
-    W,
+    0,
     horizon
   );
 
-  // Sun
-  X.fillStyle='#f4e5a4';
+// Upper sky.
+skyGradient.addColorStop(
+  0,
+  nightAmount>0
+    ? blendColor(
+        '#566b9c',
+        '#071226',
+        nightAmount
+      )
+    : blendColor(
+        '#58a8d8',
+        '#566b9c',
+        sunsetAmount
+      )
+);
+
+// Lower sky near the horizon.
+skyGradient.addColorStop(
+  1,
+  nightAmount>0
+    ? blendColor(
+        '#dd7659',
+        '#172746',
+        nightAmount
+      )
+    : blendColor(
+        '#9bd5e3',
+        '#dd7659',
+        sunsetAmount
+      )
+);
+
+X.fillStyle=skyGradient;
+
+X.fillRect(
+  0,
+  0,
+  W,
+  horizon
+);
+
+// ---------------------------------------------------------
+// STARS
+// Appear gradually during the final part of the drive.
+// ---------------------------------------------------------
+
+if(nightAmount>0){
+
+  const stars=[
+    [44,28],
+    [91,50],
+    [139,23],
+    [181,67],
+    [228,36],
+    [278,55],
+    [331,25],
+    [379,73],
+    [427,42],
+    [479,18],
+    [527,61],
+    [577,34],
+    [611,76],
+    [255,90],
+    [364,101],
+    [113,99]
+  ];
+
+  X.fillStyle=
+    'rgba(235, 247, 255, '+
+    nightAmount+
+    ')';
+
+  for(
+    let i=0;
+    i<stars.length;
+    i++
+  ){
+
+    const star=
+      stars[i];
+
+    const starSize=
+      i%4===0
+        ? 2
+        : 1;
+
+    X.fillRect(
+      star[0],
+      star[1],
+      starSize,
+      starSize
+    );
+  }
+}
+
+// ---------------------------------------------------------
+// SETTING SUN
+// ---------------------------------------------------------
+
+if(levelProgress<0.78){
+
+  /*
+    The sun lowers from Y=65 toward the horizon.
+  */
+  const sunSetProgress=
+    clamp(
+      levelProgress/0.78,
+      0,
+      1
+    );
+
+  const sunY=
+    lerp(
+      65,
+      horizon+20,
+      sunSetProgress
+    );
+
+  /*
+    Sun changes from pale yellow to sunset orange.
+  */
+  X.fillStyle=
+    blendColor(
+      '#f4e5a4',
+      '#ff8a45',
+      sunsetAmount
+    );
+
   X.beginPath();
+
   X.arc(
     78,
-    65,
+    sunY,
     25,
     0,
     Math.PI*2
   );
+
+  X.fill();
+}
+
+// ---------------------------------------------------------
+// RISING MOON
+// ---------------------------------------------------------
+
+if(levelProgress>0.68){
+
+  const moonRise=
+    clamp(
+      (levelProgress-0.68)/0.32,
+      0,
+      1
+    );
+
+  const moonX=
+    510;
+
+  const moonY=
+    lerp(
+      horizon+25,
+      55,
+      moonRise
+    );
+
+  // Moon glow.
+  X.fillStyle=
+    'rgba(190, 229, 255, '+
+    (moonRise*0.16)+
+    ')';
+
+  X.beginPath();
+
+  X.arc(
+    moonX,
+    moonY,
+    33,
+    0,
+    Math.PI*2
+  );
+
   X.fill();
 
-  // Distant horizon strip
-  X.fillStyle='#3c8462';
-  X.fillRect(
+  // Moon body.
+  X.fillStyle=
+    'rgba(226, 240, 246, '+
+    moonRise+
+    ')';
+
+  X.beginPath();
+
+  X.arc(
+    moonX,
+    moonY,
+    19,
     0,
-    horizon-5,
-    W,
-    10
+    Math.PI*2
   );
+
+  X.fill();
+
+  // Dark overlay creates a crescent moon.
+  X.fillStyle=
+    'rgba(7, 18, 38, '+
+    moonRise+
+    ')';
+
+  X.beginPath();
+
+  X.arc(
+    moonX+8,
+    moonY-5,
+    18,
+    0,
+    Math.PI*2
+  );
+
+  X.fill();
+}
+
+// ---------------------------------------------------------
+// DISTANT HORIZON
+// ---------------------------------------------------------
+
+X.fillStyle=
+  blendColor(
+    '#3c8462',
+    '#172d35',
+    nightAmount
+  );
+
+X.fillRect(
+  0,
+  horizon-5,
+  W,
+  10
+);
 
   // =========================================================
   // GRASS
   // =========================================================
 
-  X.fillStyle='#23863a';
-  X.fillRect(
-    0,
-    horizon,
-    W,
-    roadBottom-horizon
+X.fillStyle=
+  blendColor(
+    '#23863a',
+    '#10281d',
+    nightAmount
   );
+
+X.fillRect(
+  0,
+  horizon,
+  W,
+  roadBottom-horizon
+);
 
   const base=
     Math.floor(car.z/SEG)%
@@ -809,13 +1561,17 @@ function renderRoad(){
   // ROAD
   // =========================================================
 
-  poly(
+poly(
+  blendColor(
     '#595960',
-    {x:centerTop-roadTopWidth, y:horizon},
-    {x:centerTop+roadTopWidth, y:horizon},
-    {x:centerBottom+roadBottomWidth, y:roadBottom},
-    {x:centerBottom-roadBottomWidth, y:roadBottom}
-  );
+    '#30343e',
+    nightAmount
+  ),
+  {x:centerTop-roadTopWidth, y:horizon},
+  {x:centerTop+roadTopWidth, y:horizon},
+  {x:centerBottom+roadBottomWidth, y:roadBottom},
+  {x:centerBottom-roadBottomWidth, y:roadBottom}
+);
 
   // Center line
   poly(
@@ -955,6 +1711,116 @@ for(let i=0;i<18;i++){
 
 }
 
+// =========================================================
+// TRAFFIC SCREEN POSITION
+// Used by both drawing and collision detection.
+// =========================================================
+
+function getTrafficScreenState(
+  distance,
+  lane
+){
+
+  const horizon=185;
+  const roadBottom=305;
+
+  const base=
+    Math.floor(car.z/SEG)%
+    track.length;
+
+  const current=
+    track[base];
+
+  const speedRatio=
+    clamp(
+      car.speed/car.max,
+      0,
+      1
+    );
+
+  const curveOffset=
+    current.curve*
+    speedRatio*
+    90;
+
+  const playerOffset=
+    car.x*
+    70;
+
+  const centerBottom=
+    W/2-
+    playerOffset;
+
+  const centerTop=
+    W/2-
+    playerOffset*.05-
+    curveOffset;
+
+  const roadTopWidth=22;
+  const roadBottomWidth=265;
+
+  let depth=
+    1-
+    distance/5000;
+
+  depth=clamp(
+    depth,
+    0,
+    1
+  );
+
+  const perspective=
+    Math.pow(
+      depth,
+      1.55
+    );
+
+  const roadCenter=
+    lerp(
+      centerTop,
+      centerBottom,
+      perspective
+    );
+
+  const roadHalf=
+    lerp(
+      roadTopWidth,
+      roadBottomWidth,
+      perspective
+    );
+
+  const screenX=
+    roadCenter+
+    lane*
+    roadHalf*
+    1.12;
+
+  const screenY=
+    horizon+
+    perspective*
+    (
+      roadBottom-
+      horizon
+    );
+
+  const vehicleWidth=
+    6+
+    perspective*
+    105;
+
+  const vehicleHeight=
+    vehicleWidth*
+    0.58;
+
+  return{
+    x:screenX,
+    y:screenY,
+    width:vehicleWidth,
+    height:vehicleHeight
+  };
+}
+
+
 function drawRoadTraffic(
   horizon,
   roadBottom,
@@ -966,93 +1832,58 @@ function drawRoadTraffic(
 
   const visible=[];
 
-  for(const trafficCar of roadTraffic){
+  for(
+    const trafficCar
+    of roadTraffic
+  ){
 
-    let distance=
-      trafficCar.distance-car.z;
+    const distance=
+      trafficCar.distance-
+      car.z;
 
     if(
-      distance<=20 ||
+      distance<=20||
       distance>5000
-    )continue;
+    ){
+      continue;
+    }
 
     visible.push({
       trafficCar,
       distance
     });
-
   }
 
-  // Draw distant cars first
+  // Draw distant cars first.
   visible.sort(
     (a,b)=>
-      b.distance-a.distance
+      b.distance-
+      a.distance
   );
 
-  for(const item of visible){
+  for(
+    const item
+    of visible
+  ){
 
     const trafficCar=
       item.trafficCar;
 
-    const distance=
-      item.distance;
-
-    let depth=
-      1-distance/5000;
-
-    depth=clamp(
-      depth,
-      0,
-      1
-    );
-
-    // Perspective exaggeration
-const perspective=
-  Math.pow(depth,1.55);
-
-    const roadCenter=
-      lerp(
-        centerTop,
-        centerBottom,
-        perspective
+    const screen=
+      getTrafficScreenState(
+        item.distance,
+        trafficCar.lane
       );
 
-    const roadHalf=
-      lerp(
-        roadTopWidth,
-        roadBottomWidth,
-        perspective
-      );
-
-const screenX =
-  roadCenter +
-  trafficCar.lane *
-  roadHalf *
-  1.12;
-
-    const screenY=
-      horizon+
-      perspective*
-      (roadBottom-horizon);
-
-const vehicleWidth =
-  6 +
-  perspective * 125;
-
-const vehicleHeight =
-  vehicleWidth * .58;
-
-    drawPerspectiveCar(
-      screenX,
-      screenY,
-      vehicleWidth,
-      vehicleHeight,
-      trafficCar.color,
-      trafficCar.direction===-1
-    );
-
+drawPerspectiveCar(
+  screen.x,
+  screen.y,
+  screen.width,
+  screen.height,
+  trafficCar.color,
+  trafficCar.direction===-1
+);
   }
-
 }
 
 function drawPerspectiveCar(
@@ -1112,6 +1943,58 @@ function drawPerspectiveCar(
   );
 
   if(oncoming){
+
+/*
+  Headlight glow becomes stronger as the level moves
+  from sunset into night.
+*/
+const darkness=
+  clamp(
+    (car.z/(trackLength-SEG*5)-0.55)/0.45,
+    0,
+    1
+  );
+
+if(darkness>0){
+
+  const glow=
+    X.createRadialGradient(
+      x,
+      y-h*.15,
+      2,
+      x,
+      y-h*.15,
+      Math.max(8,w*.75)
+    );
+
+  glow.addColorStop(
+    0,
+    'rgba(255, 244, 170, '+
+    (darkness*0.42)+
+    ')'
+  );
+
+  glow.addColorStop(
+    1,
+    'rgba(255, 244, 170, 0)'
+  );
+
+  X.fillStyle=glow;
+
+  X.beginPath();
+
+  X.ellipse(
+    x,
+    y-h*.12,
+    Math.max(8,w*.80),
+    Math.max(4,h*.30),
+    0,
+    0,
+    Math.PI*2
+  );
+
+  X.fill();
+}
 
     // Headlights for oncoming traffic
     X.fillStyle='#fff3a2';
@@ -1284,39 +2167,82 @@ function cockpit(){
   X.fillRect(20,294,145,2);
   X.fillRect(476,294,145,2);
 
-  // =========================================================
-  // LEFT WINDSHIELD PILLAR
-  // =========================================================
+// =========================================================
+// LEFT WINDSHIELD PILLAR
+// Continues diagonally from the upper-left screen edge
+// into the dashboard.
+// =========================================================
 
-  poly(
-    '#181d21',
-    {x:0,y:180},
-    {x:18,y:180},
-    {x:75,y:294},
-    {x:34,y:303},
-    {x:0,y:266}
-  );
+poly(
+  '#181d21',
+  {x: 0,  y: 0},
+  {x: 12, y: 0},
+  {x: 30, y: 105},
+  {x: 79, y: 294},
+  {x: 35, y: 304},
+  {x: 0,  y: 268}
+);
 
-  X.fillStyle='#4b5052';
-  X.fillRect(15,202,3,65);
+// Inner pillar highlight follows the angle.
+poly(
+  '#4b5052',
+  {x: 12, y: 0},
+  {x: 16, y: 0},
+  {x: 35, y: 106},
+  {x: 70, y: 285},
+  {x: 65, y: 287},
+  {x: 30, y: 108}
+);
 
-  // =========================================================
-  // RIGHT WINDSHIELD PILLAR
-  // =========================================================
+// Dark inner edge gives the pillar more depth.
+poly(
+  '#0b0e10',
+  {x: 16, y: 0},
+  {x: 21, y: 0},
+  {x: 42, y: 108},
+  {x: 80, y: 294},
+  {x: 74, y: 295},
+  {x: 36, y: 109}
+);
 
-  poly(
-    '#181d21',
-    {x:640,y:180},
-    {x:623,y:180},
-    {x:566,y:294},
-    {x:606,y:303},
-    {x:640,y:266}
-  );
+// =========================================================
+// RIGHT WINDSHIELD PILLAR
+// Mirrored continuation to the upper-right screen edge.
+// =========================================================
 
-  X.fillStyle='#4b5052';
-  X.fillRect(622,202,3,65);
+poly(
+  '#181d21',
+  {x: 640, y: 0},
+  {x: 628, y: 0},
+  {x: 610, y: 105},
+  {x: 561, y: 294},
+  {x: 605, y: 304},
+  {x: 640, y: 268}
+);
 
-  // =========================================================
+// Inner pillar highlight.
+poly(
+  '#4b5052',
+  {x: 628, y: 0},
+  {x: 624, y: 0},
+  {x: 605, y: 106},
+  {x: 570, y: 285},
+  {x: 575, y: 287},
+  {x: 610, y: 108}
+);
+
+// Dark inner edge.
+poly(
+  '#0b0e10',
+  {x: 624, y: 0},
+  {x: 619, y: 0},
+  {x: 598, y: 108},
+  {x: 560, y: 294},
+  {x: 566, y: 295},
+  {x: 604, y: 109}
+);
+
+// =========================================================
 // REAR VIEW MIRROR
 // Mounted high against top of windshield
 // =========================================================
@@ -1384,38 +2310,54 @@ poly(
   // =========================================================
 
   // Main hood
-  poly(
-    '#111518',
-    {x:45,y:350},
-    {x:62,y:311},
-    {x:100,y:284},
-    {x:145,y:273},
-    {x:218,y:276},
-    {x:252,y:293},
-    {x:273,y:350}
-  );
+poly(
+  '#111518',
+  {x:35,y:350},
+  {x:45,y:315},
+  {x:72,y:292},
+  {x:100,y:284},
+  {x:145,y:273},
+  {x:218,y:276},
+  {x:252,y:293},
+  {x:273,y:350}
+);
 
   // Gray trim around instrument hood
   X.strokeStyle='#62696b';
   X.lineWidth=4;
 
-  X.beginPath();
-  X.moveTo(49,347);
-  X.quadraticCurveTo(73,278,146,276);
-  X.quadraticCurveTo(231,274,269,347);
-  X.stroke();
+X.beginPath();
+
+X.moveTo(38,347);
+
+X.quadraticCurveTo(
+  50,
+  285,
+  146,
+  276
+);
+
+X.quadraticCurveTo(
+  231,
+  274,
+  269,
+  347
+);
+
+X.stroke();
 
   // Inner black cluster
-  poly(
-    '#050708',
-    {x:66,y:344},
-    {x:81,y:308},
-    {x:107,y:288},
-    {x:151,y:282},
-    {x:205,y:288},
-    {x:238,y:310},
-    {x:253,y:344}
-  );
+poly(
+  '#050708',
+  {x:48,y:344},
+  {x:57,y:316},
+  {x:78,y:297},
+  {x:107,y:288},
+  {x:151,y:282},
+  {x:205,y:288},
+  {x:238,y:310},
+  {x:253,y:344}
+);
 
   // =========================================================
   // LARGE SPEEDOMETER
@@ -1490,7 +2432,7 @@ poly(
   X.lineWidth=2;
   X.strokeRect(135,340,65,22);
 
-  X.fillStyle='#67ff8a';
+X.fillStyle='#18E9FF';
   X.font='bold 9px monospace';
   X.textAlign='left';
 
@@ -1557,13 +2499,13 @@ poly(
   X.fillStyle='#050a09';
   X.fillRect(287,315,113,25);
 
-  // futuristic green display
-  X.fillStyle='#55f59a';
+  // futuristic blue display
+X.fillStyle='#18E9FF';
   X.font='8px monospace';
   X.textAlign='center';
 
   X.fillText(
-    'VECTOR DRIVE',
+    'RETRO DRIVE by Matt',
     343,
     326
   );
@@ -1662,6 +2604,265 @@ poly(
     {x:459,y:400}
   );
 
+// =========================================================
+// DASH PLUSHIES
+// Snowman + Pumpkin
+// Fixed decorations below windshield
+// =========================================================
+
+// ---------------------------------------------------------
+// SNOWMAN PLUSHIE
+// ---------------------------------------------------------
+
+const plushY=300;
+
+// Soft shadow under snowman
+X.fillStyle='#0006';
+X.fillRect(
+  483,
+  plushY-3,
+  29,
+  5
+);
+
+// Snowman lower body
+X.fillStyle='#e9f4f5';
+
+X.beginPath();
+X.arc(
+  497,
+  plushY-13,
+  12,
+  0,
+  Math.PI*2
+);
+X.fill();
+
+// Snowman head
+X.fillStyle='#f4fbfc';
+
+X.beginPath();
+X.arc(
+  497,
+  plushY-30,
+  9,
+  0,
+  Math.PI*2
+);
+X.fill();
+
+// Snowman pixel outline/shadow
+X.strokeStyle='#9eb6ba';
+X.lineWidth=1;
+
+X.beginPath();
+X.arc(
+  497,
+  plushY-30,
+  9,
+  0,
+  Math.PI*2
+);
+X.stroke();
+
+X.beginPath();
+X.arc(
+  497,
+  plushY-11.8,
+  11.5,
+  0,
+  Math.PI*2
+);
+X.stroke();
+
+// Eyes
+X.fillStyle='#182025';
+
+X.fillRect(
+  492,
+  plushY-34,
+  3,
+  3
+);
+
+X.fillRect(
+  500,
+  plushY-34,
+  3,
+  3
+);
+
+// Carrot nose
+X.fillStyle='#ff8b24';
+
+poly(
+  '#ff8b24',
+  {x:497,y:plushY-29},
+  {x:506,y:plushY-27},
+  {x:497,y:plushY-26}
+);
+
+// Snowman happy pixel smile
+X.fillStyle='#20282c';
+
+X.fillRect(493,plushY-27,2,1);
+X.fillRect(495,plushY-25,2,1);
+X.fillRect(497,plushY-24,2,1);
+X.fillRect(499,plushY-25,2,1);
+X.fillRect(501,plushY-27,2,1);
+
+// Buttons
+X.fillStyle='#20282c';
+
+X.fillRect(
+  496,
+  plushY-18,
+  2,
+  2
+);
+
+X.fillRect(
+  496,
+  plushY-12,
+  2,
+  2
+);
+
+// Cyan scarf to match the interior
+X.fillStyle='#18E9FF';
+
+X.fillRect(
+  488,
+  plushY-23,
+  18,
+  3
+);
+
+X.fillRect(
+  501,
+  plushY-21,
+  4,
+  8
+);
+
+// ---------------------------------------------------------
+// PUMPKIN PLUSHIE
+// ---------------------------------------------------------
+
+// Soft shadow
+X.fillStyle='#0006';
+
+X.fillRect(
+  520,
+  plushY-4,
+  31,
+  5
+);
+
+// Main pumpkin
+X.fillStyle='#e87324';
+
+X.beginPath();
+X.arc(
+  535,
+  plushY-15,
+  14,
+  0,
+  Math.PI*2
+);
+X.fill();
+
+// Left pumpkin lobe
+X.fillStyle='#f1872d';
+
+X.beginPath();
+X.arc(
+  529,
+  plushY-15,
+  9,
+  0,
+  Math.PI*2
+);
+X.fill();
+
+// Right pumpkin lobe
+X.beginPath();
+X.arc(
+  541,
+  plushY-15,
+  9,
+  0,
+  Math.PI*2
+);
+X.fill();
+
+// Center pumpkin lobe
+X.fillStyle='#ed7924';
+
+X.beginPath();
+X.arc(
+  535,
+  plushY-15,
+  9,
+  0,
+  Math.PI*2
+);
+X.fill();
+
+// Stem
+X.fillStyle='#47763b';
+
+X.fillRect(
+  532,
+  plushY-32,
+  6,
+  7
+);
+
+// Eyes
+X.fillStyle='#2a211c';
+
+poly(
+  '#2a211c',
+  {x:527,y:plushY-18},
+  {x:531,y:plushY-21},
+  {x:532,y:plushY-16}
+);
+
+poly(
+  '#2a211c',
+  {x:538,y:plushY-16},
+  {x:539,y:plushY-21},
+  {x:543,y:plushY-18}
+);
+
+// Small plush pumpkin smile
+X.strokeStyle='#2a211c';
+X.lineWidth=1;
+
+X.beginPath();
+X.moveTo(
+  529,
+  plushY-11
+);
+
+X.lineTo(
+  533,
+  plushY-8
+);
+
+X.lineTo(
+  537,
+  plushY-10
+);
+
+X.lineTo(
+  541,
+  plushY-8
+);
+
+X.stroke();
+
   // Passenger side trim
   X.fillStyle='#4b5254';
   X.fillRect(468,319,145,3);
@@ -1690,16 +2891,276 @@ poly(
 
   }
 
+
+
   // glove compartment outline
   X.strokeStyle='#41494c';
   X.strokeRect(483,369,119,25);
+
+
+// =========================================================
+// DOG AIR FRESHENER - LARGE VERSION
+// =========================================================
+
+/*
+  Small sideways swing based on steering.
+  The ornament swings opposite the direction of the car.
+*/
+const freshenerSwing=
+  -car.visualSteer*6;
+
+// ---------------------------------------------------------
+// ATTACHMENT POINT
+// One vent slot higher than before.
+// ---------------------------------------------------------
+
+const freshenerAnchorX=541;
+const freshenerAnchorY=341;
+
+const freshenerX=
+  freshenerAnchorX+
+  freshenerSwing;
+
+const freshenerY=351;
+
+// ---------------------------------------------------------
+// ELASTIC BAND
+// ---------------------------------------------------------
+
+X.strokeStyle='#eeeeea';
+X.lineWidth=1;
+
+// Left strand.
+X.beginPath();
+
+X.moveTo(
+  534,
+  freshenerAnchorY
+);
+
+X.lineTo(
+  freshenerX,
+  freshenerY
+);
+
+X.stroke();
+
+// Right strand.
+X.beginPath();
+
+X.moveTo(
+  548,
+  freshenerAnchorY
+);
+
+X.lineTo(
+  freshenerX,
+  freshenerY
+);
+
+X.stroke();
+
+// ---------------------------------------------------------
+// MOVE DOG WITH STEERING
+// ---------------------------------------------------------
+
+X.save();
+
+X.translate(
+  freshenerX-541,
+  -17
+);
+
+// ---------------------------------------------------------
+// DARK OUTLINE
+// ---------------------------------------------------------
+
+X.fillStyle='#151718';
+
+X.beginPath();
+X.moveTo(541,357);
+X.lineTo(525,364);
+X.lineTo(521,378);
+X.lineTo(525,391);
+X.lineTo(531,399);
+X.lineTo(551,399);
+X.lineTo(557,391);
+X.lineTo(561,378);
+X.lineTo(557,364);
+X.closePath();
+X.fill();
+
+// ---------------------------------------------------------
+// MAIN TAN DOG FACE
+// ---------------------------------------------------------
+
+X.fillStyle='#d7b77c';
+
+X.beginPath();
+X.moveTo(541,360);
+X.lineTo(528,365);
+X.lineTo(525,378);
+X.lineTo(529,389);
+X.lineTo(535,395);
+X.lineTo(547,395);
+X.lineTo(553,389);
+X.lineTo(557,378);
+X.lineTo(554,365);
+X.closePath();
+X.fill();
+
+// ---------------------------------------------------------
+// FOLDED EARS
+// ---------------------------------------------------------
+
+X.fillStyle='#b58b52';
+
+// Left ear.
+X.beginPath();
+X.moveTo(529,366);
+X.lineTo(521,362);
+X.lineTo(524,376);
+X.lineTo(531,379);
+X.closePath();
+X.fill();
+
+// Right ear.
+X.beginPath();
+X.moveTo(553,366);
+X.lineTo(561,363);
+X.lineTo(558,377);
+X.lineTo(551,379);
+X.closePath();
+X.fill();
+
+// ---------------------------------------------------------
+// LIGHT FACE MARKING
+// ---------------------------------------------------------
+
+X.fillStyle='#eed69f';
+
+X.fillRect(
+  536,
+  364,
+  10,
+  15
+);
+
+// ---------------------------------------------------------
+// EYES
+// ---------------------------------------------------------
+
+X.fillStyle='#30271f';
+
+X.fillRect(
+  530,
+  376,
+  4,
+  4
+);
+
+X.fillRect(
+  548,
+  376,
+  4,
+  4
+);
+
+// Tiny eye highlights.
+X.fillStyle='#eeeecc';
+
+X.fillRect(
+  531,
+  376,
+  1,
+  1
+);
+
+X.fillRect(
+  549,
+  376,
+  1,
+  1
+);
+
+// ---------------------------------------------------------
+// MUZZLE
+// ---------------------------------------------------------
+
+X.fillStyle='#8e8171';
+
+X.fillRect(
+  534,
+  381,
+  14,
+  9
+);
+
+// Nose.
+X.fillStyle='#151515';
+
+X.fillRect(
+  539,
+  381,
+  6,
+  4
+);
+
+// ---------------------------------------------------------
+// LARGE NECK / TAG AREA
+// ---------------------------------------------------------
+
+X.fillStyle='#17252b';
+
+X.fillRect(
+  517,
+  394,
+  48,
+  16
+);
+
+// Cyan upper trim matching the dashboard.
+X.fillStyle='#18E9FF';
+
+X.fillRect(
+  517,
+  394,
+  48,
+  2
+);
+
+// ---------------------------------------------------------
+// BEST PUP / CHEY
+// ---------------------------------------------------------
+
+X.textAlign='center';
+
+X.fillStyle='#ffffff';
+X.font='bold 6px monospace';
+
+X.fillText(
+  'BEST PUP',
+  541,
+  402
+);
+
+X.fillStyle='#18E9FF';
+X.font='bold 7px monospace';
+
+X.fillText(
+  'CHEY',
+  541,
+  409
+);
+
+X.restore();
 
   // =========================================================
   // STEERING WHEEL
   // =========================================================
 
-  let cx=151;
-  let cy=375;
+  let cx=135;
+  let cy=380;
 
   // actual steering position
   let ang=car.visualSteer*.90;
@@ -1784,12 +3245,12 @@ poly(
   X.stroke();
 
   // 1987-future logo
-  X.fillStyle='#5eff91';
+X.fillStyle='#18E9FF';
   X.font='bold 9px monospace';
   X.textAlign='center';
 
   X.fillText(
-    'V',
+    'M',
     0,
     -2
   );
@@ -1856,7 +3317,7 @@ function hud(){
  X.fillText(
   'FINISH '+
   dist.toFixed(1)+
-  ' KM',
+  ' mi',
   110,42
  );
 
@@ -2109,123 +3570,389 @@ function drawCrackedWindshield(){
 
 }
 
+function getDrivingGrade(stats){
+
+  if(!stats){
+    return 'COMPLETE';
+  }
+
+  /*
+    Finishing is already the main accomplishment.
+
+    The grade is therefore generous and acts as a fun
+    summary rather than another failure condition.
+  */
+
+  let gradeScore=0;
+
+  // Vehicle condition.
+  gradeScore+=
+    stats.condition*
+    0.35;
+
+  // Fuel management.
+  gradeScore+=
+    stats.fuel*
+    0.20;
+
+  // Checkpoints.
+  gradeScore+=
+    (
+      stats.checkpoints/
+      checkpoints.length
+    )*
+    25;
+
+  // Completion-time bonus.
+  gradeScore+=
+    clamp(
+      (165-stats.time)/65,
+      0,
+      1
+    )*
+    20;
+
+  if(gradeScore>=90)return 'S';
+  if(gradeScore>=80)return 'A';
+  if(gradeScore>=70)return 'B';
+  if(gradeScore>=60)return 'C';
+
+  return 'ROAD CHAMPION';
+}
+
+function drawGasStationVictory(){
+
+  const stats=
+    finalRunStats||{
+      time:gameTime,
+      averageSpeed:0,
+      topSpeed:topSpeedMph,
+      distanceMiles:car.z/1609.344,
+      checkpoints:nextCheckpoint,
+      score,
+      fuel:car.fuel,
+      condition:Math.max(0,100-car.damage)
+    };
+
+  // =======================================================
+  // VICTORY BACKGROUND IMAGE
+  // =======================================================
+
+  /*
+    vintage2door.png becomes the complete background.
+
+    The image is stretched to exactly match the
+    640 x 400 game canvas.
+  */
+  if(victoryImage.complete){
+
+    X.drawImage(
+      victoryImage,
+      0,
+      0,
+      W,
+      H
+    );
+
+  }else{
+
+    // Simple fallback in case the image hasn't loaded yet.
+    X.fillStyle='#142546';
+    X.fillRect(
+      0,
+      0,
+      W,
+      H
+    );
+  }
+
+  // =======================================================
+  // LEVEL COMPLETE HEADING
+  // =======================================================
+
+  X.fillStyle='#000b';
+
+  X.fillRect(
+    18,
+    12,
+    604,
+    58
+  );
+
+  X.strokeStyle='#65ff94';
+  X.lineWidth=2;
+
+  X.strokeRect(
+    18,
+    12,
+    604,
+    58
+  );
+
+  X.fillStyle='#65ff94';
+  X.font='bold 24px monospace';
+  X.textAlign='center';
+
+  const difficultyName=
+    difficultyMultiplier===1
+      ? 'EASY'
+      : difficultyMultiplier===2
+        ? 'NORMAL'
+        : 'HARD';
+
+  X.fillText(
+    'LEVEL COMPLETE ['+
+    difficultyName+
+    ']',
+    W/2,
+    42
+  );
+
+  X.fillStyle='#ffe27a';
+  X.font='11px monospace';
+
+  X.fillText(
+    'COASTAL RUN FINISHED - VEHICLE SAFE',
+    W/2,
+    60
+  );
+
+  // =======================================================
+  // RUN REPORT
+  // =======================================================
+
+  X.fillStyle='#071018e8';
+
+  X.fillRect(
+    355,
+    274,
+    267,
+    116
+  );
+
+  X.strokeStyle='#6d93a3';
+  X.lineWidth=2;
+
+  X.strokeRect(
+    355,
+    274,
+    267,
+    116
+  );
+
+  X.fillStyle='#75eaff';
+  X.font='bold 11px monospace';
+  X.textAlign='left';
+
+  X.fillText(
+    '2020 ROAD COMPUTER - RUN REPORT',
+    369,
+    292
+  );
+
+  const minutes=
+    Math.floor(
+      stats.time/60
+    );
+
+  const seconds=
+    String(
+      Math.floor(stats.time%60)
+    ).padStart(2,'0');
+
+  X.fillStyle='#ffffff';
+  X.font='10px monospace';
+
+  X.fillText(
+    'TIME        '+
+    minutes+
+    ':'+
+    seconds,
+    369,
+    311
+  );
+
+  X.fillText(
+    'AVG SPEED   '+
+    Math.round(stats.averageSpeed)+
+    ' MPH',
+    369,
+    327
+  );
+
+  X.fillText(
+    'TOP SPEED   '+
+    Math.round(stats.topSpeed)+
+    ' MPH',
+    369,
+    343
+  );
+
+  X.fillText(
+    'DISTANCE    '+
+    stats.distanceMiles.toFixed(1)+
+    ' MI',
+    369,
+    359
+  );
+
+  X.fillText(
+    'FUEL LEFT   '+
+    Math.round(stats.fuel)+
+    '%',
+    500,
+    311
+  );
+
+  X.fillText(
+    'CONDITION   '+
+    Math.round(stats.condition)+
+    '%',
+    500,
+    327
+  );
+
+  X.fillText(
+    'SCORE       '+
+    String(stats.score).padStart(4,'0'),
+    500,
+    343
+  );
+
+  X.fillStyle='#ffe27a';
+  X.font='bold 11px monospace';
+
+  X.fillText(
+    'GRADE: '+
+    getDrivingGrade(stats),
+    500,
+    361
+  );
+
+  X.textAlign='center';
+  X.fillStyle='#bce8ef';
+  X.font='9px monospace';
+
+  X.fillText(
+    '[ PRESS R TO RETURN TO MENU ]',
+    488,
+    381
+  );
+}
+
 function overlay(){
+
+  // =======================================================
+  // COLLISION SCREEN
+  // =======================================================
 
   if(crashed){
 
     drawCrackedWindshield();
 
-    X.fillStyle='#000b';
+    X.fillStyle='#000d';
 
     X.fillRect(
-      125,
-      115,
-      390,
-      112
+      95,
+      105,
+      450,
+      145
     );
 
     X.strokeStyle='#ff554f';
     X.lineWidth=3;
 
     X.strokeRect(
-      125,
-      115,
-      390,
-      112
+      95,
+      105,
+      450,
+      145
     );
 
     X.textAlign='center';
 
-    X.font='bold 31px monospace';
+    X.font='bold 24px monospace';
     X.fillStyle='#ff554f';
 
     X.fillText(
-      'COLLISION',
+      'OH NO, YOU CRASHED!',
       W/2,
-      154
-    );
-
-    X.font='bold 14px monospace';
-    X.fillStyle='#ffffff';
-
-    X.fillText(
-      'VEHICLE DISABLED',
-      W/2,
-      181
+      145
     );
 
     X.font='12px monospace';
+    X.fillStyle='#ffffff';
+
+    X.fillText(
+      'Watch for other cars next time.',
+      W/2,
+      180
+    );
+
+    X.font='bold 12px monospace';
     X.fillStyle='#ffe778';
 
     X.fillText(
-      'PRESS R OR XBOX VIEW TO RESTART',
+      '[ PRESS R TO RESTART DRIVE ]',
       W/2,
-      207
+      220
     );
 
     return;
-
   }
 
-  if(paused||finished||lost){
+  // =======================================================
+  // LEVEL-COMPLETE GAS-STATION SCREEN
+  // =======================================================
+
+  if(finished){
+
+    drawGasStationVictory();
+
+    return;
+  }
+
+  // =======================================================
+  // PAUSED OR TIME-EXPIRED SCREEN
+  // =======================================================
+
+  if(paused||lost){
 
     X.fillStyle='#000b';
-    X.fillRect(0,0,W,H);
+    X.fillRect(
+      0,
+      0,
+      W,
+      H
+    );
 
     X.textAlign='center';
     X.font='bold 34px monospace';
 
     X.fillStyle=
-      finished?
-      '#62f298':
-      lost?
-      '#ff625f':
-      '#ffe058';
+      lost
+        ? '#ff625f'
+        : '#ffe058';
 
     X.fillText(
-      finished?
-      'LEVEL COMPLETE':
-      lost?
-      'TIME EXPIRED':
-      'PAUSED',
+      lost
+        ? 'TIME EXPIRED'
+        : 'PAUSED',
       W/2,
       175
     );
 
     X.font='14px monospace';
-    X.fillStyle='#fff';
-
-    if(finished){
-
-      X.fillText(
-        'Time '+
-        Math.floor(gameTime/60)+
-        ':'+
-        String(
-          Math.floor(gameTime%60)
-        ).padStart(2,'0')+
-        '   Damage '+
-        car.damage.toFixed(0)+
-        '%',
-        W/2,
-        205
-      );
-
-    }
+    X.fillStyle='#ffffff';
 
     X.fillText(
-      'Press R / View to restart'+
-      (
-        paused?
-        '   P / Menu to resume':
-        ''
-      ),
+      lost
+        ? 'Press R / View to restart'
+        : 'Press R / View to restart   P / Menu to resume',
       W/2,
       235
     );
-
   }
-
 }
 
 function frame(t){
