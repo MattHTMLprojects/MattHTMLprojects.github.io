@@ -186,6 +186,20 @@
       line-height: 1.45;
     }
 
+.mobile-controls {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .desktop-controls {
+    display: none;
+  }
+
+  .mobile-controls {
+    display: block;
+  }
+}
+
     .panel ul {
       margin: 0;
       padding-left: 19px;
@@ -204,25 +218,102 @@
       text-align: center;
     }
 
-    @media (max-width: 760px) {
-      body {
-        padding: 8px;
-      }
+@media (max-width: 760px) {
+  body {
+    display: block;
+    padding: 8px;
+  }
 
-      .title-row {
-        align-items: start;
-        flex-direction: column;
-      }
+  .shell {
+    width: 100%;
+  }
 
-      .instructions {
-        grid-template-columns: 1fr;
-      }
+  .title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 6px;
+  }
 
-      .character-button {
-        min-height: 88px;
-        font-size: 11px;
-      }
-    }
+  h1 {
+    font-size: 30px;
+    letter-spacing: -2px;
+  }
+
+  .subtitle {
+    margin-bottom: 2px;
+  }
+
+  .frame {
+    width: 100%;
+    border-width: 3px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  #game {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 7;
+    touch-action: none;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .card h2 {
+    font-size: 24px;
+  }
+
+  .card p {
+    font-size: 11px;
+    margin: 6px 0;
+  }
+
+  .picker {
+    gap: 5px;
+    margin: 10px 0;
+  }
+
+  .character-button {
+    min-height: 76px;
+    padding: 4px;
+    font-size: 10px;
+  }
+
+  .preview {
+    height: 48px;
+  }
+
+  .start-button {
+    padding: 10px 18px;
+  }
+
+  .instructions {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .panel {
+    padding: 10px;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+.frame:has(.overlay:not([hidden])) {
+  min-height: 430px;
+}
+
+.frame:has(.overlay:not([hidden])) #game {
+  position: absolute;
+  inset: 0;
+}
+
+.overlay {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+}
   </style>
 </head>
 
@@ -238,7 +329,7 @@
         id="game"
         width="1200"
         height="525"
-        aria-label="TinyDino skateboarding game"
+        aria-label="TinyDino skateboarding game. Tap the game to ollie on touch devices."
       ></canvas>
 
       <section class="overlay" id="overlay">
@@ -311,7 +402,7 @@
       </section>
     </div>
 
-    <section class="instructions">
+    <section class="instructions desktop-controls">
       <article class="panel">
         <h2>Basic controls</h2>
         <ul>
@@ -341,6 +432,24 @@
         <p>Manual → Tre Flip → Manual</p>
       </article>
     </section>
+
+<section class="instructions mobile-controls">
+  <article class="panel">
+    <h2>Mobile Controls</h2>
+
+    <p>
+      <strong>Tap anywhere inside the game to ollie.</strong>
+    </p>
+
+    <p>
+      Time your jumps to clear obstacles and stair lines.
+    </p>
+
+    <p>
+      Keep skating as the course gets faster and see how far you can go!
+    </p>
+  </article>
+</section>
   </main>
 
   <script>
@@ -539,6 +648,34 @@
         }
       ];
 
+const DIFFICULTY = Object.freeze({
+  startSpeed: 315,
+
+  // Speed rises until this point.
+  maxSpeed: 520,
+  speedIncreasePerSecond: 2.8,
+
+  // Spawning gets progressively quicker.
+  startSpawnMin: 1.55,
+  startSpawnRandom: 1.0,
+
+  // Do not let obstacles become ridiculously close together.
+  minimumSpawnTime: 0.82,
+
+  // Number of seconds before spawn timing reaches maximum difficulty.
+  spawnRampTime: 95,
+
+  // After this point, difficulty comes mostly from obstacle patterns.
+  clusterStartTime: 70,
+
+  // Maximum chance of getting a second obstacle.
+  maxClusterChance: 0.32,
+
+  // Cluster spacing in pixels.
+  clusterGapMin: 175,
+  clusterGapMax: 245
+});
+
       function clamp(value, minimum, maximum) {
         return Math.max(minimum, Math.min(maximum, value));
       }
@@ -598,7 +735,7 @@
         game.elapsed = 0;
         game.distance = 0;
         game.score = 0;
-        game.speed = 315;
+        game.speed = DIFFICULTY.startSpeed;
         game.spawnTimer = 1.7;
         game.spaceHeld = false;
 
@@ -635,34 +772,94 @@
         return obstacleTypes[0];
       }
 
-      function spawnCourseElement() {
-        const terrainAllowed =
-          game.terrain.length === 0 &&
-          game.obstacles.length === 0 &&
-          game.elapsed > 5;
+  function spawnCourseElement() {
+  const terrainAllowed =
+    game.terrain.length === 0 &&
+    game.obstacles.length === 0 &&
+    game.elapsed > 5;
 
-        if (terrainAllowed && Math.random() < 0.31) {
-          spawnTerrain();
-        } else {
-          spawnObstacle();
-        }
+  /*
+    Terrain remains fairly uncommon because stair sections
+    require more room than normal obstacles.
+  */
+  if (terrainAllowed && Math.random() < 0.27) {
+    spawnTerrain();
+  } else {
+    spawnObstacle();
 
-        game.spawnTimer =
-          Math.max(1.3, 1.85 - game.speed / 1900) +
-          Math.random() * 1.05;
+    /*
+      Later in the run, occasionally create a second obstacle.
+
+      The second obstacle is deliberately spaced far enough
+      away that the player can land and ollie again.
+    */
+    if (game.elapsed >= DIFFICULTY.clusterStartTime) {
+      const clusterProgress = clamp(
+        (game.elapsed - DIFFICULTY.clusterStartTime) / 100,
+        0,
+        1
+      );
+
+      const clusterChance =
+        DIFFICULTY.maxClusterChance * clusterProgress;
+
+      if (Math.random() < clusterChance) {
+        const gap =
+          DIFFICULTY.clusterGapMin +
+          Math.random() *
+            (DIFFICULTY.clusterGapMax -
+              DIFFICULTY.clusterGapMin);
+
+        spawnObstacleAt(WIDTH + 45 + gap);
       }
+    }
+  }
 
-      function spawnObstacle() {
-        const source = chooseObstacle();
+  /*
+    Spawn timing gets faster during the first part of the run,
+    then stops shrinking so the game remains playable.
+  */
+  const spawnProgress = clamp(
+    game.elapsed / DIFFICULTY.spawnRampTime,
+    0,
+    1
+  );
 
-        game.obstacles.push({
-          ...source,
-          x: WIDTH + 45,
-          groundY: BASE_GROUND,
-          mirror: Math.random() < 0.5,
-          cleared: false
-        });
-      }
+  const baseDelay = lerp(
+    DIFFICULTY.startSpawnMin,
+    DIFFICULTY.minimumSpawnTime,
+    spawnProgress
+  );
+
+  /*
+    Some randomness prevents the course from feeling like
+    a metronome.
+  */
+  const randomness = lerp(
+    DIFFICULTY.startSpawnRandom,
+    0.58,
+    spawnProgress
+  );
+
+  game.spawnTimer =
+    baseDelay + Math.random() * randomness;
+}
+
+ function spawnObstacle() {
+  spawnObstacleAt(WIDTH + 45);
+}
+
+function spawnObstacleAt(x) {
+  const source = chooseObstacle();
+
+  game.obstacles.push({
+    ...source,
+    x,
+    groundY: BASE_GROUND,
+    mirror: Math.random() < 0.5,
+    cleared: false
+  });
+}
 
       /*
         One continuous terrain feature:
@@ -1469,11 +1666,11 @@
         game.distance += game.speed * dt * 0.01;
         game.score += dt * 11;
 
-        game.speed =
-          Math.min(
-            565,
-            315 + game.elapsed * 3.4
-          );
+game.speed = Math.min(
+  DIFFICULTY.maxSpeed,
+  DIFFICULTY.startSpeed +
+    game.elapsed * DIFFICULTY.speedIncreasePerSecond
+);
 
         game.spawnTimer -= dt;
 
@@ -2471,6 +2668,26 @@
         }
       }
 
+function getSpeedLabel() {
+  if (game.speed < 350) {
+    return "CRUISING";
+  }
+
+  if (game.speed < 400) {
+    return "PICKING UP SPEED";
+  }
+
+  if (game.speed < 450) {
+    return "MOVING FAST";
+  }
+
+  if (game.speed < 495) {
+    return "FLYING";
+  }
+
+  return "WAY TOO FAST!";
+}
+
       function drawHUD() {
         ctx.fillStyle = INK;
         ctx.textBaseline = "top";
@@ -2495,13 +2712,22 @@
           41
         );
 
-        ctx.textAlign = "right";
 
-        ctx.fillText(
-          `${Math.floor(game.speed)} PX/S`,
-          WIDTH - 17,
-          17
-        );
+ctx.textAlign = "right";
+
+ctx.fillText(
+  getSpeedLabel(),
+  WIDTH - 35,
+  17
+);
+
+ctx.font = "bold 11px Courier New";
+
+ctx.fillText(
+  `DISTANCE ${Math.floor(game.distance)} M`,
+  WIDTH - 35,
+  46
+);
 
         if (player.comboItems.length > 0) {
           drawCombo();
@@ -2600,20 +2826,20 @@
         ctx.fillStyle = INK;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.font = "bold 40px Courier New";
+        ctx.font = "bold 50px Courier New";
 
         ctx.fillText(
           "PAUSED",
           WIDTH / 2,
-          HEIGHT / 2 - 12
+          HEIGHT / 3 - 15
         );
 
-        ctx.font = "bold 14px Courier New";
+        ctx.font = "bold 22px Courier New";
 
         ctx.fillText(
           "PRESS P TO CONTINUE",
           WIDTH / 2,
-          HEIGHT / 2 + 25
+          HEIGHT / 2 + 10
         );
       }
 
@@ -2805,6 +3031,22 @@
         "click",
         startGame
       );
+
+canvas.addEventListener(
+  "pointerdown",
+  event => {
+    event.preventDefault();
+
+    if (
+      game.running &&
+      !game.paused &&
+      !game.gameOver
+    ) {
+      beginOllie();
+    }
+  },
+  { passive: false }
+);
 
       window.addEventListener(
         "keydown",
