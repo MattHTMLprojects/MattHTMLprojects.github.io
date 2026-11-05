@@ -5191,13 +5191,13 @@ function updateSurvival(dt){
 
   const thirstRate=
     moving
-      ?.0080
-      :.0065;
+      ?.0150
+      :.0120;
 
   const hungerRate=
     moving
-      ?.0065
-      :.0055;
+      ?.0100
+      :.0080;
 
   player.thirst=Math.max(
     0,
@@ -9615,9 +9615,6 @@ function restUntilMorning(
 
   state.time=420;
 
-  if(minutesUntilMorning>0){
-    state.day++;
-  }
 
   shelter.rested++;
 
@@ -9646,13 +9643,13 @@ function advanceRestTime(minutes){
   state.player.thirst=Math.max(
     0,
     state.player.thirst-
-      minutes*.012
+      minutes*.030
   );
 
   state.player.hunger=Math.max(
     0,
     state.player.hunger-
-      minutes*.006
+      minutes*.020
   );
 
   state.player.poison=Math.max(
