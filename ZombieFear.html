@@ -4760,7 +4760,7 @@ function update(dt){
 }
 
 function updateClock(dt){
-  state.time+=dt*1.25;
+  state.time+=dt*0.4;
 
   if(state.time>=1440){
     state.time-=1440;
@@ -5191,13 +5191,13 @@ function updateSurvival(dt){
 
   const thirstRate=
     moving
-      ?.0065
-      :.004;
+      ?.0080
+      :.0065;
 
   const hungerRate=
     moving
-      ?.0027
-      :.0018;
+      ?.0065
+      :.0055;
 
   player.thirst=Math.max(
     0,
