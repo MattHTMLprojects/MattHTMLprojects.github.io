@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Grayscale Blocks</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+
+      --page-bg: #090b10;
+      --panel-bg: #11151d;
+      --panel-inner: #0b0e14;
+      --border: #343c4a;
+      --border-bright: #68748a;
+
+      --text: #e8edf7;
+      --text-muted: #8d98aa;
+      --accent: #7fb4ff;
+      --danger: #ff3b45;
+      --warning: #ffd166;
+      --success: #63e6a5;
+
+      --tile-gap: 2px;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      overflow-x: auto;
+
+      background:
+        radial-gradient(circle at top, #141a25 0%, #090b10 48%, #050609 100%);
+
+      color: var(--text);
+
+      font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .game-shell {
+      width: min(100%, 1020px);
+
+      display: grid;
+      grid-template-columns: minmax(360px, 1fr) 300px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+
+      box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.42),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+    }
+
+    /* -------------------------------------------------- */
+    /* MAIN PLAYFIELD                                     */
+    /* -------------------------------------------------- */
+
+    .play-panel {
+      padding: 16px;
+
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .top-bar {
+      min-height: 60px;
+
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .game-title {
+      margin: 0;
+
+      font-size: 1.25rem;
+      font-weight: 750;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .stat {
+      min-width: 72px;
+      padding: 7px 10px;
+
+      background: var(--panel-inner);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+
+      text-align: center;
+    }
+
+    .stat-label {
+      display: block;
+      margin-bottom: 2px;
+
+      color: var(--text-muted);
+
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+
+    .stat-value {
+      display: block;
+
+      color: var(--text);
+
+      font-size: 1rem;
+      font-weight: 750;
+    }
+
+    .playfield-wrap {
+      position: relative;
+
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+
+      background: #07090d;
+      border: 2px solid var(--border-bright);
+      border-radius: 8px;
+
+      overflow: hidden;
+    }
+
+    #gameCanvas {
+      display: block;
+
+      width: 100%;
+      height: auto;
+
+      background: #090c12;
+    }
+
+    .error-message {
+      position: absolute;
+      left: 50%;
+      top: 42%;
+
+      width: 92%;
+      padding: 14px 12px;
+
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+
+      color: rgba(255, 47, 58, 0.9);
+      background: rgba(8, 8, 10, 0.78);
+      border: 1px solid rgba(255, 59, 69, 0.7);
+      border-radius: 6px;
+
+      font-size: clamp(1rem, 3vw, 1.65rem);
+      font-weight: 850;
+      letter-spacing: 0.06em;
+      text-align: center;
+      text-transform: uppercase;
+
+      opacity: 0;
+    }
+
+    .error-message.show {
+      animation: errorFade 850ms ease-out forwards;
+    }
+
+    @keyframes errorFade {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -42%) scale(0.98);
+      }
+
+      12% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      62% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -57%) scale(1);
+      }
+    }
+
+    .pause-cover {
+      position: absolute;
+      inset: 0;
+
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+
+      background: rgba(5, 7, 11, 0.84);
+      backdrop-filter: blur(2px);
+
+      text-align: center;
+      z-index: 6;
+    }
+
+    .pause-cover.visible {
+      display: flex;
+    }
+
+    .pause-cover strong {
+      font-size: 2rem;
+      letter-spacing: 0.15em;
+    }
+
+    .pause-cover span {
+      color: var(--text-muted);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 7px;
+    }
+
+    .control-key {
+      padding: 9px 5px;
+
+      background: var(--panel-inner);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+
+      color: var(--text-muted);
+
+      font-size: 0.73rem;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .control-key strong {
+      display: block;
+
+      color: var(--text);
+
+      font-size: 0.82rem;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .game-button {
+      min-height: 39px;
+      padding: 8px 14px;
+
+      background: #1a202b;
+      color: var(--text);
+
+      border: 1px solid var(--border-bright);
+      border-radius: 6px;
+
+      cursor: pointer;
+
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .game-button:hover {
+      background: #242d3b;
+    }
+
+    .game-button:active {
+      transform: translateY(1px);
+    }
+
+    /* -------------------------------------------------- */
+    /* RIGHT-SIDE SCREENS                                 */
+    /* -------------------------------------------------- */
+
+    .side-column {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+    }
+
+    .next-panel {
+      padding: 14px;
+    }
+
+    .screen-heading {
+      margin: 0 0 10px;
+
+      color: var(--text-muted);
+
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .next-screen {
+      position: relative;
+
+      width: 256px;
+      height: 256px;
+      margin: 0 auto;
+
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        #080b10;
+
+      background-size: 32px 32px;
+
+      border: 1px solid var(--border-bright);
+      border-radius: 7px;
+
+      overflow: hidden;
+    }
+
+    #nextCanvas {
+      position: absolute;
+      inset: 0;
+
+      display: block;
+
+      width: 256px;
+      height: 256px;
+    }
+
+    .reroll-status {
+      position: absolute;
+      inset: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 18px;
+
+      color: var(--text);
+
+      font-size: 1.5rem;
+      font-weight: 750;
+      letter-spacing: 0.03em;
+      text-align: center;
+
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .reroll-status.visible {
+      opacity: 1;
+    }
+
+    .next-footer {
+      margin-top: 10px;
+
+      display: grid;
+      gap: 8px;
+    }
+
+    .next-countdown {
+      min-height: 20px;
+
+      color: var(--text-muted);
+
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .reroll-button {
+      min-height: 44px;
+      width: 100%;
+
+      background: #182131;
+      color: var(--text);
+
+      border: 1px solid #56749e;
+      border-radius: 7px;
+
+      cursor: pointer;
+
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .reroll-button:hover {
+      background: #22314a;
+    }
+
+    .reroll-button:active {
+      transform: translateY(1px);
+    }
+
+    .reroll-credit {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      padding: 8px 10px;
+
+      background: var(--panel-inner);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+
+      color: var(--text-muted);
+
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+    }
+
+    .reroll-credit strong {
+      color: var(--warning);
+      font-size: 1rem;
+    }
+
+    .log-panel {
+      min-height: 320px;
+      padding: 14px;
+
+      display: flex;
+      flex-direction: column;
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      margin-bottom: 10px;
+    }
+
+    .log-header .screen-heading {
+      margin: 0;
+    }
+
+    .error-count {
+      color: var(--danger);
+
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .log-screen {
+      flex: 1;
+      min-height: 280px;
+      max-height: 480px;
+      padding: 10px;
+
+      overflow-y: auto;
+
+      background: var(--panel-inner);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.78rem;
+      line-height: 1.55;
+    }
+
+    .log-empty {
+      color: #596273;
+    }
+
+    .log-entry {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 7px;
+
+      color: #cfd6e4;
+
+      border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+    }
+
+    .log-number {
+      color: var(--danger);
+    }
+
+    .status-line {
+      color: var(--text-muted);
+    }
+
+    .status-line strong {
+      color: var(--success);
+    }
+
+    /* -------------------------------------------------- */
+    /* RESPONSIVE                                         */
+    /* -------------------------------------------------- */
+
+    @media (max-width: 850px) {
+      body {
+        align-items: flex-start;
+      }
+
+      .game-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .side-column {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+      }
+
+      .next-screen {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 620px) {
+      body {
+        padding: 10px;
+      }
+
+      .side-column {
+        grid-template-columns: 1fr;
+      }
+
+      .top-bar {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+
+      .game-title {
+        grid-column: 1 / -1;
+        text-align: center;
+      }
+
+      .controls {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .next-screen {
+        width: 256px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="game-shell">
+    <!-- ================================================== -->
+    <!-- MAIN PLAYFIELD                                     -->
+    <!-- ================================================== -->
+
+    <section class="panel play-panel">
+      <header class="top-bar">
+        <h1 class="game-title">Grayscale Blocks</h1>
+
+        <div class="stat">
+          <span class="stat-label">SCORE</span>
+          <span class="stat-value" id="scoreValue">0</span>
+        </div>
+
+        <div class="stat">
+          <span class="stat-label">LINES</span>
+          <span class="stat-value" id="linesValue">0</span>
+        </div>
+
+        <div class="stat">
+          <span class="stat-label">LEVEL</span>
+          <span class="stat-value" id="levelValue">1</span>
+        </div>
+      </header>
+
+      <div class="playfield-wrap">
+        <canvas
+          id="gameCanvas"
+          width="320"
+          height="640"
+          aria-label="Falling block game playfield"
+        ></canvas>
+
+        <div class="error-message" id="errorMessage">
+          ERROR
+        </div>
+
+        <div class="pause-cover" id="pauseCover">
+          <strong id="pauseTitle">PAUSED</strong>
+          <span id="pauseText">Press P to continue</span>
+        </div>
+      </div>
+
+<div class="controls">
+  <div class="control-key">
+    <strong>A / D</strong>
+    Move
+  </div>
+
+  <div class="control-key">
+    <strong>S</strong>
+    Soft drop
+  </div>
+
+  <div class="control-key">
+    <strong>X</strong>
+    Hard drop
+  </div>
+
+  <div class="control-key">
+    <strong>R</strong>
+    Rotate
+  </div>
+
+  <div class="control-key">
+    <strong>F</strong>
+    Flip
+  </div>
+
+  <div class="control-key">
+    <strong>P</strong>
+    Pause
+  </div>
+</div>
+
+      <div class="action-row">
+        <button class="game-button" id="newGameButton" type="button">
+          NEW GAME
+        </button>
+
+        <button class="game-button" id="pauseButton" type="button">
+          PAUSE
+        </button>
+
+        <span class="status-line">
+          Piece choice:
+          <strong id="transformStatus">ROTATE OR MIRROR</strong>
+        </span>
+      </div>
+    </section>
+
+    <!-- ================================================== -->
+    <!-- RIGHT-SIDE DISPLAYS                                -->
+    <!-- ================================================== -->
+
+    <aside class="side-column">
+      <section class="panel next-panel">
+        <h2 class="screen-heading">New Tile</h2>
+
+        <div class="next-screen">
+          <canvas
+            id="nextCanvas"
+            width="256"
+            height="256"
+            aria-label="Next tile preview"
+          ></canvas>
+
+          <div class="reroll-status" id="rerollStatus">
+            Okay.....
+          </div>
+        </div>
+
+        <div class="next-footer">
+          <div class="next-countdown" id="nextCountdown">
+            Next piece ready
+          </div>
+
+          <button class="reroll-button" id="rerollButton" type="button">
+            Re-Roll?
+          </button>
+
+          <div class="reroll-credit">
+            <span>RE-ROLL CREDITS</span>
+            <strong id="creditValue">00</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="log-header">
+          <h2 class="screen-heading">Log:</h2>
+          <span class="error-count" id="errorCount">ERRORS: 000</span>
+        </div>
+
+        <div class="log-screen" id="logScreen">
+          <div class="log-empty" id="logEmpty">
+            No incorrect moves recorded.
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    "use strict";
+
+    /* ==================================================== */
+    /* CONFIGURATION                                        */
+    /* ==================================================== */
+
+    const COLS = 10;
+    const ROWS = 20;
+    const BLOCK = 32;
+
+    const INITIAL_DROP_INTERVAL = 720;
+    const MINIMUM_DROP_INTERVAL = 115;
+
+    const NEXT_PIECE_DELAY = 2200;
+    const LINE_FADE_DURATION = 320;
+const TRANSFORM_COOLDOWN = 750; // milliseconds
+
+function randomMetalGray() {
+  const value = Math.floor(Math.random() * (222 - 41 + 1)) + 41;
+
+  return `rgb(${value}, ${value}, ${value})`;
+}
+
+    /*
+      These are the seven familiar tetromino shapes.
+      Their colors are chosen randomly when each piece is created.
+    */
+
+    const SHAPES = {
+      I: [
+        [0, 0, 0, 0],
+        [1, 1, 1, 1],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]
+      ],
+
+      O: [
+        [1, 1],
+        [1, 1]
+      ],
+
+      T: [
+        [0, 1, 0],
+        [1, 1, 1],
+        [0, 0, 0]
+      ],
+
+      S: [
+        [0, 1, 1],
+        [1, 1, 0],
+        [0, 0, 0]
+      ],
+
+      Z: [
+        [1, 1, 0],
+        [0, 1, 1],
+        [0, 0, 0]
+      ],
+
+      J: [
+        [1, 0, 0],
+        [1, 1, 1],
+        [0, 0, 0]
+      ],
+
+      L: [
+        [0, 0, 1],
+        [1, 1, 1],
+        [0, 0, 0]
+      ]
+    };
+
+    const SHAPE_NAMES = Object.keys(SHAPES);
+
+    /* ==================================================== */
+    /* ELEMENTS                                             */
+    /* ==================================================== */
+
+    const gameCanvas = document.getElementById("gameCanvas");
+    const gameContext = gameCanvas.getContext("2d");
+
+    const nextCanvas = document.getElementById("nextCanvas");
+    const nextContext = nextCanvas.getContext("2d");
+
+    const scoreValue = document.getElementById("scoreValue");
+    const linesValue = document.getElementById("linesValue");
+    const levelValue = document.getElementById("levelValue");
+    const creditValue = document.getElementById("creditValue");
+
+    const errorMessage = document.getElementById("errorMessage");
+    const errorCount = document.getElementById("errorCount");
+    const logScreen = document.getElementById("logScreen");
+    const logEmpty = document.getElementById("logEmpty");
+
+    const transformStatus = document.getElementById("transformStatus");
+
+    const nextCountdown = document.getElementById("nextCountdown");
+    const rerollStatus = document.getElementById("rerollStatus");
+    const rerollButton = document.getElementById("rerollButton");
+
+    const pauseCover = document.getElementById("pauseCover");
+    const pauseTitle = document.getElementById("pauseTitle");
+    const pauseText = document.getElementById("pauseText");
+
+    const newGameButton = document.getElementById("newGameButton");
+    const pauseButton = document.getElementById("pauseButton");
+
+    /* ==================================================== */
+    /* GAME STATE                                           */
+    /* ==================================================== */
+
+    let board = createEmptyBoard();
+
+    let activePiece = null;
+    let nextPiece = null;
+
+    let score = 0;
+    let totalLines = 0;
+    let level = 1;
+    let rerollCredits = 0;
+
+    let errorNumber = 0;
+
+    let gameStarted = false;
+    let gameOver = false;
+    let paused = false;
+
+    let waitingForNextPiece = false;
+    let hiddenRerollActive = false;
+
+    let nextPieceDeadline = 0;
+    let rerollTextTimeout = null;
+
+let dropCounter = 0;
+let previousTime = 0;
+
+let lastTransformTime = -Infinity;
+
+    let fadingRows = [];
+    let lineFadeStart = 0;
+    let lineFadeActive = false;
+
+    /* ==================================================== */
+    /* BOARD AND PIECES                                     */
+    /* ==================================================== */
+
+    function createEmptyBoard() {
+      return Array.from(
+        { length: ROWS },
+        () => Array(COLS).fill(null)
+      );
+    }
+
+    function copyMatrix(matrix) {
+      return matrix.map(row => [...row]);
+    }
+
+    function createRandomPiece() {
+      const type =
+        SHAPE_NAMES[
+          Math.floor(Math.random() * SHAPE_NAMES.length)
+        ];
+
+      const matrix = copyMatrix(SHAPES[type]);
+
+      return {
+        type,
+        matrix,
+        color: randomMetalGray(),
+        x: 0,
+        y: 0,
+
+        /*
+          A piece begins undecided.
+
+          "rotate" means the player successfully rotated this piece first.
+          "mirror" means the player successfully mirrored this piece first.
+        */
+        transformChoice: null
+      };
+    }
+
+    function preparePieceForSpawn(piece) {
+      piece.x = Math.floor((COLS - piece.matrix[0].length) / 2);
+      piece.y = -findTopOccupiedRow(piece.matrix);
+      piece.transformChoice = null;
+
+      return piece;
+    }
+
+    function findTopOccupiedRow(matrix) {
+      for (let y = 0; y < matrix.length; y++) {
+        if (matrix[y].some(Boolean)) {
+          return y;
+        }
+      }
+
+      return 0;
+    }
+
+    function spawnNextPiece() {
+      waitingForNextPiece = false;
+      hiddenRerollActive = false;
+
+      clearTimeout(rerollTextTimeout);
+      rerollStatus.classList.remove("visible");
+
+      if (!nextPiece) {
+        nextPiece = createRandomPiece();
+      }
+
+      activePiece = preparePieceForSpawn(nextPiece);
+      nextPiece = createRandomPiece();
+
+      dropCounter = 0;
+      updateTransformStatus();
+      drawNextPreview();
+
+      if (collides(activePiece, activePiece.x, activePiece.y, activePiece.matrix)) {
+        endGame();
+      }
+    }
+
+    /* ==================================================== */
+    /* COLLISION                                            */
+    /* ==================================================== */
+
+    function collides(piece, targetX, targetY, targetMatrix) {
+      for (let y = 0; y < targetMatrix.length; y++) {
+        for (let x = 0; x < targetMatrix[y].length; x++) {
+          if (!targetMatrix[y][x]) {
+            continue;
+          }
+
+          const boardX = targetX + x;
+          const boardY = targetY + y;
+
+          if (boardX < 0 || boardX >= COLS) {
+            return true;
+          }
+
+          if (boardY >= ROWS) {
+            return true;
+          }
+
+          if (
+            boardY >= 0 &&
+            board[boardY][boardX] !== null
+          ) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    function matrixTouchesWall(matrix, targetX) {
+      for (let y = 0; y < matrix.length; y++) {
+        for (let x = 0; x < matrix[y].length; x++) {
+          if (!matrix[y][x]) {
+            continue;
+          }
+
+          const boardX = targetX + x;
+
+          if (boardX < 0 || boardX >= COLS) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    /* ==================================================== */
+    /* MOVEMENT                                             */
+    /* ==================================================== */
+
+    function canControlPiece() {
+      return (
+        gameStarted &&
+        !gameOver &&
+        !paused &&
+        !waitingForNextPiece &&
+        !lineFadeActive &&
+        activePiece !== null
+      );
+    }
+
+    function movePiece(direction) {
+      if (!canControlPiece()) {
+        return;
+      }
+
+      const targetX = activePiece.x + direction;
+
+      if (
+        collides(
+          activePiece,
+          targetX,
+          activePiece.y,
+          activePiece.matrix
+        )
+      ) {
+        logError("MOVE BLOCKED");
+        return;
+      }
+
+      activePiece.x = targetX;
+    }
+
+    function softDrop() {
+      if (!canControlPiece()) {
+        return;
+      }
+
+      if (
+        !collides(
+          activePiece,
+          activePiece.x,
+          activePiece.y + 1,
+          activePiece.matrix
+        )
+      ) {
+        activePiece.y += 1;
+        score += 1;
+        updateStats();
+      } else {
+        lockActivePiece();
+      }
+
+      dropCounter = 0;
+    }
+
+    function automaticDrop() {
+      if (!canControlPiece()) {
+        return;
+      }
+
+      if (
+        !collides(
+          activePiece,
+          activePiece.x,
+          activePiece.y + 1,
+          activePiece.matrix
+        )
+      ) {
+        activePiece.y += 1;
+      } else {
+        lockActivePiece();
+      }
+
+      dropCounter = 0;
+    }
+
+    function hardDrop() {
+      if (!canControlPiece()) {
+        return;
+      }
+
+      let distance = 0;
+
+      while (
+        !collides(
+          activePiece,
+          activePiece.x,
+          activePiece.y + 1,
+          activePiece.matrix
+        )
+      ) {
+        activePiece.y += 1;
+        distance += 1;
+      }
+
+      score += distance * 2;
+      updateStats();
+
+      lockActivePiece();
+    }
+
+function checkTransformCooldown() {
+  const now = performance.now();
+  const elapsed = now - lastTransformTime;
+
+  if (elapsed < TRANSFORM_COOLDOWN) {
+    const remaining =
+      (TRANSFORM_COOLDOWN - elapsed) / 1000;
+
+    logError(
+      `WAIT ${remaining.toFixed(1)} MORE SECONDS, THEN TRY AGAIN`
+    );
+
+    return false;
+  }
+
+  return true;
+}
+
+function startTransformCooldown() {
+  lastTransformTime = performance.now();
+}
+
+    /* ==================================================== */
+    /* ROTATION OR MIRROR                                   */
+    /* ==================================================== */
+
+    function rotateClockwise(matrix) {
+      const size = matrix.length;
+      const rotated = Array.from(
+        { length: size },
+        () => Array(size).fill(0)
+      );
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          rotated[x][size - 1 - y] = matrix[y][x];
+        }
+      }
+
+      return rotated;
+    }
+
+    function mirrorHorizontally(matrix) {
+      return matrix.map(row => [...row].reverse());
+    }
+
+ function attemptRotate() {
+  if (!canControlPiece()) {
+    return;
+  }
+
+  // Rotate and Flip share the same cooldown.
+  if (!checkTransformCooldown()) {
+    return;
+  }
+
+  const rotated = rotateClockwise(activePiece.matrix);
+
+  // No wall kicks. The player must move away from the wall.
+  if (matrixTouchesWall(rotated, activePiece.x)) {
+    logError("TOO CLOSE TO WALL");
+    return;
+  }
+
+  if (
+    collides(
+      activePiece,
+      activePiece.x,
+      activePiece.y,
+      rotated
+    )
+  ) {
+    logError("ROTATION BLOCKED");
+    return;
+  }
+
+  activePiece.matrix = rotated;
+
+  // Cooldown begins only after a successful transformation.
+  startTransformCooldown();
+}
+
+function attemptMirror() {
+  if (!canControlPiece()) {
+    return;
+  }
+
+  // Rotate and Flip share the same cooldown.
+  if (!checkTransformCooldown()) {
+    return;
+  }
+
+  const mirrored = mirrorHorizontally(activePiece.matrix);
+
+  if (matrixTouchesWall(mirrored, activePiece.x)) {
+    logError("TOO CLOSE TO WALL");
+    return;
+  }
+
+  if (
+    collides(
+      activePiece,
+      activePiece.x,
+      activePiece.y,
+      mirrored
+    )
+  ) {
+    logError("FLIP BLOCKED");
+    return;
+  }
+
+  activePiece.matrix = mirrored;
+
+  // Cooldown begins only after a successful transformation.
+  startTransformCooldown();
+}
+
+    function updateTransformStatus() {
+      if (!activePiece) {
+        transformStatus.textContent = "ROTATE OR MIRROR";
+        transformStatus.style.color = "";
+        return;
+      }
+
+      if (activePiece.transformChoice === "rotate") {
+        transformStatus.textContent = "ROTATION CHOSEN";
+        transformStatus.style.color = "#7fb4ff";
+        return;
+      }
+
+      if (activePiece.transformChoice === "mirror") {
+        transformStatus.textContent = "MIRROR CHOSEN";
+        transformStatus.style.color = "#ff8bd5";
+        return;
+      }
+
+      transformStatus.textContent = "ROTATE OR MIRROR";
+      transformStatus.style.color = "#63e6a5";
+    }
+
+    /* ==================================================== */
+    /* LOCKING AND LINE CLEARING                            */
+    /* ==================================================== */
+
+    function lockActivePiece() {
+      if (!activePiece) {
+        return;
+      }
+
+      for (let y = 0; y < activePiece.matrix.length; y++) {
+        for (let x = 0; x < activePiece.matrix[y].length; x++) {
+          if (!activePiece.matrix[y][x]) {
+            continue;
+          }
+
+          const boardX = activePiece.x + x;
+          const boardY = activePiece.y + y;
+
+          if (boardY < 0) {
+            endGame();
+            return;
+          }
+
+          board[boardY][boardX] = {
+            color: activePiece.color
+          };
+        }
+      }
+
+      activePiece = null;
+
+      const completedRows = findCompletedRows();
+
+      if (completedRows.length > 0) {
+        startLineFade(completedRows);
+      } else {
+        startNextPieceWindow();
+      }
+    }
+
+    function findCompletedRows() {
+      const rows = [];
+
+      for (let y = 0; y < ROWS; y++) {
+        if (board[y].every(cell => cell !== null)) {
+          rows.push(y);
+        }
+      }
+
+      return rows;
+    }
+
+    function startLineFade(rows) {
+      fadingRows = rows;
+      lineFadeActive = true;
+      lineFadeStart = performance.now();
+
+      /*
+        Every completed row awards one Re-Roll credit.
+      */
+
+      rerollCredits += rows.length;
+      totalLines += rows.length;
+
+      const lineScores = [0, 100, 300, 500, 800];
+      score += lineScores[rows.length] * level;
+
+      level = Math.floor(totalLines / 10) + 1;
+
+      updateStats();
+    }
+
+    function finishLineFade() {
+      /*
+        Remove rows from the bottom upward.
+
+        Splicing out a full row and unshifting a blank row causes
+        everything above it to drop by exactly one grid row.
+      */
+
+      const orderedRows = [...fadingRows].sort((a, b) => b - a);
+
+      for (const rowIndex of orderedRows) {
+        board.splice(rowIndex, 1);
+        board.unshift(Array(COLS).fill(null));
+      }
+
+      fadingRows = [];
+      lineFadeActive = false;
+
+      startNextPieceWindow();
+    }
+
+    /* ==================================================== */
+    /* NEXT PIECE AND RE-ROLL                               */
+    /* ==================================================== */
+
+    function startNextPieceWindow() {
+      waitingForNextPiece = true;
+      hiddenRerollActive = false;
+      nextPieceDeadline = performance.now() + NEXT_PIECE_DELAY;
+
+      rerollStatus.classList.remove("visible");
+      clearTimeout(rerollTextTimeout);
+
+      drawNextPreview();
+    }
+
+    function attemptReroll() {
+      if (
+        !gameStarted ||
+        gameOver ||
+        paused ||
+        lineFadeActive
+      ) {
+        return;
+      }
+
+      /*
+        A Re-Roll only applies during the short period between
+        the previous piece locking and the new piece entering.
+      */
+
+      if (!waitingForNextPiece) {
+        logError("RE-ROLL WINDOW CLOSED");
+        return;
+      }
+
+      if (rerollCredits <= 0) {
+        logError("NO RE-ROLL CREDITS");
+        return;
+      }
+
+      rerollCredits -= 1;
+
+      /*
+        The hidden replacement is selected immediately.
+        The player does not see it.
+      */
+
+      nextPiece = createRandomPiece();
+      hiddenRerollActive = true;
+
+      updateStats();
+      showRerollSequence();
+    }
+
+    function showRerollSequence() {
+      clearTimeout(rerollTextTimeout);
+
+      nextContext.clearRect(
+        0,
+        0,
+        nextCanvas.width,
+        nextCanvas.height
+      );
+
+      rerollStatus.textContent = "Okay.....";
+      rerollStatus.classList.add("visible");
+
+      /*
+        Clicking Re-Roll again restarts this sequence but does not
+        restart the piece-entry countdown.
+      */
+
+      rerollTextTimeout = setTimeout(() => {
+        rerollStatus.textContent = "...Re-Rolling...";
+      }, 420);
+    }
+
+    function updateNextPieceWindow(currentTime) {
+      if (!waitingForNextPiece || paused || gameOver) {
+        return;
+      }
+
+      const remaining = Math.max(
+        0,
+        nextPieceDeadline - currentTime
+      );
+
+      nextCountdown.textContent =
+        `ENTERING IN ${(remaining / 1000).toFixed(1)}`;
+
+      if (remaining <= 0) {
+        spawnNextPiece();
+      }
+    }
+
+    /* ==================================================== */
+    /* ERROR SYSTEM AND LOG                                 */
+    /* ==================================================== */
+
+    function logError(message) {
+      errorNumber += 1;
+
+      if (logEmpty) {
+        logEmpty.remove();
+      }
+
+      const row = document.createElement("div");
+      row.className = "log-entry";
+
+      const number = document.createElement("span");
+      number.className = "log-number";
+      number.textContent = String(errorNumber).padStart(3, "0");
+
+      const text = document.createElement("span");
+      text.textContent = message;
+
+      row.append(number, text);
+      logScreen.appendChild(row);
+
+      /*
+        The newest entry remains visible at the bottom.
+      */
+
+      logScreen.scrollTop = logScreen.scrollHeight;
+
+      errorCount.textContent =
+        `ERRORS: ${String(errorNumber).padStart(3, "0")}`;
+
+      showErrorMessage(`ERROR: ${message}`);
+    }
+
+    function showErrorMessage(message) {
+      errorMessage.textContent = message;
+
+      /*
+        Removing and restoring the class restarts the CSS animation,
+        even when errors happen quickly.
+      */
+
+      errorMessage.classList.remove("show");
+      void errorMessage.offsetWidth;
+      errorMessage.classList.add("show");
+    }
+
+    /* ==================================================== */
+    /* DRAWING                                              */
+    /* ==================================================== */
+
+    function drawGrid() {
+      gameContext.fillStyle = "#090c12";
+      gameContext.fillRect(
+        0,
+        0,
+        gameCanvas.width,
+        gameCanvas.height
+      );
+
+      gameContext.strokeStyle = "rgba(255, 255, 255, 0.055)";
+      gameContext.lineWidth = 1;
+
+      for (let x = 0; x <= COLS; x++) {
+        gameContext.beginPath();
+        gameContext.moveTo(x * BLOCK + 0.5, 0);
+        gameContext.lineTo(x * BLOCK + 0.5, ROWS * BLOCK);
+        gameContext.stroke();
+      }
+
+      for (let y = 0; y <= ROWS; y++) {
+        gameContext.beginPath();
+        gameContext.moveTo(0, y * BLOCK + 0.5);
+        gameContext.lineTo(COLS * BLOCK, y * BLOCK + 0.5);
+        gameContext.stroke();
+      }
+    }
+
+  function drawTile(context, pixelX, pixelY, size, color, opacity = 1) {
+  context.save();
+  context.globalAlpha = opacity;
+
+  // Black separation between individual tiles.
+  context.fillStyle = "#05070a";
+  context.fillRect(pixelX, pixelY, size, size);
+
+  // Main colored metal face.
+  context.fillStyle = color;
+  context.fillRect(
+    pixelX + 2,
+    pixelY + 2,
+    size - 4,
+    size - 4
+  );
+
+  // Dark inner frame.
+  context.strokeStyle = "rgba(0, 0, 0, 0.48)";
+  context.lineWidth = 2;
+
+  context.strokeRect(
+    pixelX + 3,
+    pixelY + 3,
+    size - 6,
+    size - 6
+  );
+
+  // Metallic shading across the tile.
+  const metalShade = context.createLinearGradient(
+    pixelX,
+    pixelY,
+    pixelX + size,
+    pixelY + size
+  );
+
+  metalShade.addColorStop(0, "rgba(255,255,255,0.16)");
+  metalShade.addColorStop(0.35, "rgba(255,255,255,0.03)");
+  metalShade.addColorStop(0.7, "rgba(0,0,0,0.04)");
+  metalShade.addColorStop(1, "rgba(0,0,0,0.20)");
+
+  context.fillStyle = metalShade;
+
+  context.fillRect(
+    pixelX + 4,
+    pixelY + 4,
+    size - 8,
+    size - 8
+  );
+
+  /*
+    Classic diamond-plate-inspired X pattern.
+
+    Using proportional positions means this works on both:
+    - the 32px playfield tiles
+    - the larger NEXT TILE preview tiles
+  */
+
+  const xPositions = [
+    [0.28, 0.30],
+    [0.72, 0.30],
+    [0.50, 0.52],
+    [0.28, 0.74],
+    [0.72, 0.74]
+  ];
+
+  const arm = size * 0.075;
+
+  context.lineCap = "round";
+  context.lineJoin = "round";
+
+  for (const [px, py] of xPositions) {
+    const cx = pixelX + size * px;
+    const cy = pixelY + size * py;
+
+    // Dark shadow underneath each raised X.
+    context.strokeStyle = "rgba(0, 0, 0, 0.42)";
+    context.lineWidth = Math.max(2, size * 0.065);
+
+    context.beginPath();
+
+    context.moveTo(
+      cx - arm + 1,
+      cy - arm + 1
+    );
+
+    context.lineTo(
+      cx + arm + 1,
+      cy + arm + 1
+    );
+
+    context.moveTo(
+      cx + arm + 1,
+      cy - arm + 1
+    );
+
+    context.lineTo(
+      cx - arm + 1,
+      cy + arm + 1
+    );
+
+    context.stroke();
+
+    // Bright raised surface of the X.
+    context.strokeStyle = "rgba(255, 255, 255, 0.34)";
+    context.lineWidth = Math.max(1, size * 0.035);
+
+    context.beginPath();
+
+    context.moveTo(
+      cx - arm,
+      cy - arm
+    );
+
+    context.lineTo(
+      cx + arm,
+      cy + arm
+    );
+
+    context.moveTo(
+      cx + arm,
+      cy - arm
+    );
+
+    context.lineTo(
+      cx - arm,
+      cy + arm
+    );
+
+    context.stroke();
+  }
+
+  // Bright upper/left metal edge.
+  context.strokeStyle = "rgba(255, 255, 255, 0.30)";
+  context.lineWidth = 1;
+
+  context.beginPath();
+
+  context.moveTo(
+    pixelX + 4,
+    pixelY + size - 4
+  );
+
+  context.lineTo(
+    pixelX + 4,
+    pixelY + 4
+  );
+
+  context.lineTo(
+    pixelX + size - 4,
+    pixelY + 4
+  );
+
+  context.stroke();
+
+  // Dark lower/right edge adds thickness.
+  context.strokeStyle = "rgba(0, 0, 0, 0.35)";
+
+  context.beginPath();
+
+  context.moveTo(
+    pixelX + size - 4,
+    pixelY + 4
+  );
+
+  context.lineTo(
+    pixelX + size - 4,
+    pixelY + size - 4
+  );
+
+  context.lineTo(
+    pixelX + 4,
+    pixelY + size - 4
+  );
+
+  context.stroke();
+
+  context.restore();
+}
+
+    function drawBoard(currentTime) {
+      let fadeOpacity = 1;
+
+      if (lineFadeActive) {
+        const progress = Math.min(
+          1,
+          (currentTime - lineFadeStart) / LINE_FADE_DURATION
+        );
+
+        fadeOpacity = 1 - progress;
+      }
+
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const cell = board[y][x];
+
+          if (!cell) {
+            continue;
+          }
+
+          const isFading = fadingRows.includes(y);
+
+          drawTile(
+            gameContext,
+            x * BLOCK,
+            y * BLOCK,
+            BLOCK,
+            cell.color,
+            isFading ? fadeOpacity : 1
+          );
+        }
+      }
+    }
+
+    function drawActivePiece() {
+      if (!activePiece) {
+        return;
+      }
+
+      for (let y = 0; y < activePiece.matrix.length; y++) {
+        for (let x = 0; x < activePiece.matrix[y].length; x++) {
+          if (!activePiece.matrix[y][x]) {
+            continue;
+          }
+
+          const boardY = activePiece.y + y;
+
+          if (boardY < 0) {
+            continue;
+          }
+
+          drawTile(
+            gameContext,
+            (activePiece.x + x) * BLOCK,
+            boardY * BLOCK,
+            BLOCK,
+            activePiece.color
+          );
+        }
+      }
+    }
+
+    function drawNextPreview() {
+      nextContext.clearRect(
+        0,
+        0,
+        nextCanvas.width,
+        nextCanvas.height
+      );
+
+      if (!nextPiece || hiddenRerollActive) {
+        return;
+      }
+
+      const matrix = nextPiece.matrix;
+      const previewBlock = 42;
+
+      let minimumX = matrix[0].length;
+      let maximumX = 0;
+      let minimumY = matrix.length;
+      let maximumY = 0;
+
+      for (let y = 0; y < matrix.length; y++) {
+        for (let x = 0; x < matrix[y].length; x++) {
+          if (!matrix[y][x]) {
+            continue;
+          }
+
+          minimumX = Math.min(minimumX, x);
+          maximumX = Math.max(maximumX, x);
+          minimumY = Math.min(minimumY, y);
+          maximumY = Math.max(maximumY, y);
+        }
+      }
+
+      const pieceWidth =
+        (maximumX - minimumX + 1) * previewBlock;
+
+      const pieceHeight =
+        (maximumY - minimumY + 1) * previewBlock;
+
+      const startX =
+        (nextCanvas.width - pieceWidth) / 2;
+
+      const startY =
+        (nextCanvas.height - pieceHeight) / 2;
+
+      for (let y = 0; y < matrix.length; y++) {
+        for (let x = 0; x < matrix[y].length; x++) {
+          if (!matrix[y][x]) {
+            continue;
+          }
+
+          drawTile(
+            nextContext,
+            startX + (x - minimumX) * previewBlock,
+            startY + (y - minimumY) * previewBlock,
+            previewBlock,
+            nextPiece.color
+          );
+        }
+      }
+    }
+
+    function draw(currentTime) {
+      drawGrid();
+      drawBoard(currentTime);
+      drawActivePiece();
+    }
+
+    /* ==================================================== */
+    /* SCORING AND SPEED                                    */
+    /* ==================================================== */
+
+    function getDropInterval() {
+      return Math.max(
+        MINIMUM_DROP_INTERVAL,
+        INITIAL_DROP_INTERVAL - (level - 1) * 60
+      );
+    }
+
+    function updateStats() {
+      scoreValue.textContent = score.toLocaleString();
+      linesValue.textContent = totalLines;
+      levelValue.textContent = level;
+      creditValue.textContent =
+        String(rerollCredits).padStart(2, "0");
+    }
+
+    /* ==================================================== */
+    /* PAUSE AND GAME OVER                                  */
+    /* ==================================================== */
+
+    function togglePause() {
+      if (!gameStarted || gameOver) {
+        return;
+      }
+
+      paused = !paused;
+
+      pauseCover.classList.toggle("visible", paused);
+      pauseButton.textContent = paused ? "RESUME" : "PAUSE";
+
+      if (paused) {
+        pauseTitle.textContent = "PAUSED";
+        pauseText.textContent = "Press P to continue";
+      } else {
+        /*
+          Avoid a large automatic time jump after resuming.
+        */
+
+        previousTime = performance.now();
+      }
+    }
+
+    function endGame() {
+      gameOver = true;
+      paused = false;
+      activePiece = null;
+      waitingForNextPiece = false;
+
+      pauseTitle.textContent = "GAME OVER";
+      pauseText.textContent = "Choose NEW GAME to try again";
+      pauseCover.classList.add("visible");
+
+      pauseButton.textContent = "PAUSE";
+      nextCountdown.textContent = "Game over";
+    }
+
+    /* ==================================================== */
+    /* NEW GAME                                             */
+    /* ==================================================== */
+
+    function resetLog() {
+      errorNumber = 0;
+      errorCount.textContent = "ERRORS: 000";
+
+      logScreen.innerHTML = "";
+
+      const empty = document.createElement("div");
+      empty.className = "log-empty";
+      empty.id = "logEmpty";
+      empty.textContent = "No incorrect moves recorded.";
+
+      logScreen.appendChild(empty);
+    }
+
+    function startNewGame() {
+      board = createEmptyBoard();
+
+      activePiece = null;
+      nextPiece = createRandomPiece();
+
+      score = 0;
+      totalLines = 0;
+      level = 1;
+      rerollCredits = 0;
+
+      gameStarted = true;
+      gameOver = false;
+      paused = false;
+
+      waitingForNextPiece = false;
+      hiddenRerollActive = false;
+
+      fadingRows = [];
+      lineFadeActive = false;
+
+      dropCounter = 0;
+      previousTime = performance.now();
+
+      clearTimeout(rerollTextTimeout);
+      rerollStatus.classList.remove("visible");
+
+      pauseCover.classList.remove("visible");
+      pauseButton.textContent = "PAUSE";
+
+      resetLog();
+      updateStats();
+      spawnNextPiece();
+
+      nextCountdown.textContent = "Next piece ready";
+    }
+
+    /* ==================================================== */
+    /* MAIN LOOP                                            */
+    /* ==================================================== */
+
+    function update(currentTime = 0) {
+      const deltaTime = currentTime - previousTime;
+      previousTime = currentTime;
+
+      if (
+        gameStarted &&
+        !paused &&
+        !gameOver
+      ) {
+        if (lineFadeActive) {
+          const elapsed = currentTime - lineFadeStart;
+
+          if (elapsed >= LINE_FADE_DURATION) {
+            finishLineFade();
+          }
+        } else if (waitingForNextPiece) {
+          updateNextPieceWindow(currentTime);
+        } else if (activePiece) {
+          dropCounter += deltaTime;
+
+          if (dropCounter >= getDropInterval()) {
+            automaticDrop();
+          }
+        }
+      }
+
+      draw(currentTime);
+      requestAnimationFrame(update);
+    }
+
+    /* ==================================================== */
+    /* INPUT                                                */
+    /* ==================================================== */
+
+document.addEventListener("keydown", event => {
+  const handledKeys = [
+    "KeyA",
+    "KeyD",
+    "KeyS",
+    "KeyX",
+    "KeyR",
+    "KeyF",
+    "KeyP"
+  ];
+
+  if (handledKeys.includes(event.code)) {
+    event.preventDefault();
+  }
+
+  if (event.code === "KeyP") {
+    togglePause();
+    return;
+  }
+
+  if (!canControlPiece()) {
+    return;
+  }
+
+  switch (event.code) {
+    case "KeyA":
+      movePiece(-1);
+      break;
+
+    case "KeyD":
+      movePiece(1);
+      break;
+
+    case "KeyS":
+      softDrop();
+      break;
+
+    case "KeyX":
+      hardDrop();
+      break;
+
+    case "KeyR":
+      attemptRotate();
+      break;
+
+    case "KeyF":
+      attemptMirror();
+      break;
+  }
+});
+
+    rerollButton.addEventListener("click", attemptReroll);
+    newGameButton.addEventListener("click", startNewGame);
+    pauseButton.addEventListener("click", togglePause);
+
+    /* ==================================================== */
+    /* START                                                */
+    /* ==================================================== */
+
+    startNewGame();
+    requestAnimationFrame(update);
+  </script>
+</body>
+</html>
