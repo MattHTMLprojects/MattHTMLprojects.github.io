@@ -798,30 +798,32 @@ input[type="color"] {
     </button>
   </div>
 
- <div id="controllerControls" style="display:none">
-      <strong>Xbox Controller</strong><br>
-      Left Stick: Walk<br>
-      LS Click: Sprint<br>
-      Right Stick: Aim<br>
-      RT: Attack<br>
-      X: Interact<br>
-      Y: Cycle Weapon<br>
-      View / Select: Backpack<br>
-      Menu / Start: Pause
-    </div>
+<div id="controllerControls" style="display:none">
+  <strong>Xbox Controller</strong><br>
+  Left Stick: Walk<br>
+  LS Click: Sprint<br>
+  Right Stick: Aim<br>
+  RT: Attack<br>
+  X: Interact<br>
+  B: Dropped Items<br>
+  Y: Cycle Weapon<br>
+  View / Select: Backpack<br>
+  Menu / Start: Pause
+</div>
 
-    <div id="keyboardControls">
-      <strong>Keyboard + Mouse</strong><br>
-      WASD / Arrows: Walk<br>
-      Shift: Sprint<br>
-      Mouse: Aim<br>
-      Click / Space: Attack<br>
-      E: Interact<br>
-      Q: Cycle Weapon<br>
-      I: Backpack<br>
-      M: Carried Map<br>
-      Escape: Pause
-    </div>
+<div id="keyboardControls">
+  <strong>Keyboard + Mouse</strong><br>
+  WASD / Arrows: Walk<br>
+  Shift: Sprint<br>
+  Mouse: Aim<br>
+  Click / Space: Attack<br>
+  E: Interact<br>
+  G: Dropped Items<br>
+  Q: Cycle Weapon<br>
+  I: Backpack<br>
+  M: Carried Map<br>
+  Escape: Pause
+</div>
   </div>
 </div>
 
@@ -842,8 +844,8 @@ input[type="color"] {
 
     <p class="note">
       The county and safehouse remain for this browser session.
-      A new survivor can attempt to recover the fallen
-      survivor's backpack.
+      A new survivor will have 24 hours to recover the fallen
+      survivor's backpack before it is completely gone.
     </p>
 
     <div class="menuButtons">
@@ -973,7 +975,7 @@ const outfits = {
   },
 
   redHoodie: {
-    name: "Red Hoodie"
+    name: "Red Chiefs Shirt"
   }
 };
 
@@ -1261,7 +1263,7 @@ let target = null;
 let frame = 0;
 let previousTime = 0;
 let sessionSeed = 4317;
-
+let creatingReplacementSurvivor = false;
 
 function showScreen(name){
   Object.values(screens).forEach(screen=>{
@@ -1305,12 +1307,13 @@ hairColor:choice.hairColor,
 outfit:null,
 
       backpackCapacity:DEFAULT_BACKPACK_CAPACITY,
+  droppedItemTimers:{},
 
       inventory:{
         water:2,
         food:2,
         medicine:1,
-        cloth:1,
+        cloth:0,
         wood:0,
         nails:0,
         scrap:0,
@@ -1447,54 +1450,12 @@ closet:{
   return newState;
 }
 
-function startGame(){
-  sessionSeed=
-    Math.floor(Math.random()*2147483646)+1;
-
-  state=createState();
-
-  running=true;
-  paused=false;
-  modalOpen=false;
-  target=null;
-
-  resize();
-  showScreen("game");
-
-  notify("You wake inside your safehouse.","good");
-  notify(
-    "The county is enormous. Prepare before traveling far.",
-    "warn"
-  );
-
-  previousTime=performance.now();
-
-  cancelAnimationFrame(frame);
-  frame=requestAnimationFrame(loop);
-}
-
-function continueWithNewSurvivor(){
-  if(!state)return;
-
-  const oldPlayer=state.player;
-
-  state.fallenSurvivors.push({
-    x:oldPlayer.x,
-    y:oldPlayer.y,
-    chunkKey:getObjectChunkKey(oldPlayer.x,oldPlayer.y),
-
-    inventory:copyInventory(oldPlayer.inventory),
-
-    weapons:oldPlayer.weapons
-      .filter(entry=>entry.id!=="hands")
-      .map(entry=>({...entry})),
-
-    recovered:false
-  });
+function createReplacementSurvivor(){
 
   state.player={
     x:SAFEHOUSE_X,
     y:SAFEHOUSE_Y+80,
+
     previousX:SAFEHOUSE_X,
     previousY:SAFEHOUSE_Y+80,
 
@@ -1511,19 +1472,22 @@ function continueWithNewSurvivor(){
     hunger:100,
     poison:0,
 
-gender:choice.gender,
-shirtColor:choice.shirtColor,
-hair:choice.hair,
-hairColor:choice.hairColor,
-outfit:null,
+    gender:choice.gender,
+    shirtColor:choice.shirtColor,
+    hair:choice.hair,
+    hairColor:choice.hairColor,
+    outfit:null,
 
-    backpackCapacity:DEFAULT_BACKPACK_CAPACITY,
+    backpackCapacity:
+      DEFAULT_BACKPACK_CAPACITY,
+
+    droppedItemTimers:{},
 
     inventory:{
       water:1,
       food:1,
-      medicine:0,
-      cloth:1,
+      medicine:1,
+      cloth:0,
       wood:0,
       nails:0,
       scrap:0,
@@ -1534,14 +1498,25 @@ outfit:null,
 
     weapons:[
       {
-        uid:"new-hands-"+Date.now(),
+        uid:
+          "new-hands-"+
+          Date.now(),
+
         id:"hands",
         durability:Infinity
       },
+
       {
-        uid:"new-knife-"+Date.now(),
+        uid:
+          "new-knife-"+
+          Date.now(),
+
         id:"kitchenKnife",
-        durability:weapons.kitchenKnife.durability
+
+        durability:
+          weapons
+            .kitchenKnife
+            .durability
       }
     ],
 
@@ -1560,23 +1535,73 @@ outfit:null,
     poisonWarning:false
   };
 
-  state.camera.x=state.player.x;
-  state.camera.y=state.player.y;
 
-  running=true;
-  paused=false;
-  modalOpen=false;
-  target=null;
+  /*
+  Put the camera back at the safehouse.
+  */
+  state.camera.x=
+    state.player.x;
 
-  const cx=getChunkCoordinate(state.player.x);
-  const cy=getChunkCoordinate(state.player.y);
+  state.camera.y=
+    state.player.y;
 
-  refreshActiveChunks(state,cx,cy);
+
+  /*
+  Refresh chunks around the new survivor.
+  */
+  const cx=
+    getChunkCoordinate(
+      state.player.x
+    );
+
+  const cy=
+    getChunkCoordinate(
+      state.player.y
+    );
+
+  refreshActiveChunks(
+    state,
+    cx,
+    cy
+  );
 
   state.currentChunkX=cx;
   state.currentChunkY=cy;
 
-  showScreen("game");
+
+  /*
+  Clear lingering UI/input state.
+  */
+  if(modalOpen){
+    closeModal();
+  }
+
+  modalOpen=false;
+  paused=false;
+  target=null;
+
+  mouse.down=false;
+
+  for(const key in keys){
+    keys[key]=false;
+  }
+
+  controller.moveX=0;
+  controller.moveY=0;
+  controller.aimX=0;
+  controller.aimY=0;
+  controller.attack=false;
+  controller.sprint=false;
+
+
+  /*
+  Resume the SAME world.
+  */
+  running=true;
+
+  showScreen(
+    "game"
+  );
 
   notify(
     "A new survivor enters the county.",
@@ -1584,14 +1609,177 @@ outfit:null,
   );
 
   notify(
-    "The previous backpack remains where they fell.",
+    "The previous survivor's backpack remains where they fell.",
     "warn"
   );
 
-  previousTime=performance.now();
+  previousTime=
+    performance.now();
 
-  cancelAnimationFrame(frame);
-  frame=requestAnimationFrame(loop);
+  cancelAnimationFrame(
+    frame
+  );
+
+  frame=
+    requestAnimationFrame(
+      loop
+    );
+}
+
+function startGame(){
+
+  /*
+  If character creation was opened because
+  the previous survivor died, create only
+  the replacement PLAYER.
+
+  Do not create another world.
+  */
+  if(
+    creatingReplacementSurvivor &&
+    state
+  ){
+    creatingReplacementSurvivor=false;
+
+    createReplacementSurvivor();
+
+    return;
+  }
+
+
+  /*
+  NORMAL NEW GAME
+  */
+  sessionSeed=
+    Math.floor(
+      Math.random()*
+      2147483646
+    )+1;
+
+  state=createState();
+
+  running=true;
+  paused=false;
+  modalOpen=false;
+  target=null;
+
+  resize();
+
+  showScreen(
+    "game"
+  );
+
+  notify(
+    "You wake inside your safehouse.",
+    "good"
+  );
+
+  notify(
+    "The county is enormous. Prepare before traveling far.",
+    "warn"
+  );
+
+  previousTime=
+    performance.now();
+
+  cancelAnimationFrame(
+    frame
+  );
+
+  frame=
+    requestAnimationFrame(
+      loop
+    );
+}
+
+function continueWithNewSurvivor(){
+  if(!state)return;
+
+  const oldPlayer=
+    state.player;
+
+  /*
+  Preserve the dead survivor and their
+  possessions in the existing world.
+  */
+state.fallenSurvivors.push({
+  x:oldPlayer.x,
+  y:oldPlayer.y,
+
+  chunkKey:
+    getObjectChunkKey(
+      oldPlayer.x,
+      oldPlayer.y
+    ),
+
+  inventory:
+    copyInventory(
+      oldPlayer.inventory
+    ),
+
+  weapons:
+    oldPlayer.weapons
+      .filter(
+        entry=>entry.id!=="hands"
+      )
+      .map(
+        entry=>({...entry})
+      ),
+
+  recovered:false,
+
+  backpackExpiresAt:
+    getAbsoluteGameMinutes()+
+    1440
+});
+
+  /*
+  Completely close any lingering inventory,
+  pickup, or other modal.
+  */
+  if(modalOpen){
+    closeModal();
+  }
+
+  modalOpen=false;
+  paused=false;
+  target=null;
+
+  /*
+  Clear held inputs from the old survivor.
+  */
+  mouse.down=false;
+
+  for(const key in keys){
+    keys[key]=false;
+  }
+
+  controller.moveX=0;
+  controller.moveY=0;
+
+  controller.aimX=0;
+  controller.aimY=0;
+
+  controller.sprint=false;
+  controller.attack=false;
+
+  /*
+  Stop active gameplay while the player
+  creates their replacement survivor.
+  */
+  running=false;
+
+  cancelAnimationFrame(
+    frame
+  );
+creatingReplacementSurvivor=true;
+
+  /*
+  Return to character creation.
+  */
+  showScreen(
+    "character"
+  );
 }
 
 function copyInventory(inventory){
@@ -4736,7 +4924,11 @@ function loop(now){
 
   updateGamepad();
 
-  if(!paused&&!modalOpen){
+  /*
+  Only the actual pause state stops
+  the game simulation.
+  */
+  if(!paused){
     update(dt);
   }
 
@@ -4748,6 +4940,9 @@ function loop(now){
 function update(dt){
   updateChunkStreaming();
   updateClock(dt);
+
+  updateFallenSurvivors();
+
   updatePlayer(dt);
   updateSurvival(dt);
   updateZombies(dt);
@@ -4757,6 +4952,153 @@ function update(dt){
   updateSafehouseProduction(dt);
   updateCamera(dt);
   updateHud();
+}
+
+function updateFallenSurvivors(){
+
+  const now=
+    getAbsoluteGameMinutes();
+
+  for(
+    const survivor
+    of state.fallenSurvivors
+  ){
+
+    if(survivor.recovered){
+      continue;
+    }
+
+    if(
+      survivor.backpackExpiresAt &&
+      now>=
+        survivor.backpackExpiresAt
+    ){
+
+      /*
+      Backpack and everything left inside
+      deteriorates after one full day.
+      */
+      survivor.recovered=true;
+
+      survivor.inventory={};
+
+      survivor.weapons=[];
+    }
+  }
+}
+
+function fallenBackpackMinutesLeft(
+  survivor
+){
+  return Math.max(
+    0,
+    survivor.backpackExpiresAt-
+    getAbsoluteGameMinutes()
+  );
+}
+
+function fallenBackpackTimeText(
+  survivor
+){
+  const totalMinutes=
+    Math.ceil(
+      fallenBackpackMinutesLeft(
+        survivor
+      )
+    );
+
+  const hours=
+    Math.floor(
+      totalMinutes/60
+    );
+
+  const minutes=
+    totalMinutes%60;
+
+  return (
+    hours+
+    "h "+
+    String(minutes)
+      .padStart(2,"0")+
+    "m remaining"
+  );
+}
+
+function getAbsoluteGameMinutes(){
+  return (
+    (state.day-1)*1440+
+    state.time
+  );
+}
+
+function formatDroppedTime(
+  remainingMinutes
+){
+  const safeMinutes=
+    Math.max(
+      0,
+      Math.ceil(
+        remainingMinutes
+      )
+    );
+
+  const hours=
+    Math.floor(
+      safeMinutes/60
+    );
+
+  const minutes=
+    safeMinutes%60;
+
+  if(hours>0){
+    return (
+      hours+
+      "h "+
+      String(minutes)
+        .padStart(2,"0")+
+      "m"
+    );
+  }
+
+  return minutes+"m";
+}
+
+function droppedTimeClass(
+  remainingMinutes
+){
+  if(remainingMinutes<=10){
+    return "badText";
+  }
+
+  if(remainingMinutes<=30){
+    return "warnText";
+  }
+
+  if(remainingMinutes<=60){
+    return "goodText";
+  }
+
+  return "small";
+}
+
+function updateDroppedItems(){
+  const now=
+    getAbsoluteGameMinutes();
+
+  for(const loot of state.loot){
+    if(
+      !loot.playerDropped ||
+      loot.collected
+    ){
+      continue;
+    }
+
+    if(
+      now>=loot.dropExpiresAt
+    ){
+      loot.collected=true;
+    }
+  }
 }
 
 function updateClock(dt){
@@ -4771,6 +5113,8 @@ function updateClock(dt){
       "warn"
     );
   }
+
+  updateDroppedItems();
 }
 
 function updatePlayer(dt){
@@ -4881,15 +5225,18 @@ const sprinting=
     );
   }
 
-  if(moving){
+if(moving){
+    const weightSpeed=
+      backpackSpeedMultiplier();
+
     movePlayer(
-      dx*speed*dt,
+      dx*speed*weightSpeed*dt,
       0
     );
 
     movePlayer(
       0,
-      dy*speed*dt
+      dy*speed*weightSpeed*dt
     );
 
     player.walkCycle+=
@@ -5140,6 +5487,18 @@ function backpackWeight(){
   return Math.round(total*100)/100;
 }
 
+function backpackSpeedMultiplier(){
+  const load=Math.min(
+    backpackWeight(),
+    state.player.backpackCapacity
+  );
+
+  return Math.max(
+    0.34,
+    1-(load*.0280)
+  );
+}
+
 function canCarryItem(
   itemId,
   amount=1,
@@ -5339,6 +5698,121 @@ function drinkWater(){
   if(modalOpen){
     openInventory();
   }
+}
+
+const NEW_DROP_LIFETIME_MINUTES=120;
+const REDROP_PENALTY_MINUTES=1;
+
+function dropInventoryItem(itemId){
+  const player=state.player;
+
+  const available=
+    player.inventory[itemId]||0;
+
+  if(available<=0){
+    return;
+  }
+
+  /*
+  Previously recovered dropped items store their
+  remaining lifetime in an array by item type.
+  */
+  const timerList=
+    player.droppedItemTimers[itemId]||[];
+
+  let remainingMinutes=
+    NEW_DROP_LIFETIME_MINUTES;
+
+  let previouslyDropped=false;
+
+  if(timerList.length>0){
+    remainingMinutes=
+      timerList.shift();
+
+    previouslyDropped=true;
+  }
+
+  /*
+  Redropping costs one additional game minute.
+  A new item receives the complete two hours.
+  */
+  if(previouslyDropped){
+    remainingMinutes-=
+      REDROP_PENALTY_MINUTES;
+  }
+
+  if(remainingMinutes<=0){
+    player.inventory[itemId]--;
+
+    notify(
+      itemName(itemId)+
+      " deteriorated while being dropped.",
+      "bad"
+    );
+
+    return;
+  }
+
+  player.inventory[itemId]--;
+
+  /*
+  Slight offsets prevent several dropped items
+  from occupying exactly the same pixel.
+  */
+  const dropOffsetX=
+    (Math.random()-.5)*10;
+
+  const dropOffsetY=
+    (Math.random()-.5)*10;
+
+  const dropX=
+    player.x+dropOffsetX;
+
+  const dropY=
+    player.y+dropOffsetY;
+
+  state.loot.push({
+    id:
+      "loot"+
+      state.nextIds.loot++,
+
+    localId:
+      "player-drop-"+
+      Date.now()+
+      "-"+
+      Math.random(),
+
+    chunkKey:
+      getObjectChunkKey(
+        dropX,
+        dropY
+      ),
+
+    x:dropX,
+    y:dropY,
+
+    type:"resource",
+    item:itemId,
+    amount:1,
+
+    label:itemName(itemId),
+
+    collected:false,
+    bob:Math.random()*Math.PI*2,
+
+    playerDropped:true,
+
+    dropExpiresAt:
+      getAbsoluteGameMinutes()+
+      remainingMinutes
+  });
+
+  notify(
+    "Dropped: "+
+    itemName(itemId)+
+    ".",
+    "warn"
+  );
 }
 
 function eatFood(){
@@ -6315,6 +6789,20 @@ function updateLoot(dt){
 
     loot.bob+=dt*2.6;
 
+    /*
+    PLAYER-DROPPED ITEMS
+    Never automatically pick these up.
+    They are recovered only through
+    the G / Xbox B Dropped Items menu.
+    */
+    if(loot.playerDropped){
+      continue;
+    }
+
+    /*
+    NORMAL WORLD RESOURCES
+    Keep the original automatic pickup.
+    */
     if(
       loot.type==="resource" &&
       distance(
@@ -6327,6 +6815,99 @@ function updateLoot(dt){
       collectLoot(loot);
     }
   }
+}
+
+function collectPlayerDroppedItem(
+  loot
+){
+  if(!loot)return false;
+  if(loot.collected)return false;
+  if(!loot.playerDropped)return false;
+
+  const now=
+    getAbsoluteGameMinutes();
+
+  const remainingMinutes=
+    loot.dropExpiresAt-now;
+
+  if(remainingMinutes<=0){
+    loot.collected=true;
+
+    notify(
+      loot.label+
+      " has deteriorated.",
+      "bad"
+    );
+
+    return false;
+  }
+
+  if(
+    !canCarryItem(
+      loot.item,
+      1,
+      "resource"
+    )
+  ){
+    notify(
+      "The backpack is too full for "+
+      loot.label+".",
+      "bad"
+    );
+
+    return false;
+  }
+
+  /*
+  Return one unit to the backpack.
+  */
+  state.player.inventory[
+    loot.item
+  ]=
+    (
+      state.player.inventory[
+        loot.item
+      ]||
+      0
+    )+1;
+
+  /*
+  Save this specific unit's remaining
+  ground lifetime.
+
+  The timer remains frozen while the item
+  is inside the backpack.
+  */
+  if(
+    !state.player
+      .droppedItemTimers[
+        loot.item
+      ]
+  ){
+    state.player
+      .droppedItemTimers[
+        loot.item
+      ]=[];
+  }
+
+  state.player
+    .droppedItemTimers[
+      loot.item
+    ]
+    .push(
+      remainingMinutes
+    );
+
+  loot.collected=true;
+
+  notify(
+    "Recovered: "+
+    loot.label+
+    ".",
+    "good"
+  );
+
+  return true;
 }
 
 function collectLoot(loot){
@@ -6969,6 +7550,63 @@ function useDoor(door){
   );
 }
 
+const DROPPED_ITEM_PICKUP_RADIUS=16;
+
+function getNearbyDroppedItems(){
+  if(!state)return [];
+
+  const player=state.player;
+  const now=
+    getAbsoluteGameMinutes();
+
+  return state.loot
+    .filter(loot=>{
+      if(!loot.playerDropped)return false;
+      if(loot.collected)return false;
+      if(!isObjectActive(loot))return false;
+
+      /*
+      Ignore anything whose timer has expired,
+      even if the expiration update has not
+      removed it yet.
+      */
+      if(
+        Number.isFinite(
+          loot.dropExpiresAt
+        ) &&
+        now>=loot.dropExpiresAt
+      ){
+        return false;
+      }
+
+      const dx=
+        loot.x-player.x;
+
+      const dy=
+        loot.y-player.y;
+
+      return (
+        Math.hypot(dx,dy)<=
+        DROPPED_ITEM_PICKUP_RADIUS
+      );
+    })
+    .sort((a,b)=>{
+      const distanceA=
+        Math.hypot(
+          a.x-player.x,
+          a.y-player.y
+        );
+
+      const distanceB=
+        Math.hypot(
+          b.x-player.x,
+          b.y-player.y
+        );
+
+      return distanceA-distanceB;
+    });
+}
+
 function lootCar(car){
   if(car.looted){
     notify(
@@ -7316,6 +7954,348 @@ function closeModal(){
     .className="modalCard";
 }
 
+function moveDroppedItemSelection(
+  direction
+){
+  const choices=
+    Array.from(
+      document.querySelectorAll(
+        'input[name="droppedItemChoice"]'
+      )
+    );
+
+  if(choices.length===0){
+    return;
+  }
+
+  let selectedIndex=
+    choices.findIndex(
+      choice=>choice.checked
+    );
+
+  if(selectedIndex<0){
+    selectedIndex=0;
+  }else{
+    selectedIndex=
+      (
+        selectedIndex+
+        direction+
+        choices.length
+      )%
+      choices.length;
+  }
+
+  choices[
+    selectedIndex
+  ].checked=true;
+
+  const row=
+    choices[
+      selectedIndex
+    ].closest(
+      ".inventoryRow"
+    );
+
+  if(row){
+    row.scrollIntoView({
+      block:"nearest"
+    });
+  }
+}
+
+function updateDroppedItemController(
+  gamepad
+){
+  if(!gamepad)return;
+
+  /*
+  Standard Xbox controller mapping:
+
+  A = button 0
+  B = button 1
+  D-pad Up = button 12
+  D-pad Down = button 13
+  */
+  const aPressed=
+    Boolean(
+      gamepad.buttons[0] &&
+      gamepad.buttons[0].pressed
+    );
+
+  const bPressed=
+    Boolean(
+      gamepad.buttons[1] &&
+      gamepad.buttons[1].pressed
+    );
+
+  const upPressed=
+    Boolean(
+      gamepad.buttons[12] &&
+      gamepad.buttons[12].pressed
+    );
+
+  const downPressed=
+    Boolean(
+      gamepad.buttons[13] &&
+      gamepad.buttons[13].pressed
+    );
+
+  const menuOpen=
+    Boolean(
+      document.getElementById(
+        "droppedItemMenuMarker"
+      )
+    );
+
+  /*
+  B opens the dropped-items popup during
+  gameplay.
+
+  If that popup is already open, B closes it.
+  */
+  if(
+    bPressed &&
+    !droppedItemControllerState
+      .bWasPressed
+  ){
+    if(menuOpen){
+      closeModal();
+    }else{
+      const nearbyItems=
+        getNearbyDroppedItems();
+
+      if(nearbyItems.length>0){
+        openDroppedItemMenu();
+      }else{
+        notify(
+          "There are no dropped items nearby.",
+          "warn"
+        );
+      }
+    }
+  }
+
+  /*
+  The remaining controls only apply while
+  the dropped-items popup is open.
+  */
+  if(menuOpen){
+
+    /*
+    D-pad Up
+    */
+    if(
+      upPressed &&
+      !droppedItemControllerState
+        .upWasPressed
+    ){
+      moveDroppedItemSelection(
+        -1
+      );
+    }
+
+    /*
+    D-pad Down
+    */
+    if(
+      downPressed &&
+      !droppedItemControllerState
+        .downWasPressed
+    ){
+      moveDroppedItemSelection(
+        1
+      );
+    }
+
+    /*
+    A activates the same Pick Up Selected
+    button used by mouse controls.
+    */
+    if(
+      aPressed &&
+      !droppedItemControllerState
+        .aWasPressed
+    ){
+      const pickupButton=
+        document.getElementById(
+          "pickupSelectedDropBtn"
+        );
+
+      if(pickupButton){
+        pickupButton.click();
+      }
+    }
+  }
+
+  droppedItemControllerState
+    .aWasPressed=
+      aPressed;
+
+  droppedItemControllerState
+    .bWasPressed=
+      bPressed;
+
+  droppedItemControllerState
+    .upWasPressed=
+      upPressed;
+
+  droppedItemControllerState
+    .downWasPressed=
+      downPressed;
+}
+
+function openDroppedItemMenu(){
+  const nearbyItems=
+    getNearbyDroppedItems();
+
+  if(nearbyItems.length===0){
+    notify(
+      "There are no dropped items nearby.",
+      "warn"
+    );
+
+    return;
+  }
+
+  const now=
+    getAbsoluteGameMinutes();
+
+  const rows=
+    nearbyItems
+      .map((loot,index)=>{
+        const remainingMinutes=
+          loot.dropExpiresAt-now;
+
+        const timeClass=
+          droppedTimeClass(
+            remainingMinutes
+          );
+
+        return `
+          <label class="inventoryRow">
+            <span>
+              <input
+                type="radio"
+                name="droppedItemChoice"
+                value="${loot.id}"
+                ${index===0?"checked":""}
+              >
+
+              ${loot.label}
+              ×${loot.amount||1}
+            </span>
+
+            <span class="${timeClass}">
+              ${formatDroppedTime(
+                remainingMinutes
+              )}
+            </span>
+          </label>
+        `;
+      })
+      .join("");
+
+openModal(`
+  <div id="droppedItemMenuMarker"></div>
+
+  <h2>Dropped Items</h2>
+
+    <p class="small">
+      Select one item to recover.
+      Time continues while this menu is open.
+    </p>
+
+    <div class="inventoryList">
+      ${rows}
+    </div>
+
+    <div class="modalActions">
+      <button id="pickupSelectedDropBtn">
+        Pick Up Selected
+      </button>
+
+      <button id="pickupDropCloseBtn">
+        Close
+      </button>
+    </div>
+  `);
+
+  const pickupButton=
+    document.getElementById(
+      "pickupSelectedDropBtn"
+    );
+
+  if(pickupButton){
+    pickupButton.onclick=()=>{
+      const selected=
+        document.querySelector(
+          'input[name="droppedItemChoice"]:checked'
+        );
+
+      if(!selected){
+        notify(
+          "Select an item first.",
+          "warn"
+        );
+
+        return;
+      }
+
+      const loot=
+        state.loot.find(
+          entry=>
+            entry.id===
+            selected.value
+        );
+
+      if(!loot){
+        notify(
+          "That item is no longer available.",
+          "warn"
+        );
+
+        openDroppedItemMenu();
+        return;
+      }
+
+      const recovered=
+        collectPlayerDroppedItem(
+          loot
+        );
+
+      if(!recovered){
+        openDroppedItemMenu();
+        return;
+      }
+
+      /*
+      Keep the menu open if other dropped
+      items remain close enough.
+      */
+      const remainingNearby=
+        getNearbyDroppedItems();
+
+      if(
+        remainingNearby.length>0
+      ){
+        openDroppedItemMenu();
+      }else{
+        closeModal();
+      }
+    };
+  }
+
+  const closeButton=
+    document.getElementById(
+      "pickupDropCloseBtn"
+    );
+
+  if(closeButton){
+    closeButton.onclick=
+      closeModal;
+  }
+}
+
 function openInventory(){
   if(!state)return;
 
@@ -7368,7 +8348,14 @@ function openInventory(){
             )}
           </span>
 
-          <span>${action}</span>
+          <span>
+  ${action}
+
+  <button
+    data-drop-item="${itemId}">
+    Drop 1
+  </button>
+</span>
         </div>
       `;
     })
@@ -7521,6 +8508,23 @@ function openInventory(){
         }
       };
     });
+
+document
+  .querySelectorAll(
+    "[data-drop-item]"
+  )
+  .forEach(button=>{
+    button.onclick=()=>{
+      const itemId=
+        button.dataset.dropItem;
+
+      dropInventoryItem(
+        itemId
+      );
+
+      openInventory();
+    };
+  });
 
   document
     .querySelectorAll(
@@ -11740,8 +12744,131 @@ function drawTree(tree){
   ctx.fill();
 }
 
+function drawDroppedItemPrompt(loot){
+  if(!loot.playerDropped)return;
+  if(loot.collected)return;
+
+  const player=state.player;
+
+  const dist=
+    distance(
+      player.x,
+      player.y,
+      loot.x,
+      loot.y
+    );
+
+  /*
+  Only show the prompt when the player
+  is reasonably close to the dropped item.
+  */
+  if(dist>45)return;
+
+  /*
+  Automatically display the correct control
+  based on the player's latest input method.
+  */
+  const usingController=
+    controller.lastInputType===
+    "controller";
+
+  const text=
+    usingController
+      ?"[B] Open Pickup Menu"
+      :"[G] Open Pickup Menu";
+
+  ctx.save();
+
+  ctx.font=
+    "12px Arial";
+
+  ctx.textAlign=
+    "center";
+
+  ctx.textBaseline=
+    "middle";
+
+  const paddingX=9;
+  const bubbleHeight=24;
+
+  const textWidth=
+    ctx.measureText(
+      text
+    ).width;
+
+  const bubbleWidth=
+    textWidth+
+    paddingX*2;
+
+  /*
+  Place the prompt above the dropped-item
+  alarm/glow.
+  */
+  const bubbleX=
+    loot.x;
+
+  const bubbleY=
+    loot.y-55;
+
+  /*
+  70% opacity gray background.
+  */
+  ctx.fillStyle=
+    "rgba(55,55,55,.70)";
+
+  ctx.beginPath();
+
+  if(ctx.roundRect){
+    ctx.roundRect(
+      bubbleX-
+        bubbleWidth/2,
+      bubbleY-
+        bubbleHeight/2,
+      bubbleWidth,
+      bubbleHeight,
+      7
+    );
+  }else{
+    ctx.rect(
+      bubbleX-
+        bubbleWidth/2,
+      bubbleY-
+        bubbleHeight/2,
+      bubbleWidth,
+      bubbleHeight
+    );
+  }
+
+  ctx.fill();
+
+  /*
+  Thin subtle border.
+  */
+  ctx.strokeStyle=
+    "rgba(255,255,255,.18)";
+
+  ctx.lineWidth=1;
+  ctx.stroke();
+
+  /*
+  White prompt text.
+  */
+  ctx.fillStyle=
+    "rgba(255,255,255,.95)";
+
+  ctx.fillText(
+    text,
+    bubbleX,
+    bubbleY
+  );
+
+  ctx.restore();
+}
+
 function drawLoot(){
+
   for(const loot of state.loot){
+
     if(!isObjectActive(loot))continue;
     if(loot.collected)continue;
 
@@ -11762,6 +12889,10 @@ function drawLoot(){
         loot.bob
       )*3;
 
+
+    /*
+    GROUND SHADOW
+    */
     ctx.fillStyle=
       "rgba(0,0,0,.28)";
 
@@ -11779,25 +12910,351 @@ function drawLoot(){
 
     ctx.fill();
 
-    if(loot.type==="resource"){
-      ctx.fillStyle=
-        itemDefinitions[
-          loot.item
-        ]
-          ?itemDefinitions[
-              loot.item
-            ].color
-          :"#ffffff";
 
-      ctx.fillRect(
-        loot.x-8,
-        loot.y-8+bob,
-        16,
-        16
-      );
+    /*
+    RESOURCE
+    */
+    if(loot.type==="resource"){
+
+      /*
+      PLAYER-DROPPED RESOURCE
+      */
+      if(loot.playerDropped){
+
+        /*
+        UPWARD #E2F778 LIGHT
+        */
+        const glow=
+          ctx.createLinearGradient(
+            loot.x,
+            loot.y+3+bob,
+            loot.x,
+            loot.y-42+bob
+          );
+
+        glow.addColorStop(
+          0,
+          "rgba(226,247,120,.82)"
+        );
+
+        glow.addColorStop(
+          .45,
+          "rgba(226,247,120,.40)"
+        );
+
+        glow.addColorStop(
+          1,
+          "rgba(226,247,120,0)"
+        );
+
+        ctx.fillStyle=glow;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+          loot.x-4,
+          loot.y+3+bob
+        );
+
+        ctx.lineTo(
+          loot.x-15,
+          loot.y-40+bob
+        );
+
+        ctx.lineTo(
+          loot.x+15,
+          loot.y-40+bob
+        );
+
+        ctx.lineTo(
+          loot.x+4,
+          loot.y+3+bob
+        );
+
+        ctx.closePath();
+        ctx.fill();
+
+
+        /*
+        OUTER RED ALARM GLOW
+        */
+        const redGlow=
+          ctx.createRadialGradient(
+            loot.x,
+            loot.y+5+bob,
+            1,
+            loot.x,
+            loot.y+5+bob,
+            11
+          );
+
+        redGlow.addColorStop(
+          0,
+          "rgba(255,70,70,.85)"
+        );
+
+        redGlow.addColorStop(
+          1,
+          "rgba(190,25,30,0)"
+        );
+
+        ctx.fillStyle=
+          redGlow;
+
+        ctx.beginPath();
+
+        ctx.arc(
+          loot.x,
+          loot.y+5+bob,
+          11,
+          0,
+          Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /*
+        DARK RED ALARM BASE
+        */
+        ctx.fillStyle=
+          "#9e1f27";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+          loot.x,
+          loot.y+7+bob,
+          7,
+          5,
+          0,
+          0,
+          Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /*
+        BRIGHTER RED TOP
+        */
+        ctx.fillStyle=
+          "#d83d45";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+          loot.x,
+          loot.y+4+bob,
+          6,
+          4,
+          0,
+          0,
+          Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /*
+        ILLUMINATED CENTER
+        */
+        ctx.fillStyle=
+          "#E2F778";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+          loot.x,
+          loot.y+3+bob,
+          2.5,
+          2,
+          0,
+          0,
+          Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /*
+        POLISHED HIGHLIGHT
+        */
+        ctx.fillStyle=
+          "rgba(255,255,255,.75)";
+
+        ctx.beginPath();
+
+        ctx.arc(
+          loot.x-2,
+          loot.y+1+bob,
+          1.2,
+          0,
+          Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /*
+        PICKUP PROMPT
+
+        Only appears when the player
+        gets close to the dropped item.
+        */
+        const promptDistance=
+          distance(
+            state.player.x,
+            state.player.y,
+            loot.x,
+            loot.y
+          );
+
+        if(
+          promptDistance<=45
+        ){
+
+          const usingController=
+            controller.lastInputType===
+            "controller";
+
+          const promptText=
+            usingController
+              ?"[B] Open Pickup Menu"
+              :"[G] Open Pickup Menu";
+
+
+          ctx.save();
+
+          ctx.font=
+            "12px Arial";
+
+          ctx.textAlign=
+            "center";
+
+          ctx.textBaseline=
+            "middle";
+
+
+          /*
+          Measure text so the bubble
+          automatically fits either
+          keyboard or controller wording.
+          */
+          const paddingX=9;
+
+          const bubbleHeight=24;
+
+          const textWidth=
+            ctx.measureText(
+              promptText
+            ).width;
+
+          const bubbleWidth=
+            textWidth+
+            paddingX*2;
+
+
+          /*
+          Position above the light beam.
+          */
+          const bubbleX=
+            loot.x;
+
+          const bubbleY=
+            loot.y-57+bob;
+
+
+          /*
+          70% GRAY BACKGROUND
+          */
+          ctx.fillStyle=
+            "rgba(55,55,55,.70)";
+
+          ctx.beginPath();
+
+          if(ctx.roundRect){
+
+            ctx.roundRect(
+              bubbleX-
+                bubbleWidth/2,
+              bubbleY-
+                bubbleHeight/2,
+              bubbleWidth,
+              bubbleHeight,
+              7
+            );
+
+          }else{
+
+            ctx.rect(
+              bubbleX-
+                bubbleWidth/2,
+              bubbleY-
+                bubbleHeight/2,
+              bubbleWidth,
+              bubbleHeight
+            );
+          }
+
+          ctx.fill();
+
+
+          /*
+          SUBTLE WHITE BORDER
+          */
+          ctx.strokeStyle=
+            "rgba(255,255,255,.20)";
+
+          ctx.lineWidth=1;
+
+          ctx.stroke();
+
+
+          /*
+          WHITE TEXT
+          */
+          ctx.fillStyle=
+            "rgba(255,255,255,.95)";
+
+          ctx.fillText(
+            promptText,
+            bubbleX,
+            bubbleY
+          );
+
+          ctx.restore();
+        }
+
+      }else{
+
+        /*
+        NORMAL NATURAL WORLD LOOT
+        */
+        ctx.fillStyle=
+          itemDefinitions[
+            loot.item
+          ]
+            ?itemDefinitions[
+                loot.item
+              ].color
+            :"#ffffff";
+
+        ctx.fillRect(
+          loot.x-8,
+          loot.y-8+bob,
+          16,
+          16
+        );
+      }
     }
 
+
+    /*
+    WEAPON
+    */
     if(loot.type==="weapon"){
+
       ctx.save();
 
       ctx.translate(
@@ -11822,8 +13279,15 @@ function drawLoot(){
       ctx.restore();
     }
 
+
+    /*
+    KEY
+    */
     if(loot.type==="key"){
-      ctx.strokeStyle="#e5c85b";
+
+      ctx.strokeStyle=
+        "#e5c85b";
+
       ctx.lineWidth=4;
 
       ctx.beginPath();
@@ -11849,8 +13313,14 @@ function drawLoot(){
       ctx.stroke();
     }
 
+
+    /*
+    COMPASS
+    */
     if(loot.type==="compass"){
-      ctx.fillStyle="#c7ad61";
+
+      ctx.fillStyle=
+        "#c7ad61";
 
       ctx.beginPath();
 
@@ -11864,7 +13334,8 @@ function drawLoot(){
 
       ctx.fill();
 
-      ctx.fillStyle="#a9473e";
+      ctx.fillStyle=
+        "#a9473e";
 
       ctx.beginPath();
 
@@ -11884,6 +13355,7 @@ function drawLoot(){
       );
 
       ctx.closePath();
+
       ctx.fill();
     }
   }
@@ -11892,6 +13364,9 @@ function drawLoot(){
 function drawFallenBackpack(fallen){
   ctx.save();
 
+  /*
+  BACKPACK SHADOW
+  */
   ctx.fillStyle=
     "rgba(0,0,0,.3)";
 
@@ -11909,6 +13384,10 @@ function drawFallenBackpack(fallen){
 
   ctx.fill();
 
+
+  /*
+  BACKPACK BODY
+  */
   ctx.fillStyle="#594635";
 
   ctx.fillRect(
@@ -11918,6 +13397,10 @@ function drawFallenBackpack(fallen){
     24
   );
 
+
+  /*
+  BACKPACK HANDLE
+  */
   ctx.strokeStyle="#2e251d";
   ctx.lineWidth=3;
 
@@ -11933,6 +13416,10 @@ function drawFallenBackpack(fallen){
 
   ctx.stroke();
 
+
+  /*
+  RED DETAIL
+  */
   ctx.fillStyle="#b04d42";
 
   ctx.fillRect(
@@ -11941,6 +13428,140 @@ function drawFallenBackpack(fallen){
     6,
     6
   );
+
+
+  /*
+  TIME REMAINING
+  */
+  if(
+    !fallen.recovered &&
+    fallen.backpackExpiresAt
+  ){
+    const minutesLeft=
+      fallenBackpackMinutesLeft(
+        fallen
+      );
+
+    const totalMinutes=
+      Math.ceil(
+        minutesLeft
+      );
+
+    const hours=
+      Math.floor(
+        totalMinutes/60
+      );
+
+    const minutes=
+      totalMinutes%60;
+
+    const timerText=
+      hours+
+      "h "+
+      String(minutes)
+        .padStart(2,"0")+
+      "m remaining";
+
+
+    ctx.font=
+      "12px Arial";
+
+    ctx.textAlign=
+      "center";
+
+    ctx.textBaseline=
+      "middle";
+
+
+    /*
+    Automatically size bubble
+    around the timer text.
+    */
+    const textWidth=
+      ctx.measureText(
+        timerText
+      ).width;
+
+    const bubbleWidth=
+      textWidth+18;
+
+    const bubbleHeight=24;
+
+    const bubbleX=
+      fallen.x;
+
+    const bubbleY=
+      fallen.y-42;
+
+
+    /*
+    TRANSPARENT GRAY BUBBLE
+    */
+    ctx.fillStyle=
+      "rgba(55,55,55,.70)";
+
+    ctx.beginPath();
+
+    if(ctx.roundRect){
+
+      ctx.roundRect(
+        bubbleX-
+          bubbleWidth/2,
+        bubbleY-
+          bubbleHeight/2,
+        bubbleWidth,
+        bubbleHeight,
+        7
+      );
+
+    }else{
+
+      ctx.rect(
+        bubbleX-
+          bubbleWidth/2,
+        bubbleY-
+          bubbleHeight/2,
+        bubbleWidth,
+        bubbleHeight
+      );
+    }
+
+    ctx.fill();
+
+
+    /*
+    TIMER COLOR
+
+    Normal = white
+    Under 6 hours = yellow/green
+    Under 1 hour = red
+    */
+    if(minutesLeft<=60){
+
+      ctx.fillStyle=
+        "#ff6868";
+
+    }else if(
+      minutesLeft<=360
+    ){
+
+      ctx.fillStyle=
+        "#E2F778";
+
+    }else{
+
+      ctx.fillStyle=
+        "#ffffff";
+    }
+
+
+    ctx.fillText(
+      timerText,
+      bubbleX,
+      bubbleY
+    );
+  }
+
 
   ctx.restore();
 }
@@ -11976,6 +13597,94 @@ function drawPaperPerson(
     x,
     y
   );
+
+/*
+BACKPACK
+Drawn behind the player's body so it works
+universally with every shirt and outfit.
+*/
+context.fillStyle="#3e4448";
+
+context.beginPath();
+
+if(context.roundRect){
+context.roundRect(
+-14,
+-34,
+28,
+22,
+6
+);
+}else{
+context.rect(
+-14,
+-34,
+28,
+22
+);
+}
+
+context.fill();
+
+/*
+Darker bottom section gives the backpack
+a little depth.
+*/
+context.fillStyle="#292e31";
+
+context.fillRect(
+-12,
+-17,
+24,
+5
+);
+
+/*
+Small top handle.
+*/
+context.strokeStyle="#292e31";
+context.lineWidth=3;
+context.lineCap="round";
+
+context.beginPath();
+context.arc(
+0,
+-34,
+6,
+Math.PI,
+Math.PI*2
+);
+context.stroke();
+
+/*
+Slight side bulge so the backpack remains
+visible behind the player's torso.
+*/
+context.fillStyle="#343a3e";
+
+context.beginPath();
+context.ellipse(
+-13,
+-24,
+4,
+8,
+0,
+0,
+Math.PI*2
+);
+context.fill();
+
+context.beginPath();
+context.ellipse(
+13,
+-24,
+4,
+8,
+0,
+0,
+Math.PI*2
+);
+context.fill();
 
   context.scale(
     scale,
@@ -12673,87 +14382,63 @@ if(outfitId==="peanutShirt"){
 }
 
 
- /*
-  RED HOODIE
-  Bright red front face with darker red depth/shading
-  and a white right-pointing triangle.
+/*
+RED SHIRT
+Bright red front face with darker red depth/shading,
+full sleeves, and a white right-pointing triangle.
 */
 if(outfitId==="redHoodie"){
-  /*
-    Main bright-red hoodie face.
-  */
-  context.fillStyle="#d52323";
+context.fillStyle="#d52323";
+drawOutfitBody(
+context,
+x,
+y,
+w,
+h
+);
 
-  drawOutfitBody(
-    context,
-    x,
-    y,
-    w,
-    h
-  );
+context.fillStyle="#8f2020";
+context.fillRect(
+x,
+y+h-4,
+w,
+4
+);
+context.fillRect(
+x,
+y+3,
+3,
+h-7
+);
 
-  /*
-    Dark red shading along the bottom and side
-    gives the hoodie some paper-like depth.
-  */
-  context.fillStyle="#8f2020";
+context.strokeStyle="#9d2424";
+context.lineWidth=2;
+context.beginPath();
+context.arc(
+0,
+y+3,
+7,
+0,
+Math.PI
+);
+context.stroke();
 
-  context.fillRect(
-    x,
-    y+h-4,
-    w,
-    4
-  );
-
-  context.fillRect(
-    x,
-    y+3,
-    3,
-    h-7
-  );
-
-  /*
-    Subtle hood/collar.
-  */
-  context.strokeStyle="#9d2424";
-  context.lineWidth=2;
-
-  context.beginPath();
-
-  context.arc(
-    0,
-    y+3,
-    7,
-    0,
-    Math.PI
-  );
-
-  context.stroke();
-
-  /*
-    White right-pointing triangle.
-  */
-  context.fillStyle="#ffffff";
-
-  context.beginPath();
-
-  context.moveTo(
-    -5,
-    y+6
-  );
-
-  context.lineTo(
-    -5,
-    y+16
-  );
-
-  context.lineTo(
-    6,
-    y+11
-  );
-
-  context.closePath();
-  context.fill();
+context.fillStyle="#ffffff";
+context.beginPath();
+context.moveTo(
+-5,
+y+6
+);
+context.lineTo(
+-5,
+y+16
+);
+context.lineTo(
+6,
+y+11
+);
+context.closePath();
+context.fill();
 }
 
   context.restore();
@@ -14656,6 +16341,15 @@ if(controllerBeingUsed){
       cycleWeapon();
     }
 
+if(
+  gamepadButtonJustPressed(
+    gamepad,
+    1
+  )
+){
+  openDroppedItemMenu();
+}
+
     if(
       gamepadButtonJustPressed(
         gamepad,
@@ -14669,6 +16363,85 @@ if(controllerBeingUsed){
       attack();
     }
   }
+
+/*
+DROPPED ITEMS MENU CONTROLLER
+A      = Pick up selected
+B      = Close
+D-pad  = Change selection
+*/
+const droppedMenuOpen=
+  Boolean(
+    document.getElementById(
+      "droppedItemMenuMarker"
+    )
+  );
+
+if(
+  running &&
+  modalOpen &&
+  droppedMenuOpen
+){
+
+  /*
+  D-pad Up
+  */
+  if(
+    gamepadButtonJustPressed(
+      gamepad,
+      12
+    )
+  ){
+    moveDroppedItemSelection(
+      -1
+    );
+  }
+
+  /*
+  D-pad Down
+  */
+  if(
+    gamepadButtonJustPressed(
+      gamepad,
+      13
+    )
+  ){
+    moveDroppedItemSelection(
+      1
+    );
+  }
+
+  /*
+  A = Pick Up Selected
+  */
+  if(
+    gamepadButtonJustPressed(
+      gamepad,
+      0
+    )
+  ){
+    const pickupButton=
+      document.getElementById(
+        "pickupSelectedDropBtn"
+      );
+
+    if(pickupButton){
+      pickupButton.click();
+    }
+  }
+
+  /*
+  B = Close
+  */
+  if(
+    gamepadButtonJustPressed(
+      gamepad,
+      1
+    )
+  ){
+    closeModal();
+  }
+}
 
   /*
     Menu / Start must also be able to resume/close
@@ -14792,6 +16565,12 @@ window.addEventListener(
     ){
       openInventory();
     }
+
+if(event.code==="KeyG"){
+  event.preventDefault();
+
+  openDroppedItemMenu();
+}
 
     if(event.code==="KeyM"){
       if(
