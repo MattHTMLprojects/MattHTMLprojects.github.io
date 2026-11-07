@@ -240,63 +240,136 @@
       color: var(--text-muted);
     }
 
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 7px;
-    }
+  .controls {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
 
-    .control-key {
-      padding: 9px 5px;
+.control-key {
+  min-height: 52px;
+  padding: 9px 5px;
 
-      background: var(--panel-inner);
-      border: 1px solid var(--border);
-      border-radius: 6px;
+  /* Neutral gray resting state */
+  background: #252a31;
+  color: var(--text);
 
-      color: var(--text-muted);
+  /* Keep the blue-gray border */
+  border: 1px solid #D1D1D1;
+  border-radius: 7px;
 
-      font-size: 0.73rem;
-      line-height: 1.35;
-      text-align: center;
-    }
+  cursor: pointer;
 
-    .control-key strong {
-      display: block;
+  font: inherit;
+  text-align: center;
 
-      color: var(--text);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 
-      font-size: 0.82rem;
-    }
+  transition:
+    background 140ms ease-out,
+    border-color 140ms ease-out,
+    box-shadow 140ms ease-out,
+    transform 80ms ease-out;
+}
 
-    .action-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+.control-key strong {
+  display: block;
 
-    .game-button {
-      min-height: 39px;
-      padding: 8px 14px;
+  color: var(--text);
+  font-size: 1rem;
 
-      background: #1a202b;
-      color: var(--text);
+  pointer-events: none;
+}
 
-      border: 1px solid var(--border-bright);
-      border-radius: 6px;
+.control-key span {
+  display: block;
+  margin-top: 2px;
 
-      cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  line-height: 1.1;
 
-      font-weight: 700;
-      letter-spacing: 0.04em;
-    }
+  pointer-events: none;
+}
 
-    .game-button:hover {
-      background: #242d3b;
-    }
 
-    .game-button:active {
-      transform: translateY(1px);
-    }
+/* Mouse hover: same bright blue idea as Re-Roll */
+.control-key:hover {
+  background: #0FACF0;
+  border-color: #62d1ff;
+}
+
+
+/* Actively clicked / touched / held */
+.control-key:active,
+.control-key.pressed {
+  background: #0FACF0;
+  border-color: #8bdcff;
+
+  box-shadow:
+    0 0 7px rgba(15, 172, 240, 0.40);
+
+  transform: translateY(1px);
+}
+
+
+/* Keep small description readable on blue */
+.control-key:hover span,
+.control-key:active span,
+.control-key.pressed span {
+  color: #eaf8ff;
+}
+
+
+.action-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+
+  margin-top: 8px;
+}
+
+.game-button {
+  /* your normal/shared button styling */
+}
+
+/* NEW GAME COLORS */
+#newGameButton {
+  background: #24352b;
+  border-color: #63e6a5;
+  color: var(--text);
+}
+
+#newGameButton:hover,
+#newGameButton:active {
+  background: #39b978;
+  border-color: #8fffc4;
+}
+
+#newGameButton:active {
+  transform: translateY(1px);
+}
+
+/* PAUSE COLORS */
+#pauseButton {
+  background: #393322;
+  border-color: #ffd166;
+  color: var(--text);
+}
+
+#pauseButton:hover,
+#pauseButton:active {
+  background: #d3a72f;
+  border-color: #ffe39a;
+}
+
+#pauseButton:active {
+  transform: translateY(1px);
+}
 
     /* -------------------------------------------------- */
     /* RIGHT-SIDE SCREENS                                 */
@@ -415,12 +488,18 @@
     }
 
     .reroll-button:hover {
-      background: #22314a;
+      background: #0FACF0;
     }
 
-    .reroll-button:active {
-      transform: translateY(1px);
-    }
+.reroll-button:active {
+  background: #0FACF0;
+  border-color: #8bdcff;
+
+  box-shadow:
+    0 0 10px rgba(15, 172, 240, 0.55);
+
+  transform: translateY(1px);
+}
 
     .reroll-credit {
       display: flex;
@@ -557,10 +636,6 @@
         text-align: center;
       }
 
-      .controls {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
       .next-screen {
         width: 256px;
       }
@@ -608,56 +683,51 @@
 
         <div class="pause-cover" id="pauseCover">
           <strong id="pauseTitle">PAUSED</strong>
-          <span id="pauseText">Press P to continue</span>
+          <span id="pauseText">Select RESUME to continue</span>
         </div>
       </div>
 
 <div class="controls">
-  <div class="control-key">
-    <strong>A / D</strong>
-    Move
-  </div>
+  <button class="control-key" id="leftControl" type="button">
+    <strong>A</strong>
+    <span>Move Left</span>
+  </button>
 
-  <div class="control-key">
-    <strong>S</strong>
-    Soft drop
-  </div>
+  <button class="control-key" id="rightControl" type="button">
+    <strong>D</strong>
+    <span>Move Right</span>
+  </button>
 
-  <div class="control-key">
-    <strong>X</strong>
-    Hard drop
-  </div>
-
-  <div class="control-key">
+  <button class="control-key" id="rotateControl" type="button">
     <strong>R</strong>
-    Rotate
-  </div>
+    <span>Rotate</span>
+  </button>
 
-  <div class="control-key">
+  <button class="control-key" id="hardDropControl" type="button">
+    <strong>X</strong>
+    <span>Hard Drop</span>
+  </button>
+
+  <button class="control-key" id="softDropControl" type="button">
+    <strong>S</strong>
+    <span>Soft Drop</span>
+  </button>
+
+  <button class="control-key" id="flipControl" type="button">
     <strong>F</strong>
-    Flip
-  </div>
-
-  <div class="control-key">
-    <strong>P</strong>
-    Pause
-  </div>
+    <span>Flip</span>
+  </button>
 </div>
 
-      <div class="action-row">
-        <button class="game-button" id="newGameButton" type="button">
-          NEW GAME
-        </button>
+<div class="action-row">
+  <button class="game-button" id="newGameButton" type="button">
+    NEW GAME
+  </button>
 
-        <button class="game-button" id="pauseButton" type="button">
-          PAUSE
-        </button>
-
-        <span class="status-line">
-          Piece choice:
-          <strong id="transformStatus">ROTATE OR MIRROR</strong>
-        </span>
-      </div>
+  <button class="game-button" id="pauseButton" type="button">
+    PAUSE
+  </button>
+</div>
     </section>
 
     <!-- ================================================== -->
@@ -723,7 +793,7 @@
     const ROWS = 20;
     const BLOCK = 32;
 
-    const INITIAL_DROP_INTERVAL = 720;
+    const INITIAL_DROP_INTERVAL = 1500; // larger number means a slightly slower game
     const MINIMUM_DROP_INTERVAL = 115;
 
     const NEXT_PIECE_DELAY = 2200;
@@ -806,8 +876,6 @@ function randomMetalGray() {
     const errorCount = document.getElementById("errorCount");
     const logScreen = document.getElementById("logScreen");
     const logEmpty = document.getElementById("logEmpty");
-
-    const transformStatus = document.getElementById("transformStatus");
 
     const nextCountdown = document.getElementById("nextCountdown");
     const rerollStatus = document.getElementById("rerollStatus");
@@ -928,7 +996,6 @@ let lastTransformTime = -Infinity;
       nextPiece = createRandomPiece();
 
       dropCounter = 0;
-      updateTransformStatus();
       drawNextPreview();
 
       if (collides(activePiece, activePiece.x, activePiece.y, activePiece.matrix)) {
@@ -1211,28 +1278,7 @@ function attemptMirror() {
   startTransformCooldown();
 }
 
-    function updateTransformStatus() {
-      if (!activePiece) {
-        transformStatus.textContent = "ROTATE OR MIRROR";
-        transformStatus.style.color = "";
-        return;
-      }
 
-      if (activePiece.transformChoice === "rotate") {
-        transformStatus.textContent = "ROTATION CHOSEN";
-        transformStatus.style.color = "#7fb4ff";
-        return;
-      }
-
-      if (activePiece.transformChoice === "mirror") {
-        transformStatus.textContent = "MIRROR CHOSEN";
-        transformStatus.style.color = "#ff8bd5";
-        return;
-      }
-
-      transformStatus.textContent = "ROTATE OR MIRROR";
-      transformStatus.style.color = "#63e6a5";
-    }
 
     /* ==================================================== */
     /* LOCKING AND LINE CLEARING                            */
@@ -1847,7 +1893,7 @@ function attemptMirror() {
 
       if (paused) {
         pauseTitle.textContent = "PAUSED";
-        pauseText.textContent = "Press P to continue";
+        pauseText.textContent = "Select RESUME to continue";
       } else {
         /*
           Avoid a large automatic time jump after resuming.
@@ -1965,24 +2011,19 @@ function attemptMirror() {
     /* ==================================================== */
 
 document.addEventListener("keydown", event => {
-  const handledKeys = [
-    "KeyA",
-    "KeyD",
-    "KeyS",
-    "KeyX",
-    "KeyR",
-    "KeyF",
-    "KeyP"
-  ];
+const handledKeys = [
+  "KeyA",
+  "KeyD",
+  "KeyS",
+  "KeyX",
+  "KeyR",
+  "KeyF"
+];
 
   if (handledKeys.includes(event.code)) {
     event.preventDefault();
   }
 
-  if (event.code === "KeyP") {
-    togglePause();
-    return;
-  }
 
   if (!canControlPiece()) {
     return;
@@ -2018,6 +2059,133 @@ document.addEventListener("keydown", event => {
     rerollButton.addEventListener("click", attemptReroll);
     newGameButton.addEventListener("click", startNewGame);
     pauseButton.addEventListener("click", togglePause);
+
+
+/* ==================================================== */
+/* CLICK / TOUCH CONTROLS                               */
+/* ==================================================== */
+
+const leftControl = document.getElementById("leftControl");
+const rightControl = document.getElementById("rightControl");
+const rotateControl = document.getElementById("rotateControl");
+const hardDropControl = document.getElementById("hardDropControl");
+const softDropControl = document.getElementById("softDropControl");
+const flipControl = document.getElementById("flipControl");
+
+
+/* ==================================================== */
+/* PRESS-AND-HOLD CONTROLS                              */
+/* ==================================================== */
+
+function makeHoldControl(button, action, repeatDelay) {
+  let repeatTimer = null;
+  let holdTimeout = null;
+
+  function stop() {
+    button.classList.remove("pressed");
+
+    if (holdTimeout !== null) {
+      clearTimeout(holdTimeout);
+      holdTimeout = null;
+    }
+
+    if (repeatTimer !== null) {
+      clearInterval(repeatTimer);
+      repeatTimer = null;
+    }
+  }
+
+  function start(event) {
+    event.preventDefault();
+
+    stop();
+    button.classList.add("pressed");
+
+    // Run once immediately for a normal tap.
+    action();
+
+    // Begin repeating only when the button is held.
+    holdTimeout = setTimeout(() => {
+      repeatTimer = setInterval(action, repeatDelay);
+    }, 180);
+
+    if (button.setPointerCapture) {
+      button.setPointerCapture(event.pointerId);
+    }
+  }
+
+  button.addEventListener("pointerdown", start);
+  button.addEventListener("pointerup", stop);
+  button.addEventListener("pointercancel", stop);
+  button.addEventListener("lostpointercapture", stop);
+}
+
+
+/* A: move left */
+makeHoldControl(
+  leftControl,
+  () => movePiece(-1),
+  100
+);
+
+
+/* D: move right */
+makeHoldControl(
+  rightControl,
+  () => movePiece(1),
+  100
+);
+
+
+/* S: soft drop */
+makeHoldControl(
+  softDropControl,
+  softDrop,
+  65
+);
+
+
+/* ==================================================== */
+/* SINGLE-PRESS CONTROLS                                */
+/* ==================================================== */
+
+function makeSinglePressControl(button, action) {
+  button.addEventListener("pointerdown", event => {
+    event.preventDefault();
+
+    button.classList.add("pressed");
+    action();
+  });
+
+  function release() {
+    button.classList.remove("pressed");
+  }
+
+  button.addEventListener("pointerup", release);
+  button.addEventListener("pointercancel", release);
+  button.addEventListener("pointerleave", release);
+}
+
+
+/* R: rotate */
+makeSinglePressControl(
+  rotateControl,
+  attemptRotate
+);
+
+
+/* X: hard drop */
+makeSinglePressControl(
+  hardDropControl,
+  hardDrop
+);
+
+
+/* F: flip */
+makeSinglePressControl(
+  flipControl,
+  attemptMirror
+);
 
     /* ==================================================== */
     /* START                                                */
