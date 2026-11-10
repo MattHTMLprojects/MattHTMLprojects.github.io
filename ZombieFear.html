@@ -12901,15 +12901,16 @@ function drawContainer(container){
 }
 
 function drawCar(car) {
-  // Classic 90s arcade sedan palettes (Deep Emerald, Steel Blue, Burgundy, Dark Silver)
+  ctx.save(); // Protect global canvas state
+
   const palettes = [
     { body: "#2a7542", highlight: "#43a05d", roof: "#1f5631", glass: "#1c2833", trim: "#d5dbdb", wheels: "#111" },
-    { body: "#34495e", highlight: "#5d6d7e", roof: "#2c3e50", glass: "#1c2833", trim: "#d5dbdb", wheels: "#111" },
+    { body: "#34495e", highlight: "#5d6d7e", roof: "#2c3e50", glass: "#1c2833", trim: "#1c2833", wheels: "#111" },
     { body: "#78281f", highlight: "#a93226", roof: "#512e5f", glass: "#1c2833", trim: "#d5dbdb", wheels: "#111" },
     { body: "#566573", highlight: "#85929e", roof: "#34495e", glass: "#1c2833", trim: "#d5dbdb", wheels: "#111" }
   ];
 
-  const number = Number(String(car.id).replace(/[^0-9]/g, "")) || 0;
+  const number = Number(String(car.id).replace(/[^0-9]/g, "")) || Math.floor(Math.abs(car.x + car.y));
   const p = palettes[number % palettes.length];
 
   // Drop Shadow
@@ -12920,82 +12921,66 @@ function drawCar(car) {
 
   if (isHorizontal) {
     // --- HORIZONTAL ORIENTATION ---
-    
-    // Wheels (Tires poking out top and bottom)
     ctx.fillStyle = p.wheels;
     ctx.fillRect(car.x + car.w * 0.22, car.y - 4, 12, 6);
     ctx.fillRect(car.x + car.w * 0.70, car.y - 4, 12, 6);
     ctx.fillRect(car.x + car.w * 0.22, car.y + car.h - 2, 12, 6);
     ctx.fillRect(car.x + car.w * 0.70, car.y + car.h - 2, 12, 6);
 
-    // Main Body Chassis
     ctx.fillStyle = p.body;
     ctx.fillRect(car.x, car.y + 4, car.w, car.h - 8);
 
-    // Hood & Trunk detailing (lighter body panels)
     ctx.fillStyle = p.highlight;
     ctx.fillRect(car.x + 4, car.y + 6, car.w * 0.2, car.h - 12);
     ctx.fillRect(car.x + car.w * 0.76, car.y + 6, car.w * 0.2, car.h - 12);
 
-    // Cabin / Roof
     ctx.fillStyle = p.roof;
     ctx.fillRect(car.x + car.w * 0.3, car.y + 8, car.w * 0.4, car.h - 16);
 
-    // Windshield & Rear window glass
     ctx.fillStyle = p.glass;
     ctx.fillRect(car.x + car.w * 0.32, car.y + 10, car.w * 0.1, car.h - 20);
     ctx.fillRect(car.x + car.w * 0.58, car.y + 10, car.w * 0.1, car.h - 20);
 
-    // Chrome Bumpers / Headlights
     ctx.fillStyle = p.trim;
-    ctx.fillRect(car.x, car.y + 8, 4, car.h - 16); // Front bumper/grille accent
-    ctx.fillRect(car.x + car.w - 4, car.y + 8, 4, car.h - 16); // Rear bumper
-
+    ctx.fillRect(car.x, car.y + 8, 4, car.h - 16);
+    ctx.fillRect(car.x + car.w - 4, car.y + 8, 4, car.h - 16);
   } else {
     // --- VERTICAL ORIENTATION ---
-
-    // Wheels
     ctx.fillStyle = p.wheels;
     ctx.fillRect(car.x - 4, car.y + car.h * 0.22, 6, 12);
     ctx.fillRect(car.x + car.w - 2, car.y + car.h * 0.22, 6, 12);
     ctx.fillRect(car.x - 4, car.y + car.h * 0.70, 6, 12);
     ctx.fillRect(car.x + car.w - 2, car.y + car.h * 0.70, 6, 12);
 
-    // Main Body Chassis
     ctx.fillStyle = p.body;
     ctx.fillRect(car.x + 4, car.y, car.w - 8, car.h);
 
-    // Hood & Trunk detailing
     ctx.fillStyle = p.highlight;
     ctx.fillRect(car.x + 6, car.y + 4, car.w - 12, car.h * 0.2);
     ctx.fillRect(car.x + 6, car.y + car.h * 0.76, car.w - 12, car.h * 0.2);
 
-    // Cabin / Roof
     ctx.fillStyle = p.roof;
     ctx.fillRect(car.x + 8, car.y + car.h * 0.3, car.w - 16, car.h * 0.4);
 
-    // Windshield Glass
     ctx.fillStyle = p.glass;
     ctx.fillRect(car.x + 10, car.y + car.h * 0.32, car.w - 20, car.h * 0.1);
     ctx.fillRect(car.x + 10, car.y + car.h * 0.58, car.w - 20, car.h * 0.1);
 
-    // Trim / Bumpers
     ctx.fillStyle = p.trim;
     ctx.fillRect(car.x + 8, car.y, car.w - 16, 4);
     ctx.fillRect(car.x + 8, car.y + car.h - 4, car.w - 16, 4);
   }
 
-  // Looted Overlay Status
+  // Wrecked Text Label (Car colors remain 100% normal)
   if (car.looted) {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-    ctx.fillRect(car.x, car.y, car.w, car.h);
-
     ctx.fillStyle = "#e74c3c";
     ctx.font = "bold 11px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("WRECKED", car.x + car.w / 2, car.y + car.h / 2);
   }
+
+  ctx.restore(); // Restores global canvas state safely
 }
 
 
