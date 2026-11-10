@@ -61,6 +61,89 @@ button.good {
   background: #356a3f;
 }
 
+.touchActionButton {
+  width: 65px;
+  height: 65px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(2px);
+  color: white;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  transition: background 0.1s, transform 0.1s;
+}
+
+.touchActionButton:active, .touchActionButton.pressed {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(0.92);
+}
+
+/* Container that holds both the content and the right rail side-by-side */
+.blueprint-scroll-wrapper {
+  display: flex;
+  flex-direction: row;
+  height: 400px; /* Set an explicit height for the scrollable region inside your modal */
+  max-height: 60vh; /* Keeps it responsive on smaller screens */
+  border: 1px solid #444;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(15, 15, 15, 0.6);
+}
+
+/* Left side: scrollable content filling remaining width */
+.modal-scroll-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  scrollbar-width: none; /* Hide standard browser scrollbar */
+}
+
+.modal-scroll-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* Right side: dedicated vertical button column */
+.scroll-rail {
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(30, 30, 30, 0.95);
+  border-left: 1px solid #444;
+  flex-shrink: 0; /* Prevents the rail from shrinking */
+}
+
+.rail-btn {
+  flex: 1; /* Makes top and bottom buttons split height evenly (50%/50%) */
+  background: transparent;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.rail-btn:hover {
+  background: rgba(70, 70, 70, 0.9);
+}
+
+.rail-btn:active {
+  background: rgba(100, 100, 100, 1);
+}
+
+
 .screen {
   position: fixed;
   inset: 0;
@@ -570,8 +653,10 @@ button.good {
 }
 
 input[type="color"] {
-  width: 54px;
-  height: 42px;
+  -webkit-appearance: none;
+  border: none;
+  width: 44px;
+  height: 40px;
   padding: 3px;
   border: 1px solid rgba(255,255,255,.25);
   border-radius: 7px;
@@ -579,9 +664,24 @@ input[type="color"] {
   cursor: pointer;
 }
 
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+/* Styled all hex text boxes together so none are left unformatted */
 #shirtHex,
-#hairHex {
+#hairHex,
+#skinHex,
+#eyeHex,
+#pantsHex,
+#shoeHex {
   width: 110px;
+  height: 40px;
   padding: 9px 10px;
   border: 1px solid rgba(255,255,255,.2);
   border-radius: 7px;
@@ -589,7 +689,9 @@ input[type="color"] {
   color: white;
   font: inherit;
   text-transform: uppercase;
+  text-align: center;
 }
+
 
 </style>
 </head>
@@ -630,95 +732,94 @@ input[type="color"] {
         height="310">
       </canvas>
 
-      <div>
+      <div class="customizerControls">
+        <!-- Gender / Body Type -->
         <div class="choice">
           <h3>Survivor</h3>
           <div class="row">
-            <button
-              class="gender selected"
-              data-value="male">
-              Male
-            </button>
+            <button class="gender selected" data-value="male">Male</button>
+            <button class="gender" data-value="female">Female</button>
+          </div>
+        </div>
 
-            <button
-              class="gender"
-              data-value="female">
-              Female
-            </button>
+        <!-- Hair Style -->
+        <div class="choice">
+          <h3>Hair / Headwear</h3>
+          <div id="hairChoices" class="row"></div>
+        </div>
+
+        <!-- Hair Color -->
+        <div class="choice">
+          <h3>Hair / Hat Color</h3>
+          <div class="row">
+            <input id="hairColor" type="color" value="#59351f">
+            <input id="hairHex" type="text" value="#59351f" maxlength="7" spellcheck="false">
           </div>
         </div>
 
 <div class="choice">
-  <h3>Shirt Color</h3>
-
+  <h3>Skin Tone</h3>
   <div class="row">
     <input
-      id="shirtColor"
+      id="skinColor"
       type="color"
-      value="#376fd8">
+      value="#f5d0b1">
 
     <input
-      id="shirtHex"
+      id="skinHex"
       type="text"
-      value="#376fd8"
+      value="#f5d0b1"
       maxlength="7"
       spellcheck="false">
   </div>
 </div>
 
-<div class="choice">
-  <h3>Hair / Headwear</h3>
-  <div id="hairChoices" class="row"></div>
-</div>
 
-<div class="choice">
-  <h3>Hair Color</h3>
-
-  <div class="row">
-    <input
-      id="hairColor"
-      type="color"
-      value="#59351f">
-
-    <input
-      id="hairHex"
-      type="text"
-      value="#59351f"
-      maxlength="7"
-      spellcheck="false">
-  </div>
-</div>
-
+        <!-- Eye Color -->
         <div class="choice">
-          <h3>County</h3>
+          <h3>Eye Color</h3>
           <div class="row">
-            <button
-              class="difficulty selected"
-              data-value="standard">
-              Standard
-            </button>
+            <input id="eyeColor" type="color" value="#2e7d32">
+            <input id="eyeHex" type="text" value="#2e7d32" maxlength="7" spellcheck="false">
+          </div>
+        </div>
 
-            <button
-              class="difficulty"
-              data-value="calm">
-              Calm County
-            </button>
+        <!-- Shirt Color -->
+        <div class="choice">
+          <h3>Shirt Color</h3>
+          <div class="row">
+            <input id="shirtColor" type="color" value="#376fd8">
+            <input id="shirtHex" type="text" value="#376fd8" maxlength="7" spellcheck="false">
+          </div>
+        </div>
+
+        <!-- Pants Color -->
+        <div class="choice">
+          <h3>Pants Color</h3>
+          <div class="row">
+            <input id="pantsColor" type="color" value="#263238">
+            <input id="pantsHex" type="text" value="#263238" maxlength="7" spellcheck="false">
+          </div>
+        </div>
+
+        <!-- Shoe Color -->
+        <div class="choice">
+          <h3>Shoe Color</h3>
+          <div class="row">
+            <input id="shoeColor" type="color" value="#4e342e">
+            <input id="shoeHex" type="text" value="#4e342e" maxlength="7" spellcheck="false">
           </div>
         </div>
 
         <div class="menuButtons">
-          <button id="startBtn">
-            Wake in the Safehouse
-          </button>
-
-          <button id="backBtn">
-            Back
-          </button>
+          <button id="startBtn">Wake in the Safehouse</button>
+          <button id="backBtn">Back</button>
         </div>
       </div>
     </div>
   </div>
 </section>
+
 
 <section id="gameScreen" class="screen">
   <canvas id="game"></canvas>
@@ -804,8 +905,8 @@ input[type="color"] {
   LS Click: Sprint<br>
   Right Stick: Aim<br>
   RT: Attack<br>
+  Left Bumper: Dropped Items<br>
   X: Interact<br>
-  B: Dropped Items<br>
   Y: Cycle Weapon<br>
   View / Select: Backpack<br>
   Menu / Start: Pause
@@ -834,6 +935,43 @@ input[type="color"] {
       <div id="modalContent" class="modalCard"></div>
     </div>
   </div>
+<!-- On-Screen Touch Gamepad Overlay -->
+<div id="touchGamepadOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 998; display: none;">
+  
+  <!-- Wide Transparent Controller Chassis (Centered at the bottom) -->
+  <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: min(96vw, 550px); height: 150px; background: rgba(20, 20, 20, 0.50); border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; pointer-events: auto; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+    
+      <!-- Left Side: Movement Joystick & Vertical Stack of Buttons (Cycle & Inventory) -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div id="virtualJoystick" style="position: relative; width: 100px; height: 100px; background: rgba(255, 255, 255, 0.20); border: 2px solid rgba(255, 255, 255, 0.35); border-radius: 50%; touch-action: none; cursor: pointer;">
+          <div id="joystickThumb" style="position: absolute; top: 25px; left: 25px; width: 46px; height: 46px; background: rgba(255, 255, 255, 0.65); border-radius: 50%; transition: transform 0.05s linear;"></div>
+        </div>
+        
+        <!-- Stacked Cycle and Inventory Buttons -->
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <button id="btnCycle" class="touchActionButton" style="width: 44px; height: 44px; font-size: 10px;">Cycle</button>
+          <button id="btnInventory" class="touchActionButton" style="width: 44px; height: 44px; font-size: 9px;">Inv</button>
+        </div>
+      </div>
+
+    <!-- Right Side: Action Cluster AND Right Aim Stick -->
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <!-- Action Buttons Grid -->
+      <div style="display: grid; grid-template-columns: repeat(2, 50px); gap: 8px;">
+        <button id="btnSprint" class="touchActionButton" style="width: 50px; height: 50px; font-size: 9px;">Sprint</button>
+        <button id="btnInteract" class="touchActionButton" style="width: 50px; height: 50px; font-size: 9px;">Interact</button>
+        <button id="btnPickup" class="touchActionButton" style="width: 50px; height: 50px; font-size: 8px;">Pickup</button>
+        <button id="btnAttack" class="touchActionButton" style="width: 50px; height: 50px; font-size: 9px; background: rgba(220, 50, 50, 0.35); border-color: rgba(255, 100, 100, 0.6);">Attack</button>
+      </div>
+
+      <!-- Right Aim Joystick -->
+      <div id="rightVirtualJoystick" style="position: relative; width: 105px; height: 105px; background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; touch-action: none; cursor: pointer;">
+        <div id="rightJoystickThumb" style="position: absolute; top: 27px; left: 27px; width: 47px; height: 47px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; transition: transform 0.05s linear;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
 </section>
 
 <section id="gameOverScreen" class="screen">
@@ -909,6 +1047,201 @@ const keys = {};
 const GAMEPAD_DEADZONE = .20;
 const GAMEPAD_CURSOR_SPEED = 520;
 
+// --- 1. Left Movement Joystick Logic ---
+const leftJoystick = document.getElementById('virtualJoystick');
+const leftThumb = document.getElementById('joystickThumb');
+
+let leftActive = false;
+let leftCenter = { x: 0, y: 0 };
+const maxDist = 32;
+
+if (leftJoystick && leftThumb) {
+  leftJoystick.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    leftActive = true;
+    
+    // Calculate center based on current position
+    const rect = leftJoystick.getBoundingClientRect();
+    leftCenter.x = rect.left + rect.width / 2;
+    leftCenter.y = rect.top + rect.height / 2;
+  });
+
+  // Global window listeners allow smooth mouse dragging anywhere on screen
+  window.addEventListener('pointermove', (e) => {
+    if (!leftActive) return;
+    e.preventDefault();
+
+    const deltaX = e.clientX - leftCenter.x;
+    const deltaY = e.clientY - leftCenter.y;
+    const distance = Math.hypot(deltaX, deltaY);
+    const angle = Math.atan2(deltaY, deltaX);
+
+    const constrainedDist = Math.min(distance, maxDist);
+    const thumbX = Math.cos(angle) * constrainedDist;
+    const thumbY = Math.sin(angle) * constrainedDist;
+
+    leftThumb.style.transform = `translate(${thumbX}px, ${thumbY}px)`;
+
+    if (typeof controller !== 'undefined') {
+      window.touchInputActive = true;
+      controller.connected = true;
+      controller.moveX = thumbX / maxDist;
+      controller.moveY = thumbY / maxDist;
+    }
+  });
+
+  window.addEventListener('pointerup', (e) => {
+    if (!leftActive) return;
+    leftActive = false;
+    leftThumb.style.transform = `translate(0px, 0px)`;
+    
+    if (typeof controller !== 'undefined') {
+      controller.moveX = 0;
+      controller.moveY = 0;
+      window.touchInputActive = false;
+    }
+  });
+}
+
+
+// --- 2. Right Aim Joystick Logic ---
+const rightJoystick = document.getElementById('rightVirtualJoystick');
+const rightThumb = document.getElementById('rightJoystickThumb');
+
+let rightActive = false;
+let rightCenter = { x: 0, y: 0 };
+
+if (rightJoystick && rightThumb) {
+  rightJoystick.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    rightActive = true;
+
+    const rect = rightJoystick.getBoundingClientRect();
+    rightCenter.x = rect.left + rect.width / 2;
+    rightCenter.y = rect.top + rect.height / 2;
+  });
+
+  window.addEventListener('pointermove', (e) => {
+    if (!rightActive) return;
+    e.preventDefault();
+
+    const deltaX = e.clientX - rightCenter.x;
+    const deltaY = e.clientY - rightCenter.y;
+    const distance = Math.hypot(deltaX, deltaY);
+    const angle = Math.atan2(deltaY, deltaX);
+
+    const constrainedDist = Math.min(distance, maxDist);
+    const thumbX = Math.cos(angle) * constrainedDist;
+    const thumbY = Math.sin(angle) * constrainedDist;
+
+    rightThumb.style.transform = `translate(${thumbX}px, ${thumbY}px)`;
+
+    if (typeof controller !== 'undefined') {
+      window.touchInputActive = true;
+      controller.connected = true;
+      controller.aimX = thumbX / maxDist;
+      controller.aimY = thumbY / maxDist;
+    }
+  });
+
+  window.addEventListener('pointerup', (e) => {
+    if (!rightActive) return;
+    rightActive = false;
+    rightThumb.style.transform = `translate(0px, 0px)`;
+    
+    if (typeof controller !== 'undefined') {
+      controller.aimX = 0;
+      controller.aimY = 0;
+      window.touchInputActive = false;
+    }
+  });
+}
+
+
+// --- 3. Action Buttons Function Mapping ---
+const touchButtonActions = {
+  'btnSprint': {
+    onPress: () => { 
+      if (typeof controller !== 'undefined') {
+        window.touchInputActive = true;
+        controller.connected = true;
+        controller.sprint = true; 
+      }
+    },
+    onRelease: () => { 
+      if (typeof controller !== 'undefined') {
+        controller.sprint = false; 
+        window.touchInputActive = false;
+      }
+    }
+  },
+  'btnAttack': {
+    onPress: () => { 
+      if (typeof controller !== 'undefined') {
+        window.touchInputActive = true;
+        controller.connected = true;
+        controller.attack = true; 
+      }
+      if (typeof attack === 'function' && typeof running !== 'undefined' && running && !paused && !modalOpen) attack();
+    },
+    onRelease: () => { 
+      if (typeof controller !== 'undefined') {
+        controller.attack = false; 
+        window.touchInputActive = false;
+      }
+    }
+  },
+  'btnInteract': {
+    onPress: () => { 
+      if (typeof controller !== 'undefined') { controller.connected = true; }
+      if (typeof interact === 'function' && typeof running !== 'undefined' && running && !paused && !modalOpen) interact(); 
+    }
+  },
+  'btnCycle': {
+    onPress: () => { 
+      if (typeof controller !== 'undefined') { controller.connected = true; }
+      if (typeof cycleWeapon === 'function' && typeof running !== 'undefined' && running && !paused && !modalOpen) cycleWeapon(); 
+    }
+  },
+  'btnInventory': {
+    onPress: () => { 
+      if (typeof controller !== 'undefined') { controller.connected = true; }
+      if (typeof openInventory === 'function' && typeof running !== 'undefined' && running && !paused) openInventory(); 
+    }
+  },
+  'btnPickup': {
+    onPress: () => { 
+      if (typeof controller !== 'undefined') { controller.connected = true; }
+      if (typeof openDroppedItemMenu === 'function' && typeof running !== 'undefined' && running && !paused && !modalOpen) openDroppedItemMenu(); 
+    }
+  }
+};
+
+Object.keys(touchButtonActions).forEach(id => {
+  const el = document.getElementById(id);
+  const actions = touchButtonActions[id];
+  if (!el) return;
+
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('pressed');
+    if (actions.onPress) actions.onPress();
+  });
+
+  el.addEventListener('pointerup', (e) => {
+    e.preventDefault();
+    el.classList.remove('pressed');
+    if (actions.onRelease) actions.onRelease();
+  });
+
+  el.addEventListener('pointercancel', (e) => {
+    el.classList.remove('pressed');
+    if (actions.onRelease) actions.onRelease();
+  });
+});
+
+
 
 const controller = {
   index: null,
@@ -938,30 +1271,33 @@ const mouse = {
 
 const choice = {
   gender: "male",
-
-  shirtColor: "#376fd8",
-
+  
+  // Customization Options
+  skinColor: "#f5d0b1",
+  eyeColor: "#2e7d32",
   hair: "shortBrown",
   hairColor: "#59351f",
-
-  difficulty: "standard"
+  shirtColor: "#376fd8",
+  pantsColor: "#263238",
+  shoeColor: "#4e342e"
 };
 
 const characterOptions = {
   male: {
     hair: [
-      ["shortBrown","Short Hair"],
-      ["blackHat","Hat"]
+      ["shortBrown", "Short Hair"],
+      ["blackHat", "Hat"]
     ]
   },
 
   female: {
     hair: [
-      ["longHair","Long Hair Down"],
-      ["ponytail","Ponytail"]
+      ["longHair", "Long Hair Down"],
+      ["ponytail", "Ponytail"]
     ]
   }
 };
+
 
 const outfits = {
   rainbowShirt: {
@@ -1281,7 +1617,7 @@ function createState(){
 
   const newState={
     worldSeed:sessionSeed,
-    difficulty:choice.difficulty,
+    difficulty: "standard", // Locked to standard since the county selector is removed
 
     player:{
       x:SAFEHOUSE_X,
@@ -1302,14 +1638,19 @@ function createState(){
       hunger:100,
       poison:0,
 
-gender:choice.gender,
-shirtColor:choice.shirtColor,
-hair:choice.hair,
-hairColor:choice.hairColor,
-outfit:null,
+      // Expanded Character Customization
+      gender: choice.gender,
+      hair: choice.hair,
+      hairColor: choice.hairColor,
+      skinColor: choice.skinColor,     // <-- Add this line here!
+      eyeColor: choice.eyeColor,       
+      shirtColor: choice.shirtColor,   
+      pantsColor: choice.pantsColor,   
+      shoeColor: choice.shoeColor,     
+      outfit: null,
 
       backpackCapacity:DEFAULT_BACKPACK_CAPACITY,
-  droppedItemTimers:{},
+      droppedItemTimers:{},
 
       inventory:{
         water:2,
@@ -1417,14 +1758,14 @@ outfit:null,
       nextStorageId:1,
       waterProduction:0,
 
-closet:{
-  outfits:[
-    "rainbowShirt",
-    "dogShirt",
-    "peanutShirt",
-    "redHoodie"
-  ]
-}
+      closet:{
+        outfits:[
+          "rainbowShirt",
+          "dogShirt",
+          "peanutShirt",
+          "redHoodie"
+        ]
+      }
     },
 
     fallenSurvivors:[],
@@ -1474,11 +1815,16 @@ function createReplacementSurvivor(){
     hunger:100,
     poison:0,
 
-    gender:choice.gender,
-    shirtColor:choice.shirtColor,
-    hair:choice.hair,
-    hairColor:choice.hairColor,
-    outfit:null,
+     // --- FIXED: Added all custom choices here as well ---
+    gender: choice.gender,
+    hair: choice.hair,
+    hairColor: choice.hairColor,
+    skinColor: choice.skinColor,   // <-- Added
+    eyeColor: choice.eyeColor,     // <-- Added
+    shirtColor: choice.shirtColor, // <-- Added
+    pantsColor: choice.pantsColor, // <-- Added
+    shoeColor: choice.shoeColor,   // <-- Added
+    outfit: null,
 
     backpackCapacity:
       DEFAULT_BACKPACK_CAPACITY,
@@ -1698,6 +2044,14 @@ mouse.y =
     requestAnimationFrame(
       loop
     );
+  // --- Add this right here ---
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  if (isTouchDevice) {
+    const overlay = document.getElementById("touchGamepadOverlay");
+    if (overlay) {
+      overlay.style.display = "block";
+    }
+  }
 }
 
 function continueWithNewSurvivor(){
@@ -1788,6 +2142,11 @@ creatingReplacementSurvivor=true;
   showScreen(
     "character"
   );
+    // --- Hide the touch overlay while customizing the new survivor ---
+  const overlay = document.getElementById("touchGamepadOverlay");
+  if (overlay) {
+    overlay.style.display = "none";
+  }
 }
 
 function copyInventory(inventory){
@@ -8085,8 +8444,31 @@ openModal(`
       Time continues while this menu is open.
     </p>
 
-    <div class="inventoryList">
-      ${rows}
+    <!-- Right-Side Scroll Rail Layout Wrapper -->
+    <div class="blueprint-scroll-wrapper">
+      <div id="droppedScrollArea" class="modal-scroll-content">
+        <div class="inventoryList">
+          ${rows}
+        </div>
+      </div>
+
+      <!-- Right-Side Scroll Rail Buttons -->
+      <div class="scroll-rail">
+        <button class="rail-btn" 
+                onclick="scrollDirect('droppedScrollArea', -150)"
+                onmousedown="startScrolling('droppedScrollArea', -150)" 
+                onmouseup="stopScrolling()" 
+                onmouseleave="stopScrolling()" 
+                ontouchstart="startScrolling('droppedScrollArea', -150)" 
+                ontouchend="stopScrolling()">▲</button>
+        <button class="rail-btn" 
+                onclick="scrollDirect('droppedScrollArea', 150)"
+                onmousedown="startScrolling('droppedScrollArea', 150)" 
+                onmouseup="stopScrolling()" 
+                onmouseleave="stopScrolling()" 
+                ontouchstart="startScrolling('droppedScrollArea', 150)" 
+                ontouchend="stopScrolling()">▼</button>
+      </div>
     </div>
 
     <div class="modalActions">
@@ -8098,7 +8480,7 @@ openModal(`
         Close
       </button>
     </div>
-  `);
+  `, "droppedModal");
 
   const pickupButton=
     document.getElementById(
@@ -8175,6 +8557,7 @@ openModal(`
       closeModal;
   }
 }
+
 
 function openInventory(){
   if(!state)return;
@@ -8335,28 +8718,51 @@ function openInventory(){
       )}
     </div>
 
-    <div class="inventoryColumns">
-      <div class="inventoryList">
-        <h3>Supplies</h3>
+    <!-- Right-Side Scroll Rail Layout Wrapper -->
+    <div class="blueprint-scroll-wrapper">
+      <div id="inventoryScrollArea" class="modal-scroll-content">
+        <div class="inventoryColumns">
+          <div class="inventoryList">
+            <h3>Supplies</h3>
 
-        ${
-          resourceRows||
-          `<p class="small">
-            The backpack contains no loose supplies.
-          </p>`
-        }
+            ${
+              resourceRows||
+              `<p class="small">
+                The backpack contains no loose supplies.
+              </p>`
+            }
+          </div>
+
+          <div class="inventoryList">
+            <h3>Weapons</h3>
+            ${weaponRows}
+          </div>
+        </div>
+
+        <h3>Tools & Documents</h3>
+
+        <div class="inventoryList">
+          ${documentSection}
+        </div>
       </div>
 
-      <div class="inventoryList">
-        <h3>Weapons</h3>
-        ${weaponRows}
+      <!-- Right-Side Scroll Rail Buttons -->
+      <div class="scroll-rail">
+        <button class="rail-btn" 
+                onclick="scrollDirect('inventoryScrollArea', -150)"
+                onmousedown="startScrolling('inventoryScrollArea', -150)" 
+                onmouseup="stopScrolling()" 
+                onmouseleave="stopScrolling()" 
+                ontouchstart="startScrolling('inventoryScrollArea', -150)" 
+                ontouchend="stopScrolling()">▲</button>
+        <button class="rail-btn" 
+                onclick="scrollDirect('inventoryScrollArea', 150)"
+                onmousedown="startScrolling('inventoryScrollArea', 150)" 
+                onmouseup="stopScrolling()" 
+                onmouseleave="stopScrolling()" 
+                ontouchstart="startScrolling('inventoryScrollArea', 150)" 
+                ontouchend="stopScrolling()">▼</button>
       </div>
-    </div>
-
-    <h3>Tools & Documents</h3>
-
-    <div class="inventoryList">
-      ${documentSection}
     </div>
 
     <div class="modalActions">
@@ -8364,7 +8770,7 @@ function openInventory(){
         Close
       </button>
     </div>
-  `);
+  `, "inventoryModal");
 
   document
     .querySelectorAll(
@@ -8444,6 +8850,7 @@ document
     )
     .onclick=closeModal;
 }
+
 
 function formatWeight(value){
   return (
@@ -9314,23 +9721,38 @@ function openBlueprint(){
       your backpack and all safehouse storage.
     </p>
 
-    <h3>Safehouse Projects</h3>
+    <h3>Safehouse Projects</h3><br><b>Note: This entire project was created by Matt L, good luck surviving !</b>
 
-    <div class="grid">
-      ${projectCards}
-    </div>
-
+<div class="blueprint-scroll-wrapper">
+  <!-- Content Panel (Left) -->
+  <div id="blueprintScrollArea" class="modal-scroll-content">
+    <div class="grid">${projectCards}</div>
     <h3>Build Additional Storage</h3>
-
-    <div class="grid">
-      ${storageCards}
-    </div>
-
+    <div class="grid">${storageCards}</div>
     <h3>Existing Storage</h3>
+    <div class="grid">${storageSummary}</div>
+  </div>
 
-    <div class="grid">
-      ${storageSummary}
-    </div>
+<!-- Scroll Rail Column (Right) -->
+<div class="scroll-rail">
+  <button class="rail-btn" 
+          onclick="scrollDirect('blueprintScrollArea', -150)"
+          onmousedown="startScrolling('blueprintScrollArea', -150)" 
+          onmouseup="stopScrolling()" 
+          onmouseleave="stopScrolling()" 
+          ontouchstart="startScrolling('blueprintScrollArea', -150)" 
+          ontouchend="stopScrolling()">▲</button>
+          
+  <button class="rail-btn" 
+          onclick="scrollDirect('blueprintScrollArea', 150)"
+          onmousedown="startScrolling('blueprintScrollArea', 150)" 
+          onmouseup="stopScrolling()" 
+          onmouseleave="stopScrolling()" 
+          ontouchstart="startScrolling('blueprintScrollArea', 150)" 
+          ontouchend="stopScrolling()">▼</button>
+</div>
+</div>
+    
 
     <div class="modalActions">
       <button id="blueprintCloseBtn">
@@ -9371,6 +9793,7 @@ function openBlueprint(){
     )
     .onclick=closeModal;
 }
+
 
 function formatCost(cost){
   return Object.entries(cost)
@@ -10214,6 +10637,35 @@ function takeStoredWeapon(
 
   openStorage(storage.id);
 }
+
+let scrollInterval = null;
+
+function scrollDirect(elementId, scrollAmount) {
+  const container = document.getElementById(elementId);
+  if (!container) return;
+  container.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+}
+
+function startScrolling(elementId, scrollAmount) {
+  const container = document.getElementById(elementId);
+  if (!container) return;
+
+  // Immediate jump/scroll on press
+  container.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+
+  // Continuous smooth scroll if the button is held down
+  if (!scrollInterval) {
+    scrollInterval = setInterval(() => {
+      container.scrollBy({ top: scrollAmount, behavior: 'auto' });
+    }, 100);
+  }
+}
+
+function stopScrolling() {
+  clearInterval(scrollInterval);
+  scrollInterval = null;
+}
+
 
 function storeAllAccepted(storage){
   for(
@@ -12448,117 +12900,104 @@ function drawContainer(container){
   }
 }
 
-function drawCar(car){
-  const colors=[
-    "#6a716e",
-    "#824d43",
-    "#496476",
-    "#706849",
-    "#675f78"
+function drawCar(car) {
+  // Classic 90s arcade sedan palettes (Deep Emerald, Steel Blue, Burgundy, Dark Silver)
+  const palettes = [
+    { body: "#2a7542", highlight: "#43a05d", roof: "#1f5631", glass: "#1c2833", trim: "#d5dbdb", wheels: "#111" },
+    { body: "#34495e", highlight: "#5d6d7e", roof: "#2c3e50", glass: "#1c2833", trim: "#d5dbdb", wheels: "#111" },
+    { body: "#78281f", highlight: "#a93226", roof: "#512e5f", glass: "#1c2833", trim: "#d5dbdb", wheels: "#111" },
+    { body: "#566573", highlight: "#85929e", roof: "#34495e", glass: "#1c2833", trim: "#d5dbdb", wheels: "#111" }
   ];
 
-  const number=
-    Number(
-      String(car.id)
-        .replace(
-          /[^0-9]/g,
-          ""
-        )
-    )||0;
+  const number = Number(String(car.id).replace(/[^0-9]/g, "")) || 0;
+  const p = palettes[number % palettes.length];
 
-  ctx.fillStyle=
-    "rgba(0,0,0,.32)";
+  // Drop Shadow
+  ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+  ctx.fillRect(car.x + 6, car.y + 10, car.w, car.h);
 
-  ctx.fillRect(
-    car.x+10,
-    car.y+13,
-    car.w,
-    car.h
-  );
+  const isHorizontal = car.w > car.h;
 
-  block(
-    car.x,
-    car.y,
-    car.w,
-    car.h,
-    colors[
-      number%
-      colors.length
-    ],
-    14
-  );
+  if (isHorizontal) {
+    // --- HORIZONTAL ORIENTATION ---
+    
+    // Wheels (Tires poking out top and bottom)
+    ctx.fillStyle = p.wheels;
+    ctx.fillRect(car.x + car.w * 0.22, car.y - 4, 12, 6);
+    ctx.fillRect(car.x + car.w * 0.70, car.y - 4, 12, 6);
+    ctx.fillRect(car.x + car.w * 0.22, car.y + car.h - 2, 12, 6);
+    ctx.fillRect(car.x + car.w * 0.70, car.y + car.h - 2, 12, 6);
 
-  ctx.fillStyle="#263139";
+    // Main Body Chassis
+    ctx.fillStyle = p.body;
+    ctx.fillRect(car.x, car.y + 4, car.w, car.h - 8);
 
-  if(car.w>car.h){
-    ctx.fillRect(
-      car.x+
-        car.w*.29,
-      car.y+12,
-      car.w*.42,
-      car.h-24
-    );
-  }else{
-    ctx.fillRect(
-      car.x+12,
-      car.y+
-        car.h*.29,
-      car.w-24,
-      car.h*.42
-    );
+    // Hood & Trunk detailing (lighter body panels)
+    ctx.fillStyle = p.highlight;
+    ctx.fillRect(car.x + 4, car.y + 6, car.w * 0.2, car.h - 12);
+    ctx.fillRect(car.x + car.w * 0.76, car.y + 6, car.w * 0.2, car.h - 12);
+
+    // Cabin / Roof
+    ctx.fillStyle = p.roof;
+    ctx.fillRect(car.x + car.w * 0.3, car.y + 8, car.w * 0.4, car.h - 16);
+
+    // Windshield & Rear window glass
+    ctx.fillStyle = p.glass;
+    ctx.fillRect(car.x + car.w * 0.32, car.y + 10, car.w * 0.1, car.h - 20);
+    ctx.fillRect(car.x + car.w * 0.58, car.y + 10, car.w * 0.1, car.h - 20);
+
+    // Chrome Bumpers / Headlights
+    ctx.fillStyle = p.trim;
+    ctx.fillRect(car.x, car.y + 8, 4, car.h - 16); // Front bumper/grille accent
+    ctx.fillRect(car.x + car.w - 4, car.y + 8, 4, car.h - 16); // Rear bumper
+
+  } else {
+    // --- VERTICAL ORIENTATION ---
+
+    // Wheels
+    ctx.fillStyle = p.wheels;
+    ctx.fillRect(car.x - 4, car.y + car.h * 0.22, 6, 12);
+    ctx.fillRect(car.x + car.w - 2, car.y + car.h * 0.22, 6, 12);
+    ctx.fillRect(car.x - 4, car.y + car.h * 0.70, 6, 12);
+    ctx.fillRect(car.x + car.w - 2, car.y + car.h * 0.70, 6, 12);
+
+    // Main Body Chassis
+    ctx.fillStyle = p.body;
+    ctx.fillRect(car.x + 4, car.y, car.w - 8, car.h);
+
+    // Hood & Trunk detailing
+    ctx.fillStyle = p.highlight;
+    ctx.fillRect(car.x + 6, car.y + 4, car.w - 12, car.h * 0.2);
+    ctx.fillRect(car.x + 6, car.y + car.h * 0.76, car.w - 12, car.h * 0.2);
+
+    // Cabin / Roof
+    ctx.fillStyle = p.roof;
+    ctx.fillRect(car.x + 8, car.y + car.h * 0.3, car.w - 16, car.h * 0.4);
+
+    // Windshield Glass
+    ctx.fillStyle = p.glass;
+    ctx.fillRect(car.x + 10, car.y + car.h * 0.32, car.w - 20, car.h * 0.1);
+    ctx.fillRect(car.x + 10, car.y + car.h * 0.58, car.w - 20, car.h * 0.1);
+
+    // Trim / Bumpers
+    ctx.fillStyle = p.trim;
+    ctx.fillRect(car.x + 8, car.y, car.w - 16, 4);
+    ctx.fillRect(car.x + 8, car.y + car.h - 4, car.w - 16, 4);
   }
 
-  ctx.fillStyle=
-    "rgba(225,231,225,.42)";
+  // Looted Overlay Status
+  if (car.looted) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+    ctx.fillRect(car.x, car.y, car.w, car.h);
 
-  if(car.w>car.h){
-    ctx.fillRect(
-      car.x+18,
-      car.y+15,
-      7,
-      car.h-30
-    );
-
-    ctx.fillRect(
-      car.x+
-        car.w-25,
-      car.y+15,
-      7,
-      car.h-30
-    );
-  }else{
-    ctx.fillRect(
-      car.x+15,
-      car.y+18,
-      car.w-30,
-      7
-    );
-
-    ctx.fillRect(
-      car.x+15,
-      car.y+
-        car.h-25,
-      car.w-30,
-      7
-    );
-  }
-
-  if(car.looted){
-    ctx.fillStyle=
-      "rgba(0,0,0,.65)";
-
-    ctx.font="bold 11px Arial";
-    ctx.textAlign="center";
-
-    ctx.fillText(
-      "LOOTED",
-      car.x+
-        car.w/2,
-      car.y+
-        car.h/2+4
-    );
+    ctx.fillStyle = "#e74c3c";
+    ctx.font = "bold 11px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("WRECKED", car.x + car.w / 2, car.y + car.h / 2);
   }
 }
+
 
 function drawTree(tree){
   const radius=tree.radius;
@@ -12880,7 +13319,7 @@ function drawLoot(){
 
           const promptText=
             usingController
-              ?"[B] Open Pickup Menu"
+              ?"[Left Bumper] Open Pickup Menu"
               :"[G] Open Pickup Menu";
 
 
@@ -13479,8 +13918,8 @@ context.fill();
     data.gender==="female" &&
     data.hair==="ponytail"
   ){
-context.fillStyle=
-  data.hairColor||"#59351f";
+    context.fillStyle=
+      data.hairColor||"#59351f";
 
     context.beginPath();
 
@@ -13497,94 +13936,107 @@ context.fillStyle=
     context.fill();
   }
 
-if(
-  data.gender==="female" &&
-  data.hair==="longHair"
-){
-  context.fillStyle=
-    data.hairColor||"#59351f";
+  if(
+    data.gender==="female" &&
+    data.hair==="longHair"
+  ){
+    context.fillStyle=
+      data.hairColor||"#59351f";
 
-  /*
-    Long hair behind the head.
-  */
-  context.beginPath();
+    /*
+      Long hair behind the head.
+    */
+    context.beginPath();
 
-  if(context.roundRect){
-    context.roundRect(
-      -12,
-      -48,
-      24,
-      35,
-      10
-    );
-  }else{
-    context.rect(
-      -12,
-      -48,
-      24,
-      35
-    );
+    if(context.roundRect){
+      context.roundRect(
+        -12,
+        -48,
+        24,
+        35,
+        10
+      );
+    }else{
+      context.rect(
+        -12,
+        -48,
+        24,
+        35
+      );
+    }
+
+    context.fill();
   }
 
-  context.fill();
-}
+  // --- PANTS (Uses data.pantsColor with fallback) ---
+  context.strokeStyle = data.pantsColor || "#263238";
+  context.lineWidth = 6;
+  context.lineCap = "round";
 
-  context.strokeStyle="#222a31";
-  context.lineWidth=6;
-  context.lineCap="round";
-
+  // Left leg
   context.beginPath();
-
-  context.moveTo(
-    -5,
-    -17
-  );
-
-  context.lineTo(
-    -6+step*.45,
-    -1
-  );
-
+  context.moveTo(-5, -17);
+  context.lineTo(-6 + step * .45, -1);
   context.stroke();
 
+  // Right leg
   context.beginPath();
-
-  context.moveTo(
-    5,
-    -17
-  );
-
-  context.lineTo(
-    6-step*.45,
-    -1
-  );
-
+  context.moveTo(5, -17);
+  context.lineTo(6 - step * .45, -1);
   context.stroke();
 
-drawShirtShape(
-  context,
-  data.shirtColor,
-  -12,
-  -35,
-  24,
-  22
-);
+  // --- DIRECTION MULTIPLIER ---
+  const dir = facing >= 0 ? 1 : -1;
 
-if(data.outfit){
-  drawOutfit(
+  // --- SNEAKERS / SHOES (Restored `* dir` on footXCoords so positions mirror!) ---
+  const footXCoords = [
+    (-4 + (step * .45)) * dir,
+    (8 - (step * .45)) * dir
+  ];
+
+  for (let i = 0; i < footXCoords.length; i++) {
+    const footX = footXCoords[i];
+    
+    // 1. Draw Shoe Body
+    context.fillStyle = data.shoeColor || "#ffffff";
+    context.beginPath();
+    
+    context.moveTo(footX - 5 * dir, -1); 
+    context.lineTo(footX + 1 * dir, -1); 
+    context.quadraticCurveTo(footX + 6 * dir, 0, footX + 6 * dir, 5); 
+    context.lineTo(footX - 5 * dir, 5);  
+    context.closePath();
+    context.fill();
+  }
+   
+
+  // --- SHIRT & OUTFIT ---
+  drawShirtShape(
     context,
-    data.outfit,
+    data.shirtColor,
     -12,
     -35,
     24,
     22
   );
-}
 
+  if(data.outfit){
+    drawOutfit(
+      context,
+      data.outfit,
+      -12,
+      -35,
+      24,
+      22
+    );
+  }
+  
+
+  // --- FIXED: Skin Tone / Head (Uses data.skinColor, supports hitFlash and wild colors like purple) ---
   context.fillStyle=
     data.hitFlash>0
       ?"#ff9999"
-      :"#d4a27e";
+      :(data.skinColor||"#f5d0b1");
 
   context.beginPath();
 
@@ -13598,59 +14050,52 @@ if(data.outfit){
 
   context.fill();
 
-/*
-  Female top hair.
-
-  Both long hair and ponytail retain visible hair
-  across the top/back of the head.
-*/
-if(
-  data.gender==="female" &&
-  (
-    data.hair==="longHair" ||
-    data.hair==="ponytail"
-  )
-){
-  context.fillStyle=
-    data.hairColor||"#59351f";
-
-  context.beginPath();
-
-  context.arc(
-    0,
-    -45,
-    9.5,
-    Math.PI,
-    Math.PI*2
-  );
-
-  context.fill();
-
   /*
-    Small side pieces make the hairline look
-    connected to the long hair / ponytail.
+    Female top hair.
   */
-  context.fillRect(
-    -9,
-    -46,
-    3,
-    10
-  );
+  if(
+    data.gender==="female" &&
+    (
+      data.hair==="longHair" ||
+      data.hair==="ponytail"
+    )
+  ){
+    context.fillStyle=
+      data.hairColor||"#59351f";
 
-  context.fillRect(
-    6,
-    -46,
-    3,
-    10
-  );
-}
+    context.beginPath();
+
+    context.arc(
+      0,
+      -45,
+      9.5,
+      Math.PI,
+      Math.PI*2
+    );
+
+    context.fill();
+
+    context.fillRect(
+      -9,
+      -46,
+      3,
+      10
+    );
+
+    context.fillRect(
+      6,
+      -46,
+      3,
+      10
+    );
+  }
 
   if(
     data.gender==="male" &&
     data.hair==="shortBrown"
   ){
-context.fillStyle=
-  data.hairColor||"#59351f";
+    context.fillStyle=
+      data.hairColor||"#59351f";
 
     context.beginPath();
 
@@ -13665,57 +14110,51 @@ context.fillStyle=
     context.fill();
   }
 
-if(
-  data.gender==="male" &&
-  data.hair==="blackHat"
-){
-  /*
-    A little hair remains visible under the hat.
-  */
-  context.fillStyle="#3f2a1d";
+  if(
+    data.gender==="male" &&
+    data.hair==="blackHat"
+  ){
+    context.fillStyle="#3f2a1d";
 
-  context.beginPath();
+    context.beginPath();
 
-  context.arc(
-    0,
-    -46,
-    8,
-    Math.PI,
-    Math.PI*2
-  );
+    context.arc(
+      0,
+      -46,
+      8,
+      Math.PI,
+      Math.PI*2
+    );
 
-  context.fill();
+    context.fill();
 
-  /*
-    The selected hair/headwear color controls
-    the hat color.
-  */
-  context.fillStyle=
-    data.hairColor||"#15191b";
+    context.fillStyle=
+      data.hairColor||"#15191b";
 
-  context.fillRect(
-    -8,
-    -54,
-    16,
-    7
-  );
+    context.fillRect(
+      -8,
+      -54,
+      16,
+      7
+    );
 
-  context.beginPath();
+    context.beginPath();
 
-  context.ellipse(
-    facing*2,
-    -47,
-    12,
-    3,
-    0,
-    0,
-    Math.PI*2
-  );
+    context.ellipse(
+      facing*2,
+      -47,
+      12,
+      3,
+      0,
+      0,
+      Math.PI*2
+    );
 
-  context.fill();
-}
+    context.fill();
+  }
 
-  context.strokeStyle="#d4a27e";
+  // --- FIXED: Arms / Sleeves Skin Color (Matches data.skinColor) ---
+  context.strokeStyle= data.skinColor || "#f5d0b1";
   context.lineWidth=5;
 
   context.beginPath();
@@ -13746,7 +14185,8 @@ if(
 
   context.stroke();
 
-  context.fillStyle="#342018";
+  // --- FIXED: Eye Color (Uses data.eyeColor) ---
+  context.fillStyle= data.eyeColor || "#2e7d32";
 
   context.beginPath();
 
@@ -13770,6 +14210,7 @@ if(
   context.restore();
   context.restore();
 }
+
 
 function drawShirtShape(
   context,
@@ -14380,24 +14821,25 @@ function drawPlayer(player){
     player.x,
     player.y,
     {
-      gender:player.gender,
-      shirtColor:player.shirtColor,
-      hair:player.hair,
-      hairColor:player.hairColor,
-outfit:player.outfit,
-      facing:player.facing,
-      walkCycle:
-        player.walkCycle,
-      hitFlash:
-        player.hitFlash,
-      drawWeapon:true,
-      weaponId:
-        currentEntry().id,
-      attackVisual:
-        player.attackVisual
+      gender: player.gender,
+      skinColor: player.skinColor,   // <-- Added
+      eyeColor: player.eyeColor,     // <-- Added
+      shirtColor: player.shirtColor,
+      pantsColor: player.pantsColor, // <-- Added
+      shoeColor: player.shoeColor,   // <-- Added
+      hair: player.hair,
+      hairColor: player.hairColor,
+      outfit: player.outfit,
+      facing: player.facing,
+      walkCycle: player.walkCycle,
+      hitFlash: player.hitFlash,
+      drawWeapon: true,
+      weaponId: currentEntry().id,
+      attackVisual: player.attackVisual
     }
   );
 }
+
 
 function drawZombie(zombie){
   if(zombie.dead){
@@ -15473,19 +15915,24 @@ function drawPreview(){
     preview.height
   );
 
-drawPaperPerson(
-  pctx,
-  120,
-  230,
-  {
-    gender:choice.gender,
-    shirtColor:choice.shirtColor,
-    hair:choice.hair,
-    hairColor:choice.hairColor,
-      facing:1,
-      walkCycle:0,
-      hitFlash:0,
-      drawWeapon:false
+  // --- FIXED: Pass all new customization options to drawPaperPerson ---
+  drawPaperPerson(
+    pctx,
+    120,
+    230,
+    {
+      gender: choice.gender,
+      skinColor: choice.skinColor,   // Added
+      eyeColor: choice.eyeColor,     // Added
+      shirtColor: choice.shirtColor,
+      pantsColor: choice.pantsColor, // Added
+      shoeColor: choice.shoeColor,   // Added
+      hair: choice.hair,
+      hairColor: choice.hairColor,
+      facing: 1,
+      walkCycle: 0,
+      hitFlash: 0,
+      drawWeapon: false
     },
     3.25,
     true
@@ -15564,45 +16011,27 @@ function validHexColor(value){
 }
 
 function syncCharacterColors(){
-  const shirtColor=
-    document.getElementById(
-      "shirtColor"
-    );
+  // --- FIXED: Sync all color pickers and hex inputs, not just hair and shirt ---
+  const colorMappings = [
+    { pickerId: "shirtColor", hexId: "shirtHex", val: choice.shirtColor },
+    { pickerId: "hairColor", hexId: "hairHex", val: choice.hairColor },
+    { pickerId: "skinColor", hexId: "skinHex", val: choice.skinColor },
+    { pickerId: "eyeColor", hexId: "eyeHex", val: choice.eyeColor },
+    { pickerId: "pantsColor", hexId: "pantsHex", val: choice.pantsColor },
+    { pickerId: "shoeColor", hexId: "shoeHex", val: choice.shoeColor }
+  ];
 
-  const shirtHex=
-    document.getElementById(
-      "shirtHex"
-    );
+  colorMappings.forEach(item => {
+    const picker = document.getElementById(item.pickerId);
+    const hex = document.getElementById(item.hexId);
 
-  const hairColor=
-    document.getElementById(
-      "hairColor"
-    );
-
-  const hairHex=
-    document.getElementById(
-      "hairHex"
-    );
-
-  if(shirtColor){
-    shirtColor.value=
-      choice.shirtColor;
-  }
-
-  if(shirtHex){
-    shirtHex.value=
-      choice.shirtColor.toUpperCase();
-  }
-
-  if(hairColor){
-    hairColor.value=
-      choice.hairColor;
-  }
-
-  if(hairHex){
-    hairHex.value=
-      choice.hairColor.toUpperCase();
-  }
+    if (picker && item.val) {
+      picker.value = item.val;
+    }
+    if (hex && item.val) {
+      hex.value = item.val.toUpperCase();
+    }
+  });
 }
 
 
@@ -15989,26 +16418,37 @@ function rememberGamepadButtons(
     );
 }
 
+// --- VIRTUAL MOUSE CURSOR STATE (Placed outside or right above updateGamepad) ---
+let cursorX = window.innerWidth / 2;
+let cursorY = window.innerHeight / 2;
+const cursorSpeed = 12;
+
 function updateGamepad(){
-  const gamepad=
-    getActiveGamepad();
+  const gamepad = getActiveGamepad();
+
+  // If a physical controller is actively being used, turn off touch inputs so they don't conflict
+  if (gamepad) {
+    window.touchInputActive = false;
+  }
 
   if(!gamepad){
-    controller.connected=false;
+    // Keep controller.connected true if touch/mouse virtual controls are active!
+    controller.connected = window.touchInputActive ? true : false;
 
-    controller.moveX=0;
-    controller.moveY=0;
-
-    controller.aimX=0;
-    controller.aimY=0;
-
-    controller.sprint=false;
-    controller.attack=false;
+    // Only zero out axes if the user IS NOT actively using touch/pointer controls
+    if (!window.touchInputActive) {
+      controller.moveX = 0;
+      controller.moveY = 0;
+      controller.aimX = 0;
+      controller.aimY = 0;
+      controller.sprint = false;
+      controller.attack = false;
+    }
 
     return;
   }
-
-  controller.connected=true;
+  
+  controller.connected = true;
 
   /*
     Standard Gamepad mapping:
@@ -16053,6 +16493,53 @@ const controllerBeingUsed=
 if(controllerBeingUsed){
   setInputType("controller");
 }
+
+  /*
+    --- VIRTUAL CURSOR UPDATE (Right Stick Movement) ---
+  */
+  if (Math.abs(controller.aimX) > 0.1 || Math.abs(controller.aimY) > 0.1) {
+    cursorX += controller.aimX * cursorSpeed;
+    cursorY += controller.aimY * cursorSpeed;
+
+    // Clamp to screen bounds
+    cursorX = Math.max(0, Math.min(window.innerWidth, cursorX));
+    cursorY = Math.max(0, Math.min(window.innerHeight, cursorY));
+
+    let cursorEl = document.getElementById("gamepadCursor");
+    if (!cursorEl) {
+      cursorEl = document.createElement("div");
+      cursorEl.id = "gamepadCursor";
+      cursorEl.style.position = "fixed";
+      // Size of the crosshair container
+      cursorEl.style.width = "24px";
+      cursorEl.style.height = "24px";
+      // Crosshair styling: a hollow circle reticle with a center dot
+      cursorEl.style.border = "2px solid rgba(255, 255, 255, 0.9)";
+      cursorEl.style.boxShadow = "0 0 4px rgba(0, 0, 0, 0.8)";
+      cursorEl.style.borderRadius = "50%";
+      cursorEl.style.pointerEvents = "none";
+      cursorEl.style.zIndex = "99999";
+      
+      // Add a tiny center dot inside the crosshair ring
+      const centerDot = document.createElement("div");
+      centerDot.style.position = "absolute";
+      centerDot.style.top = "50%";
+      centerDot.style.left = "50%";
+      centerDot.style.width = "4px";
+      centerDot.style.height = "4px";
+      centerDot.style.backgroundColor = "#ffffff";
+      centerDot.style.transform = "translate(-50%, -50%)";
+      centerDot.style.borderRadius = "50%";
+      cursorEl.appendChild(centerDot);
+
+      document.body.appendChild(cursorEl);
+    }
+    
+    // Offset by 12px (half of 24px width/height) so the exact center points to the mouse coordinates
+    cursorEl.style.display = modalOpen ? "block" : "none"; // Hide during normal play if you want, or keep visible!
+    cursorEl.style.left = `${cursorX - 12}px`;
+    cursorEl.style.top = `${cursorY - 12}px`;
+  }
 
   /*
     Standard Xbox-style button mapping:
@@ -16101,14 +16588,14 @@ if(controllerBeingUsed){
       cycleWeapon();
     }
 
-if(
-  gamepadButtonJustPressed(
-    gamepad,
-    1
-  )
-){
-  openDroppedItemMenu();
-}
+    if(
+      gamepadButtonJustPressed(
+        gamepad,
+        4
+      )
+    ){
+      openDroppedItemMenu();
+    }
 
     if(
       gamepadButtonJustPressed(
@@ -16126,7 +16613,7 @@ if(
 
 /*
 DROPPED ITEMS MENU CONTROLLER
-A      = Pick up selected
+A      = Pick up selected / Virtual Click
 B      = Close
 D-pad  = Change selection
 */
@@ -16172,7 +16659,7 @@ if(
   }
 
   /*
-  A = Pick Up Selected
+  A = Pick Up Selected (or Virtual Click if hovering a button)
   */
   if(
     gamepadButtonJustPressed(
@@ -16180,13 +16667,19 @@ if(
       0
     )
   ){
-    const pickupButton=
-      document.getElementById(
-        "pickupSelectedDropBtn"
-      );
+    const targetElement = document.elementFromPoint(cursorX, cursorY);
+    // If the virtual cursor is hovering over the Close button or any other element, click it!
+    if (targetElement && (targetElement.id === "pickupDropCloseBtn" || targetElement.tagName === "BUTTON")) {
+      targetElement.click();
+    } else {
+      const pickupButton=
+        document.getElementById(
+          "pickupSelectedDropBtn"
+        );
 
-    if(pickupButton){
-      pickupButton.click();
+      if(pickupButton){
+        pickupButton.click();
+      }
     }
   }
 
@@ -16202,6 +16695,22 @@ if(
     closeModal();
   }
 }
+
+  /*
+    General Modal / Inventory Virtual Click Handler
+    Allows "A" to click whatever the virtual cursor is hovering over when any modal is open
+  */
+  if(
+    running &&
+    modalOpen &&
+    !droppedMenuOpen &&
+    gamepadButtonJustPressed(gamepad, 0)
+  ){
+    const targetElement = document.elementFromPoint(cursorX, cursorY);
+    if(targetElement){
+      targetElement.click();
+    }
+  }
 
   /*
     Menu / Start must also be able to resume/close
@@ -16227,6 +16736,7 @@ if(
     gamepad
   );
 }
+
 
 function resize(){
   /*
@@ -16517,142 +17027,63 @@ document
           );
         });
 
-if(
-  choice.gender==="male"
-){
-  choice.hair="shortBrown";
-}else{
-  choice.hair="longHair";
-}
+      if(
+        choice.gender==="male"
+      ){
+        choice.hair="shortBrown";
+      }else{
+        choice.hair="longHair";
+      }
 
       refreshChoices();
     };
   });
 
-document
-  .querySelectorAll(
-    ".difficulty"
-  )
-  .forEach(button=>{
-    button.onclick=()=>{
-      choice.difficulty=
-        button.dataset.value;
+// --- HELPER FUNCTION FOR ALL COLOR INPUT PAIRS ---
+function setupColorInput(pickerId, hexId, choiceKey) {
+  const picker = document.getElementById(pickerId);
+  const hexInput = document.getElementById(hexId);
+  
+  if (!picker || !hexInput) return;
 
-      document
-        .querySelectorAll(
-          ".difficulty"
-        )
-        .forEach(other=>{
-          other.classList.toggle(
-            "selected",
-            other.dataset.value===
-              choice.difficulty
-          );
-        });
-    };
-  });
-
-const shirtColorPicker=
-  document.getElementById(
-    "shirtColor"
-  );
-
-const shirtHexInput=
-  document.getElementById(
-    "shirtHex"
-  );
-
-const hairColorPicker=
-  document.getElementById(
-    "hairColor"
-  );
-
-const hairHexInput=
-  document.getElementById(
-    "hairHex"
-  );
-
-shirtColorPicker.addEventListener(
-  "input",
-  ()=>{
-    choice.shirtColor=
-      shirtColorPicker.value;
-
-    shirtHexInput.value=
-      choice.shirtColor.toUpperCase();
-
-    drawPreview();
-  }
-);
-
-shirtHexInput.addEventListener(
-  "change",
-  ()=>{
-    let value=
-      shirtHexInput.value.trim();
-
-    if(
-      !value.startsWith("#")
-    ){
-      value="#"+value;
-    }
-
-    if(validHexColor(value)){
-      choice.shirtColor=value;
-
-      shirtColorPicker.value=value;
-
-      shirtHexInput.value=
-        value.toUpperCase();
-
+  picker.addEventListener(
+    "input",
+    ()=>{
+      choice[choiceKey] = picker.value;
+      hexInput.value = picker.value.toUpperCase();
       drawPreview();
-    }else{
-      shirtHexInput.value=
-        choice.shirtColor.toUpperCase();
     }
-  }
-);
+  );
 
-hairColorPicker.addEventListener(
-  "input",
-  ()=>{
-    choice.hairColor=
-      hairColorPicker.value;
+  hexInput.addEventListener(
+    "change",
+    ()=>{
+      let value = hexInput.value.trim();
 
-    hairHexInput.value=
-      choice.hairColor.toUpperCase();
+      if(!value.startsWith("#")){
+        value = "#" + value;
+      }
 
-    drawPreview();
-  }
-);
-
-hairHexInput.addEventListener(
-  "change",
-  ()=>{
-    let value=
-      hairHexInput.value.trim();
-
-    if(
-      !value.startsWith("#")
-    ){
-      value="#"+value;
+      if(validHexColor(value)){
+        choice[choiceKey] = value;
+        picker.value = value;
+        hexInput.value = value.toUpperCase();
+        drawPreview();
+      } else {
+        hexInput.value = choice[choiceKey].toUpperCase();
+      }
     }
+  );
+}
 
-    if(validHexColor(value)){
-      choice.hairColor=value;
+// --- INITIALIZE ALL COLOR INPUTS (Shirt, Hair, Skin, Eyes, Pants, Shoes) ---
+setupColorInput("shirtColor", "shirtHex", "shirtColor");
+setupColorInput("hairColor", "hairHex", "hairColor");
+setupColorInput("skinColor", "skinHex", "skinColor");
+setupColorInput("eyeColor", "eyeHex", "eyeColor");
+setupColorInput("pantsColor", "pantsHex", "pantsColor");
+setupColorInput("shoeColor", "shoeHex", "shoeColor");
 
-      hairColorPicker.value=value;
-
-      hairHexInput.value=
-        value.toUpperCase();
-
-      drawPreview();
-    }else{
-      hairHexInput.value=
-        choice.hairColor.toUpperCase();
-    }
-  }
-);
 
 const controlsHeader=
   document.getElementById(
@@ -16780,6 +17211,9 @@ keyboardTab.onclick=()=>{
 refreshChoices();
 resize();
 
+</script>
+</body>
+</html>
 </script>
 </body>
 </html>
