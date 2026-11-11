@@ -225,6 +225,12 @@ button.good {
   width: 100%;
 }
 
+.characterLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 #preview {
   display: block;
   width: 100%;
@@ -592,6 +598,15 @@ button.good {
   box-shadow: 0 10px 25px rgba(0,0,0,0.6);
 }
 
+.survivorColorPicker {
+  margin-bottom: 15px;
+}
+
+.colorPickerLabel {
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+
 .paletteColor {
   width: 28px;
   height: 28px;
@@ -603,6 +618,44 @@ button.good {
 
 .paletteColor:hover {
   transform: scale(1.1);
+  border-color: white;
+}
+
+/* Permanent shared survivor palette */
+#survivorPalette {
+  display: grid !important;
+  grid-template-columns: repeat(4, 32px);
+  gap: 5px;
+
+  position: static !important;
+  visibility: visible !important;
+
+  width: max-content;
+  padding: 8px;
+  margin-top: 6px;
+
+  background: #222;
+  border: 1px solid #555;
+  border-radius: 6px;
+}
+
+#survivorPalette .paletteColor {
+  width: 32px;
+  height: 32px;
+  display: block;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+#survivorPalette .paletteColor.selectedColor {
+  border-color: white;
+  transform: scale(1.08);
+}
+
+#survivorPalette .paletteColor:hover {
+  transform: scale(1.08);
   border-color: white;
 }
 
@@ -711,14 +764,6 @@ button.good {
 }
 
 @media(max-width: 760px) {
-  .characterGrid {
-    grid-template-columns: 1fr;
-  }
-
-  #preview {
-    max-width: 180px;
-  }
-
   #expedition {
     display: none;
   }
@@ -774,7 +819,6 @@ input[type="color"]::-webkit-color-swatch {
   text-align: center;
 }
 
-
 </style>
 </head>
 
@@ -805,17 +849,112 @@ input[type="color"]::-webkit-color-swatch {
   </div>
 </section>
 
+
+
+
+
 <section id="characterScreen" class="screen">
   <div class="card">
     <h2>Create Survivor</h2>
 
     <div class="characterGrid">
-      <canvas
+  <!-- LEFT SIDE -->
+  <div class="characterLeft">     
+ <canvas
         id="preview"
         width="240"
         height="310">
       </canvas>
 
+<div class="survivorColorPicker">
+
+  <div class="colorPickerLabel">
+    Color Input ID: <span id="colorInputID">hairColor</span>
+  </div>
+
+<div id="survivorPalette" class="colorDropdownGrid">
+
+  <!-- White -> Black -->
+  <div class="paletteColor" style="background:#ffffff;" onclick="usePaletteColor('#ffffff')"></div>
+  <div class="paletteColor" style="background:#d6d6d6;" onclick="usePaletteColor('#d6d6d6')"></div>
+  <div class="paletteColor" style="background:#777777;" onclick="usePaletteColor('#777777')"></div>
+  <div class="paletteColor" style="background:#212121;" onclick="usePaletteColor('#212121')"></div>
+
+  <!-- Brown -->
+  <div class="paletteColor" style="background:#e0ac69;" onclick="usePaletteColor('#e0ac69')"></div>
+  <div class="paletteColor" style="background:#c68642;" onclick="usePaletteColor('#c68642')"></div>
+  <div class="paletteColor" style="background:#8d5524;" onclick="usePaletteColor('#8d5524')"></div>
+  <div class="paletteColor" style="background:#59351f;" onclick="usePaletteColor('#59351f')"></div>
+
+  <!-- Red -->
+  <div class="paletteColor" style="background:#ffcdd2;" onclick="usePaletteColor('#ffcdd2')"></div>
+  <div class="paletteColor" style="background:#ef5350;" onclick="usePaletteColor('#ef5350')"></div>
+  <div class="paletteColor" style="background:#c62828;" onclick="usePaletteColor('#c62828')"></div>
+  <div class="paletteColor" style="background:#7f0000;" onclick="usePaletteColor('#7f0000')"></div>
+
+  <!-- Orange -->
+  <div class="paletteColor" style="background:#ffe0b2;" onclick="usePaletteColor('#ffe0b2')"></div>
+  <div class="paletteColor" style="background:#ff9800;" onclick="usePaletteColor('#ff9800')"></div>
+  <div class="paletteColor" style="background:#ef6c00;" onclick="usePaletteColor('#ef6c00')"></div>
+  <div class="paletteColor" style="background:#9f3a00;" onclick="usePaletteColor('#9f3a00')"></div>
+
+  <!-- Yellow / Blonde -->
+  <div class="paletteColor" style="background:#fff9c4;" onclick="usePaletteColor('#fff9c4')"></div>
+  <div class="paletteColor" style="background:#ffe66d;" onclick="usePaletteColor('#ffe66d')"></div>
+  <div class="paletteColor" style="background:#fbc02d;" onclick="usePaletteColor('#fbc02d')"></div>
+  <div class="paletteColor" style="background:#9e6d00;" onclick="usePaletteColor('#9e6d00')"></div>
+
+  <!-- Lime -->
+  <div class="paletteColor" style="background:#e6ee9c;" onclick="usePaletteColor('#e6ee9c')"></div>
+  <div class="paletteColor" style="background:#c0ca33;" onclick="usePaletteColor('#c0ca33')"></div>
+  <div class="paletteColor" style="background:#827717;" onclick="usePaletteColor('#827717')"></div>
+  <div class="paletteColor" style="background:#4b4a00;" onclick="usePaletteColor('#4b4a00')"></div>
+
+  <!-- Green -->
+  <div class="paletteColor" style="background:#c8e6c9;" onclick="usePaletteColor('#c8e6c9')"></div>
+  <div class="paletteColor" style="background:#66bb6a;" onclick="usePaletteColor('#66bb6a')"></div>
+  <div class="paletteColor" style="background:#2e7d32;" onclick="usePaletteColor('#2e7d32')"></div>
+  <div class="paletteColor" style="background:#17451a;" onclick="usePaletteColor('#17451a')"></div>
+
+  <!-- Teal -->
+  <div class="paletteColor" style="background:#b2dfdb;" onclick="usePaletteColor('#b2dfdb')"></div>
+  <div class="paletteColor" style="background:#4db6ac;" onclick="usePaletteColor('#4db6ac')"></div>
+  <div class="paletteColor" style="background:#00796b;" onclick="usePaletteColor('#00796b')"></div>
+  <div class="paletteColor" style="background:#004d40;" onclick="usePaletteColor('#004d40')"></div>
+
+  <!-- Cyan -->
+  <div class="paletteColor" style="background:#b2ebf2;" onclick="usePaletteColor('#b2ebf2')"></div>
+  <div class="paletteColor" style="background:#26c6da;" onclick="usePaletteColor('#26c6da')"></div>
+  <div class="paletteColor" style="background:#00838f;" onclick="usePaletteColor('#00838f')"></div>
+  <div class="paletteColor" style="background:#004d54;" onclick="usePaletteColor('#004d54')"></div>
+
+  <!-- Blue -->
+  <div class="paletteColor" style="background:#bbdefb;" onclick="usePaletteColor('#bbdefb')"></div>
+  <div class="paletteColor" style="background:#42a5f5;" onclick="usePaletteColor('#42a5f5')"></div>
+  <div class="paletteColor" style="background:#1565c0;" onclick="usePaletteColor('#1565c0')"></div>
+  <div class="paletteColor" style="background:#0d3b75;" onclick="usePaletteColor('#0d3b75')"></div>
+
+  <!-- Indigo -->
+  <div class="paletteColor" style="background:#c5cae9;" onclick="usePaletteColor('#c5cae9')"></div>
+  <div class="paletteColor" style="background:#7986cb;" onclick="usePaletteColor('#7986cb')"></div>
+  <div class="paletteColor" style="background:#3949ab;" onclick="usePaletteColor('#3949ab')"></div>
+  <div class="paletteColor" style="background:#1a237e;" onclick="usePaletteColor('#1a237e')"></div>
+
+  <!-- Purple -->
+  <div class="paletteColor" style="background:#e1bee7;" onclick="usePaletteColor('#e1bee7')"></div>
+  <div class="paletteColor" style="background:#ab47bc;" onclick="usePaletteColor('#ab47bc')"></div>
+  <div class="paletteColor" style="background:#7b1fa2;" onclick="usePaletteColor('#7b1fa2')"></div>
+  <div class="paletteColor" style="background:#4a148c;" onclick="usePaletteColor('#4a148c')"></div>
+
+  <!-- Pink -->
+  <div class="paletteColor" style="background:#f8bbd0;" onclick="usePaletteColor('#f8bbd0')"></div>
+  <div class="paletteColor" style="background:#ec407a;" onclick="usePaletteColor('#ec407a')"></div>
+  <div class="paletteColor" style="background:#c2185b;" onclick="usePaletteColor('#c2185b')"></div>
+  <div class="paletteColor" style="background:#7b103d;" onclick="usePaletteColor('#7b103d')"></div>
+</div></div></div>
+
+
+  <!-- RIGHT SIDE -->
       <div class="customizerControls">
         <!-- Gender / Body Type -->
         <div class="choice">
@@ -832,43 +971,39 @@ input[type="color"]::-webkit-color-swatch {
           <div id="hairChoices" class="row"></div>
         </div>
 
-<!-- Example for Hair / Hat Color (Repeat pattern for Skin, Eyes, Shirt, Pants, Shoes) -->
+<!-- Hair / Hat Color -->
+
 <div class="choice">
+
   <h3>Hair / Hat Color</h3>
+
   <div class="row">
-    <!-- Custom Color Trigger & Dropdown Wrapper -->
-    <div class="customPickerWrapper">
-      <div id="hairPreview" class="colorPreviewBtn" onclick="toggleColorDropdown('hair')"></div>
-      
-      <!-- The Simple Color Grid Popup -->
-      <div id="hairDropdown" class="colorDropdownGrid" style="display: none;">
-        <!-- Preset colors -->
-        <div class="paletteColor" style="background: #ffffff;" onclick="selectColor('hair', '#ffffff')"></div>
-        <div class="paletteColor" style="background: #e0e0e0;" onclick="selectColor('hair', '#e0e0e0')"></div>
-        <div class="paletteColor" style="background: #9e9e9e;" onclick="selectColor('hair', '#9e9e9e')"></div>
-        <div class="paletteColor" style="background: #212121;" onclick="selectColor('hair', '#212121')"></div>
-        <div class="paletteColor" style="background: #b71c1c;" onclick="selectColor('hair', '#b71c1c')"></div>
-        <div class="paletteColor" style="background: #e65100;" onclick="selectColor('hair', '#e65100')"></div>
-        <div class="paletteColor" style="background: #fbc02d;" onclick="selectColor('hair', '#fbc02d')"></div>
-        <div class="paletteColor" style="background: #33691e;" onclick="selectColor('hair', '#33691e')"></div>
-        <div class="paletteColor" style="background: #006064;" onclick="selectColor('hair', '#006064')"></div>
-        <div class="paletteColor" style="background: #0d47a1;" onclick="selectColor('hair', '#0d47a1')"></div>
-        <div class="paletteColor" style="background: #4a148c;" onclick="selectColor('hair', '#4a148c')"></div>
-        <div class="paletteColor" style="background: #880e4f;" onclick="selectColor('hair', '#880e4f')"></div>
-        <div class="paletteColor" style="background: #59351f;" onclick="selectColor('hair', '#59351f')"></div>
-        <div class="paletteColor" style="background: #8d5524;" onclick="selectColor('hair', '#8d5524')"></div>
-        <div class="paletteColor" style="background: #c68642;" onclick="selectColor('hair', '#c68642')"></div>
-        <div class="paletteColor" style="background: #e0ac69;" onclick="selectColor('hair', '#e0ac69')"></div>
+
+    <div
+      id="hairPreview"
+      class="colorPreviewBtn"
+      style="background:#59351f;"
+      onclick="setColorInput('hairColor')">
+    </div>
+
+    <input
+      id="hairHex"
+      type="text"
+      value="#59351f"
+      maxlength="7"
+      spellcheck="false"
+      onclick="setColorInput('hairColor')">
+
   </div>
+
 </div>
 
-    <!-- Hex Text Input -->
-    <input id="hairHex" type="text" value="#59351f" maxlength="7" spellcheck="false">
-  </div>
-</div>
-
-
-        
+<!-- Hidden input keeps your existing setupColorInput() system working -->
+<input
+  id="hairColor"
+  type="color"
+  value="#59351f"
+  style="display:none;">
 
 <div class="choice">
   <h3>Skin Tone</h3>
@@ -876,7 +1011,7 @@ input[type="color"]::-webkit-color-swatch {
     <input
       id="skinColor"
       type="color"
-      value="#f5d0b1">
+      value="#f5d0b1" onclick="setColorInput('skinColor')">
 
     <input
       id="skinHex"
@@ -892,7 +1027,7 @@ input[type="color"]::-webkit-color-swatch {
         <div class="choice">
           <h3>Eye Color</h3>
           <div class="row">
-            <input id="eyeColor" type="color" value="#2e7d32">
+            <input id="eyeColor" type="color" value="#2e7d32" onclick="setColorInput('eyeColor')">
             <input id="eyeHex" type="text" value="#2e7d32" maxlength="7" spellcheck="false">
           </div>
         </div>
@@ -901,7 +1036,7 @@ input[type="color"]::-webkit-color-swatch {
         <div class="choice">
           <h3>Shirt Color</h3>
           <div class="row">
-            <input id="shirtColor" type="color" value="#376fd8">
+            <input id="shirtColor" type="color" value="#376fd8" onclick="setColorInput('shirtColor')">
             <input id="shirtHex" type="text" value="#376fd8" maxlength="7" spellcheck="false">
           </div>
         </div>
@@ -910,7 +1045,7 @@ input[type="color"]::-webkit-color-swatch {
         <div class="choice">
           <h3>Pants Color</h3>
           <div class="row">
-            <input id="pantsColor" type="color" value="#263238">
+            <input id="pantsColor" type="color" value="#263238" onclick="setColorInput('pantsColor')">
             <input id="pantsHex" type="text" value="#263238" maxlength="7" spellcheck="false">
           </div>
         </div>
@@ -919,7 +1054,7 @@ input[type="color"]::-webkit-color-swatch {
         <div class="choice">
           <h3>Shoe Color</h3>
           <div class="row">
-            <input id="shoeColor" type="color" value="#4e342e">
+            <input id="shoeColor" type="color" value="#4e342e" onclick="setColorInput('shoeColor')">
             <input id="shoeHex" type="text" value="#4e342e" maxlength="7" spellcheck="false">
           </div>
         </div>
@@ -932,6 +1067,11 @@ input[type="color"]::-webkit-color-swatch {
     </div>
   </div>
 </section>
+
+
+
+
+
 
 <section id="gameScreen" class="screen">
   <canvas id="game"></canvas>
@@ -17298,6 +17438,13 @@ function setupColorInput(pickerId, hexId, choiceKey) {
     ()=>{
       choice[choiceKey] = picker.value;
       hexInput.value = picker.value.toUpperCase();
+const previewId = pickerId.replace("Color", "Preview");
+const preview = document.getElementById(previewId);
+
+if (preview) {
+  preview.style.background = picker.value;
+}
+
       drawPreview();
     }
   );
@@ -17331,6 +17478,52 @@ setupColorInput("eyeColor", "eyeHex", "eyeColor");
 setupColorInput("pantsColor", "pantsHex", "pantsColor");
 setupColorInput("shoeColor", "shoeHex", "shoeColor");
 
+let colorInputID = "hairColor";
+
+function setColorInput(id) {
+  colorInputID = id;
+
+  document.getElementById("colorInputID").textContent = id;
+
+  const picker = document.getElementById(id);
+  if (!picker) return;
+
+  highlightPaletteColor(picker.value);
+}
+
+function highlightPaletteColor(color) {
+
+  const colors = document.querySelectorAll(
+    "#survivorPalette .paletteColor"
+  );
+
+  colors.forEach(tile => {
+
+    tile.classList.remove("selectedColor");
+
+    if (
+      tile.getAttribute("onclick")
+          .toLowerCase()
+          .includes(color.toLowerCase())
+    ) {
+      tile.classList.add("selectedColor");
+    }
+
+  });
+}
+
+function usePaletteColor(color) {
+
+  const picker = document.getElementById(colorInputID);
+
+  if (!picker) return;
+
+  picker.value = color;
+
+  picker.dispatchEvent(new Event("input", { bubbles: true }));
+
+  highlightPaletteColor(color);
+}
 
 const controlsHeader=
   document.getElementById(
