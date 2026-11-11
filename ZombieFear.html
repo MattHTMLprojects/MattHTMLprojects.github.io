@@ -102,10 +102,13 @@ button.good {
 
 /* Left side: scrollable content filling remaining width */
 .modal-scroll-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  scrollbar-width: none; /* Hide standard browser scrollbar */
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px;
+    scrollbar-width: none;
+    overscroll-behavior: contain;
 }
 
 .modal-scroll-content::-webkit-scrollbar {
@@ -114,25 +117,33 @@ button.good {
 
 /* Right side: dedicated vertical button column */
 .scroll-rail {
-  width: 40px;
-  display: flex;
-  flex-direction: column;
-  background: rgba(30, 30, 30, 0.95);
-  border-left: 1px solid #444;
-  flex-shrink: 0; /* Prevents the rail from shrinking */
+    flex: 0 0 40px;
+    width: 40px;
+    min-width: 40px;
+    display: flex;
+    flex-direction: column;
+    background: rgba(30, 30, 30, 0.95);
+    border-left: 1px solid #444;
 }
 
 .rail-btn {
-  flex: 1; /* Makes top and bottom buttons split height evenly (50%/50%) */
-  background: transparent;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
+    flex: 1 1 50%;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    touch-action: manipulation;
 }
 
 .rail-btn:hover {
@@ -499,6 +510,24 @@ button.good {
   display: flex;
 }
 
+#fpsCounter {
+    position: fixed;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+
+    color: #ffe06b;
+    font: bold 16px monospace;
+
+    background: rgba(0, 0, 0, 0.65);
+    padding: 4px 8px;
+    border-radius: 4px;
+
+    pointer-events: none;
+    user-select: none;
+}
+
 .modalCard {
   width: min(940px,96vw);
   max-height: 90vh;
@@ -644,6 +673,10 @@ button.good {
   background: #d8c58d;
 }
 
+.modalCard.blueprintModal {
+    overflow: hidden;
+}
+
 .blueprintModal {
   background:
     linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),
@@ -746,6 +779,8 @@ input[type="color"]::-webkit-color-swatch {
 </head>
 
 <body>
+
+<div id="fpsCounter">FPS: --</div>
 
 <section id="menuScreen" class="screen active">
   <div class="card center">
@@ -1013,7 +1048,7 @@ input[type="color"]::-webkit-color-swatch {
     </div>
   </div>
 <!-- On-Screen Touch Gamepad Overlay -->
-<div id="touchGamepadOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 998; display: none;">
+<div id="touchGamepadOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 998; display: block;">
   
   <!-- Wide Transparent Controller Chassis (Centered at the bottom) -->
   <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: min(96vw, 550px); height: 150px; background: rgba(20, 20, 20, 0.50); border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; pointer-events: auto; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
@@ -1674,6 +1709,7 @@ let state = null;
 let running = false;
 let paused = false;
 let modalOpen = false;
+let sprintExhausted = false;
 let target = null;
 let frame = 0;
 let previousTime = 0;
@@ -4936,6 +4972,26 @@ function generateTrees(
 
     if(blocked)continue;
 
+// Keep trees away from cars.
+for(const car of s.cars){
+
+    if(car.chunkKey !== chunk.key) continue;
+
+    const treeBuffer = 35;
+
+    if(
+        x > car.x - treeBuffer &&
+        x < car.x + car.w + treeBuffer &&
+        y > car.y - treeBuffer &&
+        y < car.y + car.h + treeBuffer
+    ){
+        blocked = true;
+        break;
+    }
+}
+
+if(blocked) continue;
+
     s.trees.push({
       chunkKey:chunk.key,
       x,
@@ -5042,8 +5098,8 @@ function placeChunkCar(
     attempts++;
 
     const horizontal = random() < 0.5;
-    w = horizontal ? 190 : 92;
-    h = horizontal ? 92 : 190;
+    w = horizontal ? 152 : 74;
+    h = horizontal ? 74 : 152;
 
     let candidateX =
       chunk.x +
@@ -5067,64 +5123,83 @@ function placeChunkCar(
         random() * (CHUNK_SIZE - h - 200);
     }
 
-    const candidateCar = {
-      x: candidateX,
-      y: candidateY,
-      w: w,
-      h: h
-    };
+ const candidateCar = {
+    x: candidateX,
+    y: candidateY,
+    w: w,
+    h: h
+};
 
-    // 1. Check if candidate car overlaps any walls in this chunk
-    const hitsWall = s.walls.some(wall => 
-      wall.chunkKey === chunk.key && rectIntersect(candidateCar, wall)
-    );
+// 1. Check walls.
+const hitsWall = s.walls.some(wall =>
+    wall.chunkKey === chunk.key &&
+    rectIntersect(candidateCar, wall)
+);
 
-    // 2. Check if candidate car blocks any doors (with a 25px safety buffer)
-    const hitsDoor = s.doors.some(door => 
-      door.chunkKey === chunk.key && rectIntersect(candidateCar, {
+// 2. Check doors with a 25px safety buffer.
+const hitsDoor = s.doors.some(door =>
+    door.chunkKey === chunk.key &&
+    rectIntersect(candidateCar, {
         x: door.x - 25,
         y: door.y - 25,
         w: door.w + 50,
         h: door.h + 50
-      })
-    );
+    })
+);
 
-    if (!hitsWall && !hitsDoor) {
-      x = candidateX;
-      y = candidateY;
-      valid = true;
-    }
-  } while (!valid && attempts < 25);
+// 3. Check other cars with a 12px safety buffer.
+const hitsCar = s.cars.some(otherCar =>
+    otherCar.chunkKey === chunk.key &&
+    rectIntersect(candidateCar, {
+        x: otherCar.x - 12,
+        y: otherCar.y - 12,
+        w: otherCar.w + 24,
+        h: otherCar.h + 24
+    })
+);
 
-  // Fallback if space is too cramped, ensuring it still spawns
-  if (!valid) {
-    const horizontalFallback = random() < 0.5;
-    w = horizontalFallback ? 190 : 92;
-    h = horizontalFallback ? 92 : 190;
-    x = chunk.x + 100 + random() * (CHUNK_SIZE - w - 200);
-    y = chunk.y + CHUNK_SIZE / 2 + (random() < 0.5 ? -145 : 55);
-    if (!horizontalFallback) {
-      x = chunk.x + CHUNK_SIZE / 2 + (random() < 0.5 ? -145 : 55);
-      y = chunk.y + 100 + random() * (CHUNK_SIZE - h - 200);
-    }
-  }
+// 4. Check trees.
+const hitsTree = s.trees.some(tree => {
 
-  s.cars.push({
+    if (tree.chunkKey !== chunk.key) return false;
+
+    const treeBuffer = Math.max(tree.radius || 20, 20);
+
+    return rectIntersect(candidateCar, {
+        x: tree.x - treeBuffer,
+        y: tree.y - treeBuffer,
+        w: treeBuffer * 2,
+        h: treeBuffer * 2
+    });
+});
+
+// Accept this position only if everything is clear.
+if (!hitsWall && !hitsDoor && !hitsCar && !hitsTree) {
+    x = candidateX;
+    y = candidateY;
+    valid = true;
+}
+
+} while (!valid && attempts < 25);
+
+// If all 25 attempts failed, skip this car.
+if (!valid) {
+    return;
+}
+
+s.cars.push({
     id: "car" + s.nextIds.car++,
     localId,
     chunkKey: chunk.key,
-
     x,
     y,
     w,
     h,
-
     name,
     looted: false,
+    contents: carContents(name, random)
+});
 
-    contents:
-      carContents(name, random)
-  });
 }
 
 // Standard AABB Collision Helper
@@ -5140,8 +5215,9 @@ function carContents(name,random){
   if(name.includes("Ambulance")){
     return [
       ["medicine",3+Math.floor(random()*3)],
-      ["cloth",2+Math.floor(random()*3)],
-      ["water",1+Math.floor(random()*2)]
+      ["cloth",1+Math.floor(random()*2)],
+      ["water",1+Math.floor(random()*2)],
+      ["paper",2+Math.floor(random()*3)]
     ];
   }
 
@@ -5152,14 +5228,16 @@ function carContents(name,random){
       ["wood",2+Math.floor(random()*4)],
       ["scrap",2+Math.floor(random()*4)],
       ["parts",1+Math.floor(random()*3)],
-      ["nails",2+Math.floor(random()*4)]
+      ["nails",2+Math.floor(random()*4)],
+ 	["paper",2+Math.floor(random()*3)]
     ];
   }
 
   return [
     ["cloth",1],
     ["food",Math.floor(random()*2)],
-    ["scrap",1+Math.floor(random()*3)]
+    ["scrap",1+Math.floor(random()*3)],
+ ["paper",2+Math.floor(random()*3)]
   ].filter(entry=>entry[1]>0);
 }
 
@@ -5768,9 +5846,21 @@ if(
     backpackWeight()>
     player.backpackCapacity;
 
+// Enter exhaustion when stamina is almost empty.
+if (player.stamina <= 2) {
+    sprintExhausted = true;
+}
+
+// Allow sprinting again after meaningful recovery.
+if (player.stamina >= 20) {
+    sprintExhausted = false;
+}
+
+
 const sprinting=
   moving &&
   !overloaded &&
+  !sprintExhausted &&
   (
     keys.ShiftLeft||
     keys.ShiftRight||
@@ -8694,22 +8784,23 @@ openModal(`
       </div>
 
       <!-- Right-Side Scroll Rail Buttons -->
-      <div class="scroll-rail">
-        <button class="rail-btn" 
-                onclick="scrollDirect('droppedScrollArea', -150)"
-                onmousedown="startScrolling('droppedScrollArea', -150)" 
-                onmouseup="stopScrolling()" 
-                onmouseleave="stopScrolling()" 
-                ontouchstart="startScrolling('droppedScrollArea', -150)" 
-                ontouchend="stopScrolling()">▲</button>
-        <button class="rail-btn" 
-                onclick="scrollDirect('droppedScrollArea', 150)"
-                onmousedown="startScrolling('droppedScrollArea', 150)" 
-                onmouseup="stopScrolling()" 
-                onmouseleave="stopScrolling()" 
-                ontouchstart="startScrolling('droppedScrollArea', 150)" 
-                ontouchend="stopScrolling()">▼</button>
-      </div>
+<div class="scroll-rail">
+
+    <button
+        type="button"
+        class="rail-btn"
+        onclick="scrollDirect('droppedScrollArea', -80)">
+        ▲
+    </button>
+
+    <button
+        type="button"
+        class="rail-btn"
+        onclick="scrollDirect('droppedScrollArea', 80)">
+        ▼
+    </button>
+
+</div>
     </div>
 
     <div class="modalActions">
@@ -8987,24 +9078,22 @@ function openInventory(){
         </div>
       </div>
 
-      <!-- Right-Side Scroll Rail Buttons -->
-      <div class="scroll-rail">
-        <button class="rail-btn" 
-                onclick="scrollDirect('inventoryScrollArea', -150)"
-                onmousedown="startScrolling('inventoryScrollArea', -150)" 
-                onmouseup="stopScrolling()" 
-                onmouseleave="stopScrolling()" 
-                ontouchstart="startScrolling('inventoryScrollArea', -150)" 
-                ontouchend="stopScrolling()">▲</button>
-        <button class="rail-btn" 
-                onclick="scrollDirect('inventoryScrollArea', 150)"
-                onmousedown="startScrolling('inventoryScrollArea', 150)" 
-                onmouseup="stopScrolling()" 
-                onmouseleave="stopScrolling()" 
-                ontouchstart="startScrolling('inventoryScrollArea', 150)" 
-                ontouchend="stopScrolling()">▼</button>
-      </div>
-    </div>
+<!-- Right-Side Scroll Rail Buttons -->
+<div class="scroll-rail">
+    <button
+        type="button"
+        class="rail-btn"
+        onclick="scrollDirect('inventoryScrollArea', -80)">
+        ▲
+    </button>
+    <button
+        type="button"
+        class="rail-btn"
+        onclick="scrollDirect('inventoryScrollArea', 80)">
+        ▼
+    </button>
+</div>
+</div>
 
     <div class="modalActions">
       <button id="inventoryCloseBtn">
@@ -9965,35 +10054,30 @@ function openBlueprint(){
     <h3>Safehouse Projects</h3><br><b>Note: This entire project was created by Matt L, good luck surviving !</b>
 
 <div class="blueprint-scroll-wrapper">
-  <!-- Content Panel (Left) -->
-  <div id="blueprintScrollArea" class="modal-scroll-content">
-    <div class="grid">${projectCards}</div>
-    <h3>Build Additional Storage</h3>
-    <div class="grid">${storageCards}</div>
-    <h3>Existing Storage</h3>
-    <div class="grid">${storageSummary}</div>
-  </div>
-
-<!-- Scroll Rail Column (Right) -->
-<div class="scroll-rail">
-  <button class="rail-btn" 
-          onclick="scrollDirect('blueprintScrollArea', -150)"
-          onmousedown="startScrolling('blueprintScrollArea', -150)" 
-          onmouseup="stopScrolling()" 
-          onmouseleave="stopScrolling()" 
-          ontouchstart="startScrolling('blueprintScrollArea', -150)" 
-          ontouchend="stopScrolling()">▲</button>
-          
-  <button class="rail-btn" 
-          onclick="scrollDirect('blueprintScrollArea', 150)"
-          onmousedown="startScrolling('blueprintScrollArea', 150)" 
-          onmouseup="stopScrolling()" 
-          onmouseleave="stopScrolling()" 
-          ontouchstart="startScrolling('blueprintScrollArea', 150)" 
-          ontouchend="stopScrolling()">▼</button>
+    <!-- Content Panel (Left) -->
+    <div id="blueprintScrollArea" class="modal-scroll-content">
+        <div class="grid">${projectCards}</div>
+        <h3>Build Additional Storage</h3>
+        <div class="grid">${storageCards}</div>
+        <h3>Existing Storage</h3>
+        <div class="grid">${storageSummary}</div>
+    </div>
+    <!-- Scroll Rail Column (Right) -->
+    <div class="scroll-rail">
+        <button
+            type="button"
+            class="rail-btn"
+            onclick="scrollDirect('blueprintScrollArea', -80)">
+            ▲
+        </button>
+        <button
+            type="button"
+            class="rail-btn"
+            onclick="scrollDirect('blueprintScrollArea', 80)">
+            ▼
+        </button>
+    </div>
 </div>
-</div>
-    
 
     <div class="modalActions">
       <button id="blueprintCloseBtn">
@@ -10341,6 +10425,67 @@ function refreshSafehouseStorageObjects(){
         }
       );
     });
+}
+
+let fpsFrames = 0;
+let fpsLastTime = performance.now();
+
+function trackFPS() {
+
+    fpsFrames++;
+
+    const now = performance.now();
+    const elapsed = now - fpsLastTime;
+
+    if (elapsed >= 1000) {
+
+        const fps = Math.round(
+            fpsFrames * 1000 / elapsed
+        );
+
+        const display =
+            document.getElementById("fpsCounter");
+
+if (display) {
+
+    const visibleWalls = state.walls.filter(wall =>
+        isObjectActive(wall) &&
+        !wall.destroyed &&
+        isVisible(
+            wall.x,
+            wall.y - 45,
+            wall.w,
+            wall.h + 50,
+            120
+        )
+    ).length;
+
+const visibleTrees = state.trees.filter(tree =>
+    isObjectActive(tree) &&
+    isVisible(
+        tree.x - tree.radius,
+        tree.y - tree.radius - 30,
+        tree.radius * 2,
+        tree.radius * 2 + 50,
+        120
+    )
+).length;
+
+    display.textContent =
+        "FPS: " + fps +
+        " | P:" + state.particles.length +
+        " Z:" + state.zombies.length +
+        " T:" + state.trees.length +
+	"/" + visibleTrees +
+        " W:" + state.walls.length +
+        "/" + visibleWalls +
+        " C:" + state.cars.length;
+
+}
+
+        fpsFrames = 0;
+        fpsLastTime = now;
+    }
 }
 
 function findStorage(storageId){
@@ -10882,9 +11027,12 @@ function takeStoredWeapon(
 let scrollInterval = null;
 
 function scrollDirect(elementId, scrollAmount) {
-  const container = document.getElementById(elementId);
-  if (!container) return;
-  container.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+    const container = document.getElementById(elementId);
+    if (!container) return;
+
+    container.scrollBy({
+        top: scrollAmount
+    });
 }
 
 function startScrolling(elementId, scrollAmount) {
@@ -11724,15 +11872,15 @@ function updateEffects(dt){
       text=>text.life>0
     );
 
-  for(const wall of state.walls){
-    if(!isObjectActive(wall))continue;
-
-    wall.flash=Math.max(
-      0,
-      wall.flash-dt*5
+for(const wall of state.walls){
+    // Most walls are not flashing, so reject them first.
+    if(!wall.flash || wall.flash <= 0) continue;
+    if(!isObjectActive(wall)) continue;
+    wall.flash = Math.max(
+        0,
+        wall.flash - dt * 5
     );
-  }
-}
+}}
 
 function updateCamera(dt){
   const smooth=
@@ -11778,12 +11926,7 @@ function updateCamera(dt){
 function render(){
   if(!state)return;
 
-  // Initialize frame counter and object cache if they don't exist yet
-  if(state.frameCount === undefined){
-    state.frameCount = 0;
-    state.cachedSortedObjects = [];
-  }
-  state.frameCount++;
+    trackFPS();
 
   ctx.clearRect(
     0,
@@ -11858,24 +12001,44 @@ function render(){
     o:state.player
   });
 
-  // PERFORMANCE OPTIMIZATION: Throttled sorting (every 2nd frame)
-  // This prevents heavy CPU spikes when dozens of zombies and objects are rendered.
-  if(state.frameCount % 2 === 0 || state.cachedSortedObjects.length !== objects.length){
-    objects.sort((a, b) => a.y - b.y);
-    state.cachedSortedObjects = objects;
-  }
+// Sort all currently visible objects by their ground position.
+objects.sort((a, b) => a.y - b.y);
 
-  // Draw using the cached sorted objects array
-  for(const item of state.cachedSortedObjects){
-    if(item.type==="tree") drawTree(item.o);
-    if(item.type==="car") drawCar(item.o);
-    if(item.type==="wall") drawWall(item.o);
-    if(item.type==="door") drawDoor(item.o);
-    if(item.type==="container") drawContainer(item.o);
-    if(item.type==="zombie") drawZombie(item.o);
-    if(item.type==="fallen") drawFallenBackpack(item.o);
-    if(item.type==="player") drawPlayer(item.o);
-  }
+// Draw the visible objects in depth order.
+for (const item of objects) {
+    switch (item.type) {
+        case "tree":
+            drawTree(item.o);
+            break;
+
+        case "car":
+            drawCar(item.o);
+            break;
+
+        case "wall":
+            drawWall(item.o);
+            break;
+
+        case "door":
+            drawDoor(item.o);
+            break;
+
+        case "container":
+            drawContainer(item.o);
+            break;
+
+        case "zombie":
+            drawZombie(item.o);
+            break;
+
+        case "fallen":
+            drawFallenBackpack(item.o);
+            break;
+
+        case "player":
+            drawPlayer(item.o);
+            break;
+    }}
 
   drawSafehouseProjects();
   drawEffects();
@@ -15743,84 +15906,64 @@ function drawEffects(){
 }
 
 function drawLighting(){
-  let darkness=0;
 
-  const time=state.time;
+    let darkness = 0;
 
-  if(time<360){
-    darkness=.72;
-  }else if(time<480){
-    darkness=lerp(
-      .72,
-      .05,
-      (time-360)/120
-    );
-  }else if(time<1080){
-    darkness=.03;
-  }else if(time<1230){
-    darkness=lerp(
-      .03,
-      .72,
-      (time-1080)/150
-    );
-  }else{
-    darkness=.72;
-  }
+    const time = state.time;
 
-  if(darkness<=.04)return;
+    // Night
+    if(time < 360){
 
-  ctx.save();
+        darkness = .70; // .45 = moonlit, .70 = pretty dark
 
-  ctx.fillStyle=
-    `rgba(5,10,20,${darkness})`;
+    // Sunrise: 6:00 AM to 8:00 AM
+    }else if(time < 480){
 
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+        darkness = lerp(
+            .50,
+            0,
+            (time - 360) / 120
+        );
 
-  if(darkness>.25){
-    ctx.globalCompositeOperation=
-      "destination-out";
+    // Daytime
+    }else if(time < 1080){
 
-    const gradient=
-      ctx.createRadialGradient(
-        canvas.width/2,
-        canvas.height/2,
-        70,
-        canvas.width/2,
-        canvas.height/2,
-        255
-      );
+        darkness = 0;
 
-    gradient.addColorStop(
-      0,
-      "rgba(0,0,0,.94)"
-    );
+    // Sunset: 6:00 PM to 8:30 PM
+    }else if(time < 1230){
 
-    gradient.addColorStop(
-      1,
-      "rgba(0,0,0,0)"
+        darkness = lerp(
+            0,
+            .50,
+            (time - 1080) / 150
+        );
+
+    // Night
+    }else{
+
+        darkness = .50;
+
+    }
+
+    // Daytime requires no lighting overlay at all.
+    if(darkness <= 0) return;
+
+    ctx.save();
+
+    // Cool blue moonlit darkness.
+    ctx.fillStyle =
+        `rgba(10, 25, 55, ${darkness})`;
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
     );
 
-    ctx.fillStyle=gradient;
+    ctx.restore();
 
-    ctx.beginPath();
-
-    ctx.arc(
-      canvas.width/2,
-      canvas.height/2,
-      255,
-      0,
-      Math.PI*2
-    );
-
-    ctx.fill();
-  }
-
-  ctx.restore();
 }
 
 function drawPoisonOverlay(){
