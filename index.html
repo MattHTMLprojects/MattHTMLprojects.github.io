@@ -550,6 +550,12 @@ a {
     );
 }
 
+.notebookFont {
+    position: absolute;
+    top: 45px;
+    right: 10px;
+    z-index: 2;
+}
 
 /* ================================================
    NOTEBOOK COVER / PAPER
@@ -3262,20 +3268,34 @@ function openNotebook() {
         ).join("")}
       </div>
 
-
       <div class="notebookHeader">
+<button
+class="notebookClose"
+type="button"
+title="Close notebook"
+aria-label="Close notebook"
+>
+✕
+</button>
+</div>
 
-        <button
-          class="notebookClose"
-          type="button"
-          title="Close notebook"
-          aria-label="Close notebook"
-        >
-          ✕
-        </button>
-
-      </div>
-
+<select
+class="notebookFont"
+aria-label="Notebook font">
+<option value="Arial">Arial</option>
+<option value="Segoe Script">Segoe Script</option>
+<option value="Brush Script MT">Brush Script</option>
+<option value="Lucida Handwriting">Lucida Handwriting</option>
+<option value="Verdana">Verdana</option>
+<option value="Tahoma">Tahoma</option>
+<option value="Georgia">Georgia</option>
+<option value="Times New Roman">Times New Roman</option>
+<option value="Courier New">Courier New</option>
+<option value="Trebuchet MS">Trebuchet MS</option>
+<option value="Comic Sans MS">Comic Sans MS</option>
+<option value="Impact">Impact</option>
+<option value="system-ui">System</option>
+</select>
 
       <div class="notebookPage">
 
@@ -3351,6 +3371,23 @@ function openNotebook() {
       ".notebookText"
     );
 
+const fontSelect =
+notebookWindow.querySelector(
+".notebookFont"
+);
+
+textArea.style.fontFamily =
+fontSelect.value;
+
+fontSelect.addEventListener(
+"change",
+function() {
+
+textArea.style.fontFamily =
+fontSelect.value;
+
+}
+);
 
   /* ================================================
      CLOSE NOTEBOOK
