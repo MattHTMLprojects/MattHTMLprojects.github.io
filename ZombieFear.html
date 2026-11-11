@@ -4854,45 +4854,85 @@ function placeChunkCar(
   random,
   name
 ){
-  const horizontal=
-    random()<.5;
+  let x, y, w, h;
+  let attempts = 0;
+  let valid = false;
 
-  const w=
-    horizontal
-      ?190
-      :92;
+  do {
+    attempts++;
 
-  const h=
-    horizontal
-      ?92
-      :190;
+    const horizontal = random() < 0.5;
+    w = horizontal ? 190 : 92;
+    h = horizontal ? 92 : 190;
 
-  let x=
-    chunk.x+
-    100+
-    random()*(CHUNK_SIZE-w-200);
+    let candidateX =
+      chunk.x +
+      100 +
+      random() * (CHUNK_SIZE - w - 200);
 
-  let y=
-    chunk.y+
-    CHUNK_SIZE/2+
-    (random()<.5 ? -145 : 55);
+    let candidateY =
+      chunk.y +
+      CHUNK_SIZE / 2 +
+      (random() < 0.5 ? -145 : 55);
 
-  if(!horizontal){
-    x=
-      chunk.x+
-      CHUNK_SIZE/2+
-      (random()<.5 ? -145 : 55);
+    if (!horizontal) {
+      candidateX =
+        chunk.x +
+        CHUNK_SIZE / 2 +
+        (random() < 0.5 ? -145 : 55);
 
-    y=
-      chunk.y+
-      100+
-      random()*(CHUNK_SIZE-h-200);
+      candidateY =
+        chunk.y +
+        100 +
+        random() * (CHUNK_SIZE - h - 200);
+    }
+
+    const candidateCar = {
+      x: candidateX,
+      y: candidateY,
+      w: w,
+      h: h
+    };
+
+    // 1. Check if candidate car overlaps any walls in this chunk
+    const hitsWall = s.walls.some(wall => 
+      wall.chunkKey === chunk.key && rectIntersect(candidateCar, wall)
+    );
+
+    // 2. Check if candidate car blocks any doors (with a 25px safety buffer)
+    const hitsDoor = s.doors.some(door => 
+      door.chunkKey === chunk.key && rectIntersect(candidateCar, {
+        x: door.x - 25,
+        y: door.y - 25,
+        w: door.w + 50,
+        h: door.h + 50
+      })
+    );
+
+    if (!hitsWall && !hitsDoor) {
+      x = candidateX;
+      y = candidateY;
+      valid = true;
+    }
+  } while (!valid && attempts < 25);
+
+  // Fallback if space is too cramped, ensuring it still spawns
+  if (!valid) {
+    const horizontalFallback = random() < 0.5;
+    w = horizontalFallback ? 190 : 92;
+    h = horizontalFallback ? 92 : 190;
+    x = chunk.x + 100 + random() * (CHUNK_SIZE - w - 200);
+    y = chunk.y + CHUNK_SIZE / 2 + (random() < 0.5 ? -145 : 55);
+    if (!horizontalFallback) {
+      x = chunk.x + CHUNK_SIZE / 2 + (random() < 0.5 ? -145 : 55);
+      y = chunk.y + 100 + random() * (CHUNK_SIZE - h - 200);
+    }
   }
 
   s.cars.push({
-    id:"car"+s.nextIds.car++,
+    id: "car" + s.nextIds.car++,
     localId,
-    chunkKey:chunk.key,
+    chunkKey: chunk.key,
 
     x,
     y,
@@ -4900,12 +4940,21 @@ function placeChunkCar(
     h,
 
     name,
-    looted:false,
+    looted: false,
 
     contents:
-      carContents(name,random)
+      carContents(name, random)
   });
 }
+
+// Standard AABB Collision Helper
+function rectIntersect(r1, r2) {
+  return r1.x < r2.x + r2.w &&
+         r1.x + r1.w > r2.x &&
+         r1.y < r2.y + r2.h &&
+         r1.y + r1.h > r2.y;
+}
+
 
 function carContents(name,random){
   if(name.includes("Ambulance")){
@@ -4934,111 +4983,122 @@ function carContents(name,random){
   ].filter(entry=>entry[1]>0);
 }
 
-function generateChunkZombies(s,chunk){
-  const random=chunkRandom(
+function generateChunkZombies(s, chunk) {
+  const random = chunkRandom(
     s,
     chunk.cx,
     chunk.cy,
     "zombies"
   );
 
-  let minimum=2;
-  let maximum=5;
+  let minimum = 2;
+  let maximum = 5;
 
-  if(chunk.region==="safehouse"){
-    minimum=1;
-    maximum=2;
+  if (chunk.region === "safehouse") {
+    minimum = 1;
+    maximum = 2;
   }
 
-  if(chunk.region==="suburbs"){
-    minimum=2;
-    maximum=5;
+  if (chunk.region === "suburbs") {
+    minimum = 2;
+    maximum = 5;
   }
 
-  if(chunk.region==="town"){
-    minimum=4;
-    maximum=9;
+  if (chunk.region === "town") {
+    minimum = 4;
+    maximum = 9;
   }
 
-  if(chunk.region==="industrial"){
-    minimum=3;
-    maximum=7;
+  if (chunk.region === "industrial") {
+    minimum = 3;
+    maximum = 7;
   }
 
-  if(chunk.region==="farmland"){
-    minimum=1;
-    maximum=4;
+  if (chunk.region === "farmland") {
+    minimum = 1;
+    maximum = 4;
   }
 
-  if(chunk.region==="deepWoods"){
-    minimum=2;
-    maximum=5;
+  if (chunk.region === "deepWoods") {
+    minimum = 2;
+    maximum = 5;
   }
 
-  if(chunk.region==="outerCounty"){
-    minimum=2;
-    maximum=6;
+  if (chunk.region === "outerCounty") {
+    minimum = 2;
+    maximum = 6;
   }
 
-  if(s.difficulty==="calm"){
-    minimum=Math.max(
+  if (s.difficulty === "calm") {
+    minimum = Math.max(
       1,
-      Math.floor(minimum*.55)
+      Math.floor(minimum * .55)
     );
 
-    maximum=Math.max(
+    maximum = Math.max(
       minimum,
-      Math.floor(maximum*.6)
+      Math.floor(maximum * .6)
     );
   }
 
-  const total=
-    minimum+
+  const total =
+    minimum +
     Math.floor(
-      random()*
-      (maximum-minimum+1)
+      random() *
+      (maximum - minimum + 1)
     );
 
-  for(let i=0;i<total;i++){
+  for (let i = 0; i < total; i++) {
     let x;
     let y;
-    let attempts=0;
+    let attempts = 0;
+    let validSpawn = false;
 
-    do{
-      x=
-        chunk.x+
-        60+
-        random()*(CHUNK_SIZE-120);
-
-      y=
-        chunk.y+
-        60+
-        random()*(CHUNK_SIZE-120);
-
+    do {
       attempts++;
-    }while(
-      pointBlockedByBuilding(
+      x =
+        chunk.x +
+        60 +
+        random() * (CHUNK_SIZE - 120);
+
+      y =
+        chunk.y +
+        60 +
+        random() * (CHUNK_SIZE - 120);
+
+      // 1. Check if blocked by a building wall
+      const blockedByBuilding = pointBlockedByBuilding(
         s,
         chunk.key,
         x,
         y
-      ) &&
-      attempts<12
-    );
+      );
 
-    if(
-      chunk.region==="safehouse" &&
+      // 2. Check if spawned too close to any tree trunk
+      const blockedByTree = s.trees.some(tree => {
+        if (tree.chunkKey !== chunk.key) return false;
+        // Distance check: radius + 15px safety buffer
+        return distance(x, y, tree.x, tree.y) < (tree.radius + 15);
+      });
+
+      if (!blockedByBuilding && !blockedByTree) {
+        validSpawn = true;
+      }
+    } while (!validSpawn && attempts < 20);
+
+    if (
+      chunk.region === "safehouse" &&
       distance(
         x,
         y,
         SAFEHOUSE_X,
         SAFEHOUSE_Y
-      )<390
-    ){
+      ) < 390
+    ) {
       continue;
     }
 
-    const variant=
+    const variant =
       chooseZombieVariant(
         chunk.region,
         random
@@ -5048,7 +5108,7 @@ function generateChunkZombies(s,chunk){
       createZombie(
         s,
         chunk,
-        "zombie-"+i,
+        "zombie-" + i,
         x,
         y,
         variant,
@@ -5057,6 +5117,7 @@ function generateChunkZombies(s,chunk){
     );
   }
 }
+
 
 function chooseZombieVariant(
   region,
@@ -5540,8 +5601,8 @@ const sprinting=
 
   let speed=
     sprinting
-      ?235
-      :145;
+      ?250
+      :155;
 
   if(player.thirst<=10){
     speed*=.78;
@@ -12904,74 +12965,74 @@ function drawCar(car) {
   ctx.save(); // Protect global canvas state
 
   const palettes = [
-    { body: "#2a7542", highlight: "#43a05d", roof: "#1f5631", glass: "#1c2833", trim: "#d5dbdb", wheels: "#111" },
-    { body: "#34495e", highlight: "#5d6d7e", roof: "#2c3e50", glass: "#1c2833", trim: "#1c2833", wheels: "#111" },
-    { body: "#78281f", highlight: "#a93226", roof: "#512e5f", glass: "#1c2833", trim: "#d5dbdb", wheels: "#111" },
-    { body: "#566573", highlight: "#85929e", roof: "#34495e", glass: "#1c2833", trim: "#d5dbdb", wheels: "#111" }
+    { body: "#2a7542", roof: "#1f5631", trim: "#43a05d", glass: "#1c2833", wheels: "#111" },
+    { body: "#34495e", roof: "#2c3e50", trim: "#5d6d7e", glass: "#1c2833", wheels: "#111" },
+    { body: "#78281f", roof: "#512e5f", trim: "#a93226", glass: "#1c2833", wheels: "#111" },
+    { body: "#566573", roof: "#34495e", trim: "#85929e", glass: "#1c2833", wheels: "#111" }
   ];
 
   const number = Number(String(car.id).replace(/[^0-9]/g, "")) || Math.floor(Math.abs(car.x + car.y));
   const p = palettes[number % palettes.length];
 
-  // Drop Shadow
-  ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-  ctx.fillRect(car.x + 6, car.y + 10, car.w, car.h);
-
   const isHorizontal = car.w > car.h;
 
   if (isHorizontal) {
     // --- HORIZONTAL ORIENTATION ---
-    ctx.fillStyle = p.wheels;
-    ctx.fillRect(car.x + car.w * 0.22, car.y - 4, 12, 6);
-    ctx.fillRect(car.x + car.w * 0.70, car.y - 4, 12, 6);
-    ctx.fillRect(car.x + car.w * 0.22, car.y + car.h - 2, 12, 6);
-    ctx.fillRect(car.x + car.w * 0.70, car.y + car.h - 2, 12, 6);
-
+    // Main Body Block
     ctx.fillStyle = p.body;
-    ctx.fillRect(car.x, car.y + 4, car.w, car.h - 8);
+    ctx.fillRect(car.x, car.y, car.w, car.h);
 
-    ctx.fillStyle = p.highlight;
-    ctx.fillRect(car.x + 4, car.y + 6, car.w * 0.2, car.h - 12);
-    ctx.fillRect(car.x + car.w * 0.76, car.y + 6, car.w * 0.2, car.h - 12);
-
+    // Roof Center Block
     ctx.fillStyle = p.roof;
-    ctx.fillRect(car.x + car.w * 0.3, car.y + 8, car.w * 0.4, car.h - 16);
+    ctx.fillRect(car.x + car.w * 0.28, car.y + 3, car.w * 0.44, car.h - 6);
 
+    // Front Windshield (Blue Rectangle)
     ctx.fillStyle = p.glass;
-    ctx.fillRect(car.x + car.w * 0.32, car.y + 10, car.w * 0.1, car.h - 20);
-    ctx.fillRect(car.x + car.w * 0.58, car.y + 10, car.w * 0.1, car.h - 20);
+    ctx.fillRect(car.x + car.w * 0.62, car.y + 5, 8, car.h - 10);
 
-    ctx.fillStyle = p.trim;
-    ctx.fillRect(car.x, car.y + 8, 4, car.h - 16);
-    ctx.fillRect(car.x + car.w - 4, car.y + 8, 4, car.h - 16);
+    // Rear Window (Smaller Blue Rectangle)
+    ctx.fillRect(car.x + car.w * 0.32, car.y + 5, 5, car.h - 10);
+
+    // Side Windows (2 small thin low-height blue rectangles)
+    ctx.fillRect(car.x + car.w * 0.42, car.y + 2, car.w * 0.16, 3);
+    ctx.fillRect(car.x + car.w * 0.42, car.y + car.h - 5, car.w * 0.16, 3);
+
+    // Tires (Slightly beefier black pixels near the body)
+    ctx.fillStyle = p.wheels;
+    ctx.fillRect(car.x + car.w * 0.20, car.y - 2, 10, 4);          // Top-Left
+    ctx.fillRect(car.x + car.w * 0.68, car.y - 2, 10, 4);          // Top-Right
+    ctx.fillRect(car.x + car.w * 0.20, car.y + car.h - 2, 10, 4); // Bottom-Left
+    ctx.fillRect(car.x + car.w * 0.68, car.y + car.h - 2, 10, 4); // Bottom-Right
   } else {
     // --- VERTICAL ORIENTATION ---
-    ctx.fillStyle = p.wheels;
-    ctx.fillRect(car.x - 4, car.y + car.h * 0.22, 6, 12);
-    ctx.fillRect(car.x + car.w - 2, car.y + car.h * 0.22, 6, 12);
-    ctx.fillRect(car.x - 4, car.y + car.h * 0.70, 6, 12);
-    ctx.fillRect(car.x + car.w - 2, car.y + car.h * 0.70, 6, 12);
-
+    // Main Body Block
     ctx.fillStyle = p.body;
-    ctx.fillRect(car.x + 4, car.y, car.w - 8, car.h);
+    ctx.fillRect(car.x, car.y, car.w, car.h);
 
-    ctx.fillStyle = p.highlight;
-    ctx.fillRect(car.x + 6, car.y + 4, car.w - 12, car.h * 0.2);
-    ctx.fillRect(car.x + 6, car.y + car.h * 0.76, car.w - 12, car.h * 0.2);
-
+    // Roof Center Block
     ctx.fillStyle = p.roof;
-    ctx.fillRect(car.x + 8, car.y + car.h * 0.3, car.w - 16, car.h * 0.4);
+    ctx.fillRect(car.x + 3, car.y + car.h * 0.28, car.w - 6, car.h * 0.44);
 
+    // Front Windshield (Blue Rectangle)
     ctx.fillStyle = p.glass;
-    ctx.fillRect(car.x + 10, car.y + car.h * 0.32, car.w - 20, car.h * 0.1);
-    ctx.fillRect(car.x + 10, car.y + car.h * 0.58, car.w - 20, car.h * 0.1);
+    ctx.fillRect(car.x + 5, car.y + car.h * 0.62, car.w - 10, 8);
 
-    ctx.fillStyle = p.trim;
-    ctx.fillRect(car.x + 8, car.y, car.w - 16, 4);
-    ctx.fillRect(car.x + 8, car.y + car.h - 4, car.w - 16, 4);
+    // Rear Window (Smaller Blue Rectangle)
+    ctx.fillRect(car.x + 5, car.y + car.h * 0.32, car.w - 10, 5);
+
+    // Side Windows (2 small thin low-height blue rectangles)
+    ctx.fillRect(car.x + 2, car.y + car.h * 0.42, 3, car.h * 0.16);
+    ctx.fillRect(car.x + car.w - 5, car.y + car.h * 0.42, 3, car.h * 0.16);
+
+    // Tires (Slightly beefier black pixels near the body)
+    ctx.fillStyle = p.wheels;
+    ctx.fillRect(car.x - 2, car.y + car.h * 0.20, 4, 10);          // Top-Left
+    ctx.fillRect(car.x - 2, car.y + car.h * 0.68, 4, 10);          // Bottom-Left
+    ctx.fillRect(car.x + car.w - 2, car.y + car.h * 0.20, 4, 10); // Top-Right
+    ctx.fillRect(car.x + car.w - 2, car.y + car.h * 0.68, 4, 10); // Bottom-Right
   }
 
-  // Wrecked Text Label (Car colors remain 100% normal)
+  // Wrecked Text Label
   if (car.looted) {
     ctx.fillStyle = "#e74c3c";
     ctx.font = "bold 11px Arial";
