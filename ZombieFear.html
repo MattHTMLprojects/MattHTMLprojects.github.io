@@ -209,16 +209,23 @@ button.good {
 .characterGrid {
   display: grid;
   grid-template-columns: 240px 1fr;
-  gap: 25px;
+  gap: 20px;
+  align-items: start;
+  width: 100%;
 }
 
 #preview {
-  width: 240px;
-  height: 310px;
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  aspect-ratio: 240 / 310;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: #1a2326;
+  margin: 0 auto;
 }
+
 
 .choice {
   margin-bottom: 20px;
@@ -527,6 +534,49 @@ button.good {
   margin-top: 14px;
 }
 
+.customPickerWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.colorPreviewBtn {
+  width: 44px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 7px;
+  background: #1a2428;
+  cursor: pointer;
+}
+
+.colorDropdownGrid {
+  position: absolute;
+  top: 46px;
+  left: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: repeat(4, 28px);
+  gap: 6px;
+  padding: 8px;
+  background: #11181b;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+}
+
+.paletteColor {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.paletteColor:hover {
+  transform: scale(1.1);
+  border-color: white;
+}
+
 .item {
   padding: 13px;
   border: 1px solid rgba(255,255,255,.13);
@@ -627,19 +677,18 @@ button.good {
   max-width: 650px;
 }
 
-@media(max-width:760px) {
+@media(max-width: 760px) {
   .characterGrid {
     grid-template-columns: 1fr;
   }
 
   #preview {
-    width: 100%;
-    height: 240px;
+    max-width: 180px;
   }
 
-#expedition {
-  display: none;
-}
+  #expedition {
+    display: none;
+  }
 
   #weapon {
     top: auto;
@@ -748,14 +797,43 @@ input[type="color"]::-webkit-color-swatch {
           <div id="hairChoices" class="row"></div>
         </div>
 
-        <!-- Hair Color -->
-        <div class="choice">
-          <h3>Hair / Hat Color</h3>
-          <div class="row">
-            <input id="hairColor" type="color" value="#59351f">
-            <input id="hairHex" type="text" value="#59351f" maxlength="7" spellcheck="false">
-          </div>
-        </div>
+<!-- Example for Hair / Hat Color (Repeat pattern for Skin, Eyes, Shirt, Pants, Shoes) -->
+<div class="choice">
+  <h3>Hair / Hat Color</h3>
+  <div class="row">
+    <!-- Custom Color Trigger & Dropdown Wrapper -->
+    <div class="customPickerWrapper">
+      <div id="hairPreview" class="colorPreviewBtn" onclick="toggleColorDropdown('hair')"></div>
+      
+      <!-- The Simple Color Grid Popup -->
+      <div id="hairDropdown" class="colorDropdownGrid" style="display: none;">
+        <!-- Preset colors -->
+        <div class="paletteColor" style="background: #ffffff;" onclick="selectColor('hair', '#ffffff')"></div>
+        <div class="paletteColor" style="background: #e0e0e0;" onclick="selectColor('hair', '#e0e0e0')"></div>
+        <div class="paletteColor" style="background: #9e9e9e;" onclick="selectColor('hair', '#9e9e9e')"></div>
+        <div class="paletteColor" style="background: #212121;" onclick="selectColor('hair', '#212121')"></div>
+        <div class="paletteColor" style="background: #b71c1c;" onclick="selectColor('hair', '#b71c1c')"></div>
+        <div class="paletteColor" style="background: #e65100;" onclick="selectColor('hair', '#e65100')"></div>
+        <div class="paletteColor" style="background: #fbc02d;" onclick="selectColor('hair', '#fbc02d')"></div>
+        <div class="paletteColor" style="background: #33691e;" onclick="selectColor('hair', '#33691e')"></div>
+        <div class="paletteColor" style="background: #006064;" onclick="selectColor('hair', '#006064')"></div>
+        <div class="paletteColor" style="background: #0d47a1;" onclick="selectColor('hair', '#0d47a1')"></div>
+        <div class="paletteColor" style="background: #4a148c;" onclick="selectColor('hair', '#4a148c')"></div>
+        <div class="paletteColor" style="background: #880e4f;" onclick="selectColor('hair', '#880e4f')"></div>
+        <div class="paletteColor" style="background: #59351f;" onclick="selectColor('hair', '#59351f')"></div>
+        <div class="paletteColor" style="background: #8d5524;" onclick="selectColor('hair', '#8d5524')"></div>
+        <div class="paletteColor" style="background: #c68642;" onclick="selectColor('hair', '#c68642')"></div>
+        <div class="paletteColor" style="background: #e0ac69;" onclick="selectColor('hair', '#e0ac69')"></div>
+  </div>
+</div>
+
+    <!-- Hex Text Input -->
+    <input id="hairHex" type="text" value="#59351f" maxlength="7" spellcheck="false">
+  </div>
+</div>
+
+
+        
 
 <div class="choice">
   <h3>Skin Tone</h3>
@@ -819,7 +897,6 @@ input[type="color"]::-webkit-color-swatch {
     </div>
   </div>
 </section>
-
 
 <section id="gameScreen" class="screen">
   <canvas id="game"></canvas>
@@ -1027,7 +1104,7 @@ const SAFEHOUSE_Y =
   START_CHUNK_Y * CHUNK_SIZE + CHUNK_SIZE / 2;
 
 const LOAD_RADIUS = 2;
-const UNLOAD_RADIUS = 3;
+const UNLOAD_RADIUS = 6;
 
 const PLAYER_RADIUS = 17;
 const INTERACT_DISTANCE = 96;
@@ -1273,7 +1350,7 @@ const choice = {
   gender: "male",
   
   // Customization Options
-  skinColor: "#f5d0b1",
+  skinColor: "#9c7c62",
   eyeColor: "#2e7d32",
   hair: "shortBrown",
   hairColor: "#59351f",
@@ -2053,6 +2130,109 @@ mouse.y =
     }
   }
 }
+
+
+// Toggle dropdown visibility and close others if open
+function toggleColorDropdown(part) {
+  const dropdown = document.getElementById(`${part}Dropdown`);
+  const isOpen = dropdown.style.display === 'grid';
+  
+  // Hide all open dropdowns first
+  document.querySelectorAll('.colorDropdownGrid').forEach(d => d.style.display = 'none');
+  
+  if (!isOpen) {
+    dropdown.style.display = 'grid';
+  }
+}
+
+// Close dropdowns when clicking outside
+window.addEventListener('click', (e) => {
+  if (!e.target.closest('.customPickerWrapper')) {
+    document.querySelectorAll('.colorDropdownGrid').forEach(d => d.style.display = 'none');
+  }
+});
+
+// Handle selecting a color from the custom grid
+function selectColor(part, hex) {
+  choice[part + 'Color'] = hex;
+  
+  // Update UI preview box background
+  const preview = document.getElementById(`${part}Preview`);
+  if (preview) preview.style.backgroundColor = hex;
+  
+  // Update Hex input field
+  const hexInput = document.getElementById(`${part}Hex`);
+  if (hexInput) hexInput.value = hex.toUpperCase();
+  
+  // Hide dropdown
+  document.getElementById(`${part}Dropdown`).style.display = 'none';
+  
+  // Redraw survivor canvas preview
+  if (typeof drawPreview === 'function') {
+    drawPreview();
+  }
+}
+
+// Initialize preview background colors on load
+['hair', 'skin', 'eye', 'shirt', 'pants', 'shoe'].forEach(part => {
+  const preview = document.getElementById(`${part}Preview`);
+  const hexInput = document.getElementById(`${part}Hex`);
+  if (preview && hexInput) {
+    preview.style.backgroundColor = hexInput.value;
+  }
+});
+
+
+function setupColorPickers() {
+  const parts = ['hair', 'skin', 'eye', 'shirt', 'pants', 'shoe'];
+
+  parts.forEach(part => {
+    const colorInput = document.getElementById(`${part}Color`);
+    const hexInput = document.getElementById(`${part}Hex`);
+    const rgbLabel = document.getElementById(`${part}Rgb`);
+
+    function updateColorValues(hex) {
+      if (!hex.startsWith('#')) hex = '#' + hex;
+      if (hex.length !== 7) return;
+
+      // Sync both input fields
+      if (colorInput) colorInput.value = hex;
+      if (hexInput) hexInput.value = hex;
+
+      // Calculate and display RGB from Hex
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      
+      if (!isNaN(r) && !isNaN(g) && !isNaN(b) && rgbLabel) {
+        rgbLabel.textContent = `RGB: ${r}, ${g}, ${b}`;
+      }
+
+      // Optional: Trigger your character preview canvas redraw here
+      // if (typeof updateCharacterPreview === 'function') updateCharacterPreview();
+    }
+
+    // When using the native color picker wheel
+    if (colorInput) {
+      colorInput.oninput = (e) => updateColorValues(e.target.value);
+    }
+
+    // When typing manually into the hex text box
+    if (hexInput) {
+      hexInput.oninput = (e) => {
+        let val = e.target.value;
+        if (val.length === 7) {
+          updateColorValues(val);
+        }
+      };
+    }
+  });
+}
+
+// Run when document loads
+setupColorPickers();
+
+
 
 function continueWithNewSurvivor(){
   if(!state)return;
@@ -11598,6 +11778,13 @@ function updateCamera(dt){
 function render(){
   if(!state)return;
 
+  // Initialize frame counter and object cache if they don't exist yet
+  if(state.frameCount === undefined){
+    state.frameCount = 0;
+    state.cachedSortedObjects = [];
+  }
+  state.frameCount++;
+
   ctx.clearRect(
     0,
     0,
@@ -11607,9 +11794,10 @@ function render(){
 
   ctx.save();
 
+  // Crisp pixel-aligned camera translation (prevents shaking/jitter)
   ctx.translate(
-    canvas.width/2-state.camera.x,
-    canvas.height/2-state.camera.y
+    Math.round(canvas.width / 2 - state.camera.x),
+    Math.round(canvas.height / 2 - state.camera.y)
   );
 
   drawGround();
@@ -11622,158 +11810,46 @@ function render(){
 
   for(const tree of state.trees){
     if(!isObjectActive(tree))continue;
-
-    if(
-      !isVisible(
-        tree.x-tree.radius,
-        tree.y-tree.radius-30,
-        tree.radius*2,
-        tree.radius*2+50,
-        120
-      )
-    ){
-      continue;
-    }
-
-    objects.push({
-      y:tree.y,
-      type:"tree",
-      o:tree
-    });
+    if(!isVisible(tree.x-tree.radius, tree.y-tree.radius-30, tree.radius*2, tree.radius*2+50, 120))continue;
+    objects.push({ y:tree.y, type:"tree", o:tree });
   }
 
   for(const car of state.cars){
     if(!isObjectActive(car))continue;
-
-    if(
-      !isVisible(
-        car.x,
-        car.y,
-        car.w,
-        car.h,
-        120
-      )
-    ){
-      continue;
-    }
-
-    objects.push({
-      y:car.y+car.h,
-      type:"car",
-      o:car
-    });
+    if(!isVisible(car.x, car.y, car.w, car.h, 120))continue;
+    objects.push({ y:car.y+car.h, type:"car", o:car });
   }
 
   for(const wall of state.walls){
     if(!isObjectActive(wall))continue;
     if(wall.destroyed)continue;
-
-    if(
-      !isVisible(
-        wall.x,
-        wall.y-45,
-        wall.w,
-        wall.h+50,
-        120
-      )
-    ){
-      continue;
-    }
-
-    objects.push({
-      y:wall.y+wall.h,
-      type:"wall",
-      o:wall
-    });
+    if(!isVisible(wall.x, wall.y-45, wall.w, wall.h+50, 120))continue;
+    objects.push({ y:wall.y+wall.h, type:"wall", o:wall });
   }
 
   for(const door of state.doors){
     if(!isObjectActive(door))continue;
-
-    if(
-      !isVisible(
-        door.x-40,
-        door.y-40,
-        door.w+80,
-        door.h+80,
-        120
-      )
-    ){
-      continue;
-    }
-
-    objects.push({
-      y:door.y+door.h,
-      type:"door",
-      o:door
-    });
+    if(!isVisible(door.x-40, door.y-40, door.w+80, door.h+80, 120))continue;
+    objects.push({ y:door.y+door.h, type:"door", o:door });
   }
 
   for(const container of state.containers){
     if(!isObjectActive(container))continue;
-
-    if(
-      !isVisible(
-        container.x-container.w/2,
-        container.y-container.h/2,
-        container.w,
-        container.h,
-        120
-      )
-    ){
-      continue;
-    }
-
-    objects.push({
-      y:container.y+container.h/2,
-      type:"container",
-      o:container
-    });
+    if(!isVisible(container.x-container.w/2, container.y-container.h/2, container.w, container.h, 120))continue;
+    objects.push({ y:container.y+container.h/2, type:"container", o:container });
   }
 
   for(const zombie of state.zombies){
     if(!isObjectActive(zombie))continue;
-
-    if(
-      !isVisible(
-        zombie.x-45,
-        zombie.y-80,
-        90,
-        95,
-        160
-      )
-    ){
-      continue;
-    }
-
-    objects.push({
-      y:zombie.y,
-      type:"zombie",
-      o:zombie
-    });
+    if(!isVisible(zombie.x-45, zombie.y-80, 90, 95, 160))continue;
+    objects.push({ y:zombie.y, type:"zombie", o:zombie });
   }
 
   for(const fallen of state.fallenSurvivors){
     if(fallen.recovered)continue;
     if(!isObjectActive(fallen))continue;
-
-    if(
-      !isVisible(
-        fallen.x-28,
-        fallen.y-30,
-        56,
-        50,
-        120
-      )
-    ){
-      continue;
-    }
-
-    objects.push({
-      y:fallen.y,
-      type:"fallen",
-      o:fallen
-    });
+    if(!isVisible(fallen.x-28, fallen.y-30, 56, 50, 120))continue;
+    objects.push({ y:fallen.y, type:"fallen", o:fallen });
   }
 
   objects.push({
@@ -11782,42 +11858,23 @@ function render(){
     o:state.player
   });
 
-  objects.sort(
-    (a,b)=>a.y-b.y
-  );
+  // PERFORMANCE OPTIMIZATION: Throttled sorting (every 2nd frame)
+  // This prevents heavy CPU spikes when dozens of zombies and objects are rendered.
+  if(state.frameCount % 2 === 0 || state.cachedSortedObjects.length !== objects.length){
+    objects.sort((a, b) => a.y - b.y);
+    state.cachedSortedObjects = objects;
+  }
 
-  for(const item of objects){
-    if(item.type==="tree"){
-      drawTree(item.o);
-    }
-
-    if(item.type==="car"){
-      drawCar(item.o);
-    }
-
-    if(item.type==="wall"){
-      drawWall(item.o);
-    }
-
-    if(item.type==="door"){
-      drawDoor(item.o);
-    }
-
-    if(item.type==="container"){
-      drawContainer(item.o);
-    }
-
-    if(item.type==="zombie"){
-      drawZombie(item.o);
-    }
-
-    if(item.type==="fallen"){
-      drawFallenBackpack(item.o);
-    }
-
-    if(item.type==="player"){
-      drawPlayer(item.o);
-    }
+  // Draw using the cached sorted objects array
+  for(const item of state.cachedSortedObjects){
+    if(item.type==="tree") drawTree(item.o);
+    if(item.type==="car") drawCar(item.o);
+    if(item.type==="wall") drawWall(item.o);
+    if(item.type==="door") drawDoor(item.o);
+    if(item.type==="container") drawContainer(item.o);
+    if(item.type==="zombie") drawZombie(item.o);
+    if(item.type==="fallen") drawFallenBackpack(item.o);
+    if(item.type==="player") drawPlayer(item.o);
   }
 
   drawSafehouseProjects();
@@ -11830,6 +11887,7 @@ function render(){
   drawCompass();
   drawCrosshair();
 }
+
 
 function isVisible(
   x,
@@ -17260,3 +17318,4 @@ resize();
 </script>
 </body>
 </html>
+
