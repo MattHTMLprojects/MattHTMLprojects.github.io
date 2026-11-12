@@ -2227,77 +2227,44 @@ function createReplacementSurvivor(){
     );
 }
 
-function startGame(){
-
-  /*
-  If character creation was opened because
-  the previous survivor died, create only
-  the replacement PLAYER.
-
-  Do not create another world.
-  */
-  if(
-    creatingReplacementSurvivor &&
-    state
-  ){
-    creatingReplacementSurvivor=false;
-
+function startGame() {
+  // 1. Handle replacement survivor cleanly and EXIT immediately
+  if (creatingReplacementSurvivor && state) {
+    creatingReplacementSurvivor = false;
     createReplacementSurvivor();
-
-    return;
+    
+    // Don't forget to trigger touch gamepad check here too if needed!
+    checkTouchDeviceOverlay();
+    return; // <-- Stops execution completely so it never touches createState()
   }
 
+  // 2. NORMAL NEW GAME (Only runs if starting a fresh world)
+  sessionSeed = Math.floor(Math.random() * 2147483646) + 1;
+  state = createState();
 
-  /*
-  NORMAL NEW GAME
-  */
-  sessionSeed=
-    Math.floor(
-      Math.random()*
-      2147483646
-    )+1;
-
-  state=createState();
-
-  running=true;
-  paused=false;
-  modalOpen=false;
-  target=null;
+  running = true;
+  paused = false;
+  modalOpen = false;
+  target = null;
 
   resize();
+  showScreen("game");
 
-  showScreen(
-    "game"
-  );
+  notify("You wake inside your safehouse.", "good");
+  notify("The county is enormous. Prepare before traveling far.", "warn");
 
-  notify(
-    "You wake inside your safehouse.",
-    "good"
-  );
+  mouse.x = canvas.width / 2 + 100;
+  mouse.y = canvas.height / 2;
 
-  notify(
-    "The county is enormous. Prepare before traveling far.",
-    "warn"
-  );
+  previousTime = performance.now();
+  cancelAnimationFrame(frame);
+  frame = requestAnimationFrame(loop);
 
-mouse.x =
-  canvas.width / 2 + 100;
+  checkTouchDeviceOverlay();
+}
 
-mouse.y =
-  canvas.height / 2;
-
-  previousTime=
-    performance.now();
-
-  cancelAnimationFrame(
-    frame
-  );
-
-  frame=
-    requestAnimationFrame(
-      loop
-    );
-  // --- Add this right here ---
+// Helper to keep touch check clean
+function checkTouchDeviceOverlay() {
   const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
   if (isTouchDevice) {
     const overlay = document.getElementById("touchGamepadOverlay");
@@ -2306,6 +2273,7 @@ mouse.y =
     }
   }
 }
+
 
 
 // Toggle dropdown visibility and close others if open
