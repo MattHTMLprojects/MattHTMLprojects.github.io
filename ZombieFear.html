@@ -1279,7 +1279,7 @@ const SAFEHOUSE_Y =
   START_CHUNK_Y * CHUNK_SIZE + CHUNK_SIZE / 2;
 
 const LOAD_RADIUS = 2;
-const UNLOAD_RADIUS = 6;
+const UNLOAD_RADIUS = 3;
 
 const PLAYER_RADIUS = 17;
 const INTERACT_DISTANCE = 96;
@@ -2508,7 +2508,10 @@ function isChunkInsideWorld(cx,cy){
 }
 
 function isChunkActive(key){
-  return state.activeChunkKeys.includes(key);
+  if(!state.activeChunkSet){
+    state.activeChunkSet = new Set(state.activeChunkKeys || []);
+  }
+  return state.activeChunkSet.has(key);
 }
 
 function isObjectActive(object){
@@ -2596,32 +2599,34 @@ function updateChunkStreaming(){
   unloadDistantChunks(state,cx,cy);
 }
 
-function refreshActiveChunks(s,centerX,centerY){
-  const active=[];
+function refreshActiveChunks(s, centerX, centerY){
+  const active = [];
+  const activeSet = new Set();
 
   for(
-    let cy=centerY-LOAD_RADIUS;
-    cy<=centerY+LOAD_RADIUS;
+    let cy = centerY - LOAD_RADIUS;
+    cy <= centerY + LOAD_RADIUS;
     cy++
   ){
     for(
-      let cx=centerX-LOAD_RADIUS;
-      cx<=centerX+LOAD_RADIUS;
+      let cx = centerX - LOAD_RADIUS;
+      cx <= centerX + LOAD_RADIUS;
       cx++
     ){
-      if(!isChunkInsideWorld(cx,cy))continue;
+      if(!isChunkInsideWorld(cx, cy)) continue;
 
-      const key=getChunkKey(cx,cy);
-
+      const key = getChunkKey(cx, cy);
       active.push(key);
+      activeSet.add(key);
 
       if(!s.chunks[key]){
-        generateChunk(s,cx,cy);
+        generateChunk(s, cx, cy);
       }
     }
   }
 
-  s.activeChunkKeys=active;
+  s.activeChunkKeys = active;
+  s.activeChunkSet = activeSet;
 }
 
 function unloadDistantChunks(s,centerX,centerY){
@@ -6199,49 +6204,70 @@ function movePlayer(dx,dy){
   }
 }
 
-function worldCollision(x,y,r){
+function worldCollision(x, y, r){
   for(const wall of state.walls){
-    if(!isObjectActive(wall))continue;
+    if(wall.destroyed || !isObjectActive(wall)) continue;
 
+    // Fast bounding-box skip before running circleRect
     if(
-      !wall.destroyed &&
-      circleRect(x,y,r,wall)
+      x + r < wall.x ||
+      x - r > wall.x + wall.w ||
+      y + r < wall.y ||
+      y - r > wall.y + wall.h
     ){
+      continue;
+    }
+
+    if(circleRect(x, y, r, wall)){
       return true;
     }
   }
 
   for(const door of state.doors){
-    if(!isObjectActive(door))continue;
+    if(door.open || !isObjectActive(door)) continue;
 
     if(
-      !door.open &&
-      circleRect(x,y,r,door)
+      x + r < door.x ||
+      x - r > door.x + door.w ||
+      y + r < door.y ||
+      y - r > door.y + door.h
     ){
+      continue;
+    }
+
+    if(circleRect(x, y, r, door)){
       return true;
     }
   }
 
   for(const car of state.cars){
-    if(!isObjectActive(car))continue;
+    if(!isObjectActive(car)) continue;
 
-    if(circleRect(x,y,r,car)){
+    if(
+      x + r < car.x ||
+      x - r > car.x + car.w ||
+      y + r < car.y ||
+      y - r > car.y + car.h
+    ){
+      continue;
+    }
+
+    if(circleRect(x, y, r, car)){
       return true;
     }
   }
 
   for(const tree of state.trees){
-    if(!isObjectActive(tree))continue;
+    if(!isObjectActive(tree)) continue;
 
-    if(
-      distance(
-        x,
-        y,
-        tree.x,
-        tree.y
-      )<
-      r+tree.radius*.38
-    ){
+    const hitDist = r + tree.radius * .38;
+    const dx = x - tree.x;
+    const dy = y - tree.y;
+
+    // Fast bounding-box & squared-distance check (avoids slow Math.sqrt)
+    if(Math.abs(dx) >= hitDist || Math.abs(dy) >= hitDist) continue;
+
+    if(dx * dx + dy * dy < hitDist * hitDist){
       return true;
     }
   }
@@ -6770,11 +6796,25 @@ function meleePathBlocked(
   x2,
   y2
 ){
+  const minX = x1 < x2 ? x1 : x2;
+  const maxX = x1 > x2 ? x1 : x2;
+  const minY = y1 < y2 ? y1 : y2;
+  const maxY = y1 > y2 ? y1 : y2;
+
   for(const wall of state.walls){
-    if(!isObjectActive(wall))continue;
+    if(wall.destroyed || !isObjectActive(wall)) continue;
+
+    // Fast bounding-box skip before running segmentIntersectsRect
+    if(
+      maxX < wall.x ||
+      minX > wall.x + wall.w ||
+      maxY < wall.y ||
+      minY > wall.y + wall.h
+    ){
+      continue;
+    }
 
     if(
-      !wall.destroyed &&
       segmentIntersectsRect(
         x1,
         y1,
@@ -6788,10 +6828,18 @@ function meleePathBlocked(
   }
 
   for(const door of state.doors){
-    if(!isObjectActive(door))continue;
+    if(door.open || !isObjectActive(door)) continue;
 
     if(
-      !door.open &&
+      maxX < door.x ||
+      minX > door.x + door.w ||
+      maxY < door.y ||
+      minY > door.y + door.h
+    ){
+      continue;
+    }
+
+    if(
       segmentIntersectsRect(
         x1,
         y1,
@@ -6806,6 +6854,7 @@ function meleePathBlocked(
 
   return false;
 }
+
 
 function attack(){
   const player=state.player;
@@ -7169,12 +7218,26 @@ function createDroppedResource(
 
 function updateZombies(dt){
   const player=state.player;
+  const ZOMBIE_ACTIVE_RADIUS = 2000;
 
   for(const zombie of state.zombies){
     if(!isObjectActive(zombie))continue;
 
     if(zombie.dead){
       zombie.deathTime+=dt;
+      continue;
+    }
+
+    const playerDistance=
+      distance(
+        zombie.x,
+        zombie.y,
+        player.x,
+        player.y
+      );
+
+    // Sleep off-screen zombies beyond 2000px so they don't burn CPU on wall collisions
+    if(playerDistance > ZOMBIE_ACTIVE_RADIUS){
       continue;
     }
 
@@ -7195,14 +7258,6 @@ function updateZombies(dt){
         dt
       );
     }
-
-    const playerDistance=
-      distance(
-        zombie.x,
-        zombie.y,
-        player.x,
-        player.y
-      );
 
     const detection=
       isNight()
@@ -10162,7 +10217,7 @@ function openBlueprint(){
       your backpack and all safehouse storage.
     </p>
 
-    <h3>Safehouse Projects</h3><br><b>Note: This entire project was created by Matt L, good luck surviving !</b>
+    <h3>Safehouse Projects</h3><br><b>** Note: This entire HTML project was created by Matt L, have fun and good luck surviving !</b>
 
 <div class="blueprint-scroll-wrapper">
     <!-- Content Panel (Left) -->
@@ -10540,64 +10595,51 @@ function refreshSafehouseStorageObjects(){
 
 let fpsFrames = 0;
 let fpsLastTime = performance.now();
+let fpsDisplayEl = null;
+let showExtendedDebug = false; // Press F3 to toggle full diagnostic readout
 
-function trackFPS() {
+window.addEventListener("keydown", e => {
+  if(e.key === "F3"){
+    e.preventDefault();
+    showExtendedDebug = !showExtendedDebug;
+  }
+});
 
-    fpsFrames++;
+function trackFPS(){
+  fpsFrames++;
 
-    const now = performance.now();
-    const elapsed = now - fpsLastTime;
+  const now = performance.now();
+  const elapsed = now - fpsLastTime;
 
-    if (elapsed >= 1000) {
+  if(elapsed >= 1000){
+    const fps = Math.round(fpsFrames * 1000 / elapsed);
 
-        const fps = Math.round(
-            fpsFrames * 1000 / elapsed
-        );
-
-        const display =
-            document.getElementById("fpsCounter");
-
-if (display) {
-
-    const visibleWalls = state.walls.filter(wall =>
-        isObjectActive(wall) &&
-        !wall.destroyed &&
-        isVisible(
-            wall.x,
-            wall.y - 45,
-            wall.w,
-            wall.h + 50,
-            120
-        )
-    ).length;
-
-const visibleTrees = state.trees.filter(tree =>
-    isObjectActive(tree) &&
-    isVisible(
-        tree.x - tree.radius,
-        tree.y - tree.radius - 30,
-        tree.radius * 2,
-        tree.radius * 2 + 50,
-        120
-    )
-).length;
-
-    display.textContent =
-        "FPS: " + fps +
-        " | P:" + state.particles.length +
-        " Z:" + state.zombies.length +
-        " T:" + state.trees.length +
-	"/" + visibleTrees +
-        " W:" + state.walls.length +
-        "/" + visibleWalls +
-        " C:" + state.cars.length;
-
-}
-
-        fpsFrames = 0;
-        fpsLastTime = now;
+    if(!fpsDisplayEl){
+      fpsDisplayEl = document.getElementById("fpsCounter");
     }
+
+    if(fpsDisplayEl){
+      if(showExtendedDebug){
+        const visibleTrees = state.visibleTreesCount || 0;
+        const visibleWalls = state.visibleWallsCount || 0;
+
+        fpsDisplayEl.textContent =
+          "FPS: " + fps +
+          " | P:" + state.particles.length +
+          " Z:" + state.zombies.length +
+          " T:" + state.trees.length + "/" + visibleTrees +
+          " W:" + state.walls.length + "/" + visibleWalls +
+          " C:" + state.cars.length;
+      }else{
+        fpsDisplayEl.textContent = "FPS: " + fps;
+      }
+    }
+
+    fpsFrames = 0;
+    fpsLastTime = now;
+  }
 }
+
 
 function findStorage(storageId){
   return state.safehouse
@@ -11620,195 +11662,155 @@ function openPause(){
     };
 }
 
+let hudCache = null;
+
 function updateHud(){
-  const player=state.player;
-  const weapon=currentWeapon();
-  const entry=currentEntry();
+  if(!hudCache){
+    hudCache = {
+      healthFill: document.getElementById("healthFill"),
+      staminaFill: document.getElementById("staminaFill"),
+      thirstFill: document.getElementById("thirstFill"),
+      hungerFill: document.getElementById("hungerFill"),
+      healthText: document.getElementById("healthText"),
+      staminaText: document.getElementById("staminaText"),
+      thirstText: document.getElementById("thirstText"),
+      hungerText: document.getElementById("hungerText"),
+      poisonArea: document.getElementById("poisonArea"),
+      poisonFill: document.getElementById("poisonFill"),
+      poisonText: document.getElementById("poisonText"),
+      dayText: document.getElementById("dayText"),
+      timeText: document.getElementById("timeText"),
+      weaponName: document.getElementById("weaponName"),
+      weaponStats: document.getElementById("weaponStats"),
+      expedition: document.getElementById("expedition"),
+      prev: {}
+    };
+  }
 
-  document
-    .getElementById(
-      "healthFill"
-    )
-    .style.width=
-      player.health/
-      player.maxHealth*
-      100+
-      "%";
+  const player = state.player;
+  const weapon = currentWeapon();
+  const entry = currentEntry();
+  const prev = hudCache.prev;
 
-  document
-    .getElementById(
-      "staminaFill"
-    )
-    .style.width=
-      player.stamina/
-      player.maxStamina*
-      100+
-      "%";
+  const hpPct = (player.health / player.maxHealth * 100).toFixed(1) + "%";
+  if(prev.hpPct !== hpPct){
+    hudCache.healthFill.style.width = hpPct;
+    prev.hpPct = hpPct;
+  }
 
-  document
-    .getElementById(
-      "thirstFill"
-    )
-    .style.width=
-      player.thirst+
-      "%";
+  const stamPct = (player.stamina / player.maxStamina * 100).toFixed(1) + "%";
+  if(prev.stamPct !== stamPct){
+    hudCache.staminaFill.style.width = stamPct;
+    prev.stamPct = stamPct;
+  }
 
-  document
-    .getElementById(
-      "hungerFill"
-    )
-    .style.width=
-      player.hunger+
-      "%";
+  const thirstPct = player.thirst.toFixed(1) + "%";
+  if(prev.thirstPct !== thirstPct){
+    hudCache.thirstFill.style.width = thirstPct;
+    prev.thirstPct = thirstPct;
+  }
 
-  document
-    .getElementById(
-      "healthText"
-    )
-    .textContent=
-      Math.ceil(
-        player.health
-      )+
-      " / "+
-      player.maxHealth;
+  const hungerPct = player.hunger.toFixed(1) + "%";
+  if(prev.hungerPct !== hungerPct){
+    hudCache.hungerFill.style.width = hungerPct;
+    prev.hungerPct = hungerPct;
+  }
 
-  document
-    .getElementById(
-      "staminaText"
-    )
-    .textContent=
-      Math.ceil(
-        player.stamina
-      )+
-      " / "+
-      player.maxStamina;
+  const hpText = Math.ceil(player.health) + " / " + player.maxHealth;
+  if(prev.hpText !== hpText){
+    hudCache.healthText.textContent = hpText;
+    prev.hpText = hpText;
+  }
 
-  document
-    .getElementById(
-      "thirstText"
-    )
-    .textContent=
-      Math.ceil(
-        player.thirst
-      )+
-      "%";
+  const stamText = Math.ceil(player.stamina) + " / " + player.maxStamina;
+  if(prev.stamText !== stamText){
+    hudCache.staminaText.textContent = stamText;
+    prev.stamText = stamText;
+  }
 
-  document
-    .getElementById(
-      "hungerText"
-    )
-    .textContent=
-      Math.ceil(
-        player.hunger
-      )+
-      "%";
+  const thirstText = Math.ceil(player.thirst) + "%";
+  if(prev.thirstText !== thirstText){
+    hudCache.thirstText.textContent = thirstText;
+    prev.thirstText = thirstText;
+  }
 
-  const poisonArea=
-    document.getElementById(
-      "poisonArea"
-    );
+  const hungerText = Math.ceil(player.hunger) + "%";
+  if(prev.hungerText !== hungerText){
+    hudCache.hungerText.textContent = hungerText;
+    prev.hungerText = hungerText;
+  }
 
-  poisonArea.style.display=
-    player.poison>0
-      ?"block"
-      :"none";
+  const poisonDisplay = player.poison > 0 ? "block" : "none";
+  if(prev.poisonDisplay !== poisonDisplay){
+    hudCache.poisonArea.style.display = poisonDisplay;
+    prev.poisonDisplay = poisonDisplay;
+  }
 
-  document
-    .getElementById(
-      "poisonFill"
-    )
-    .style.width=
-      player.poison+
-      "%";
+  if(player.poison > 0){
+    const poisonPct = player.poison.toFixed(1) + "%";
+    if(prev.poisonPct !== poisonPct){
+      hudCache.poisonFill.style.width = poisonPct;
+      prev.poisonPct = poisonPct;
+    }
 
-  document
-    .getElementById(
-      "poisonText"
-    )
-    .textContent=
-      Math.ceil(
-        player.poison
-      )+
-      "%";
+    const poisonText = Math.ceil(player.poison) + "%";
+    if(prev.poisonText !== poisonText){
+      hudCache.poisonText.textContent = poisonText;
+      prev.poisonText = poisonText;
+    }
+  }
 
-  document
-    .getElementById(
-      "dayText"
-    )
-    .textContent=
-      state.day;
+  if(prev.day !== state.day){
+    hudCache.dayText.textContent = state.day;
+    prev.day = state.day;
+  }
 
-  document
-    .getElementById(
-      "timeText"
-    )
-    .textContent=
-      formatTime(
-        state.time
-      );
+  const timeStr = formatTime(state.time);
+  if(prev.timeStr !== timeStr){
+    hudCache.timeText.textContent = timeStr;
+    prev.timeStr = timeStr;
+  }
 
-  document
-    .getElementById(
-      "weaponName"
-    )
-    .textContent=
-      weapon.name;
+  if(prev.weaponName !== weapon.name){
+    hudCache.weaponName.textContent = weapon.name;
+    prev.weaponName = weapon.name;
+  }
 
-  document
-    .getElementById(
-      "weaponStats"
-    )
-    .textContent=
-      "Damage "+
-      weapon.damage+
-      " • Stamina "+
-      weapon.stamina+
-      (
-        Number.isFinite(
-          entry.durability
-        )
-          ?" • Durability "+
-            entry.durability
-          :""
-      );
+  const weaponStatsStr =
+    "Damage " + weapon.damage +
+    " • Stamina " + weapon.stamina +
+    (Number.isFinite(entry.durability) ? " • Durability " + entry.durability : "");
 
+  if(prev.weaponStatsStr !== weaponStatsStr){
+    hudCache.weaponStats.textContent = weaponStatsStr;
+    prev.weaponStatsStr = weaponStatsStr;
+  }
 
-  const currentChunk=
-    state.chunks[
-      getObjectChunkKey(
-        player.x,
-        player.y
-      )
-    ];
+  const currentChunk = state.chunks[getObjectChunkKey(player.x, player.y)];
+  const region = currentChunk ? regionDisplayName(currentChunk.region) : "Unknown County";
+  const weight = backpackWeight();
 
-  const region=
-    currentChunk
-      ?regionDisplayName(
-          currentChunk.region
-        )
-      :"Unknown County";
+  const backpackClass =
+    weight >= player.backpackCapacity
+      ? "badText"
+      : weight >= player.backpackCapacity * 0.82
+        ? "warningText"
+        : "goodText";
 
-  const backpackClass=
-    backpackWeight()>=
-    player.backpackCapacity
-      ?"badText"
-      :backpackWeight()>=
-        player.backpackCapacity*.82
-        ?"warningText"
-        :"goodText";
+  const waterCount = player.inventory.water || 0;
+  const foodCount = player.inventory.food || 0;
+  const pendingCount = state.pendingDiscoveries.length;
 
-  document
-    .getElementById(
-      "expedition"
-    )
-    .innerHTML=`
+  const expeditionKey = `${backpackClass}|${weight}|${player.backpackCapacity}|${region}|${state.zone}|${waterCount}|${foodCount}|${pendingCount}`;
+
+  if(prev.expeditionKey !== expeditionKey){
+    prev.expeditionKey = expeditionKey;
+    hudCache.expedition.innerHTML = `
       <strong>Expedition</strong><br>
 
       <span class="${backpackClass}">
         Backpack:
-        ${formatWeight(
-          backpackWeight()
-        )}
+        ${formatWeight(weight)}
         /
         ${player.backpackCapacity}
       </span><br>
@@ -11820,27 +11822,25 @@ function updateHud(){
       ${state.zone}<br>
 
       Water:
-      ${player.inventory.water||0}<br>
+      ${waterCount}<br>
 
       Food:
-      ${player.inventory.food||0}<br>
+      ${foodCount}<br>
 
       ${
-        state.pendingDiscoveries.length
-          ?`
+        pendingCount
+          ? `
             <span class="warningText">
-              ${state.pendingDiscoveries.length}
-              undocumented discover${
-                state.pendingDiscoveries.length===1
-                  ?"y"
-                  :"ies"
-              }
+              ${pendingCount}
+              undocumented discover${pendingCount === 1 ? "y" : "ies"}
             </span>
           `
-          :""
+          : ""
       }
     `;
+  }
 }
+
 
 function regionDisplayName(region){
   return {
@@ -11958,40 +11958,38 @@ function particles(
 }
 
 function updateEffects(dt){
-  for(const particle of state.particles){
-    particle.x+=particle.vx*dt;
-    particle.y+=particle.vy*dt;
+  if(state.particles.length > 0){
+    for(const particle of state.particles){
+      particle.x += particle.vx * dt;
+      particle.y += particle.vy * dt;
+      particle.vx *= .92;
+      particle.vy *= .92;
+      particle.life -= dt;
+    }
 
-    particle.vx*=.92;
-    particle.vy*=.92;
-    particle.life-=dt;
+    state.particles = state.particles.filter(
+      particle => particle.life > 0
+    );
   }
 
-  state.particles=
-    state.particles.filter(
-      particle=>
-        particle.life>0
-    );
+  if(state.texts.length > 0){
+    for(const text of state.texts){
+      text.y -= dt * 30;
+      text.life -= dt;
+    }
 
-  for(const text of state.texts){
-    text.y-=dt*30;
-    text.life-=dt;
+    state.texts = state.texts.filter(
+      text => text.life > 0
+    );
   }
 
-  state.texts=
-    state.texts.filter(
-      text=>text.life>0
-    );
-
-for(const wall of state.walls){
-    // Most walls are not flashing, so reject them first.
+  for(const wall of state.walls){
     if(!wall.flash || wall.flash <= 0) continue;
     if(!isObjectActive(wall)) continue;
-    wall.flash = Math.max(
-        0,
-        wall.flash - dt * 5
-    );
-}}
+    wall.flash = Math.max(0, wall.flash - dt * 5);
+  }
+}
+
 
 function updateCamera(dt){
   const smooth=
@@ -12062,17 +12060,30 @@ function render(){
 
   const objects=[];
 
+  let visibleTreesCount = 0;
   for(const tree of state.trees){
     if(!isObjectActive(tree))continue;
     if(!isVisible(tree.x-tree.radius, tree.y-tree.radius-30, tree.radius*2, tree.radius*2+50, 120))continue;
+    visibleTreesCount++;
     objects.push({ y:tree.y, type:"tree", o:tree });
   }
+  state.visibleTreesCount = visibleTreesCount;
 
   for(const car of state.cars){
     if(!isObjectActive(car))continue;
     if(!isVisible(car.x, car.y, car.w, car.h, 120))continue;
     objects.push({ y:car.y+car.h, type:"car", o:car });
   }
+
+  let visibleWallsCount = 0;
+  for(const wall of state.walls){
+    if(!isObjectActive(wall))continue;
+    if(wall.destroyed)continue;
+    if(!isVisible(wall.x, wall.y-45, wall.w, wall.h+50, 120))continue;
+    visibleWallsCount++;
+    objects.push({ y:wall.y+wall.h, type:"wall", o:wall });
+  }
+  state.visibleWallsCount = visibleWallsCount;
 
   for(const wall of state.walls){
     if(!isObjectActive(wall))continue;
@@ -12199,68 +12210,35 @@ function isVisible(
 }
 
 function drawGround(){
-  const left=
-    state.camera.x-
-    canvas.width/2-
-    120;
+  const left = Math.round(state.camera.x - canvas.width / 2 - 120);
+  const top = Math.round(state.camera.y - canvas.height / 2 - 120);
+  const width = canvas.width + 240;
+  const height = canvas.height + 240;
 
-  const top=
-    state.camera.y-
-    canvas.height/2-
-    120;
+  ctx.fillStyle = "#42583c";
+  ctx.fillRect(left, top, width, height);
 
-  const width=
-    canvas.width+240;
+  ctx.strokeStyle = "rgba(255,255,255,.025)";
+  ctx.lineWidth = 1;
 
-  const height=
-    canvas.height+240;
+  const startX = Math.floor(left / 100) * 100;
+  const endX = left + width;
+  const startY = Math.floor(top / 100) * 100;
+  const endY = top + height;
 
-  ctx.fillStyle="#42583c";
-
-  ctx.fillRect(
-    left,
-    top,
-    width,
-    height
-  );
-
-  ctx.strokeStyle=
-    "rgba(255,255,255,.025)";
-
-  ctx.lineWidth=1;
-
-  const startX=
-    Math.floor(left/100)*100;
-
-  const endX=left+width;
-
-  for(
-    let x=startX;
-    x<endX;
-    x+=100
-  ){
-    ctx.beginPath();
-    ctx.moveTo(x,top);
-    ctx.lineTo(x,top+height);
-    ctx.stroke();
+  // Batch all grid lines into 1 single stroke call instead of 30+ separate calls
+  ctx.beginPath();
+  for(let x = startX; x < endX; x += 100){
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, top + height);
   }
-
-  const startY=
-    Math.floor(top/100)*100;
-
-  const endY=top+height;
-
-  for(
-    let y=startY;
-    y<endY;
-    y+=100
-  ){
-    ctx.beginPath();
-    ctx.moveTo(left,y);
-    ctx.lineTo(left+width,y);
-    ctx.stroke();
+  for(let y = startY; y < endY; y += 100){
+    ctx.moveTo(left, y);
+    ctx.lineTo(left + width, y);
   }
+  ctx.stroke();
 }
+
 
 function drawRoads(){
   for(const road of state.roads){
@@ -12398,8 +12376,29 @@ function drawFloors(){
 }
 
 function drawGroundDecor(){
+  // Pass 1: Batch all visible grass tufts into a single path & stroke
+  ctx.strokeStyle = "rgba(55,91,45,.8)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+
   for(const decor of state.decor){
-    if(!isObjectActive(decor))continue;
+    if(decor.type !== "grass") continue;
+    if(!isObjectActive(decor)) continue;
+    if(!isVisible(decor.x - 20, decor.y - 20, 60, 60, 100)) continue;
+
+    ctx.moveTo(decor.x, decor.y);
+    ctx.lineTo(decor.x - 4, decor.y - 8);
+    ctx.moveTo(decor.x, decor.y);
+    ctx.lineTo(decor.x + 3, decor.y - 10);
+    ctx.moveTo(decor.x, decor.y);
+    ctx.lineTo(decor.x + 7, decor.y - 5);
+  }
+  ctx.stroke();
+
+  // Pass 2: Draw all other decor types
+  for(const decor of state.decor){
+    if(decor.type === "grass") continue;
+    if(!isObjectActive(decor)) continue;
 
     if(
       !isVisible(
@@ -12410,48 +12409,6 @@ function drawGroundDecor(){
         100
       )
     ){
-      continue;
-    }
-
-    if(decor.type==="grass"){
-      ctx.strokeStyle=
-        "rgba(55,91,45,.8)";
-
-      ctx.lineWidth=2;
-
-      ctx.beginPath();
-
-      ctx.moveTo(
-        decor.x,
-        decor.y
-      );
-
-      ctx.lineTo(
-        decor.x-4,
-        decor.y-8
-      );
-
-      ctx.moveTo(
-        decor.x,
-        decor.y
-      );
-
-      ctx.lineTo(
-        decor.x+3,
-        decor.y-10
-      );
-
-      ctx.moveTo(
-        decor.x,
-        decor.y
-      );
-
-      ctx.lineTo(
-        decor.x+7,
-        decor.y-5
-      );
-
-      ctx.stroke();
       continue;
     }
 
@@ -12622,63 +12579,57 @@ function drawGroundDecor(){
       continue;
     }
 
-if(decor.type==="closet"){
-  block(
-    decor.x,
-    decor.y,
-    decor.w,
-    decor.h,
-    "#5a4434",
-    14
-  );
+    if(decor.type==="closet"){
+      block(
+        decor.x,
+        decor.y,
+        decor.w,
+        decor.h,
+        "#5a4434",
+        14
+      );
 
-  /*
-    Closet center seam.
-  */
-  ctx.strokeStyle="#34271e";
-  ctx.lineWidth=2;
+      ctx.strokeStyle="#34271e";
+      ctx.lineWidth=2;
 
-  ctx.beginPath();
+      ctx.beginPath();
 
-  ctx.moveTo(
-    decor.x+decor.w/2,
-    decor.y+5
-  );
+      ctx.moveTo(
+        decor.x+decor.w/2,
+        decor.y+5
+      );
 
-  ctx.lineTo(
-    decor.x+decor.w/2,
-    decor.y+decor.h-5
-  );
+      ctx.lineTo(
+        decor.x+decor.w/2,
+        decor.y+decor.h-5
+      );
 
-  ctx.stroke();
+      ctx.stroke();
 
-  /*
-    Door handles.
-  */
-  ctx.fillStyle="#c4aa68";
+      ctx.fillStyle="#c4aa68";
 
-  ctx.beginPath();
+      ctx.beginPath();
 
-  ctx.arc(
-    decor.x+decor.w/2-6,
-    decor.y+decor.h/2,
-    3,
-    0,
-    Math.PI*2
-  );
+      ctx.arc(
+        decor.x+decor.w/2-6,
+        decor.y+decor.h/2,
+        3,
+        0,
+        Math.PI*2
+      );
 
-  ctx.arc(
-    decor.x+decor.w/2+6,
-    decor.y+decor.h/2,
-    3,
-    0,
-    Math.PI*2
-  );
+      ctx.arc(
+        decor.x+decor.w/2+6,
+        decor.y+decor.h/2,
+        3,
+        0,
+        Math.PI*2
+      );
 
-  ctx.fill();
+      ctx.fill();
 
-  continue;
-}
+      continue;
+    }
 
     if(decor.type==="couch"){
       block(
@@ -13018,218 +12969,133 @@ function block(
   );
 }
 
+const WALL_COLORS = {
+  safehouse: { base: "#8c7056", side: shade("#8c7056", -0.35) },
+  interior:  { base: "#a58d72", side: shade("#a58d72", -0.35) },
+  fence:     { base: "#795c3e", side: shade("#795c3e", -0.35) },
+  default:   { base: "#776c60", side: shade("#776c60", -0.35) }
+};
+
 function drawWall(wall){
-  const height=
-    wall.material==="interior"
-      ?25
-      :38;
+  const height =
+    wall.material === "interior"
+      ? 25
+      : 38;
 
-  const color=
-    wall.material==="safehouse"
-      ?"#8c7056"
-      :wall.material==="interior"
-        ?"#a58d72"
-        :wall.material==="fence"
-          ?"#795c3e"
-          :"#776c60";
+  const palette =
+    WALL_COLORS[wall.material] ||
+    WALL_COLORS.default;
 
-  ctx.fillStyle=
-    "rgba(0,0,0,.3)";
-
+  ctx.fillStyle = "rgba(0,0,0,.3)";
   ctx.fillRect(
-    wall.x+12,
-    wall.y+12,
+    wall.x + 12,
+    wall.y + 12,
     wall.w,
-    wall.h+height
+    wall.h + height
   );
 
-  ctx.fillStyle=
-    shade(color,-.35);
-
+  ctx.fillStyle = palette.side;
   ctx.beginPath();
-
-  ctx.moveTo(
-    wall.x,
-    wall.y+wall.h
-  );
-
-  ctx.lineTo(
-    wall.x+wall.w,
-    wall.y+wall.h
-  );
-
-  ctx.lineTo(
-    wall.x+
-      wall.w+12,
-    wall.y+
-      wall.h+height
-  );
-
-  ctx.lineTo(
-    wall.x+12,
-    wall.y+
-      wall.h+height
-  );
-
+  ctx.moveTo(wall.x, wall.y + wall.h);
+  ctx.lineTo(wall.x + wall.w, wall.y + wall.h);
+  ctx.lineTo(wall.x + wall.w + 12, wall.y + wall.h + height);
+  ctx.lineTo(wall.x + 12, wall.y + wall.h + height);
   ctx.closePath();
   ctx.fill();
 
-  ctx.fillStyle=
-    wall.flash>0
-      ?"#f2d3a5"
-      :color;
+  ctx.fillStyle =
+    wall.flash > 0
+      ? "#f2d3a5"
+      : palette.base;
 
   ctx.fillRect(
     wall.x,
-    wall.y-height,
+    wall.y - height,
     wall.w,
-    wall.h+height
+    wall.h + height
   );
 
-  ctx.strokeStyle=
-    "rgba(37,24,16,.38)";
-
-  ctx.lineWidth=2;
-
+  ctx.strokeStyle = "rgba(37,24,16,.38)";
+  ctx.lineWidth = 2;
   ctx.strokeRect(
     wall.x,
-    wall.y-height,
+    wall.y - height,
     wall.w,
-    wall.h+height
+    wall.h + height
   );
 
   if(
     wall.destroyable &&
-    wall.hp<wall.maxHp
+    wall.hp < wall.maxHp
   ){
-    const cracks=
-      Math.ceil(
-        (
-          1-
-          wall.hp/
-          wall.maxHp
-        )*5
-      );
+    const cracks = Math.ceil(
+      (1 - wall.hp / wall.maxHp) * 5
+    );
+    const y = wall.y - height * 0.55;
 
-    ctx.strokeStyle="#3d3129";
+    ctx.strokeStyle = "#3d3129";
+    ctx.beginPath();
 
-    for(let i=0;i<cracks;i++){
-      const x=
-        wall.x+
-        wall.w*
-        (
-          (i+1)/
-          (cracks+1)
-        );
-
-      const y=
-        wall.y-
-        height*.55;
-
-      ctx.beginPath();
-
-      ctx.moveTo(
-        x,
-        y-9
-      );
-
-      ctx.lineTo(
-        x-5,
-        y
-      );
-
-      ctx.lineTo(
-        x+4,
-        y+9
-      );
-
-      ctx.stroke();
+    for(let i = 0; i < cracks; i++){
+      const x = wall.x + wall.w * ((i + 1) / (cracks + 1));
+      ctx.moveTo(x, y - 9);
+      ctx.lineTo(x - 5, y);
+      ctx.lineTo(x + 4, y + 9);
     }
+
+    ctx.stroke();
   }
 }
 
 function drawDoor(door){
   if(door.open){
-    ctx.save();
+    ctx.fillStyle = "#674726";
 
-    if(
-      door.orientation===
-      "horizontal"
-    ){
-      ctx.translate(
-        door.x,
-        door.y
-      );
-
-      ctx.rotate(
-        -Math.PI/2
-      );
-
-      ctx.fillStyle="#674726";
-
+    if(door.orientation === "horizontal"){
+      // Matches rotate(-Math.PI/2) + fillRect(0, 0, door.h, door.w)
       ctx.fillRect(
-        0,
-        0,
-        door.h,
-        door.w
+        door.x,
+        door.y - door.h,
+        door.w,
+        door.h
       );
     }else{
-      ctx.translate(
-        door.x,
-        door.y
-      );
-
-      ctx.rotate(
-        Math.PI/2
-      );
-
-      ctx.fillStyle="#674726";
-
+      // Matches rotate(Math.PI/2) + fillRect(0, -door.w, door.h, door.w)
       ctx.fillRect(
-        0,
-        -door.w,
-        door.h,
-        door.w
+        door.x,
+        door.y,
+        door.w,
+        door.h
       );
     }
-
-    ctx.restore();
     return;
   }
 
   block(
     door.x,
-    door.y-8,
+    door.y - 8,
     door.w,
-    door.h+8,
+    door.h + 8,
     "#6c4d2e",
     10
   );
 
-  ctx.fillStyle="#d6bc5f";
-
+  ctx.fillStyle = "#d6bc5f";
   ctx.beginPath();
-
   ctx.arc(
-    door.x+
-      door.w-13,
-    door.y+
-      door.h/2,
+    door.x + door.w - 13,
+    door.y + door.h / 2,
     4,
     0,
-    Math.PI*2
+    Math.PI * 2
   );
-
   ctx.fill();
 
   if(door.locked){
-    ctx.fillStyle="#b44a3f";
-
+    ctx.fillStyle = "#b44a3f";
     ctx.fillRect(
-      door.x+
-        door.w/2-4,
-      door.y+
-        door.h/2-5,
+      door.x + door.w / 2 - 4,
+      door.y + door.h / 2 - 5,
       8,
       10
     );
@@ -13237,41 +13103,30 @@ function drawDoor(door){
 }
 
 function drawContainer(container){
-  let color=
+  let color =
     container.looted
-      ?"#4b443b"
-      :"#715637";
+      ? "#4b443b"
+      : "#715637";
 
   if(container.persistentStorage){
-    const storage=
-      findStorage(
-        container.storageId
-      );
+    const storage = findStorage(container.storageId);
 
     if(storage){
-      if(storage.type==="pantry"){
-        color="#8b6a3d";
-      }
-
-      if(storage.type==="medical"){
-        color="#d8ded9";
-      }
-
-      if(storage.type==="weapons"){
-        color="#5e4b36";
-      }
-
-      if(storage.level>=2){
-        color=shade(color,.12);
+      if(storage.type === "pantry"){
+        color = storage.level >= 2 ? "#9c7744" : "#8b6a3d";
+      }else if(storage.type === "medical"){
+        color = storage.level >= 2 ? "#f2f9f3" : "#d8ded9";
+      }else if(storage.type === "weapons"){
+        color = storage.level >= 2 ? "#6a543d" : "#5e4b36";
+      }else if(storage.level >= 2){
+        color = "#7f613e";
       }
     }
   }
 
   block(
-    container.x-
-      container.w/2,
-    container.y-
-      container.h/2,
+    container.x - container.w / 2,
+    container.y - container.h / 2,
     container.w,
     container.h,
     color,
@@ -13279,19 +13134,17 @@ function drawContainer(container){
   );
 
   if(container.persistentStorage){
-    ctx.fillStyle=
-      "rgba(255,255,255,.75)";
-
-    ctx.font="bold 8px Arial";
-    ctx.textAlign="center";
-
+    ctx.fillStyle = "rgba(255,255,255,.75)";
+    ctx.font = "bold 8px Arial";
+    ctx.textAlign = "center";
     ctx.fillText(
       "STORAGE",
       container.x,
-      container.y+3
+      container.y + 3
     );
   }
 }
+
 
 function drawCar(car) {
   ctx.save(); // Protect global canvas state
@@ -14143,451 +13996,206 @@ function drawFallenBackpack(fallen){
   ctx.restore();
 }
 
+
 function drawPaperPerson(
   context,
   x,
   y,
   data,
-  scale=1,
-  previewMode=false
+  scale = 1,
+  previewMode = false
 ){
-  const movingBob=
-    previewMode
-      ?0
-      :Math.sin(
-          data.walkCycle||0
-        )*1.8;
-
-  const step=
-    previewMode
-      ?0
-      :Math.sin(
-          data.walkCycle||0
-        )*3.3;
-
-  const facing=
-    data.facing||1;
-
-  context.save();
-
-  context.translate(
-    x,
-    y
-  );
-
-/*
-BACKPACK
-Drawn behind the player's body so it works
-universally with every shirt and outfit.
-*/
-context.fillStyle="#3e4448";
-
-context.beginPath();
-
-if(context.roundRect){
-context.roundRect(
--14,
--34,
-28,
-22,
-6
-);
-}else{
-context.rect(
--14,
--34,
-28,
-22
-);
-}
-
-context.fill();
-
-/*
-Darker bottom section gives the backpack
-a little depth.
-*/
-context.fillStyle="#292e31";
-
-context.fillRect(
--12,
--17,
-24,
-5
-);
-
-/*
-Small top handle.
-*/
-context.strokeStyle="#292e31";
-context.lineWidth=3;
-context.lineCap="round";
-
-context.beginPath();
-context.arc(
-0,
--34,
-6,
-Math.PI,
-Math.PI*2
-);
-context.stroke();
-
-/*
-Slight side bulge so the backpack remains
-visible behind the player's torso.
-*/
-context.fillStyle="#343a3e";
-
-context.beginPath();
-context.ellipse(
--13,
--24,
-4,
-8,
-0,
-0,
-Math.PI*2
-);
-context.fill();
-
-context.beginPath();
-context.ellipse(
-13,
--24,
-4,
-8,
-0,
-0,
-Math.PI*2
-);
-context.fill();
-
-  context.scale(
-    scale,
-    scale
-  );
-
-  context.fillStyle=
-    "rgba(0,0,0,.32)";
-
-  context.beginPath();
-
-  context.ellipse(
-    0,
-    3,
-    17,
-    6,
-    0,
-    0,
-    Math.PI*2
-  );
-
-  context.fill();
-
-  context.save();
-
-  context.translate(
-    0,
-    movingBob
-  );
-
-  if(
-    data.gender==="female" &&
-    data.hair==="ponytail"
-  ){
-    context.fillStyle=
-      data.hairColor||"#59351f";
-
-    context.beginPath();
-
-    context.ellipse(
-      -facing*10,
-      -35,
-      7,
-      12,
-      -facing*.35,
-      0,
-      Math.PI*2
-    );
-
-    context.fill();
-  }
-
-  if(
-    data.gender==="female" &&
-    data.hair==="longHair"
-  ){
-    context.fillStyle=
-      data.hairColor||"#59351f";
-
-    /*
-      Long hair behind the head.
-    */
-    context.beginPath();
-
-    if(context.roundRect){
-      context.roundRect(
-        -12,
-        -48,
-        24,
-        35,
-        10
-      );
-    }else{
-      context.rect(
-        -12,
-        -48,
-        24,
-        35
-      );
-    }
-
-    context.fill();
-  }
-
-  // --- PANTS (Uses data.pantsColor with fallback) ---
-  context.strokeStyle = data.pantsColor || "#263238";
-  context.lineWidth = 6;
-  context.lineCap = "round";
-
-  // Left leg
-  context.beginPath();
-  context.moveTo(-5, -17);
-  context.lineTo(-6 + step * .45, -1);
-  context.stroke();
-
-  // Right leg
-  context.beginPath();
-  context.moveTo(5, -17);
-  context.lineTo(6 - step * .45, -1);
-  context.stroke();
-
-  // --- DIRECTION MULTIPLIER ---
+  const walkCycle = data.walkCycle || 0;
+  const movingBob = previewMode ? 0 : Math.sin(walkCycle) * 1.8;
+  const step = previewMode ? 0 : Math.sin(walkCycle) * 3.3;
+  const facing = data.facing || 1;
   const dir = facing >= 0 ? 1 : -1;
 
-  // --- SNEAKERS / SHOES (Restored `* dir` on footXCoords so positions mirror!) ---
-  const footXCoords = [
-    (-4 + (step * .45)) * dir,
-    (8 - (step * .45)) * dir
-  ];
-
-  for (let i = 0; i < footXCoords.length; i++) {
-    const footX = footXCoords[i];
-    
-    // 1. Draw Shoe Body
-    context.fillStyle = data.shoeColor || "#ffffff";
-    context.beginPath();
-    
-    context.moveTo(footX - 5 * dir, -1); 
-    context.lineTo(footX + 1 * dir, -1); 
-    context.quadraticCurveTo(footX + 6 * dir, 0, footX + 6 * dir, 5); 
-    context.lineTo(footX - 5 * dir, 5);  
-    context.closePath();
-    context.fill();
+  context.save();
+  context.translate(x, y);
+  if(scale !== 1){
+    context.scale(scale, scale);
   }
-   
 
-  // --- SHIRT & OUTFIT ---
-  drawShirtShape(
-    context,
-    data.shirtColor,
-    -12,
-    -35,
-    24,
-    22
-  );
-
-  if(data.outfit){
-    drawOutfit(
-      context,
-      data.outfit,
-      -12,
-      -35,
-      24,
-      22
-    );
-  }
-  
-
-  // --- FIXED: Skin Tone / Head (Uses data.skinColor, supports hitFlash and wild colors like purple) ---
-  context.fillStyle=
-    data.hitFlash>0
-      ?"#ff9999"
-      :(data.skinColor||"#f5d0b1");
-
+  /*
+    BACKPACK
+  */
+  context.fillStyle = "#3e4448";
   context.beginPath();
+  if(context.roundRect){
+    context.roundRect(-14, -34, 28, 22, 6);
+  }else{
+    context.rect(-14, -34, 28, 22);
+  }
+  context.fill();
 
-  context.arc(
-    0,
-    -43,
-    9,
-    0,
-    Math.PI*2
-  );
+  context.fillStyle = "#292e31";
+  context.fillRect(-12, -17, 24, 5);
 
+  context.strokeStyle = "#292e31";
+  context.lineWidth = 3;
+  context.lineCap = "round";
+  context.beginPath();
+  context.arc(0, -34, 6, Math.PI, Math.PI * 2);
+  context.stroke();
+
+  context.fillStyle = "#343a3e";
+  context.beginPath();
+  context.ellipse(-13, -24, 4, 8, 0, 0, Math.PI * 2);
+  context.moveTo(17, -24);
+  context.ellipse(13, -24, 4, 8, 0, 0, Math.PI * 2);
   context.fill();
 
   /*
-    Female top hair.
+    GROUND SHADOW
+  */
+  context.fillStyle = "rgba(0,0,0,.32)";
+  context.beginPath();
+  context.ellipse(0, 3, 17, 6, 0, 0, Math.PI * 2);
+  context.fill();
+
+  context.save();
+  context.translate(0, movingBob);
+
+  /*
+    BACK HAIR
+  */
+  if(data.gender === "female" && data.hair === "ponytail"){
+    context.fillStyle = data.hairColor || "#59351f";
+    context.beginPath();
+    context.ellipse(-facing * 10, -35, 7, 12, -facing * 0.35, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  if(data.gender === "female" && data.hair === "longHair"){
+    context.fillStyle = data.hairColor || "#59351f";
+    context.beginPath();
+    if(context.roundRect){
+      context.roundRect(-12, -48, 24, 35, 10);
+    }else{
+      context.rect(-12, -48, 24, 35);
+    }
+    context.fill();
+  }
+
+  /*
+    PANTS (Batched into 1 stroke)
+  */
+  context.strokeStyle = data.pantsColor || "#263238";
+  context.lineWidth = 6;
+  context.lineCap = "round";
+  context.beginPath();
+  context.moveTo(-5, -17);
+  context.lineTo(-6 + step * 0.45, -1);
+  context.moveTo(5, -17);
+  context.lineTo(6 - step * 0.45, -1);
+  context.stroke();
+
+  /*
+    SHOES
+  */
+  const footXCoords = [
+    (-4 + step * 0.45) * dir,
+    (8 - step * 0.45) * dir
+  ];
+
+  context.fillStyle = data.shoeColor || "#ffffff";
+  context.beginPath();
+  for(let i = 0; i < footXCoords.length; i++){
+    const footX = footXCoords[i];
+    context.moveTo(footX - 5 * dir, -1);
+    context.lineTo(footX + 1 * dir, -1);
+    context.quadraticCurveTo(footX + 6 * dir, 0, footX + 6 * dir, 5);
+    context.lineTo(footX - 5 * dir, 5);
+    context.closePath();
+  }
+  context.fill();
+
+  /*
+    SHIRT & OUTFIT
+  */
+  drawShirtShape(context, data.shirtColor, -12, -35, 24, 22);
+
+  if(data.outfit){
+    drawOutfit(context, data.outfit, -12, -35, 24, 22);
+  }
+
+  /*
+    HEAD
+  */
+  context.fillStyle =
+    data.hitFlash > 0
+      ? "#ff9999"
+      : (data.skinColor || "#f5d0b1");
+
+  context.beginPath();
+  context.arc(0, -43, 9, 0, Math.PI * 2);
+  context.fill();
+
+  /*
+    FRONT HAIR / HAT
   */
   if(
-    data.gender==="female" &&
-    (
-      data.hair==="longHair" ||
-      data.hair==="ponytail"
-    )
+    data.gender === "female" &&
+    (data.hair === "longHair" || data.hair === "ponytail")
   ){
-    context.fillStyle=
-      data.hairColor||"#59351f";
-
+    context.fillStyle = data.hairColor || "#59351f";
     context.beginPath();
-
-    context.arc(
-      0,
-      -45,
-      9.5,
-      Math.PI,
-      Math.PI*2
-    );
-
+    context.arc(0, -45, 9.5, Math.PI, Math.PI * 2);
     context.fill();
-
-    context.fillRect(
-      -9,
-      -46,
-      3,
-      10
-    );
-
-    context.fillRect(
-      6,
-      -46,
-      3,
-      10
-    );
+    context.fillRect(-9, -46, 3, 10);
+    context.fillRect(6, -46, 3, 10);
   }
 
-  if(
-    data.gender==="male" &&
-    data.hair==="shortBrown"
-  ){
-    context.fillStyle=
-      data.hairColor||"#59351f";
-
+  if(data.gender === "male" && data.hair === "shortBrown"){
+    context.fillStyle = data.hairColor || "#59351f";
     context.beginPath();
-
-    context.arc(
-      0,
-      -46,
-      9,
-      Math.PI,
-      Math.PI*2
-    );
-
+    context.arc(0, -46, 9, Math.PI, Math.PI * 2);
     context.fill();
   }
 
-  if(
-    data.gender==="male" &&
-    data.hair==="blackHat"
-  ){
-    context.fillStyle="#3f2a1d";
-
+  if(data.gender === "male" && data.hair === "blackHat"){
+    context.fillStyle = "#3f2a1d";
     context.beginPath();
-
-    context.arc(
-      0,
-      -46,
-      8,
-      Math.PI,
-      Math.PI*2
-    );
-
+    context.arc(0, -46, 8, Math.PI, Math.PI * 2);
     context.fill();
 
-    context.fillStyle=
-      data.hairColor||"#15191b";
-
-    context.fillRect(
-      -8,
-      -54,
-      16,
-      7
-    );
+    context.fillStyle = data.hairColor || "#15191b";
+    context.fillRect(-8, -54, 16, 7);
 
     context.beginPath();
-
-    context.ellipse(
-      facing*2,
-      -47,
-      12,
-      3,
-      0,
-      0,
-      Math.PI*2
-    );
-
+    context.ellipse(facing * 2, -47, 12, 3, 0, 0, Math.PI * 2);
     context.fill();
   }
 
-  // --- FIXED: Arms / Sleeves Skin Color (Matches data.skinColor) ---
-  context.strokeStyle= data.skinColor || "#f5d0b1";
-  context.lineWidth=5;
-
+  /*
+    ARMS (Batched into 1 stroke)
+  */
+  context.strokeStyle = data.skinColor || "#f5d0b1";
+  context.lineWidth = 5;
   context.beginPath();
-
-  context.moveTo(
-    -10,
-    -31
-  );
-
-  context.lineTo(
-    -facing*4-10,
-    -17
-  );
-
+  context.moveTo(-10, -31);
+  context.lineTo(-facing * 4 - 10, -17);
+  context.moveTo(10, -31);
+  context.lineTo(facing * 14, -19);
   context.stroke();
 
+  /*
+    EYE
+  */
+  context.fillStyle = data.eyeColor || "#2e7d32";
   context.beginPath();
-
-  context.moveTo(
-    10,
-    -31
-  );
-
-  context.lineTo(
-    facing*14,
-    -19
-  );
-
-  context.stroke();
-
-  // --- FIXED: Eye Color (Uses data.eyeColor) ---
-  context.fillStyle= data.eyeColor || "#2e7d32";
-
-  context.beginPath();
-
-  context.arc(
-    facing*3,
-    -44,
-    1.2,
-    0,
-    Math.PI*2
-  );
-
+  context.arc(facing * 3, -44, 1.2, 0, Math.PI * 2);
   context.fill();
 
   if(data.drawWeapon){
-    drawUprightWeapon(
-      context,
-      data
-    );
+    drawUprightWeapon(context, data);
   }
 
   context.restore();
   context.restore();
 }
+
 
 
 function drawShirtShape(
@@ -15474,16 +15082,31 @@ function drawZombieEyes(
         ?1
         :.65;
 
-    ctx.save();
+    // Fast semi-transparent outer glow
+    ctx.fillStyle=
+      `rgba(255,43,43,${glow*.3})`;
 
-    ctx.shadowColor=
-      "#ff2b2b";
+    ctx.beginPath();
 
-    ctx.shadowBlur=
-      isNight()
-        ?12
-        :5;
+    ctx.arc(
+      -4,
+      -44,
+      6,
+      0,
+      Math.PI*2
+    );
 
+    ctx.arc(
+      4,
+      -44,
+      6,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    // Bright eye core
     ctx.fillStyle=
       `rgba(255,45,45,${glow})`;
 
@@ -15506,16 +15129,36 @@ function drawZombieEyes(
     );
 
     ctx.fill();
-    ctx.restore();
 
     return;
   }
 
   if(zombie.variant==="toxic"){
-    ctx.save();
+    // Fast semi-transparent outer glow
+    ctx.fillStyle=
+      "rgba(127,255,85,.3)";
 
-    ctx.shadowColor="#7fff55";
-    ctx.shadowBlur=10;
+    ctx.beginPath();
+
+    ctx.arc(
+      -4,
+      -44,
+      6,
+      0,
+      Math.PI*2
+    );
+
+    ctx.arc(
+      4,
+      -44,
+      6,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    // Bright eye core
     ctx.fillStyle="#9cff73";
 
     ctx.beginPath();
@@ -15537,7 +15180,6 @@ function drawZombieEyes(
     );
 
     ctx.fill();
-    ctx.restore();
 
     return;
   }
