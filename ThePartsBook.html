@@ -1,0 +1,2747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Parts Book, Cars & Trucks 2018-Present</title>
+
+<style>
+  :root {
+    --ink: #20201d;
+    --muted-ink: #5d5b53;
+    --paper: #f2eddf;
+    --paper-dark: #d9d0bc;
+    --cover: #202428;
+    --cover-edge: #101214;
+    --steel-light: #d8dde0;
+    --steel-mid: #717980;
+    --steel-dark: #32383d;
+    --warning: #f0c62d;
+    --warning-dark: #24231d;
+    --green: #526f4c;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    min-height: 100%;
+    margin: 0;
+    font-family: Arial, "Times New Roman", serif;
+    color: var(--ink);
+    background:
+      radial-gradient(
+        circle at 20% 15%,
+        rgba(255, 255, 255, .06),
+        transparent 22%
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, .018) 0 1px,
+        transparent 1px 4px
+      ),
+      linear-gradient(
+        135deg,
+        #363b3e,
+        #171a1c 70%
+      );
+  }
+
+  button,
+  select,
+  input {
+    font: inherit;
+  }
+
+  button:focus-visible,
+  select:focus-visible,
+  input:focus-visible {
+    outline: 3px solid #e0af19;
+    outline-offset: 3px;
+  }
+
+  .app {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    overflow-x: hidden;
+  }
+
+  .book-stage {
+    width: min(1180px, 96vw);
+    min-height: 710px;
+    position: relative;
+    perspective: 2200px;
+  }
+
+  .book-shadow {
+    position: absolute;
+    inset: auto 4% -28px;
+    height: 70px;
+    background:
+      radial-gradient(
+        ellipse,
+        rgba(0, 0, 0, .68),
+        transparent 68%
+      );
+    filter: blur(10px);
+    pointer-events: none;
+  }
+
+  /* ==========================================================
+     CLOSED BOOK COVER
+     ========================================================== */
+
+  .cover {
+    width: min(670px, 92vw);
+    min-height: 680px;
+    margin: 0 auto;
+    position: relative;
+
+    border-radius: 7px 18px 18px 7px;
+
+    cursor: pointer;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: 56px 44px;
+
+    color: #f0f2f2;
+    text-align: center;
+
+    transform-origin: left center;
+
+    background:
+      linear-gradient(
+        100deg,
+        rgba(255, 255, 255, .06),
+        transparent 13%
+      ),
+      repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, .018) 0 1px,
+        transparent 1px 5px
+      ),
+      linear-gradient(
+        135deg,
+        #343a3f,
+        var(--cover) 58%,
+        #15181a
+      );
+
+    border: 2px solid #080a0b;
+
+    box-shadow:
+      0 3px 0 #697076 inset,
+      -11px 0 0 #121416,
+      -15px 0 0 #3d4245,
+      0 26px 46px rgba(0, 0, 0, .65);
+
+    transition:
+      transform .35s ease,
+      box-shadow .35s ease;
+
+    overflow: hidden;
+  }
+
+  .cover::before {
+    content: "";
+    position: absolute;
+    inset: 13px;
+
+    border: 1px solid rgba(220, 225, 226, .19);
+    border-radius: 4px 13px 13px 4px;
+
+    pointer-events: none;
+  }
+
+  .cover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background:
+      linear-gradient(
+        115deg,
+        transparent 32%,
+        rgba(255, 255, 255, .05) 41%,
+        transparent 50%
+      ),
+      repeating-linear-gradient(
+        167deg,
+        transparent 0 17px,
+        rgba(255, 255, 255, .025) 18px,
+        transparent 19px 44px
+      );
+
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  .cover:hover {
+    transform:
+      translateY(-8px)
+      rotateX(1.5deg);
+  }
+
+  /* Binding rivets */
+
+  .rivet {
+    position: absolute;
+    left: 18px;
+
+    width: 14px;
+    height: 14px;
+
+    border-radius: 50%;
+
+    background:
+      radial-gradient(
+        circle at 35% 30%,
+        #e2e5e5,
+        #6e767b 45%,
+        #252a2d 76%
+      );
+
+    box-shadow:
+      0 1px 3px #000;
+  }
+
+  .rivet.one {
+    top: 15%;
+  }
+
+  .rivet.two {
+    top: calc(50% - 7px);
+  }
+
+  .rivet.three {
+    bottom: 15%;
+  }
+
+  .cover-kicker {
+    font:
+      700
+      14px / 1.3
+      Arial,
+      sans-serif;
+
+    letter-spacing: .34em;
+    color: #bcc2c5;
+
+    margin-bottom: 22px;
+  }
+
+  .cover h1 {
+    margin: 22px 0 5px;
+
+    font:
+      800
+      clamp(34px, 6vw, 58px) / .98
+      Arial,
+      sans-serif;
+
+    letter-spacing: .06em;
+
+    text-shadow:
+      0 2px 2px #000;
+  }
+
+  .cover .edition {
+    margin: 13px 0 0;
+
+    font:
+      800
+      25px / 1.25
+      Arial,
+      sans-serif;
+
+    letter-spacing: .2em;
+    color: #e5e7e7;
+  }
+
+  .cover .years {
+    margin-top: 7px;
+
+    font:
+      700
+      16px / 1.2
+      Arial,
+      sans-serif;
+
+    letter-spacing: .25em;
+    color: #b5bbc0;
+  }
+
+  .cover .strapline {
+    margin-top: 38px;
+    padding-top: 18px;
+
+    width: 78%;
+
+    border-top:
+      1px solid
+      rgba(255, 255, 255, .25);
+
+    font:
+      700
+      12px / 1.6
+      Arial,
+      sans-serif;
+
+    letter-spacing: .18em;
+    color: #aeb4b7;
+  }
+
+  .open-prompt {
+    position: absolute;
+
+    bottom: 18px;
+    left: 50%;
+
+    transform:
+      translateX(-50%);
+
+    font:
+      700
+      12px
+      Arial,
+      sans-serif;
+
+    letter-spacing: .18em;
+
+    color: #d4d7d8;
+
+    opacity: .75;
+  }
+
+/* ==========================================================
+   GEAR + CROSSED WRENCH EMBLEM
+   Reshaped to look more like a traditional mechanic emblem.
+   No outside image required.
+   ========================================================== */
+/* ==========================================================
+   EMBLEM CONTAINER
+   ========================================================== */
+.emblem {
+  width: 245px;
+  height: 245px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 10px 7px rgba(0, 0, 0, 0.65));
+}
+
+/* ==========================================================
+   SOLID INDUSTRIAL GEAR COG (BACKGROUND LAYER)
+   ========================================================== */
+.gear {
+  position: absolute;
+  width: 185px;
+  height: 185px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  z-index: 1;
+
+  background:
+    radial-gradient(
+      circle,
+      transparent 0 18px,
+      #9ca2a5 19px 30px,
+      #3a3f42 31px 33px,
+      #5b6164 34px 64px,
+      #34393b 65px 68px,
+      #9ca2a5 69px 100%
+    ),
+    linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(0,0,0,0.35) 100%);
+  background-blend-mode: overlay;
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.75));
+
+  /* 16 stubby gear teeth + 6 lightening holes + center axle bore */
+  -webkit-mask-image:
+    radial-gradient(circle, transparent 0 18px, #000 19px),
+    radial-gradient(circle at 50% 23.2%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 73.2% 36.6%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 73.2% 63.4%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 50% 76.8%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 26.8% 63.4%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 26.8% 36.6%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 50.0% 0.0%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 69.1% 3.8%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 85.4% 14.6%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 96.2% 30.9%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 100.0% 50.0%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 96.2% 69.1%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 85.4% 85.4%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 69.1% 96.2%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 50.0% 100.0%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 30.9% 96.2%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 14.6% 85.4%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 3.8% 69.1%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 0.0% 50.0%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 3.8% 30.9%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 14.6% 14.6%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 30.9% 3.8%, transparent 0 7.2px, #000 8.2px);
+  -webkit-mask-composite: destination-in;
+
+  mask-image:
+    radial-gradient(circle, transparent 0 18px, #000 19px),
+    radial-gradient(circle at 50% 23.2%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 73.2% 36.6%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 73.2% 63.4%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 50% 76.8%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 26.8% 63.4%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 26.8% 36.6%, transparent 0 9.5px, #000 10.5px),
+    radial-gradient(circle at 50.0% 0.0%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 69.1% 3.8%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 85.4% 14.6%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 96.2% 30.9%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 100.0% 50.0%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 96.2% 69.1%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 85.4% 85.4%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 69.1% 96.2%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 50.0% 100.0%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 30.9% 96.2%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 14.6% 85.4%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 3.8% 69.1%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 0.0% 50.0%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 3.8% 30.9%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 14.6% 14.6%, transparent 0 7.2px, #000 8.2px),
+    radial-gradient(circle at 30.9% 3.8%, transparent 0 7.2px, #000 8.2px);
+  mask-composite: intersect;
+}
+
+/* ==========================================================
+   CROSSED ADJUSTABLE WRENCHES (FOREGROUND X)
+   ========================================================== */
+.adj-wrench {
+  position: absolute;
+  width: 68px;
+  height: 238px;
+  left: 50%;
+  top: 50%;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.85));
+}
+
+.wrench-left {
+  transform: translate(-50%, -50%) rotate(-38deg);
+  z-index: 2;
+}
+
+/* Mirrored horizontally so both adjustable heads point symmetrically */
+.wrench-right {
+  transform: translate(-50%, -50%) rotate(38deg) scaleX(-1);
+  z-index: 3;
+}
+
+/* True Angled Crescent Wrench Head Silhouette */
+.wrench-head {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 66px;
+  background: linear-gradient(135deg, #e5e8ea 0%, #9ba1a4 45%, #484d50 100%);
+
+  /* Sculpted fixed jaw (left), angled hex throat, and stepped movable jaw (right) */
+  clip-path: polygon(
+    28% 2%,    /* Fixed jaw tip */
+    40% 2%,    /* Inner fixed jaw tip */
+    44% 38%,   /* Inner throat corner */
+    62% 38%,   /* Movable jaw inner base */
+    58% 12%,   /* Movable jaw inner tip */
+    72% 12%,   /* Movable jaw outer tip */
+    92% 36%,   /* Movable jaw shoulder */
+    92% 56%,   /* Thumbwheel housing outer edge */
+    76% 68%,   /* Thumbwheel housing lower curve */
+    64% 98%,   /* Neck right */
+    34% 98%,   /* Neck left */
+    12% 72%,   /* Outer curved cheek lower */
+    6% 45%,    /* Outer curved cheek mid */
+    14% 18%    /* Outer curved cheek upper */
+  );
+}
+
+/* Subtle machined edge bevel inside the wrench head */
+.wrench-head::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.35) 0%, transparent 45%, rgba(0,0,0,0.45) 100%);
+  clip-path: inherit;
+}
+
+/* Knurled Thumb-Wheel Adjuster Screw inside the Jaw Housing */
+.wrench-thumbwheel {
+  position: absolute;
+  top: 33px;
+  left: 33px;
+  width: 15px;
+  height: 11px;
+  border-radius: 2px;
+  z-index: 2;
+  background: repeating-linear-gradient(
+    90deg,
+    #232729 0px,
+    #232729 1.5px,
+    #c6cacc 1.5px,
+    #c6cacc 3px
+  );
+  box-shadow:
+    0 0 0 1.5px #1c2022,
+    inset 0 2px 2px rgba(255, 255, 255, 0.4),
+    inset 0 -2px 2px rgba(0, 0, 0, 0.65);
+}
+
+/* Forged Tapered Handle with Hanging Eye Hole */
+.wrench-handle {
+  position: absolute;
+  top: 63px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 170px;
+  border-radius: 3px 3px 11px 11px;
+  background: linear-gradient(90deg, #4b5053 0%, #d4d8da 35%, #8b9194 70%, #3a3f42 100%);
+  box-shadow:
+    inset 0 0 0 1.5px #222628,
+    inset 4px 0 3px rgba(0, 0, 0, 0.35),
+    inset -4px 0 3px rgba(0, 0, 0, 0.35);
+
+  -webkit-mask-image: radial-gradient(circle at 50% calc(100% - 14px), transparent 0 5px, #000 6px);
+  mask-image: radial-gradient(circle at 50% calc(100% - 14px), transparent 0 5px, #000 6px);
+}
+
+/* Recessed Forged Grip Panel on Handle */
+.wrench-handle::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 9px;
+  border-radius: 4.5px;
+  background: linear-gradient(90deg, #52585b, #7d8386);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.7),
+    0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+  /* ==========================================================
+     OPEN BOOK
+     ========================================================== */
+
+  .open-book {
+    display: none;
+
+    width: 100%;
+    min-height: 710px;
+
+    position: relative;
+
+    grid-template-columns:
+      1fr 1fr;
+
+    border-radius: 13px;
+
+    box-shadow:
+      0 28px 50px
+      rgba(0, 0, 0, .62);
+
+    animation:
+      bookArrive .7s ease both;
+  }
+
+  .open-book.visible {
+    display: grid;
+  }
+
+  @keyframes bookArrive {
+    from {
+      opacity: 0;
+
+      transform:
+        scale(.84)
+        rotateX(7deg);
+    }
+
+    to {
+      opacity: 1;
+
+      transform:
+        scale(1)
+        rotateX(0);
+    }
+  }
+
+  .page {
+    min-width: 0;
+    min-height: 710px;
+
+    position: relative;
+
+    padding:
+      39px 42px 45px;
+
+    overflow: hidden;
+
+    background:
+      radial-gradient(
+        circle at 20% 15%,
+        rgba(255, 255, 255, .82),
+        transparent 30%
+      ),
+      repeating-linear-gradient(
+        0deg,
+        rgba(60, 48, 25, .018) 0 1px,
+        transparent 1px 4px
+      ),
+      var(--paper);
+
+    border:
+      1px solid #b5aa94;
+  }
+
+  .page.left {
+    border-radius:
+      12px 0 0 12px;
+
+    box-shadow:
+      inset -20px 0 32px -27px
+      #332f28;
+  }
+
+  .page.right {
+    border-radius:
+      0 12px 12px 0;
+
+    box-shadow:
+      inset 20px 0 32px -27px
+      #332f28;
+  }
+
+  .page.left::after,
+  .page.right::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    bottom: 0;
+
+    width: 18px;
+
+    pointer-events: none;
+  }
+
+  .page.left::after {
+    right: 0;
+
+    background:
+      linear-gradient(
+        to left,
+        rgba(56, 49, 38, .2),
+        transparent
+      );
+  }
+
+  .page.right::before {
+    left: 0;
+
+    background:
+      linear-gradient(
+        to right,
+        rgba(56, 49, 38, .2),
+        transparent
+      );
+  }
+
+  .binding {
+    position: absolute;
+
+    z-index: 8;
+
+    width: 10px;
+
+    top: 5px;
+    bottom: 5px;
+
+    left: 50%;
+
+    transform:
+      translateX(-50%);
+
+    background:
+      linear-gradient(
+        90deg,
+        #756b59,
+        #2c2923 45%,
+        #b5a98d 60%,
+        #665d4e
+      );
+
+    box-shadow:
+      0 0 13px
+      rgba(0, 0, 0, .55);
+
+    pointer-events: none;
+  }
+
+  .page-turn {
+    animation:
+      pageTurn .48s ease both;
+  }
+
+  @keyframes pageTurn {
+    0% {
+      opacity: .25;
+
+      transform:
+        rotateY(-8deg)
+        scale(.985);
+
+      filter:
+        brightness(.7);
+    }
+
+    100% {
+      opacity: 1;
+
+      transform:
+        rotateY(0)
+        scale(1);
+
+      filter:
+        brightness(1);
+    }
+  }
+
+  .section-label {
+    font:
+      800
+      11px / 1.2
+      Arial,
+      sans-serif;
+
+    letter-spacing: .2em;
+
+    color:
+      var(--muted-ink);
+
+    text-transform:
+      uppercase;
+  }
+
+  .page h2 {
+    margin:
+      8px 0 10px;
+
+    font:
+      900
+      clamp(24px, 3vw, 37px) / 1
+      Arial,
+      sans-serif;
+
+    letter-spacing:
+      .025em;
+  }
+
+  .rule {
+    height: 5px;
+
+    margin:
+      12px 0 20px;
+
+    border-block:
+      1px solid var(--ink);
+  }
+
+  .toc-heading {
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  .toc-heading h2 {
+    font-size:
+      clamp(27px, 3.6vw, 43px);
+  }
+
+  .toc-subtitle {
+    max-width: 450px;
+
+    margin:
+      0 auto 26px;
+
+    color:
+      #59564e;
+
+    font-style:
+      italic;
+
+    line-height:
+      1.45;
+  }
+
+  .category-grid {
+    display: grid;
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+
+    gap: 14px;
+  }
+
+  .category-card {
+    min-height: 104px;
+
+    border:
+      2px solid #25251f;
+
+    background:
+      rgba(255, 255, 255, .24);
+
+    color:
+      var(--ink);
+
+    display: grid;
+
+    grid-template-columns:
+      55px 1fr;
+
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 12px;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    box-shadow:
+      4px 4px 0 #b6ad99;
+
+    transition:
+      transform .15s ease,
+      background .15s ease;
+  }
+
+  .category-card:hover {
+    transform:
+      translate(-2px, -2px);
+
+    background:
+      #fffaf0;
+
+    box-shadow:
+      6px 6px 0 #aaa18d;
+  }
+
+  .category-card .icon {
+    width: 52px;
+    height: 52px;
+
+    display: grid;
+    place-items: center;
+
+    border:
+      2px solid #2d2c27;
+
+    border-radius: 50%;
+
+    background:
+      #e1dac9;
+
+    font-size:
+      28px;
+
+    filter:
+      grayscale(1);
+  }
+
+  .category-card strong {
+    display: block;
+
+    font:
+      900
+      16px
+      Arial,
+      sans-serif;
+
+    letter-spacing:
+      .08em;
+  }
+
+  .category-card small {
+    display: block;
+
+    margin-top: 5px;
+
+    line-height:
+      1.28;
+
+    color:
+      #5f5b52;
+  }
+
+  .vehicle-panel {
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  .vehicle-panel .lead {
+    line-height: 1.55;
+    color: #4e4b43;
+  }
+
+  .field {
+    margin:
+      13px 0 0;
+  }
+
+  .field label {
+    display: block;
+
+    margin-bottom:
+      6px;
+
+    font:
+      800
+      11px
+      Arial,
+      sans-serif;
+
+    letter-spacing:
+      .16em;
+  }
+
+  .field select,
+  .part-search {
+    width: 100%;
+
+    padding:
+      12px 13px;
+
+    border:
+      2px solid #292923;
+
+    background:
+      #faf6eb;
+
+    color:
+      var(--ink);
+
+    border-radius:
+      0;
+  }
+
+  .primary-btn,
+  .text-btn {
+    border:
+      2px solid #272721;
+
+    cursor:
+      pointer;
+  }
+
+  .primary-btn {
+    margin-top:
+      18px;
+
+    padding:
+      13px 18px;
+
+    background:
+      #292b2a;
+
+    color:
+      white;
+
+    font:
+      800
+      13px
+      Arial,
+      sans-serif;
+
+    letter-spacing:
+      .13em;
+
+    box-shadow:
+      4px 4px 0 #a8a08e;
+  }
+
+  .primary-btn:hover {
+    background:
+      #111;
+  }
+
+  .primary-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+
+  .lookup-box {
+    margin-top: auto;
+
+    padding:
+      17px;
+
+    border:
+      1px solid #7c7567;
+
+    background:
+      rgba(255, 255, 255, .2);
+  }
+
+  .lookup-box h3 {
+    margin:
+      0 0 8px;
+
+    font:
+      900
+      15px
+      Arial,
+      sans-serif;
+
+    letter-spacing:
+      .08em;
+  }
+
+  .lookup-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .lookup-row .part-search {
+    flex: 1;
+  }
+
+  .lookup-row button {
+    padding:
+      0 15px;
+
+    border:
+      2px solid #272721;
+
+    background:
+      #ded5c1;
+
+    cursor:
+      pointer;
+
+    font-weight:
+      800;
+  }
+
+  .blueprint-wrap {
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  .blueprint {
+    min-height: 430px;
+    flex: 1;
+
+    border:
+      1px solid #77736a;
+
+    position: relative;
+
+    display: grid;
+    place-items: center;
+
+    background:
+      linear-gradient(
+        rgba(35, 45, 48, .05) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        rgba(35, 45, 48, .05) 1px,
+        transparent 1px
+      ),
+      #ece9de;
+
+    background-size:
+      22px 22px;
+
+    overflow:
+      hidden;
+  }
+
+  .blueprint svg {
+    width: 94%;
+
+    max-height:
+      420px;
+
+    color:
+      #343d40;
+  }
+
+  .fig-caption {
+    margin-top:
+      10px;
+
+    font-size:
+      12px;
+
+    line-height:
+      1.4;
+
+    color:
+      #535047;
+  }
+
+  .spec-page {
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  .vehicle-stamp {
+    display: inline-block;
+
+    width:
+      fit-content;
+
+    padding:
+      6px 9px;
+
+    border:
+      2px solid #272721;
+
+    font:
+      900
+      12px
+      Arial,
+      sans-serif;
+
+    letter-spacing:
+      .1em;
+
+    transform:
+      rotate(-.5deg);
+  }
+
+.shop-note {
+  margin: 12px 0;
+  padding: 13px 16px;
+  border-left: 5px solid #262620;
+  background: #e0d8c6;
+  font-size: clamp(14px, 1.5vw, 18px);
+  line-height: 1.4;
+}
+
+.known-results {
+  max-height: 135px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+
+  /* Allows natural finger scrolling on phones/tablets */
+  -webkit-overflow-scrolling: touch;
+
+  /* Prevents scrolling this box from feeling awkward */
+  overscroll-behavior: contain;
+
+  scrollbar-width: thin;
+}
+
+  .shop-note strong {
+    font-family:
+      Arial,
+      sans-serif;
+  }
+
+  .filter-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .filter-row {
+    border:
+      1px solid #4e4b43;
+
+    background:
+      rgba(255, 255, 255, .28);
+
+    padding:
+      13px 14px;
+  }
+
+  .filter-number {
+    display: block;
+
+    font:
+      900
+      19px
+      Arial,
+      sans-serif;
+
+    letter-spacing:
+      .04em;
+  }
+
+  .filter-link {
+    margin-top:
+      5px;
+
+    padding:
+      0;
+
+    border:
+      0;
+
+    background:
+      transparent;
+
+    color:
+      #2b4e5d;
+
+    text-decoration:
+      underline;
+
+    cursor:
+      pointer;
+
+    font-weight:
+      700;
+  }
+
+  .status-box {
+    padding:
+      20px;
+
+    border:
+      2px dashed #6e695e;
+
+    background:
+      rgba(255, 255, 255, .25);
+
+    line-height:
+      1.55;
+  }
+
+  .status-box h3 {
+    margin:
+      0 0 7px;
+
+    font:
+      900
+      19px
+      Arial,
+      sans-serif;
+  }
+
+  .warning-box {
+    margin-top:
+      auto;
+
+    position:
+      relative;
+
+    padding:
+      18px 19px 18px 72px;
+
+    border:
+      3px solid
+      var(--warning-dark);
+
+    background:
+      repeating-linear-gradient(
+        90deg,
+        var(--warning) 0 27px,
+        #2c2b24 27px 40px
+      )
+      top / 100% 7px
+      no-repeat,
+
+      repeating-linear-gradient(
+        90deg,
+        var(--warning) 0 27px,
+        #2c2b24 27px 40px
+      )
+      bottom / 100% 7px
+      no-repeat,
+
+      #f3e8ad;
+
+    font:
+      700
+      13px / 1.48
+      Arial,
+      sans-serif;
+  }
+
+  .warning-icon {
+    position:
+      absolute;
+
+    left:
+      16px;
+
+    top:
+      50%;
+
+    transform:
+      translateY(-50%);
+
+    width:
+      42px;
+
+    height:
+      38px;
+
+    display:
+      grid;
+
+    place-items:
+      center;
+
+    font:
+      900
+      24px
+      Arial,
+      sans-serif;
+
+    color:
+      #191914;
+
+    background:
+      var(--warning);
+
+    border:
+      3px solid #191914;
+
+    clip-path:
+      polygon(
+        50% 0,
+        100% 100%,
+        0 100%
+      );
+
+    padding-top:
+      8px;
+  }
+
+  .warning-box strong {
+    display:
+      block;
+
+    letter-spacing:
+      .08em;
+
+    margin-bottom:
+      3px;
+  }
+
+  .page-footer {
+    position:
+      absolute;
+
+    bottom:
+      14px;
+
+    left:
+      38px;
+
+    right:
+      38px;
+
+    display:
+      flex;
+
+    justify-content:
+      space-between;
+
+    gap:
+      15px;
+
+    border-top:
+      1px solid #8d8677;
+
+    padding-top:
+      6px;
+
+    font:
+      700
+      9px
+      Arial,
+      sans-serif;
+
+    letter-spacing:
+      .1em;
+
+    color:
+      #5e5a50;
+  }
+
+  .book-nav {
+    position:
+      absolute;
+
+    z-index:
+      20;
+
+    left:
+      50%;
+
+    bottom:
+      -54px;
+
+    transform:
+      translateX(-50%);
+
+    display:
+      flex;
+
+    gap:
+      10px;
+  }
+
+  .book-nav button {
+    border:
+      1px solid #9da2a4;
+
+    background:
+      #1e2224;
+
+    color:
+      #eee;
+
+    padding:
+      10px 14px;
+
+    cursor:
+      pointer;
+
+    font:
+      700
+      12px
+      Arial,
+      sans-serif;
+
+    letter-spacing:
+      .08em;
+
+    box-shadow:
+      0 5px 10px
+      rgba(0, 0, 0, .4);
+  }
+
+  .book-nav button:hover {
+    background:
+      #080909;
+  }
+
+  .cross-list {
+    display:
+      grid;
+
+    gap:
+      9px;
+
+    max-height:
+      465px;
+
+    overflow:
+      auto;
+
+    padding-right:
+      5px;
+  }
+
+  .cross-item {
+    width:
+      100%;
+
+    padding:
+      14px;
+
+    border:
+      1px solid #656157;
+
+    background:
+      rgba(255, 255, 255, .25);
+
+    text-align:
+      left;
+
+    cursor:
+      pointer;
+  }
+
+  .cross-item:hover {
+    background:
+      #fffaf0;
+  }
+
+  .cross-item strong {
+    display:
+      block;
+
+    font:
+      900
+      15px
+      Arial,
+      sans-serif;
+  }
+
+  .cross-item span {
+    display:
+      block;
+
+    margin-top:
+      4px;
+
+    color:
+      #5a574f;
+  }
+
+  .empty-cross {
+    padding:
+      22px;
+
+    border:
+      2px dashed #777166;
+
+    line-height:
+      1.5;
+  }
+
+  /* ==========================================================
+     RESPONSIVE LAYOUT
+     ========================================================== */
+
+  @media (max-width: 850px) {
+
+    .app {
+      padding:
+        12px 10px 70px;
+
+      align-items:
+        start;
+    }
+
+    .book-stage {
+      min-height:
+        0;
+    }
+
+    .open-book.visible {
+      display:
+        block;
+    }
+
+    .binding {
+      display:
+        none;
+    }
+
+    .page {
+      min-height:
+        680px;
+
+      border-radius:
+        10px !important;
+
+      padding:
+        30px 25px 48px;
+    }
+
+    .page.right {
+      margin-top:
+        12px;
+    }
+
+    .page.left::after,
+    .page.right::before {
+      display:
+        none;
+    }
+
+    .book-nav {
+      bottom:
+        -58px;
+
+      width:
+        100%;
+
+      justify-content:
+        center;
+    }
+
+    .cover {
+      min-height:
+        620px;
+    }
+  }
+
+  @media (max-width: 520px) {
+
+    .category-grid {
+      grid-template-columns:
+        1fr;
+    }
+
+    .category-card {
+      min-height:
+        88px;
+    }
+
+    .cover {
+      padding:
+        42px 25px;
+
+      min-height:
+        580px;
+    }
+
+    .emblem {
+      width:
+        205px;
+    }
+
+    .wrench {
+      width:
+        171px;
+    }
+
+    .page-footer {
+      left:
+        22px;
+
+      right:
+        22px;
+    }
+
+    .lookup-row {
+      flex-direction:
+        column;
+    }
+
+    .lookup-row button {
+      padding:
+        11px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<main class="app">
+
+  <section
+    class="book-stage"
+    aria-label="Manually updated parts reference book"
+  >
+
+    <div class="book-shadow"></div>
+
+
+    <!-- =====================================================
+         CLOSED BOOK COVER
+         ===================================================== -->
+
+    <button
+      class="cover"
+      id="cover"
+      type="button"
+      aria-label="Open The Parts Book"
+    >
+
+      <span class="rivet one"></span>
+      <span class="rivet two"></span>
+      <span class="rivet three"></span>
+
+
+      <div class="cover-kicker">
+        COOLEST EDITION
+      </div>
+
+<div class="emblem">
+  <div class="gear"></div>
+
+  <div class="adj-wrench wrench-left">
+    <div class="wrench-head"></div>
+    <div class="wrench-thumbwheel"></div>
+    <div class="wrench-handle"></div>
+  </div>
+
+  <div class="adj-wrench wrench-right">
+    <div class="wrench-head"></div>
+    <div class="wrench-thumbwheel"></div>
+    <div class="wrench-handle"></div>
+  </div>
+</div>
+
+
+      <h1>
+        THE PARTS BOOK
+      </h1>
+
+
+      <div class="edition">
+        Cars & Trucks
+      </div>
+
+
+      <div class="years">
+        2018 - PRESENT
+      </div>
+
+
+      <div class="strapline">
+        PARTS
+        &nbsp;•&nbsp;
+        FLUIDS
+        &nbsp;•&nbsp;
+        MAINTENANCE
+        &nbsp;•&nbsp;
+        REFERENCE
+      </div>
+
+
+      <div class="open-prompt">
+        CLICK TO OPEN
+      </div>
+
+    </button>
+
+
+
+<!-- =====================================================
+     OPEN BOOK
+     ===================================================== -->
+
+<div class="open-book" id="openBook" aria-live="polite">
+  <div class="binding"></div>
+
+  <!-- LEFT PAGE -->
+  <article class="page left" id="leftPage"></article>
+
+  <!-- RIGHT PAGE -->
+  <article class="page right" id="rightPage"></article>
+
+  <!-- BOOK CONTROLS -->
+  <nav class="book-nav" aria-label="Book navigation">
+    <button type="button" id="homeButton">TABLE OF CONTENTS</button>
+    <button type="button" id="closeButton">CLOSE BOOK</button>
+  </nav>
+</div>
+
+</section>
+</main>
+
+<script>
+
+/* ======================================================================
+   THE PARTS BOOK - VEHICLE DATA
+
+   FORMAT:
+   addData(YEAR, "MAKE", "MODEL", "ENGINE", {
+     oil: { filters: ["FILTER"], quarts: 0, weight: "OIL WEIGHT", standard: "OIL SPEC" },
+     lights: { result: "" },
+     battery: { result: "" },
+     wipers: { result: "" }
+   });
+
+   Add only the categories with known information.
+
+====================================================================== */
+
+const PARTS_BOOK = [];
+
+function addDataForYears(years, make, model, engine, data = {}) {
+  years.forEach(year => addData(year, make, model, engine, data));
+}
+
+function addData(year, make, model, engine, data = {}) {
+  PARTS_BOOK.push({
+    year: Number(year),
+    make: String(make).trim(),
+    model: String(model).trim(),
+    engine: String(engine).trim(),
+    ...data
+  });
+}
+
+
+/* ======================================================================
+
+====================================================================== */
+/* ======================================================================
+Tip: search for STARTHERE to be at the top of the addData list
+====================================================================== */
+/* ======================================================================
+
+====================================================================== */
+
+addDataForYears([2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026], "Chevrolet", "Silverado 1500", "2.7L Turbo (L3B)", {
+  oil: {
+    socketInfo: "3/8-inch square drive ratchet • no socket required",
+    filters: ["ACDelco PF66"],
+    quarts: 6,
+    weight: "5W-30",
+    standard: "GM dexos1 Gen 2 or Gen 3"
+  },
+  lights: {
+    socketInfo: "10 mm socket (with extension) and T15 Torx bit for housing/liner access",
+    lowBeam: "H11 (2019–2021 Halogen) • D5S HID (2018) • Integrated LED (Upper Trims & 2022+)",
+    highBeam: "9005 / HB3 (2019–2021 Halogen) • D5S HID (2018) • Integrated LED (Upper Trims & 2022+)",
+    frontTurnSignal: "7443 / 7444 (Halogen trims) • Integrated LED (LED trims)",
+    rearBrakeAndTurn: "7443 / 7440 (Non-LED trims) • Integrated LED (LED trims)",
+    reverse: "921 / T15",
+    licensePlate: "194 / T10 / 2825",
+    fogLights: "5202 / PS24W (2018) • Integrated LED (2019–2026)",
+    thirdBrakeAndCargo: "921 / T15 (2018) • Integrated LED (2019–2026)",
+    interior: "194 / 212-2 (2018) • Integrated LED (2019–2026)"
+  },
+  battery:  { result: "test" },
+  filters:  { result: "test" },
+  brakes:   { result: "test" },
+  fluids:   { result: "test" },
+  wipers:   { result: "test" },
+  ignition: { result: "test" }
+});
+
+
+
+addDataForYears([2018, 2019, 2020, 2021], "Chevrolet", "Silverado 1500", "4.3L", {
+  oil: {
+    socketInfo: "Typically requires a 15 mm socket or wrench",
+    filters: ["Mobil 1 M1-212A"],
+    quarts: 6,
+    weight: "5W-30",
+    standard: "GM dexos1 approved"
+  },
+  lights: {
+    lowBeam: "H11",
+    highBeam: "9005 / HB3",
+    frontTurnSignal: "7443 / 7440",
+    rearBrakeAndTurn: "7443",
+    reverse: "921 / T15",
+    licensePlate: "194 / T10 / 2825",
+    fogLights: "Integrated LED",
+    thirdBrakeAndCargo: "Integrated LED",
+    interior: "Integrated LED"
+  },
+  battery: {
+    socketInfo: "Typically requires 10 mm and 13 mm sockets for top brace and hold-down clamp",
+    groupSize: "BCI Group 48 (H6)",
+    optionalGroupSize: "BCI Group 94R (H7) (fits adjustable factory tray)",
+    batteryType: "Flooded Lead-Acid (AGM optional)",
+    cca: "600–750 CCA",
+    voltage: "12V"
+  },
+  filters:  { result: "test" },
+  brakes:   { result: "test" },
+  fluids:   { result: "test" },
+  wipers:   { result: "test" },
+  ignition: { result: "test" }
+});
+
+
+
+addData(2021, "Chevrolet", "Silverado 1500", "4.3L", {
+oil: {
+  socketInfo: "Typically requires a 15 mm socket or wrench",
+  filters: ["Mobil 1 M1-212A"], quarts: 6, weight: "5W-30", standard: "GM dexos1 approved"},
+  lights:   { result: "test" },
+  battery:  { result: "test" },
+  filters:  { result: "test" },
+  brakes:   { result: "test" },
+  fluids:   { result: "test" },
+  wipers:   { result: "test" },
+  ignition: { result: "test" }});
+
+addData(2020, "Chevrolet", "Traverse", "3.6L V6", {
+  oil: {
+  socketInfo: "Typically requires a 15 mm socket or wrench",
+  filters: ["ACDelco PF63"],
+    quarts: 6,
+    weight: "5W-30",
+    standard: "GM dexos1 Gen 2 or Gen 3"}});
+
+
+/* ======================================================================
+
+====================================================================== */
+/* ======================================================================
+Tip: this is the END of the addData list
+====================================================================== */
+/* ======================================================================
+
+====================================================================== */
+
+/* ======================================================================
+   VEHICLE DATA CATEGORIES
+
+   Add only known/verified categories to each addData() vehicle record.
+
+   oil:      filters, quarts, weight, standard
+   lights:   lowBeam, highBeam, fog
+   battery:  size
+   filters:  engineAir, cabinAir
+   brakes:   frontPads, rearPads, frontRotors, rearRotors
+   fluids:   coolant, brakeFluid, transmissionFluid
+   wipers:   driver, passenger, rear
+   ignition: sparkPlug
+
+   Unknown categories can be omitted until information is available.
+   ====================================================================== */
+
+
+/* ======================================================================
+   BOOK CATEGORY INFORMATION
+   ====================================================================== */
+
+const CATEGORY_INFO = {
+  oil: {
+    title: "Oil & Lubrication",
+    icon: "◉",
+    caption: "Oil, filters and engine lubrication",
+    reminderTitle: "GOOD TO KNOW",
+    reminder: "Used motor oil and oil filters should be taken to an appropriate collection or recycling facility. A small extra step helps keep automotive waste out of drains, soil and ordinary trash."
+  },
+  lights: { title: "Lights", icon: "☀", caption: "Headlights, signals and exterior bulbs" },
+  battery: { title: "Battery", icon: "▣", caption: "Battery fitment and replacement notes" },
+  filters: { title: "Filters", icon: "▤", caption: "Engine and cabin air filters" },
+  brakes: { title: "Brakes", icon: "◌", caption: "Pads, rotors and brake notes" },
+  fluids: { title: "Fluids", icon: "◆", caption: "Coolant, brake and transmission fluids" },
+  wipers: { title: "Wipers", icon: "⌁", caption: "Driver, passenger and rear sizes" },
+  ignition: { title: "Ignition", icon: "ϟ", caption: "Spark plugs and ignition maintenance" }
+};
+
+
+/* ======================================================================
+   CURRENT BOOK STATE
+   ====================================================================== */
+
+const state = {
+  selectedVehicle: null,
+  currentView: "toc",
+  previousView: "toc"
+};
+
+
+/* ======================================================================
+   MAIN PAGE ELEMENTS
+   ====================================================================== */
+
+const cover = document.getElementById("cover");
+const openBook = document.getElementById("openBook");
+const leftPage = document.getElementById("leftPage");
+const rightPage = document.getElementById("rightPage");
+const homeButton = document.getElementById("homeButton");
+const closeButton = document.getElementById("closeButton");
+
+/* ======================================================================
+   BOOK CONTROLS
+   ====================================================================== */
+
+cover.addEventListener("click", () => {
+  cover.style.display = "none";
+  openBook.classList.add("visible");
+  renderTableOfContents();
+});
+
+closeButton.addEventListener("click", () => {
+  openBook.classList.remove("visible");
+  cover.style.display = "flex";
+  state.currentView = "toc";
+});
+
+homeButton.addEventListener("click", renderTableOfContents);
+
+
+/* ======================================================================
+   PAGE TURN ANIMATION
+   ====================================================================== */
+
+function animatePages() {
+  leftPage.classList.remove("page-turn");
+  rightPage.classList.remove("page-turn");
+
+  // Forces the browser to recognize the removed animation class.
+  void leftPage.offsetWidth;
+
+  leftPage.classList.add("page-turn");
+  rightPage.classList.add("page-turn");
+}
+
+
+/* ======================================================================
+   PAGE CONTENT
+   ====================================================================== */
+
+function setPages(leftHTML, rightHTML) {
+  leftPage.innerHTML = leftHTML;
+  rightPage.innerHTML = rightHTML;
+  animatePages();
+}
+
+
+/* ======================================================================
+   PAGE FOOTER
+   ====================================================================== */
+
+function footer(page, section) {
+  return `
+    <div class="page-footer">
+      <span>PAGE ${page} • ${escapeHTML(section).toUpperCase()}</span>
+      <span>REFERENCE EDITION</span>
+    </div>
+  `;
+}
+
+/* ======================================================================
+   TABLE OF CONTENTS
+   ====================================================================== */
+
+function renderTableOfContents() {
+  state.currentView = "toc";
+
+  const categoryButtons = Object.entries(CATEGORY_INFO).map(([key, item]) => `
+    <button class="category-card" type="button" data-category="${key}">
+      <span class="icon" aria-hidden="true">${item.icon}</span>
+      <span>
+        <strong>${escapeHTML(item.title)}</strong>
+        <small>${escapeHTML(item.caption)}</small>
+      </span>
+    </button>
+  `).join("");
+
+  const leftHTML = `
+    <div class="toc-heading">
+      <div class="section-label">Main Index</div>
+      <h2>What are we getting into today?</h2>
+      <div class="rule"></div>
+      <p class="toc-subtitle">
+        (Tip: Vehicle must be selected first) Choose a section and the book will turn to the appropriate shop notes.
+      </p>
+    </div>
+
+    <div class="category-grid">${categoryButtons}</div>
+    ${footer("1", "Table of Contents")}
+  `;
+
+  const rightHTML = `
+    <div class="vehicle-panel">
+      <div class="section-label">Vehicle Application</div>
+      <h2>Vehicle Selection Page</h2>
+      <div class="rule"></div>
+
+      <p class="lead">
+        Select a vehicle before opening a parts section.
+      </p>
+
+      <div class="field">
+        <label for="yearSelect">MODEL YEAR</label>
+        <select id="yearSelect"></select>
+      </div>
+
+      <div class="field">
+        <label for="modelSelect">MODEL</label>
+        <select id="modelSelect"></select>
+      </div>
+
+  <div class="field">
+        <label for="engineSelect">ENGINE</label>
+        <select id="engineSelect"></select>
+      </div>
+
+      <button class="primary-btn" id="setVehicleButton" type="button">
+        SET THIS VEHICLE
+      </button>
+
+      <p style="max-width: 480px; margin: 16px auto 8px; font-size: 0.85rem; line-height: 1.4; color: #555; text-align: left;">
+        <strong>Disclaimer:</strong> The information in <em>The Parts Book</em> is compiled for general reference purposes only. Because vehicle specifications, mid-year production changes, and manufacturer part numbers frequently update, you should independently verify fitment and compatibility using your Vehicle Identification Number (VIN) before purchasing any parts.
+      </p>
+
+      <p id="vehicleMessage" role="status"
+         style="min-height:22px;font-weight:700;color:#4d5846"></p>
+
+      ${footer("2", "Vehicle Selection")}
+    </div>
+  `;
+
+
+  setPages(leftHTML, rightHTML);
+  bindTableOfContents();
+}
+
+
+/* ======================================================================
+   TABLE OF CONTENTS CONTROLS
+   ====================================================================== */
+
+function bindTableOfContents() {
+  const yearSelect = document.getElementById("yearSelect");
+  const modelSelect = document.getElementById("modelSelect");
+  const engineSelect = document.getElementById("engineSelect");
+  const message = document.getElementById("vehicleMessage");
+
+
+  const years = unique(PARTS_BOOK.map(vehicle => vehicle.year))
+    .sort((a, b) => b - a);
+
+  fillSelect(yearSelect, years, "_ Select year _");
+  refreshModels();
+
+  yearSelect.addEventListener("change", refreshModels);
+  modelSelect.addEventListener("change", refreshEngines);
+
+  function refreshModels() {
+    const models = unique(
+      PARTS_BOOK
+        .filter(vehicle => String(vehicle.year) === yearSelect.value)
+        .map(vehicle => vehicle.model)
+    ).sort();
+
+    fillSelect(modelSelect, models, "_ Select model _");
+    refreshEngines();
+  }
+
+  function refreshEngines() {
+    const engines = unique(
+      PARTS_BOOK
+        .filter(vehicle =>
+          String(vehicle.year) === yearSelect.value &&
+          vehicle.model === modelSelect.value
+        )
+        .map(vehicle => vehicle.engine)
+    ).sort();
+
+    fillSelect(engineSelect, engines, "_ Select engine _");
+  }
+
+  if (state.selectedVehicle) {
+    yearSelect.value = String(state.selectedVehicle.year);
+    refreshModels();
+
+    modelSelect.value = state.selectedVehicle.model;
+    refreshEngines();
+
+    engineSelect.value = state.selectedVehicle.engine;
+    message.textContent = `Current vehicle: ${vehicleName(state.selectedVehicle)}`;
+  }
+
+  document.querySelectorAll("[data-category]").forEach(button => {
+    button.addEventListener("click", () => {
+      openCategory(button.dataset.category);
+    });
+  });
+
+  document.getElementById("setVehicleButton").addEventListener("click", () => {
+    const vehicle = PARTS_BOOK.find(vehicle =>
+      String(vehicle.year) === yearSelect.value &&
+      vehicle.model === modelSelect.value &&
+      vehicle.engine === engineSelect.value
+    );
+
+    if (!vehicle) {
+      message.textContent = "Choose a year, model and engine first.";
+      return;
+    }
+
+    state.selectedVehicle = vehicle;
+    message.textContent = `Vehicle set: ${vehicleName(vehicle)}`;
+  });
+}
+
+/* ============================================================
+   OPEN A CATEGORY
+   ============================================================ */
+
+function openCategory(category) {
+  if (!state.selectedVehicle) {
+    renderChooseVehicle(category);
+    return;
+  }
+
+  const categoryRenderers = {
+    oil: renderOilPage,
+    lights: renderLightsPage,
+    battery: renderBatteryPage,
+    filters: renderFiltersPage,
+    brakes: renderBrakesPage,
+    fluids: renderFluidsPage,
+    wipers: renderWipersPage,
+    ignition: renderIgnitionPage
+  };
+
+  const vehicleData = state.selectedVehicle[category];
+  const renderPage = categoryRenderers[category];
+  const hasRealData = vehicleData && !vehicleData.result;
+
+  if (renderPage && hasRealData) {
+    renderPage(state.selectedVehicle);
+  } else {
+    renderMissingCategory(category, state.selectedVehicle);
+  }
+}
+
+
+
+/* ============================================================
+   USER CLICKED A CATEGORY WITHOUT SELECTING A VEHICLE
+   ============================================================ */
+
+function renderChooseVehicle(category) {
+  const info = CATEGORY_INFO[category];
+
+  setPages(
+    `${renderGenericDiagram(category)}
+     ${footer("3", `${info.title} Figure`)}`,
+
+    `<div class="spec-page">
+      <div class="section-label">Selection Required</div>
+      <h2>${escapeHTML(info.title)}</h2>
+      <div class="rule"></div>
+
+      <div class="status-box">
+        <h3>Choose your vehicle first.</h3>
+        <p>
+          The book needs a year, model and engine before it can show known application data.
+        </p>
+      </div>
+
+      <button type="button" class="primary-btn" id="chooseVehicleButton">
+        RETURN TO VEHICLE SELECTION
+      </button>
+
+      ${footer("4", info.title)}
+    </div>`
+  );
+
+  document.getElementById("chooseVehicleButton")
+    .addEventListener("click", renderTableOfContents);
+}
+
+
+/* ============================================================
+   OIL & LUBRICATION PAGE
+   ============================================================ */
+
+function renderOilPage(vehicle) {
+  state.previousView = state.currentView;
+  state.currentView = "oil";
+
+  const oil = vehicle.oil;
+
+  /* ==========================================================
+     CREATE FILTER LIST
+
+     This works with ONE filter, TWO filters,
+     or any number of filters later.
+     ========================================================== */
+
+const oilResultsHTML = oil.filters.map(filter => `
+  <div class="filter-row">
+
+    <div>
+      <strong>Oil Filter:</strong>
+      ${escapeHTML(filter)}
+    </div>
+
+    <div>
+      <strong>Oil needed:</strong>
+      [${escapeHTML(String(oil.quarts))} Quarts]
+      of
+      [${escapeHTML(oil.weight)}]
+      [${escapeHTML(oil.standard)}]
+    </div>
+
+  </div>
+`).join("");
+
+
+ /* ============= OPTIONAL OIL STANDARD ===========*/
+const standardText = oil.standard
+  ? ` meeting <strong>${escapeHTML(oil.standard)}</strong>`
+  : "";
+
+/* ========================================================
+   OIL PAGE
+   ======================================================== */
+
+setPages(
+  `${renderGenericDiagram("oil")}
+   ${footer("5", "Oil System Figure")}`,
+
+  `<div class="spec-page">
+    <div class="section-label">Section 2-A • Shop Tech Notes</div>
+    <h2>Oil & Lubrication</h2>
+    <div class="rule"></div>
+
+    <div class="vehicle-stamp">
+      ${escapeHTML(vehicleName(vehicle)).toUpperCase()}
+    </div>
+
+    <div class="shop-note">
+      <strong>${escapeHTML(oil.socketInfo || "No socket info yet")}</strong>
+    </div>
+
+    <div class="section-label" style="margin-bottom:8px">
+      OIL AND FILTERS
+    </div>
+
+    <div class="known-results">
+      <div class="filter-list">${oilResultsHTML}</div>
+    </div>
+
+    <div class="warning-box">
+      <span class="warning-icon" aria-hidden="true">!</span>
+      <strong>${CATEGORY_INFO.oil.reminderTitle}</strong>
+      ${CATEGORY_INFO.oil.reminder}
+    </div>
+
+    ${footer("6", "Oil & Lubrication")}
+  </div>`
+);
+
+}
+
+/* ============================================================
+   LIGHTING & BULBS PAGE
+   ============================================================ */
+
+function renderLightsPage(vehicle) {
+  state.previousView = state.currentView;
+  state.currentView = "lights";
+
+  const lights = vehicle.lights;
+
+  const lightLabels = {
+    lowBeam: "Low Beam",
+    highBeam: "High Beam",
+    frontTurnSignal: "Front Turn Signal",
+    rearBrakeAndTurn: "Rear Brake / Turn",
+    reverse: "Reverse",
+    licensePlate: "License Plate",
+    fogLights: "Fog Lights",
+    thirdBrakeAndCargo: "Third Brake / Cargo",
+    interior: "Interior"
+  };
+
+  const lightResultsHTML = Object.entries(lights).map(([key, value]) => `
+    <div class="filter-row">
+      <div>
+        <strong>${escapeHTML(lightLabels[key] || key)}:</strong>
+        ${escapeHTML(String(value))}
+      </div>
+    </div>
+  `).join("");
+
+  setPages(
+    `${renderGenericDiagram("lights")}
+     ${footer("7", "Lighting System Figure")}`,
+
+    `<div class="spec-page">
+      <div class="section-label">Section 2-B • Shop Tech Notes</div>
+      <h2>Lights</h2>
+      <div class="rule"></div>
+
+      <div class="vehicle-stamp">
+        ${escapeHTML(vehicleName(vehicle)).toUpperCase()}
+      </div>
+
+      <div class="section-label" style="margin-bottom:8px">
+        BULB SIZES
+      </div>
+
+      <div class="known-results" style="padding: 18px 20px; min-height: 260px;">
+        <div class="filter-list">${lightResultsHTML}</div>
+      </div>
+
+      <div class="warning-box">
+        <span class="warning-icon" aria-hidden="true">!</span>
+        <strong>${CATEGORY_INFO.lights.reminderTitle}</strong>
+        ${CATEGORY_INFO.lights.reminder}
+      </div>
+
+      ${footer("8", "Lights")}
+    </div>`
+  );
+}
+
+
+/* ============================================================
+   FUTURE VEHICLE FUNCTION DATA 
+   ============================================================ */
+
+function renderBatteryPage(vehicle)  { renderMissingCategory("battery", vehicle); }
+function renderFiltersPage(vehicle)  { renderMissingCategory("filters", vehicle); }
+function renderBrakesPage(vehicle)   { renderMissingCategory("brakes", vehicle); }
+function renderFluidsPage(vehicle)   { renderMissingCategory("fluids", vehicle); }
+function renderWipersPage(vehicle)   { renderMissingCategory("wipers", vehicle); }
+function renderIgnitionPage(vehicle) { renderMissingCategory("ignition", vehicle); }
+
+
+/* ============================================================
+   CATEGORY EXISTS, BUT VEHICLE DATA DOES NOT YET
+   ============================================================ */
+
+function renderMissingCategory(category, vehicle) {
+  state.currentView = category;
+  const info = CATEGORY_INFO[category];
+
+  setPages(
+    `${renderGenericDiagram(category)}
+     ${footer("7", `${info.title} Figure`)}`,
+
+    `<div class="spec-page">
+      <div class="section-label">Shop Tech Notes</div>
+      <h2>${escapeHTML(info.title)}</h2>
+      <div class="rule"></div>
+
+      <div class="vehicle-stamp">
+        ${escapeHTML(vehicleName(vehicle)).toUpperCase()}
+      </div>
+
+      <div class="status-box" style="margin-top:22px">
+        <h3>Information not added yet.</h3>
+        <p>
+          This edition does not yet contain verified
+          ${escapeHTML(info.title.toLowerCase())} information for this vehicle.
+          The page is ready and will begin working automatically when that
+          category is added to the vehicle record.
+        </p>
+      </div>
+
+      <div class="warning-box">
+        <span class="warning-icon" aria-hidden="true">!</span>
+        <strong>HEADS UP</strong>
+        Missing information is shown plainly rather than replaced with an estimate.
+        Check the vehicle documentation before purchasing or beginning work.
+      </div>
+
+      ${footer("8", info.title)}
+    </div>`
+  );
+}
+
+/* ======================================================================
+   END OF PART 3
+   ====================================================================== */
+
+
+/* ============================================================
+   GENERIC TECHNICAL / BLUEPRINT DRAWINGS
+   ============================================================
+
+   These drawings are intentionally generic.
+
+   They provide the old shop-manual / parts-book appearance
+   without claiming that the illustrated component positions
+   are exact for a specific Chevrolet.
+
+   ============================================================ */
+
+function renderGenericDiagram(category) {
+
+
+  const title =
+
+    CATEGORY_INFO[category]
+      ?.title
+
+    ||
+
+    "Reference";
+
+
+
+  const drawings = {
+
+
+
+    /* ========================================================
+       OIL / UNDERBODY
+       ======================================================== */
+
+   oil: `
+<svg viewBox="0 0 500 420" role="img" aria-label="Generic spin-on oil filter technical drawing">
+  <g fill="none" stroke="currentColor" stroke-width="3">
+    <ellipse cx="250" cy="77" rx="92" ry="36"/>
+    <path d="M158 77v230c0 22 41 40 92 40s92-18 92-40V77"/>
+    <ellipse cx="250" cy="307" rx="92" ry="40"/>
+    <ellipse cx="250" cy="77" rx="55" ry="20"/>
+    <circle cx="250" cy="77" r="11"/>
+    <circle cx="215" cy="75" r="7"/>
+    <circle cx="285" cy="75" r="7"/>
+    <circle cx="230" cy="98" r="7"/>
+    <circle cx="270" cy="98" r="7"/>
+    <path d="M180 150h140 M180 166h140 M180 235h140" stroke-width="1.5"/>
+    <path d="M342 150h105 M342 235h105" stroke-width="2"/>
+  </g>
+  <g fill="currentColor" font-family="Arial" font-size="16" font-weight="700">
+    <text x="350" y="144">FILTER BODY</text>
+    <text x="350" y="229">SEALING BASE</text>
+  </g>
+</svg>
+`,
+
+
+/* ========================================================
+   LIGHTS
+   ======================================================== */
+
+lights: `
+<svg viewBox="0 0 600 500" role="img" aria-label="Generic automotive headlight bulb technical drawing">
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- TOP GLASS TIP -->
+    <path d="M292 40Q292 28 300 18Q308 28 308 40L306 52H294Z" fill="currentColor" stroke-width="2"/>
+
+    <!-- GLASS BULB CAPSULE -->
+    <path d="M264 58Q300 43 336 58L332 174Q329 211 300 224Q271 211 268 174Z" stroke-width="4"/>
+
+    <!-- GLASS HIGHLIGHT LINES -->
+    <path d="M278 69Q272 119 278 170 M322 69Q328 119 322 170" stroke-width="1.5" opacity=".65"/>
+
+    <!-- FILAMENT / INTERNAL SUPPORT -->
+    <path d="M288 190L289 104 M312 190L311 104" stroke-width="2.5"/>
+    <path d="M289 107L294 102L299 108L304 102L311 107" stroke-width="2"/>
+    <path d="M288 177L300 191L312 177" stroke-width="2"/>
+
+    <!-- GLASS-TO-METAL BASE -->
+    <ellipse cx="300" cy="218" rx="45" ry="15" stroke-width="3"/>
+    <path d="M258 219L264 258 M342 219L336 258" stroke-width="3"/>
+
+    <!-- METAL COLLAR -->
+    <path d="M265 231H335L340 286Q300 300 260 286Z" stroke-width="4"/>
+    <path d="M270 245H330 M267 264H333 M281 232V284 M319 232V284" stroke-width="1.5"/>
+
+    <!-- COLLAR WINDOWS -->
+    <rect x="271" y="247" width="19" height="17" rx="3" stroke-width="2"/>
+    <rect x="310" y="247" width="19" height="17" rx="3" stroke-width="2"/>
+
+    <!-- O-RING -->
+    <ellipse cx="300" cy="292" rx="67" ry="18" stroke-width="8"/>
+
+
+  <!-- MOUNTING FLANGE -->
+<path d="M225 302H257Q267 287 300 287Q333 287 343 302H375L393 316L374 330H345Q331 342 300 342Q269 342 255 330H226L207 316Z" stroke-width="5"/>
+
+<!-- LOCKING TABS -->
+<path d="M225 304L188 293L180 313L208 325" stroke-width="4"/>
+<path d="M375 304L412 293L420 313L392 325" stroke-width="4"/>
+
+<!-- LOWER PLASTIC HOUSING -->
+<path d="M244 333Q300 346 356 333L373 364L366 413Q300 434 234 413L227 364Z" stroke-width="6"/>
+<path d="M242 346L238 395 M358 346L362 395" stroke-width="2"/>
+
+<!-- ELECTRICAL CONNECTOR -->
+<path d="M236 396Q300 382 364 396L378 443Q300 468 222 443Z" stroke-width="6"/>
+<path d="M248 410Q300 399 352 410L358 438Q300 453 242 438Z" stroke-width="4"/>
+<rect x="271" y="415" width="12" height="22" rx="2" stroke-width="2"/>
+<rect x="317" y="415" width="12" height="22" rx="2" stroke-width="2"/>
+
+<!-- CALLOUTS -->
+<path d="M335 109H462" stroke-width="2"/>
+<circle cx="480" cy="109" r="17" fill="#ece9de" stroke="currentColor" stroke-width="2"/>
+<path d="M378 317H462" stroke-width="2"/>
+<circle cx="480" cy="317" r="17" fill="#ece9de" stroke="currentColor" stroke-width="2"/>
+<path d="M369 421H462" stroke-width="2"/>
+<circle cx="480" cy="421" r="17" fill="#ece9de" stroke="currentColor" stroke-width="2"/>
+
+</g>
+
+<!-- CALLOUT TEXT -->
+<g fill="currentColor" font-family="Arial" font-size="15" font-weight="700">
+  <text x="475" y="115">1</text>
+  <text x="475" y="323">2</text>
+  <text x="475" y="427">3</text>
+  <text x="20" y="488">1 • BULB CAPSULE</text>
+  <text x="205" y="488">2 • MOUNTING BASE</text>
+  <text x="400" y="488">3 • CONNECTOR</text>
+</g>
+
+</svg>
+`,
+
+
+/* ========================================================
+   BATTERY
+   ======================================================== */
+
+battery: `
+<svg viewBox="0 0 600 430">
+  <g fill="none" stroke="currentColor" stroke-width="4">
+    <rect x="120" y="105" width="360" height="230" rx="15"/>
+    <path d="M155 105V70h95v35 M350 105V70h95v35"/>
+    <rect x="150" y="155" width="300" height="120"/>
+    <!-- PLUS / MINUS -->
+    <path d="M205 195v42 M184 216h42 M373 216h45"/>
+  </g>
+  <text x="176" y="307" fill="currentColor" font-family="Arial" font-size="18" font-weight="700">GENERIC BATTERY REFERENCE</text>
+</svg>`,
+
+/* ========================================================
+   WIPERS
+   ======================================================== */
+
+wipers: `
+<svg viewBox="0 0 600 430">
+  <g fill="none" stroke="currentColor" stroke-width="4">
+    <!-- WINDSHIELD -->
+    <path d="M82 315l80-210h276l80 210z M130 315h340"/>
+    <!-- WIPER ARMS -->
+    <path d="M292 310L155 135 M316 310L440 148"/>
+    <!-- WIPER BLADES -->
+    <path d="M152 128l175 45 M435 141l-160 38" stroke-width="8"/>
+  </g>
+</svg>`,
+
+/* ========================================================
+   BRAKES
+   ======================================================== */
+
+brakes: `
+<svg viewBox="0 0 600 430">
+  <g fill="none" stroke="currentColor" stroke-width="4">
+    <!-- ROTOR -->
+    <circle cx="300" cy="218" r="145"/>
+    <circle cx="300" cy="218" r="92"/>
+    <circle cx="300" cy="218" r="25"/>
+    <circle cx="300" cy="218" r="58" stroke-dasharray="8 12"/>
+    <!-- CALIPER -->
+    <path d="M420 126c55 40 63 130 13 185l-64-48c22-26 18-69-8-90z"/>
+  </g>
+</svg>`,
+
+/* ========================================================
+   FILTERS
+   ======================================================== */
+
+filters: `
+<svg viewBox="0 0 600 430">
+  <g fill="none" stroke="currentColor" stroke-width="3">
+    <rect x="104" y="82" width="392" height="266"/>
+    <!-- FILTER MEDIA -->
+    <path d="M130 108l340 214 M180 108l290 181 M230 108l240 149 M280 108l190 117 M330 108l140 85 M130 322l340-214 M130 272l290-164 M130 222l240-114 M130 172l190-64"/>
+  </g>
+</svg>`,
+
+  /* ========================================================
+   FLUIDS
+   ======================================================== */
+
+fluids: `
+<svg viewBox="0 0 600 430">
+  <g fill="none" stroke="currentColor" stroke-width="4">
+    <path d="M300 50c-42 75-121 156-121 237a121 121 0 00242 0c0-81-79-162-121-237z"/>
+    <path d="M224 287c0 42 34 76 76 76"/>
+  </g>
+</svg>`,
+
+/* ========================================================
+   IGNITION / SPARK PLUG
+   ======================================================== */
+
+ignition: `
+<svg viewBox="0 0 600 430">
+  <g fill="none" stroke="currentColor" stroke-width="4">
+    <path d="M250 55h100v77l-24 40v72l-18 25v98h-16v-98l-18-25v-72l-24-40z"/>
+    <path d="M250 90h100 M274 172h52 M274 204h52 M274 236h52"/>
+    <!-- ELECTRODE -->
+    <path d="M292 367v30 M308 367v30"/>
+  </g>
+</svg>`
+
+};
+
+
+/* ==========================================================
+   BUILD THE LEFT TECHNICAL DRAWING PAGE
+   ========================================================== */
+
+return `
+  <div class="blueprint-wrap">
+    <div class="section-label">Technical Figure • Generic Reference</div>
+    <h2>${escapeHTML(title)}</h2>
+    <div class="rule"></div>
+
+    <div class="blueprint">
+      ${drawings[category] || drawings.oil}
+    </div>
+
+    <p class="fig-caption">
+          </p>
+  </div>
+`;
+}
+
+
+
+/* ============================================================
+   VEHICLE / SELECT HELPERS
+   ============================================================ */
+
+function fillSelect(select, values, placeholder) {
+  select.innerHTML =
+    `<option value="">${escapeHTML(placeholder)}</option>` +
+    values.map(value =>
+      `<option value="${escapeAttribute(value)}">${escapeHTML(String(value))}</option>`
+    ).join("");
+}
+
+function unique(values) {
+  return [...new Set(values)];
+}
+
+function vehicleName(vehicle) {
+  return `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.engine}`;
+}
+
+/* ============================================================
+   FILTER / HTML HELPERS
+   ============================================================ */
+
+function normalizeFilter(value) {
+  return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>'"]/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#39;",
+    "\"": "&quot;"
+  })[char]);
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value);
+}
+
+/* ============================================================
+   END OF JAVASCRIPT
+   ============================================================ */
+
+</script>
+</body>
+</html>
