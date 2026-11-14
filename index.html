@@ -40,6 +40,236 @@ a {
 }
 
 
+.ai-fab {
+  position: fixed;
+  bottom: 80px;
+  left: 24px;
+  z-index: 9998;
+
+  width: 52px;
+  height: 42px;
+
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(45deg, #ea4335, #34a853, #4285f4);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  transition: background 0.15s, transform 0.15s, filter 0.15s;
+}
+
+.ai-fab:hover {
+  transform: scale(1.07);
+  background: linear-gradient(45deg, #ff6659, #ffd54f, #5cd67d, #6ba4ff);
+}
+
+.ai-fab:active {
+  transform: scale(0.96);
+}
+
+
+
+.ai-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100001; /* <-- Only change this number */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+
+.ai-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ai-modal-box {
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  background-color: #131314;
+  border: 1px solid #3c4043;
+  border-radius: 28px;
+  padding: 32px 24px 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.2s ease;
+}
+
+.ai-modal-backdrop.open .ai-modal-box {
+  transform: translateY(0) scale(1);
+}
+
+.ai-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: transparent;
+  border: none;
+  color: #9aa0a6;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.ai-close-btn:hover {
+  background-color: #282a2c;
+  color: #e3e3e3;
+}
+
+.ai-modal-header {
+  text-align: center;
+}
+
+.ai-modal-title {
+  margin: 0 0 6px;
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.ai-modal-subtitle {
+  margin: 0;
+  color: #9aa0a6;
+  font-size: 0.9rem;
+}
+
+.ai-prompt-card {
+  background-color: #1e1f20;
+  border: 1px solid #3c4043;
+  border-radius: 24px;
+  padding: 14px 18px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.2s;
+}
+
+.ai-prompt-card:focus-within {
+  border-color: #8ab4f8;
+}
+
+.ai-prompt-card textarea {
+  box-sizing: border-box;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #e3e3e3;
+  font-family: inherit;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  min-height: clamp(140px, 25dvh, 300px); /* 140px on phones, scales smoothly up to 300px on desktops */
+  max-height: 50dvh;
+}
+
+
+
+.ai-prompt-card textarea::placeholder {
+  color: #9aa0a6;
+}
+
+.ai-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ai-mic-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-mic-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: 1px solid #3c4043;
+  color: #e3e3e3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.ai-mic-btn:hover {
+  background-color: #282a2c;
+  border-color: #8ab4f8;
+}
+
+.ai-mic-btn.recording {
+  background-color: rgba(242, 139, 130, 0.15);
+  border-color: #f28b82;
+  color: #f28b82;
+  animation: aiPulse 1.4s infinite;
+}
+
+@keyframes aiPulse {
+  0% { box-shadow: 0 0 0 0 rgba(242, 139, 130, 0.45); }
+  70% { box-shadow: 0 0 0 10px rgba(242, 139, 130, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(242, 139, 130, 0); }
+}
+
+.ai-mic-status {
+  font-size: 0.85rem;
+  color: #9aa0a6;
+}
+
+.ai-mic-status.active {
+  color: #f28b82;
+  font-weight: 500;
+}
+
+.ai-submit-btn {
+  background-color: #8ab4f8;
+  color: #131314;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.ai-submit-btn:hover {
+  background-color: #aecbfa;
+}
+
+.ai-submit-btn:active {
+  transform: scale(0.98);
+}
+
+
 /* ================================================
    WALLPAPER
 ================================================ */
@@ -1250,6 +1480,39 @@ a {
 
 <body>
 
+
+<button id="openAiBtn" class="ai-fab" type="button" aria-label="Open Google AI Mode" title="Ask Google AI">🔮</button>
+
+<div id="aiModal" class="ai-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+  <div class="ai-modal-box">
+    <button id="closeAiBtn" class="ai-close-btn" type="button" aria-label="Close popup">&times;</button>
+
+    <div class="ai-modal-header">
+      <h2 id="aiModalTitle" class="ai-modal-title">Ask AI Mode</h2>
+      <p class="ai-modal-subtitle">Type or tap the mic to ask a question</p>
+    </div>
+
+    <form id="aiForm" class="ai-prompt-card" action="https://google.com" method="GET" target="_blank">
+      <input type="hidden" name="udm" value="50">
+      <textarea id="promptInput" name="q" placeholder="Ask anything..." required></textarea>
+
+      <div class="toolbar ai-toolbar">
+        <div class="ai-mic-controls">
+          <button id="micBtn" class="ai-mic-btn" type="button" aria-label="Speak your question" title="Speak your question">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
+            </svg>
+          </button>
+          <span id="micStatus" class="ai-mic-status"></span>
+        </div>
+        <button type="submit" class="ai-submit-btn">Ask AI</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
 <!-- ================================================
      WALLPAPER
 ================================================ -->
@@ -1602,6 +1865,113 @@ a {
 
 <script>
 "use strict";
+
+
+(() => {
+  const openAiBtn = document.getElementById('openAiBtn');
+  const closeAiBtn = document.getElementById('closeAiBtn');
+  const aiModal = document.getElementById('aiModal');
+  const form = document.getElementById('aiForm');
+  const promptInput = document.getElementById('promptInput');
+  const micBtn = document.getElementById('micBtn');
+  const micStatus = document.getElementById('micStatus');
+
+  let recognition = null;
+  let isRecording = false;
+  let savedTextBeforeSpeech = '';
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      isRecording = true;
+      savedTextBeforeSpeech = promptInput.value.trim();
+      micBtn.classList.add('recording');
+      micStatus.textContent = 'Listening...';
+      micStatus.classList.add('active');
+    };
+
+    recognition.onresult = (event) => {
+      let spokenText = '';
+      for (let i = 0; i < event.results.length; i++) {
+        spokenText += event.results[i].transcript;
+      }
+      const prefix = savedTextBeforeSpeech ? savedTextBeforeSpeech + ' ' : '';
+      promptInput.value = prefix + spokenText;
+      promptInput.dispatchEvent(new Event('input'));
+    };
+
+    recognition.onerror = (event) => {
+      micStatus.textContent = event.error === 'not-allowed'
+        ? 'Mic blocked (check browser permissions)'
+        : 'Could not hear clearly. Try again.';
+      micStatus.classList.remove('active');
+    };
+
+    recognition.onend = () => {
+      isRecording = false;
+      micBtn.classList.remove('recording');
+      if (micStatus.textContent === 'Listening...') micStatus.textContent = '';
+      micStatus.classList.remove('active');
+      promptInput.focus();
+    };
+
+    micBtn.addEventListener('click', () => {
+      if (isRecording) {
+        recognition.stop();
+      } else {
+        micStatus.textContent = '';
+        recognition.start();
+      }
+    });
+  } else {
+    micBtn.style.display = 'none';
+  }
+
+  function openPopup() {
+    aiModal.classList.add('open');
+    setTimeout(() => promptInput.focus(), 50);
+  }
+
+  function closePopup() {
+    if (isRecording && recognition) recognition.stop();
+    micStatus.textContent = '';
+    aiModal.classList.remove('open');
+  }
+
+  openAiBtn.addEventListener('click', openPopup);
+  closeAiBtn.addEventListener('click', closePopup);
+  aiModal.addEventListener('click', (e) => { if (e.target === aiModal) closePopup(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && aiModal.classList.contains('open')) closePopup();
+  });
+
+  promptInput.addEventListener('input', () => {
+    promptInput.style.height = 'auto';
+    promptInput.style.height = promptInput.scrollHeight + 'px';
+  });
+
+  promptInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (promptInput.value.trim() !== '') form.requestSubmit();
+    }
+  });
+
+  form.addEventListener('submit', () => {
+    if (isRecording && recognition) recognition.stop();
+    setTimeout(() => {
+      promptInput.value = '';
+      promptInput.style.height = 'auto';
+      closePopup();
+    }, 100);
+  });
+})();
 
 
 /* ================================================
@@ -4808,6 +5178,5 @@ if(
 positionAllIcons();
 
 </script>
-
 </body>
 </html>
