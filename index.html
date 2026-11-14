@@ -40,21 +40,30 @@ a {
 }
 
 
-.ai-fab {
+.bottom-left-controls {
   position: fixed;
-  bottom: 80px;
   left: 24px;
-  z-index: 9998;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  z-index: 100000;
 
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bottom-left-controls button {
+  position: static !important;
   width: 52px;
   height: 42px;
+  padding: 0;
+  margin: 0;
 
   border: 0;
   border-radius: 10px;
-  background: linear-gradient(45deg, #ea4335, #34a853, #4285f4);
+  color: #fff;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
 
-  font-size: 1.5rem;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,16 +72,33 @@ a {
   transition: background 0.15s, transform 0.15s, filter 0.15s;
 }
 
-.ai-fab:hover {
-  transform: scale(1.07);
+#openAiBtn {
+  background: linear-gradient(45deg, #ea4335, #34a853, #4285f4);
+  font-size: 23px;
+}
+
+#openAiBtn:hover {
+  transform: scale(1.06);
   background: linear-gradient(45deg, #ff6659, #ffd54f, #5cd67d, #6ba4ff);
 }
 
-.ai-fab:active {
-  transform: scale(0.96);
+#openAiBtn:active {
+  transform: scale(0.95);
 }
 
+#speechButton {
+  background: #3D3D3D;
+  font-size: 24px;
+}
 
+#speechButton:hover {
+  background: #f1cd4f;
+  transform: scale(1.06);
+}
+
+#speechButton:active {
+  transform: scale(0.95);
+}
 
 .ai-modal-backdrop {
   position: fixed;
@@ -147,7 +173,7 @@ a {
   font-size: 2rem;
   font-weight: 500;
   letter-spacing: -0.5px;
-  background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570);
+  background: linear-gradient(90deg, #FFFFFF, #D6D6D6, #42A5F5);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -269,6 +295,71 @@ a {
   transform: scale(0.98);
 }
 
+/* Shared bottom-left stack for phones, tablets, and desktops */
+.bottom-left-controls {
+  position: fixed;
+  left: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  z-index: 100000;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px; /* Matches your 80px desktop spacing above 😎 */
+}
+
+/* Shared button size, shape, and centering inside the bottom-left stack */
+#openAiBtn,
+#speechButton {
+  position: static;
+  width: 52px;
+  height: 42px;
+  padding: 0;
+
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  transition: background 0.15s, transform 0.15s, filter 0.15s;
+}
+
+/* Google AI button colors & animations */
+#openAiBtn {
+  background: linear-gradient(45deg, #ea4335, #34a853, #4285f4);
+  font-size: 23px;
+}
+
+#openAiBtn:hover {
+  transform: scale(1.06);
+  background: linear-gradient(45deg, #ff6659, #ffd54f, #5cd67d, #6ba4ff);
+}
+
+#openAiBtn:active {
+  transform: scale(0.95);
+}
+
+/* Smiley text-to-speech button colors & animations */
+#speechButton {
+  background: #3D3D3D;
+  font-size: 24px;
+}
+
+#speechButton:hover {
+  background: #f1cd4f;
+  transform: scale(1.06);
+}
+
+#speechButton:active {
+  transform: scale(0.95);
+}
+
+
 
 /* ================================================
    WALLPAPER
@@ -298,8 +389,7 @@ a {
 
 #paintButton,
 #resetButton,
-#notebookButton,
-#speechButton {
+#notebookButton {
   position: fixed;
   z-index: 100000;
 
@@ -369,46 +459,6 @@ a {
 #paintButton.open {
   background: #99D3FF;
   transform: scale(1.06);
-}
-
-#speechButton {
-  position: fixed;
-
-  left: 24px;
-  bottom: 24px;
-
-  z-index: 100000;
-
-  width: 52px;
-  height: 42px;
-
-  border: 0;
-  border-radius: 10px;
-
-  background: #3D3D3D;
-  color: white;
-
-  font-size: 24px;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 5px 15px
-    rgba(0, 0, 0, 0.35);
-
-  transition:
-    background 0.15s,
-    transform 0.15s;
-}
-
-#speechButton:hover {
-  background: #f1cd4f;
-
-  transform: scale(1.06);
-}
-
-#speechButton:active {
-  transform: scale(0.95);
 }
 
 #resetButton:active,
@@ -1437,10 +1487,12 @@ a {
     height: 42px;
   }
 
-#speechButton {
-  left: 12px;
-  bottom: 12px;
-}
+  .bottom-left-controls {
+    left: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    gap: 8px; /* Matches your tight 8px mobile spacing at the top */
+  }
+
 
   #desktopIcons {
     left: 12px;
@@ -1480,15 +1532,12 @@ a {
 
 <body>
 
-
-<button id="openAiBtn" class="ai-fab" type="button" aria-label="Open Google AI Mode" title="Ask Google AI">🔮</button>
-
 <div id="aiModal" class="ai-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
   <div class="ai-modal-box">
     <button id="closeAiBtn" class="ai-close-btn" type="button" aria-label="Close popup">&times;</button>
 
     <div class="ai-modal-header">
-      <h2 id="aiModalTitle" class="ai-modal-title">Ask AI Mode</h2>
+      <h2 id="aiModalTitle" class="ai-modal-title">Internet AI Chat</h2>
       <p class="ai-modal-subtitle">Type or tap the mic to ask a question</p>
     </div>
 
@@ -1505,19 +1554,18 @@ a {
           </button>
           <span id="micStatus" class="ai-mic-status"></span>
         </div>
-        <button type="submit" class="ai-submit-btn">Ask AI</button>
+        <button type="submit" class="ai-submit-btn">Send</button>
       </div>
     </form>
   </div>
 </div>
-
-
 
 <!-- ================================================
      WALLPAPER
 ================================================ -->
 
 <div id="wallpaperLayer"></div>
+
 
 
 <!-- ================================================
@@ -1550,14 +1598,26 @@ a {
   📓
 </button>
 
-<button
-  id="speechButton"
-  type="button"
-  title="Open text to speech"
-  aria-label="Open text to speech"
->
-  😎
-</button>
+<div class="bottom-left-controls">
+  <button
+    id="openAiBtn"
+    class="ai-fab"
+    type="button"
+    aria-label="Ask AI"
+    title="Ask AI"
+  >
+    🔮
+  </button>
+
+  <button
+    id="speechButton"
+    type="button"
+    title="Open text to speech"
+    aria-label="Open text to speech"
+  >
+    😎
+  </button>
+</div>
 
 
 <!-- ================================================
@@ -1931,7 +1991,9 @@ a {
     });
   } else {
     micBtn.style.display = 'none';
+    micStatus.textContent = 'Voice input unavailable in this browser (use keyboard mic)';
   }
+
 
   function openPopup() {
     aiModal.classList.add('open');
