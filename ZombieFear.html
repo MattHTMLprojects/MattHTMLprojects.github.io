@@ -2321,12 +2321,9 @@ function startGame() {
 
 // Helper to keep touch check clean
 function checkTouchDeviceOverlay() {
-  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-  if (isTouchDevice) {
-    const overlay = document.getElementById("touchGamepadOverlay");
-    if (overlay) {
-      overlay.style.display = "block";
-    }
+  const overlay = document.getElementById("touchGamepadOverlay");
+  if (overlay) {
+    overlay.style.display = window.isGamepadEnabled ? "block" : "none";
   }
 }
 
@@ -6394,7 +6391,7 @@ function backpackWeight(){
   }
 
   if(state.player.hasCompass){
-    total+=.25;
+    total+=.05;
   }
 
   return Math.round(total*100)/100;
@@ -6437,7 +6434,7 @@ function canCarryItem(
   }
 
   if(type==="compass"){
-    addedWeight=.25;
+    addedWeight=.05;
   }
 
   if(type==="map"){
