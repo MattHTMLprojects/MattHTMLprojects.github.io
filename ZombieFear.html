@@ -518,21 +518,29 @@ button.good {
 
 #fpsCounter {
     position: fixed;
-    top: 215px;
-    left: 20%;
-    transform: translateX(-50%);
+    top: 80px;
+    right: 20px;
+    left: auto;
     z-index: 9999;
 
     color: #ffe06b;
-    font: bold 16px monospace;
+    font: bold 15px monospace;
+    line-height: 1.4;
+    text-align: right;
+    white-space: nowrap;
 
-    background: rgba(0, 0, 0, 0.25);
-    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 6px 10px;
     border-radius: 4px;
 
-    pointer-events: none;
+    pointer-events: auto; /* Allows clicking and tapping on tablets */
+    cursor: pointer;
     user-select: none;
 }
+
+
+
 
 .modalCard {
   width: min(940px,96vw);
@@ -824,7 +832,7 @@ input[type="color"]::-webkit-color-swatch {
 
 <body>
 
-<div id="fpsCounter">FPS: --</div>
+<div id="fpsCounter">FPS:</div>
 
 <section id="menuScreen" class="screen active">
   <div class="card center">
@@ -1191,18 +1199,18 @@ input[type="color"]::-webkit-color-swatch {
 <div id="touchGamepadOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 998; display: block;">
   
   <!-- Wide Transparent Controller Chassis (Centered at the bottom) -->
-  <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: min(96vw, 550px); height: 150px; background: rgba(20, 20, 20, 0.50); border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; pointer-events: auto; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+  <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: min(96vw, 550px); height: 150px; background: rgba(20, 20, 20, 0.50); border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; pointer-events: auto; touch-action: none; user-select: none; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
     
       <!-- Left Side: Movement Joystick & Vertical Stack of Buttons (Cycle & Inventory) -->
       <div style="display: flex; align-items: center; gap: 12px;">
         <div id="virtualJoystick" style="position: relative; width: 100px; height: 100px; background: rgba(255, 255, 255, 0.20); border: 2px solid rgba(255, 255, 255, 0.35); border-radius: 50%; touch-action: none; cursor: pointer;">
-          <div id="joystickThumb" style="position: absolute; top: 25px; left: 25px; width: 46px; height: 46px; background: rgba(255, 255, 255, 0.65); border-radius: 50%; transition: transform 0.05s linear;"></div>
+          <div id="joystickThumb" style="position: absolute; top: 25px; left: 25px; width: 46px; height: 46px; background: rgba(255, 255, 255, 0.65); border-radius: 50%; transition: transform 0.05s linear; pointer-events: none;"></div>
         </div>
         
         <!-- Stacked Cycle and Inventory Buttons -->
         <div style="display: flex; flex-direction: column; gap: 6px;">
-          <button id="btnCycle" class="touchActionButton" style="width: 44px; height: 44px; font-size: 10px;">Cycle</button>
-          <button id="btnInventory" class="touchActionButton" style="width: 44px; height: 44px; font-size: 9px;">Inv</button>
+          <button id="btnCycle" class="touchActionButton" style="width: 44px; height: 44px; font-size: 10px; touch-action: none;">Cycle</button>
+          <button id="btnInventory" class="touchActionButton" style="width: 44px; height: 44px; font-size: 9px; touch-action: none;">Inv</button>
         </div>
       </div>
 
@@ -1210,15 +1218,15 @@ input[type="color"]::-webkit-color-swatch {
     <div style="display: flex; align-items: center; gap: 15px;">
       <!-- Action Buttons Grid -->
       <div style="display: grid; grid-template-columns: repeat(2, 50px); gap: 8px;">
-        <button id="btnSprint" class="touchActionButton" style="width: 50px; height: 50px; font-size: 9px;">Sprint</button>
-        <button id="btnInteract" class="touchActionButton" style="width: 50px; height: 50px; font-size: 9px;">Interact</button>
-        <button id="btnPickup" class="touchActionButton" style="width: 50px; height: 50px; font-size: 8px;">Pickup</button>
-        <button id="btnAttack" class="touchActionButton" style="width: 50px; height: 50px; font-size: 9px; background: rgba(220, 50, 50, 0.35); border-color: rgba(255, 100, 100, 0.6);">Attack</button>
+        <button id="btnSprint" class="touchActionButton" style="width: 50px; height: 50px; font-size: 9px; touch-action: none;">Sprint</button>
+        <button id="btnInteract" class="touchActionButton" style="width: 50px; height: 50px; font-size: 9px; touch-action: none;">Interact</button>
+        <button id="btnPickup" class="touchActionButton" style="width: 50px; height: 50px; font-size: 8px; touch-action: none;">Pickup</button>
+        <button id="btnAttack" class="touchActionButton" style="width: 50px; height: 50px; font-size: 9px; background: rgba(220, 50, 50, 0.35); border-color: rgba(255, 100, 100, 0.6); touch-action: none;">Attack</button>
       </div>
 
       <!-- Right Aim Joystick -->
       <div id="rightVirtualJoystick" style="position: relative; width: 105px; height: 105px; background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; touch-action: none; cursor: pointer;">
-        <div id="rightJoystickThumb" style="position: absolute; top: 27px; left: 27px; width: 47px; height: 47px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; transition: transform 0.05s linear;"></div>
+        <div id="rightJoystickThumb" style="position: absolute; top: 27px; left: 27px; width: 47px; height: 47px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; transition: transform 0.05s linear; pointer-events: none;"></div>
       </div>
     </div>
 
@@ -1252,6 +1260,11 @@ input[type="color"]::-webkit-color-swatch {
 
 <script>
 "use strict";
+
+let toolTipsEnabled = true;          // Overall ToolTips state
+let leftSafehouseOnce = false;       // Auto-retires prompts on first door open
+let toolTipsManuallyEnabled = false; // True if player explicitly turns ToolTips ON in Pause menu
+
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -1299,172 +1312,190 @@ const keys = {};
 const GAMEPAD_DEADZONE = .20;
 const GAMEPAD_CURSOR_SPEED = 520;
 
-// --- 1. Left Movement Joystick Logic ---
+// --- 1 & 2. Multi-Touch Dual Joystick Logic ---
 const leftJoystick = document.getElementById('virtualJoystick');
 const leftThumb = document.getElementById('joystickThumb');
+const rightJoystick = document.getElementById('rightVirtualJoystick');
+const rightThumb = document.getElementById('rightJoystickThumb');
 
-let leftActive = false;
-let leftCenter = { x: 0, y: 0 };
 const maxDist = 32;
+
+let leftPointerId = null;
+let leftCenter = { x: 0, y: 0 };
+
+let rightPointerId = null;
+let rightCenter = { x: 0, y: 0 };
+
+let sprintHeld = false;
+let attackHeld = false;
+
+function syncTouchInputState() {
+  if (typeof controller === 'undefined') return;
+  const anyTouchHeld =
+    leftPointerId !== null ||
+    rightPointerId !== null ||
+    sprintHeld ||
+    attackHeld;
+
+  window.touchInputActive = anyTouchHeld;
+  if (anyTouchHeld) {
+    controller.connected = true;
+    if (typeof setInputType === 'function') {
+      setInputType("controller");
+    } else {
+      controller.lastInputType = "controller";
+    }
+  }
+}
+
+function updateJoystickPosition(clientX, clientY, center, thumbEl, isLeft) {
+  const deltaX = clientX - center.x;
+  const deltaY = clientY - center.y;
+  const distance = Math.hypot(deltaX, deltaY);
+  const angle = Math.atan2(deltaY, deltaX);
+
+  const constrainedDist = Math.min(distance, maxDist);
+  const thumbX = Math.cos(angle) * constrainedDist;
+  const thumbY = Math.sin(angle) * constrainedDist;
+
+  thumbEl.style.transform = `translate(${thumbX}px, ${thumbY}px)`;
+
+  if (typeof controller !== 'undefined') {
+    if (isLeft) {
+      controller.moveX = thumbX / maxDist;
+      controller.moveY = thumbY / maxDist;
+    } else {
+      controller.aimX = thumbX / maxDist;
+      controller.aimY = thumbY / maxDist;
+    }
+  }
+}
 
 if (leftJoystick && leftThumb) {
   leftJoystick.addEventListener('pointerdown', (e) => {
     e.preventDefault();
-    leftActive = true;
-    
-    // Calculate center based on current position
+    if (leftPointerId !== null) return;
+
+    leftPointerId = e.pointerId;
+    leftJoystick.setPointerCapture(e.pointerId);
+
     const rect = leftJoystick.getBoundingClientRect();
     leftCenter.x = rect.left + rect.width / 2;
     leftCenter.y = rect.top + rect.height / 2;
+
+    syncTouchInputState();
+    updateJoystickPosition(e.clientX, e.clientY, leftCenter, leftThumb, true);
   });
 
-  // Global window listeners allow smooth mouse dragging anywhere on screen
-  window.addEventListener('pointermove', (e) => {
-    if (!leftActive) return;
+  leftJoystick.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== leftPointerId) return;
     e.preventDefault();
-
-    const deltaX = e.clientX - leftCenter.x;
-    const deltaY = e.clientY - leftCenter.y;
-    const distance = Math.hypot(deltaX, deltaY);
-    const angle = Math.atan2(deltaY, deltaX);
-
-    const constrainedDist = Math.min(distance, maxDist);
-    const thumbX = Math.cos(angle) * constrainedDist;
-    const thumbY = Math.sin(angle) * constrainedDist;
-
-    leftThumb.style.transform = `translate(${thumbX}px, ${thumbY}px)`;
-
-    if (typeof controller !== 'undefined') {
-      window.touchInputActive = true;
-      controller.connected = true;
-      controller.moveX = thumbX / maxDist;
-      controller.moveY = thumbY / maxDist;
-    }
+    updateJoystickPosition(e.clientX, e.clientY, leftCenter, leftThumb, true);
   });
 
-  window.addEventListener('pointerup', (e) => {
-    if (!leftActive) return;
-    leftActive = false;
-    leftThumb.style.transform = `translate(0px, 0px)`;
-    
+  const releaseLeftStick = (e) => {
+    if (e.pointerId !== leftPointerId) return;
+    leftPointerId = null;
+    leftThumb.style.transform = 'translate(0px, 0px)';
+
     if (typeof controller !== 'undefined') {
       controller.moveX = 0;
       controller.moveY = 0;
-      window.touchInputActive = false;
     }
-  });
+    syncTouchInputState();
+  };
+
+  leftJoystick.addEventListener('pointerup', releaseLeftStick);
+  leftJoystick.addEventListener('pointercancel', releaseLeftStick);
 }
-
-
-// --- 2. Right Aim Joystick Logic ---
-const rightJoystick = document.getElementById('rightVirtualJoystick');
-const rightThumb = document.getElementById('rightJoystickThumb');
-
-let rightActive = false;
-let rightCenter = { x: 0, y: 0 };
 
 if (rightJoystick && rightThumb) {
   rightJoystick.addEventListener('pointerdown', (e) => {
     e.preventDefault();
-    rightActive = true;
+    if (rightPointerId !== null) return;
+
+    rightPointerId = e.pointerId;
+    rightJoystick.setPointerCapture(e.pointerId);
 
     const rect = rightJoystick.getBoundingClientRect();
     rightCenter.x = rect.left + rect.width / 2;
     rightCenter.y = rect.top + rect.height / 2;
+
+    syncTouchInputState();
+    updateJoystickPosition(e.clientX, e.clientY, rightCenter, rightThumb, false);
   });
 
-  window.addEventListener('pointermove', (e) => {
-    if (!rightActive) return;
+  rightJoystick.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== rightPointerId) return;
     e.preventDefault();
-
-    const deltaX = e.clientX - rightCenter.x;
-    const deltaY = e.clientY - rightCenter.y;
-    const distance = Math.hypot(deltaX, deltaY);
-    const angle = Math.atan2(deltaY, deltaX);
-
-    const constrainedDist = Math.min(distance, maxDist);
-    const thumbX = Math.cos(angle) * constrainedDist;
-    const thumbY = Math.sin(angle) * constrainedDist;
-
-    rightThumb.style.transform = `translate(${thumbX}px, ${thumbY}px)`;
-
-    if (typeof controller !== 'undefined') {
-      window.touchInputActive = true;
-      controller.connected = true;
-      controller.aimX = thumbX / maxDist;
-      controller.aimY = thumbY / maxDist;
-    }
+    updateJoystickPosition(e.clientX, e.clientY, rightCenter, rightThumb, false);
   });
 
-  window.addEventListener('pointerup', (e) => {
-    if (!rightActive) return;
-    rightActive = false;
-    rightThumb.style.transform = `translate(0px, 0px)`;
-    
+  const releaseRightStick = (e) => {
+    if (e.pointerId !== rightPointerId) return;
+    rightPointerId = null;
+    rightThumb.style.transform = 'translate(0px, 0px)';
+
     if (typeof controller !== 'undefined') {
       controller.aimX = 0;
       controller.aimY = 0;
-      window.touchInputActive = false;
     }
-  });
-}
+    syncTouchInputState();
+  };
 
+  rightJoystick.addEventListener('pointerup', releaseRightStick);
+  rightJoystick.addEventListener('pointercancel', releaseRightStick);
+}
 
 // --- 3. Action Buttons Function Mapping ---
 const touchButtonActions = {
   'btnSprint': {
-    onPress: () => { 
-      if (typeof controller !== 'undefined') {
-        window.touchInputActive = true;
-        controller.connected = true;
-        controller.sprint = true; 
-      }
+    onPress: () => {
+      sprintHeld = true;
+      if (typeof controller !== 'undefined') controller.sprint = true;
+      syncTouchInputState();
     },
-    onRelease: () => { 
-      if (typeof controller !== 'undefined') {
-        controller.sprint = false; 
-        window.touchInputActive = false;
-      }
+    onRelease: () => {
+      sprintHeld = false;
+      if (typeof controller !== 'undefined') controller.sprint = false;
+      syncTouchInputState();
     }
   },
   'btnAttack': {
-    onPress: () => { 
-      if (typeof controller !== 'undefined') {
-        window.touchInputActive = true;
-        controller.connected = true;
-        controller.attack = true; 
-      }
+    onPress: () => {
+      attackHeld = true;
+      if (typeof controller !== 'undefined') controller.attack = true;
+      syncTouchInputState();
       if (typeof attack === 'function' && typeof running !== 'undefined' && running && !paused && !modalOpen) attack();
     },
-    onRelease: () => { 
-      if (typeof controller !== 'undefined') {
-        controller.attack = false; 
-        window.touchInputActive = false;
-      }
+    onRelease: () => {
+      attackHeld = false;
+      if (typeof controller !== 'undefined') controller.attack = false;
+      syncTouchInputState();
     }
   },
   'btnInteract': {
-    onPress: () => { 
-      if (typeof controller !== 'undefined') { controller.connected = true; }
-      if (typeof interact === 'function' && typeof running !== 'undefined' && running && !paused && !modalOpen) interact(); 
+    onPress: () => {
+      if (typeof controller !== 'undefined') controller.connected = true;
+      if (typeof interact === 'function' && typeof running !== 'undefined' && running && !paused && !modalOpen) interact();
     }
   },
   'btnCycle': {
-    onPress: () => { 
-      if (typeof controller !== 'undefined') { controller.connected = true; }
-      if (typeof cycleWeapon === 'function' && typeof running !== 'undefined' && running && !paused && !modalOpen) cycleWeapon(); 
+    onPress: () => {
+      if (typeof controller !== 'undefined') controller.connected = true;
+      if (typeof cycleWeapon === 'function' && typeof running !== 'undefined' && running && !paused && !modalOpen) cycleWeapon();
     }
   },
   'btnInventory': {
-    onPress: () => { 
-      if (typeof controller !== 'undefined') { controller.connected = true; }
-      if (typeof openInventory === 'function' && typeof running !== 'undefined' && running && !paused) openInventory(); 
+    onPress: () => {
+      if (typeof controller !== 'undefined') controller.connected = true;
+      if (typeof openInventory === 'function' && typeof running !== 'undefined' && running && !paused) openInventory();
     }
   },
   'btnPickup': {
-    onPress: () => { 
-      if (typeof controller !== 'undefined') { controller.connected = true; }
-      if (typeof openDroppedItemMenu === 'function' && typeof running !== 'undefined' && running && !paused && !modalOpen) openDroppedItemMenu(); 
+    onPress: () => {
+      if (typeof controller !== 'undefined') controller.connected = true;
+      if (typeof openDroppedItemMenu === 'function' && typeof running !== 'undefined' && running && !paused && !modalOpen) openDroppedItemMenu();
     }
   }
 };
@@ -1481,16 +1512,13 @@ Object.keys(touchButtonActions).forEach(id => {
     if (actions.onPress) actions.onPress();
   });
 
-  el.addEventListener('pointerup', (e) => {
-    e.preventDefault();
+  const handleBtnRelease = (e) => {
     el.classList.remove('pressed');
     if (actions.onRelease) actions.onRelease();
-  });
+  };
 
-  el.addEventListener('pointercancel', (e) => {
-    el.classList.remove('pressed');
-    if (actions.onRelease) actions.onRelease();
-  });
+  el.addEventListener('pointerup', handleBtnRelease);
+  el.addEventListener('pointercancel', handleBtnRelease);
 });
 
 
@@ -8264,86 +8292,90 @@ if(
   setPrompt();
 }
 
-function setPrompt(){
-  const prompt=
-    document.getElementById(
-      "prompt"
-    );
+function setPrompt() {
+  const prompt = document.getElementById("prompt");
 
-  if(!target){
-    prompt.style.display="none";
+  if (!target) {
+    prompt.style.display = "none";
     return;
   }
 
-  let text="";
+  let text = "";
+  let isKeyHint = true; // Tracks whether this message is a "PRESS E" tutorial hint
 
-  if(target.type==="door"){
-    const door=target.obj;
+  if (target.type === "door") {
+    const door = target.obj;
 
-    if(door.locked){
-      text=hasKey(door.keyId)
-        ?"PRESS E TO USE KEY"
-        :"LOCKED • FIND A KEY OR BREAK A WALL";
-    }else{
-      text=door.open
-        ?"PRESS E TO CLOSE DOOR"
-        :"PRESS E TO OPEN DOOR";
+    if (door.locked) {
+      if (hasKey(door.keyId)) {
+        text = "PRESS E TO USE KEY";
+      } else {
+        text = "LOCKED • FIND A KEY OR BREAK A WALL";
+        isKeyHint = false; // World state info — always useful to see
+      }
+    } else {
+      text = door.open
+        ? "PRESS E TO CLOSE DOOR"
+        : "PRESS E TO OPEN DOOR";
     }
   }
 
-  if(target.type==="car"){
-    text=target.obj.looted
-      ?"VEHICLE EMPTY"
-      :"PRESS E TO SEARCH "+
-        target.obj.name.toUpperCase();
+  if (target.type === "car") {
+    if (target.obj.looted) {
+      text = "VEHICLE EMPTY";
+      isKeyHint = false;
+    } else {
+      text = "PRESS E TO SEARCH " + target.obj.name.toUpperCase();
+    }
   }
 
-  if(target.type==="container"){
-    text=target.obj.looted
-      ?"CONTAINER EMPTY"
-      :"PRESS E TO SEARCH "+
-        target.obj.name.toUpperCase();
+  if (target.type === "container") {
+    if (target.obj.looted) {
+      text = "CONTAINER EMPTY";
+      isKeyHint = false;
+    } else {
+      text = "PRESS E TO SEARCH " + target.obj.name.toUpperCase();
+    }
   }
 
-  if(target.type==="loot"){
-    text=
-      "PRESS E TO TAKE "+
-      target.obj.label.toUpperCase();
+  if (target.type === "loot") {
+    text = "PRESS E TO TAKE " + target.obj.label.toUpperCase();
   }
 
-if(target.type==="closet"){
-  text=
-    "PRESS E TO OPEN CLOSET";
+  if (target.type === "closet") {
+    text = "PRESS E TO OPEN CLOSET";
+  }
+
+  if (target.type === "blueprint") {
+    text = "PRESS E TO MANAGE SAFEHOUSE";
+  }
+
+  if (target.type === "wallMap") {
+    text = "PRESS E TO REVIEW COUNTY MAP";
+  }
+
+  if (target.type === "mapHook") {
+    text = "PRESS E TO RETURN MAP TO WALL";
+  }
+
+  if (target.type === "shelter") {
+    text = "PRESS E TO CONSIDER RESTING HERE";
+  }
+
+  if (target.type === "fallenBackpack") {
+    text = "PRESS E TO RECOVER FALLEN BACKPACK";
+  }
+
+  // Hide "PRESS E" hints if ToolTips are disabled OR the player already left the safehouse
+  if (isKeyHint && (!toolTipsEnabled || leftSafehouseOnce)) {
+    prompt.style.display = "none";
+    return;
+  }
+
+  prompt.textContent = text;
+  prompt.style.display = "block";
 }
 
-  if(target.type==="blueprint"){
-    text=
-      "PRESS E TO MANAGE SAFEHOUSE";
-  }
-
-  if(target.type==="wallMap"){
-    text=
-      "PRESS E TO REVIEW COUNTY MAP";
-  }
-
-  if(target.type==="mapHook"){
-    text=
-      "PRESS E TO RETURN MAP TO WALL";
-  }
-
-  if(target.type==="shelter"){
-    text=
-      "PRESS E TO CONSIDER RESTING HERE";
-  }
-
-  if(target.type==="fallenBackpack"){
-    text=
-      "PRESS E TO RECOVER FALLEN BACKPACK";
-  }
-
-  prompt.textContent=text;
-  prompt.style.display="block";
-}
 
 function interact(){
   if(!target||modalOpen)return;
@@ -8391,22 +8423,43 @@ if(target.type==="closet"){
   }
 }
 
-function useDoor(door){
-  if(door.locked){
-    if(hasKey(door.keyId)){
-      door.locked=false;
-      door.open=true;
+function canCloseDoor(door) {
+  // 1. Check if the player is standing in the doorway
+  if (circleRect(state.player.x, state.player.y, PLAYER_RADIUS, door)) {
+    return false;
+  }
 
-      state.player.keys=
+  // 2. Check if any zombie is standing in the doorway
+  for (const z of state.zombies) {
+    const zr = z.radius || PLAYER_RADIUS;
+    if (circleRect(z.x, z.y, zr, door)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function useDoor(door) {
+  if (door.locked) {
+    if (hasKey(door.keyId)) {
+      door.locked = false;
+      door.open = true;
+
+      if (door.open && !leftSafehouseOnce && !toolTipsManuallyEnabled) {
+        leftSafehouseOnce = true;
+      }
+
+      state.player.keys =
         state.player.keys.filter(
-          key=>key!==door.keyId
+          key => key !== door.keyId
         );
 
       notify(
         "Unlocked with the correct key.",
         "good"
       );
-    }else{
+    } else {
       notify(
         "The door is locked.",
         "warn"
@@ -8416,15 +8469,29 @@ function useDoor(door){
     return;
   }
 
-  door.open=!door.open;
+  // Prevent closing the door if the player or a zombie is standing inside it
+  if (door.open && !canCloseDoor(door)) {
+    notify(
+      "Doorway is blocked.",
+      "warn"
+    );
+    return;
+  }
+
+  door.open = !door.open;
+
+  if (door.open && !leftSafehouseOnce && !toolTipsManuallyEnabled) {
+    leftSafehouseOnce = true;
+  }
 
   notify(
     door.open
-      ?"Door opened."
-      :"Door closed.",
+      ? "Door opened."
+      : "Door closed.",
     "good"
   );
 }
+
 
 const DROPPED_ITEM_PICKUP_RADIUS=45;
 
@@ -10596,49 +10663,70 @@ function refreshSafehouseStorageObjects(){
 let fpsFrames = 0;
 let fpsLastTime = performance.now();
 let fpsDisplayEl = null;
-let showExtendedDebug = false; // Press F3 to toggle full diagnostic readout
+let showExtendedDebug = false;
+let lastCalculatedFps = "--";
+let fpsClickBound = false;
+
+function toggleFPSDebug() {
+  showExtendedDebug = !showExtendedDebug;
+  updateFPSDisplay();
+}
+
+function updateFPSDisplay() {
+  if (!fpsDisplayEl) {
+    fpsDisplayEl = document.getElementById("fpsCounter");
+  }
+  if (!fpsDisplayEl) return;
+
+  // Bind click/tap once so pressing the box toggles expand/collapse
+  if (!fpsClickBound) {
+    fpsDisplayEl.addEventListener("click", (e) => {
+      e.stopPropagation(); // Prevents accidental shooting/clicking through to the canvas
+      toggleFPSDebug();
+    });
+    fpsClickBound = true;
+  }
+
+  if (showExtendedDebug) {
+    const visibleTrees = state.visibleTreesCount || 0;
+    const visibleWalls = state.visibleWallsCount || 0;
+
+    fpsDisplayEl.innerHTML = [
+      `FPS: ${lastCalculatedFps}`,
+      `Particles: ${state.particles.length}`,
+      `Zombies: ${state.zombies.length}`,
+      `Trees: ${state.trees.length}/${visibleTrees}`,
+      `Walls: ${state.walls.length}/${visibleWalls}`,
+      `Cars: ${state.cars.length}`,
+      `<div style="text-align: left; margin-top: 2px; opacity: 0.8;">▲</div>`
+    ].join("<br>");
+  } else {
+    fpsDisplayEl.textContent = `▼ FPS: ${lastCalculatedFps}`;
+  }
+}
 
 window.addEventListener("keydown", e => {
-  if(e.key === "F3"){
+  if (e.key === "F3") {
     e.preventDefault();
-    showExtendedDebug = !showExtendedDebug;
+    toggleFPSDebug();
   }
 });
 
-function trackFPS(){
+function trackFPS() {
   fpsFrames++;
 
   const now = performance.now();
   const elapsed = now - fpsLastTime;
 
-  if(elapsed >= 1000){
-    const fps = Math.round(fpsFrames * 1000 / elapsed);
-
-    if(!fpsDisplayEl){
-      fpsDisplayEl = document.getElementById("fpsCounter");
-    }
-
-    if(fpsDisplayEl){
-      if(showExtendedDebug){
-        const visibleTrees = state.visibleTreesCount || 0;
-        const visibleWalls = state.visibleWallsCount || 0;
-
-        fpsDisplayEl.textContent =
-          "FPS: " + fps +
-          " | P:" + state.particles.length +
-          " Z:" + state.zombies.length +
-          " T:" + state.trees.length + "/" + visibleTrees +
-          " W:" + state.walls.length + "/" + visibleWalls +
-          " C:" + state.cars.length;
-      }else{
-        fpsDisplayEl.textContent = "FPS: " + fps;
-      }
-    }
+  if (elapsed >= 1000) {
+    lastCalculatedFps = Math.round((fpsFrames * 1000) / elapsed);
+    updateFPSDisplay();
 
     fpsFrames = 0;
     fpsLastTime = now;
   }
 }
+
 
 
 function findStorage(storageId){
@@ -11599,8 +11687,10 @@ function spawnRestThreat(shelter){
   );
 }
 
-function openPause(){
-  paused=true;
+function openPause() {
+  paused = true;
+
+  const areToolTipsCurrentlyActive = toolTipsEnabled && !leftSafehouseOnce;
 
   openModal(`
     <h2>Game Paused</h2>
@@ -11619,6 +11709,10 @@ function openPause(){
         Backpack
       </button>
 
+      <button id="toggleToolTipsBtn">
+        ToolTips: ${areToolTipsCurrentlyActive ? "On" : "Off"}
+      </button>
+
       <button id="restartBtn">
         Start New World
       </button>
@@ -11631,36 +11725,55 @@ function openPause(){
 
   document
     .getElementById("resumeBtn")
-    .onclick=()=>{
-      paused=false;
+    .onclick = () => {
+      paused = false;
       closeModal();
     };
 
   document
-    .getElementById(
-      "pauseInventoryBtn"
-    )
-    .onclick=openInventory;
+    .getElementById("pauseInventoryBtn")
+    .onclick = openInventory;
+
+  document
+    .getElementById("toggleToolTipsBtn")
+    .onclick = () => {
+      const currentlyOn = toolTipsEnabled && !leftSafehouseOnce;
+
+      if (currentlyOn) {
+        toolTipsEnabled = false;
+        toolTipsManuallyEnabled = false;
+      } else {
+        toolTipsEnabled = true;
+        leftSafehouseOnce = false;
+        toolTipsManuallyEnabled = true;
+      }
+
+      const btn = document.getElementById("toggleToolTipsBtn");
+      if (btn) {
+        btn.textContent = `ToolTips: ${toolTipsEnabled ? "On" : "Off"}`;
+      }
+    };
 
   document
     .getElementById("restartBtn")
-    .onclick=()=>{
+    .onclick = () => {
       closeModal();
-      paused=false;
+      paused = false;
       startGame();
     };
 
   document
     .getElementById("menuBtn")
-    .onclick=()=>{
-      running=false;
-      paused=false;
+    .onclick = () => {
+      running = false;
+      paused = false;
 
       closeModal();
       cancelAnimationFrame(frame);
       showScreen("menu");
     };
 }
+
 
 let hudCache = null;
 
@@ -15768,73 +15881,52 @@ function drawPoisonOverlay(){
   ctx.restore();
 }
 
-function drawCompass(){
-  if(
-    !state.player.hasCompass
-  ){
+function drawCompass() {
+  if (!state.player.hasCompass) {
     return;
   }
 
-  const directions=[
-    "E",
-    "SE",
-    "S",
-    "SW",
-    "W",
-    "NW",
-    "N",
-    "NE"
-  ];
+  const directions = ["E", "SE", "S", "SW", "W", "NW", "N", "NE"];
 
-  let angle=
-    state.player.aimAngle;
+  let angle = state.player.aimAngle;
+  while (angle < 0) angle += Math.PI * 2;
+  while (angle >= Math.PI * 2) angle -= Math.PI * 2;
 
-  while(angle<0){
-    angle+=Math.PI*2;
-  }
+  const direction = directions[Math.round(angle / (Math.PI / 4)) % 8];
 
-  while(angle>=Math.PI*2){
-    angle-=Math.PI*2;
-  }
+  // Calculate current tile coordinates
+  const tileSize = state.tileSize || 32;
+  const tileX = Math.floor(state.player.x / tileSize);
+  const tileY = Math.floor(state.player.y / tileSize);
 
-  const direction=
-    directions[
-      Math.round(
-        angle/
-        (Math.PI/4)
-      )%8
-    ];
+  // Wider, shorter box dimensions
+  const boxWidth = 170;
+  const boxHeight = 50;
+  const boxX = canvas.width / 2 - boxWidth / 2;
+  const boxY = 10;
 
-  ctx.fillStyle=
-    "rgba(8,11,12,.74)";
+  // Background box
+  ctx.fillStyle = "rgba(8, 11, 12, 0.74)";
+  ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
-  ctx.fillRect(
-    canvas.width/2-55,
-    10,
-    110,
-    36
-  );
+  // Border
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+  ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
 
-  ctx.strokeStyle=
-    "rgba(255,255,255,.25)";
+  ctx.textAlign = "center";
 
-  ctx.strokeRect(
-    canvas.width/2-55,
-    10,
-    110,
-    36
-  );
+  // Line 1: Centered Rugged GPS Device Name (shifted down 4px)
+  ctx.fillStyle = "#D6D6D6";
+  ctx.font = "bold 15px monospace";
+  ctx.fillText("RECON PPK GPS", canvas.width / 2, boxY + 21);
 
-  ctx.fillStyle="#e1d08a";
-  ctx.font="bold 16px Arial";
-  ctx.textAlign="center";
-
-  ctx.fillText(
-    direction,
-    canvas.width/2,
-    34
-  );
+  // Line 2: Combined Direction & Raw Grid Coordinates (shifted down 4px)
+  ctx.fillStyle = "#09CEF1";
+  ctx.font = "bold 14px monospace";
+  ctx.fillText(`${direction} | ${tileX}, ${tileY}`, canvas.width / 2, boxY + 41);
 }
+
+
 
 function drawCrosshair(){
   if(modalOpen||paused)return;
@@ -16423,10 +16515,6 @@ const cursorSpeed = 12;
 function updateGamepad(){
   const gamepad = getActiveGamepad();
 
-  // If a physical controller is actively being used, turn off touch inputs so they don't conflict
-  if (gamepad) {
-    window.touchInputActive = false;
-  }
 
   if(!gamepad){
     // Keep controller.connected true if touch/mouse virtual controls are active!
@@ -16488,6 +16576,7 @@ const controllerBeingUsed=
   );
 
 if(controllerBeingUsed){
+ window.touchInputActive = false;
   setInputType("controller");
 }
 
