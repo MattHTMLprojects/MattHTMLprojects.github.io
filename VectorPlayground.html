@@ -95,12 +95,28 @@
     </div>
 
     <div id="blocker" onclick="enterGame()">
-        <h1>CLICK TO ENTER VECTOR PLAYGROUND</h1>
+        <h1>[CLICK TO ENTER] MATT'S VECTOR PLAYGROUND</h1>
         <p><span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> Move &nbsp;|&nbsp; <span class="key">SHIFT</span> Sprint &nbsp;|&nbsp; <span class="key">SPACE</span> Jump &nbsp;|&nbsp; <span class="key">C</span> Crouch</p>
-        <p style="margin-top: 8px; color: #aaa; font-size: 13px;">Mouse Look (or Click-Drag / <span class="key">←</span> <span class="key">→</span> <span class="key">↑</span> <span class="key">↓</span>)</p>
+        <p> <span class="key">E</span> Interact &nbsp;|&nbsp; Mouse Look (or Click-Drag / <span class="key">←</span> <span class="key">→</span> <span class="key">↑</span> <span class="key">↓</span>)</p>
     </div>
 
     <script>
+
+        // ==========================================
+        // OPTIONAL BASE64 OVERLAY IMAGE (UNCOMMENT TO USE)
+        // ==========================================
+        /*
+        var overlayImg = new Image();
+        var overlayReady = false;
+        overlayImg.onload = function() {
+            overlayReady = true;
+        };
+        // Replace the string below with your full Base64 data URL (e.g., data:image/png;base64,...)
+        overlayImg.src = "data:image/png;base64,PASTE_YOUR_BASE64_STRING_HERE";
+        */
+
+
+
         var canvas = document.getElementById('gameCanvas');
         var ctx = canvas.getContext('2d');
         var blocker = document.getElementById('blocker');
@@ -233,11 +249,7 @@
             for (var i = 0; i < boxFaces.length; i++) {
                 var f = boxFaces[i];
                 var center = f.v0.add(f.v2).scale(0.5);
-                var faceVerts = [];
-                faceVerts.push(f.v0);
-                faceVerts.push(f.v1);
-                faceVerts.push(f.v2);
-                faceVerts.push(f.v3);
+                var faceVerts = [f.v0, f.v1, f.v2, f.v3];
 
                 faces.push({
                     verts: faceVerts,
@@ -255,7 +267,7 @@
             }
         }
 
-        // Ground Floor
+        // --- STATIC WORLD GEOMETRY ---
         addBox(0, -0.5, 0, 60, 1, 60, 'grey', 'DEV_FLOOR_60x60');
 
         // Outer Arena Perimeter Walls
@@ -268,24 +280,281 @@
         addBox(-8, 0.25, -6, 2.5, 0.5, 2.5, 'orange', 'H: 0.50m');
         addBox(-4, 0.50, -6, 2.5, 1.0, 2.5, 'grey',   'H: 1.00m');
         addBox(0,  0.625, -6, 2.5, 1.25, 2.5, 'orange', 'H: 1.25m');
-addBox(4,  0.75, -6, 2.5, 1.5, 2.5, 'grey',   'H: 1.50m (CROUCH)');
-// Zone 2: Low & High Walls
-addBox(-10, 0.5, 4, 8, 1.0, 0.8, 'orange', 'WALL 1.0m');
-addBox(-10, 0.65, 9, 8, 1.3, 0.8, 'grey',   'WALL 1.3m');
-addBox(-10, 1.1, 14, 8, 2.2, 0.8, 'orange', 'WALL 2.2m');
-addBox(-13, 0.5, 12.6, 2, 1.0, 2, 'grey',   'STEP 1.0m');
-// Zone 3: Staircase & Elevated Catwalk
-for (var s = 0; s < 6; s++) {
-addBox(12, 0.25 + s * 0.5, -10 + s * 1.2, 3, 0.5, 1.2, s % 2 === 0 ? 'grey' : 'orange', 'STEP ' + (s + 1));
+        addBox(4,  0.75, -6, 2.5, 1.5, 2.5, 'grey',   'H: 1.50m (CROUCH)');
+
+        // Zone 2: Low & High Walls
+        addBox(-10, 0.5, 4, 8, 1.0, 0.8, 'orange', 'WALL 1.0m');
+        addBox(-10, 0.65, 9, 8, 1.3, 0.8, 'grey',   'WALL 1.3m');
+        addBox(-10, 1.1, 14, 8, 2.2, 0.8, 'orange', 'WALL 2.2m');
+        addBox(-13, 0.5, 12.6, 2, 1.0, 2, 'grey',   'STEP 1.0m');
+
+        // Zone 3: Staircase & Elevated Catwalk
+        for (var s = 0; s < 6; s++) {
+            addBox(12, 0.25 + s * 0.5, -10 + s * 1.2, 3, 0.5, 1.2, s % 2 === 0 ? 'grey' : 'orange', 'STEP ' + (s + 1));
+        }
+        addBox(12, 2.75, 0, 5, 0.5, 8, 'orange', 'CATWALK_A');
+        addBox(12, 2.75, 8.5, 5, 0.5, 4, 'grey', 'CATWALK_B');
+        addBox(12, 3.4, 1.5, 2, 0.8, 0.6, 'grey', 'VAULT_BAR');
+
+        // Zone 4: Crate Pyramid
+        addBox(0, 0.5, 12, 3, 1.0, 3, 'grey', 'CRATE_1m');
+        addBox(3, 0.5, 12, 3, 1.0, 3, 'orange', 'CRATE_1m');
+        addBox(1.5, 1.5, 12, 2.5, 1.0, 2.5, 'orange', 'TOP_CRATE');
+        addBox(-3, 0.75, 12, 2, 1.5, 2, 'grey', 'CRATE_1.5m');
+
+        // Static Wall Outlet on North Perimeter Wall
+        addBox(0.85, 0.45, -29.45, 0.22, 0.30, 0.08, 'grey', 'WALL_OUTLET');
+
+        // Save static array lengths so we can cleanly rebuild ONLY the desk when it moves
+        var STATIC_COLLIDER_COUNT = colliders.length;
+        var STATIC_FACE_COUNT = faces.length;
+
+        // ==========================================
+        // 3. INTERACTIVE SIT-STAND WORKSTATION [30 - 90]
+        // ==========================================
+        var deskX = 0;
+        var deskZ = -28.6;
+        var deskHeightVal = 75; // Range: 30 (Sit) to 90 (Stand)
+        var deskBtnUpPos = { x: 0, y: 0, z: 0 };
+        var deskBtnDownPos = { x: 0, y: 0, z: 0 };
+        var deskInteractPrompt = ""; // Render this string on your 2D HUD canvas
+
+        // Input tracking for [E] key
+        var isHoldingE = false;
+        window.addEventListener('keydown', function(e) {
+            if (e.code === 'KeyE') isHoldingE = true;
+        });
+        window.addEventListener('keyup', function(e) {
+            if (e.code === 'KeyE') isHoldingE = false;
+        });
+
+
+        // Power state variables (add right below deskInteractPrompt = "";)
+        var monitorOn = false;
+        var pcOn = false;
+        var monBtnPos = { x: 0, y: 0, z: 0 };
+        var pcBtnPos = { x: 0, y: 0, z: 0 };
+
+
+        function buildWorkstationGeometry() {
+            // Clear previous dynamic desk colliders and faces
+            colliders.length = STATIC_COLLIDER_COUNT;
+            faces.length = STATIC_FACE_COUNT;
+
+            // Map [30..90] display value to world height [0.72m .. 1.32m]
+            var deskTopY = 0.72 + ((deskHeightVal - 30) / 60) * 0.60;
+            var displayNum = Math.round(deskHeightVal);
+
+            // 1. Sit-Stand Desk Frame & Desktop
+            addBox(deskX, deskTopY - 0.03, deskZ, 3.2, 0.06, 1.4, 'orange', 'DESK [' + displayNum + ']');
+
+            // Fixed Outer Base Legs & Floor Feet
+            addBox(deskX - 1.35, 0.03, deskZ, 0.18, 0.06, 1.1, 'orange', 'DESK_FOOT_L');
+            addBox(deskX + 1.35, 0.03, deskZ, 0.18, 0.06, 1.1, 'orange', 'DESK_FOOT_R');
+            addBox(deskX - 1.35, 0.34, deskZ, 0.16, 0.62, 0.16, 'grey', 'LEG_BASE_L');
+            addBox(deskX + 1.35, 0.34, deskZ, 0.16, 0.62, 0.16, 'grey', 'LEG_BASE_R');
+
+            // Telescoping Inner Columns (Stretch with desk height)
+            var innerLegH = deskTopY - 0.06;
+            addBox(deskX - 1.35, innerLegH / 2, deskZ, 0.11, innerLegH, 0.11, 'orange', 'LEG_TELESCOPE_L');
+            addBox(deskX + 1.35, innerLegH / 2, deskZ, 0.11, innerLegH, 0.11, 'orange', 'LEG_TELESCOPE_R');
+
+            // Under-desk Crossbar
+            addBox(deskX, deskTopY - 0.25, deskZ - 0.35, 2.6, 0.08, 0.08, 'grey', 'CROSSBAR');
+
+            // 2. Interactive Control Panel with [30-90] Readout + UP / DOWN Buttons
+            var ctrlX = deskX - 0.85;
+            var ctrlY = deskTopY - 0.07;
+            var ctrlZ = deskZ + 0.68;
+            addBox(ctrlX, ctrlY, ctrlZ, 0.38, 0.05, 0.12, 'grey', 'HEIGHT: ' + displayNum);
+
+            // Raise Button [UP] (Left side of controller)
+            deskBtnUpPos = { x: ctrlX - 0.10, y: ctrlY, z: ctrlZ + 0.05 };
+            addBox(deskBtnUpPos.x, deskBtnUpPos.y, deskBtnUpPos.z, 0.08, 0.035, 0.05, 'orange', 'UP [E]');
+
+            // Lower Button [DOWN] (Right side of controller)
+            deskBtnDownPos = { x: ctrlX + 0.10, y: ctrlY, z: ctrlZ + 0.05 };
+            addBox(deskBtnDownPos.x, deskBtnDownPos.y, deskBtnDownPos.z, 0.08, 0.035, 0.05, 'orange', 'DN [E]');
+
+            // 3. Ultrawide Monitor + Bottom-Right Power Button
+            addBox(deskX - 0.25, deskTopY + 0.02, deskZ - 0.35, 0.45, 0.04, 0.30, 'grey', 'MON_BASE');
+            addBox(deskX - 0.25, deskTopY + 0.28, deskZ - 0.42, 0.10, 0.50, 0.08, 'orange', 'MON_STAND');
+            addBox(deskX - 0.25, deskTopY + 0.48, deskZ - 0.32, 1.25, 0.58, 0.06, 'grey', 'MONITOR_BEZEL');
+
+            // Screen logic: Orange ONLY when both monitorOn AND pcOn are true
+            var screenTheme = (monitorOn && pcOn) ? 'orange' : 'grey';
+            var screenLabel = !monitorOn ? 'MONITOR_OFF' : (pcOn ? 'SYSTEM_ONLINE' : 'NO_SIGNAL');
+            addBox(deskX - 0.25, deskTopY + 0.48, deskZ - 0.285, 1.17, 0.50, 0.01, screenTheme, screenLabel);
+
+            // Physical Power Button on Bottom-Right of Monitor Bezel
+            monBtnPos = {
+                x: (deskX - 0.25) + 0.54,
+                y: (deskTopY + 0.48) - 0.26,
+                z: (deskZ - 0.32) + 0.035
+            };
+          addBox(monBtnPos.x, monBtnPos.y, monBtnPos.z, 0.06, 0.03, 0.02, monitorOn ? 'orange' : 'grey', 'MON_PWR');
+
+            // 4. Keyboard & Mouse
+            addBox(deskX - 0.35, deskTopY + 0.02, deskZ + 0.22, 0.65, 0.04, 0.24, 'grey', 'KEYBOARD');
+            addBox(deskX + 0.22, deskTopY + 0.025, deskZ + 0.22, 0.12, 0.05, 0.20, 'orange', 'MOUSE');
+
+            // 5. Pencil Cup & Pencils
+            var cupX = deskX - 1.15;
+            var cupZ = deskZ + 0.15;
+            addBox(cupX, deskTopY + 0.09, cupZ, 0.14, 0.18, 0.14, 'orange', 'PENCIL_CUP');
+            addBox(cupX - 0.03, deskTopY + 0.15, cupZ - 0.02, 0.02, 0.26, 0.02, 'grey', 'PENCIL_01');
+            addBox(cupX + 0.02, deskTopY + 0.16, cupZ + 0.03, 0.02, 0.28, 0.02, 'grey', 'PENCIL_02');
+            addBox(cupX + 0.03, deskTopY + 0.14, cupZ - 0.03, 0.02, 0.24, 0.02, 'grey', 'PEN_03');
+
+            // 6. Open-Glass PC Tower (Side Facing Left for Clear View)
+            var pcX = deskX + 1.05;
+            var pcZ = deskZ - 0.05;
+            var pcW = 0.46, pcH = 0.85, pcD = 0.85;
+            var pcBaseY = deskTopY;
+
+            // Physical Power Button on Front-Top of PC Case
+            pcBtnPos = {
+                x: pcX - 0.12,
+                y: pcBaseY + pcH - 0.06,
+                z: pcZ + pcD / 2 + 0.01
+            };
+            addBox(pcBtnPos.x, pcBtnPos.y, pcBtnPos.z, 0.06, 0.06, 0.03, pcOn ? 'orange' : 'grey', 'PC_PWR');
+
+
+            addBox(pcX, pcBaseY + 0.02, pcZ, pcW, 0.04, pcD, 'grey', 'PC_BOTTOM');
+            addBox(pcX, pcBaseY + pcH - 0.02, pcZ, pcW, 0.04, pcD, 'grey', 'PC_TOP');
+            addBox(pcX + pcW/2 - 0.02, pcBaseY + pcH/2, pcZ, 0.04, pcH, pcD, 'orange', 'PC_MB_TRAY');
+            addBox(pcX, pcBaseY + pcH/2, pcZ - pcD/2 + 0.02, pcW, pcH, 0.04, 'grey', 'PC_REAR_IO');
+            addBox(pcX, pcBaseY + pcH/2, pcZ + pcD/2 - 0.02, pcW, pcH, 0.04, 'orange', 'PC_FRONT');
+            addBox(pcX - pcW/2 + 0.02, pcBaseY + pcH/2, pcZ - pcD/2 + 0.02, 0.04, pcH, 0.04, 'grey', 'GLASS_FRAME_1');
+            addBox(pcX - pcW/2 + 0.02, pcBaseY + pcH/2, pcZ + pcD/2 - 0.02, 0.04, pcH, 0.04, 'grey', 'GLASS_FRAME_2');
+
+            // Internal Components
+            addBox(pcX - 0.02, pcBaseY + 0.14, pcZ - 0.18, 0.32, 0.18, 0.34, 'orange', 'PSU_850W');
+            addBox(pcX + 0.16, pcBaseY + 0.52, pcZ - 0.04, 0.04, 0.48, 0.44, 'grey', 'MOTHERBOARD');
+            addBox(pcX + 0.04, pcBaseY + 0.62, pcZ - 0.06, 0.18, 0.16, 0.16, 'orange', 'CPU_COOLER');
+addBox(pcX + 0.01, pcBaseY + 0.40, pcZ + 0.04, 0.26, 0.09, 0.52, 'orange', 'GFX_CARD_GPU');
+// 7. Internal & Desktop Cables
+addBox(pcX + 0.08, pcBaseY + 0.34, pcZ + 0.14, 0.03, 0.24, 0.04, 'grey', 'CABLE_24PIN_ATX');
+addBox(pcX - 0.04, pcBaseY + 0.30, pcZ + 0.18, 0.03, 0.16, 0.03, 'grey', 'CABLE_GPU_PCIE');
+addBox(deskX + 0.40, deskTopY + 0.25, deskZ - 0.48, 1.30, 0.025, 0.025, 'orange', 'CABLE_DISPLAYPORT');
+addBox(pcX, deskTopY + 0.22, deskZ - 0.48, 0.025, 0.16, 0.025, 'orange', 'CABLE_DP_DROP');
+addBox(deskX + 0.35, deskTopY + 0.02, deskZ - 0.15, 1.40, 0.02, 0.02, 'grey', 'CABLE_KB_USB');
+addBox(deskX + 0.65, deskTopY + 0.02, deskZ - 0.10, 0.85, 0.02, 0.02, 'orange', 'CABLE_MOUSE_USB');
+// 8. Dynamic Wall Power Cables (Stretch cleanly to wall outlet at Y = 0.45)
+var outletY = 0.45;
+var pcPsuY = deskTopY + 0.14;
+var pcDropH = Math.abs(pcPsuY - outletY);
+addBox(pcX, deskTopY + 0.14, deskZ - 0.56, 0.03, 0.03, 0.18, 'grey', 'PC_PWR_OUT');
+addBox(pcX, (pcPsuY + outletY) / 2, deskZ - 0.64, 0.03, pcDropH, 0.03, 'grey', 'PC_PWR_DROP');
+addBox(deskX + 0.95, outletY, deskZ - 0.64, 0.22, 0.03, 0.03, 'grey', 'PC_PWR_PLUG');
+var monPsuY = deskTopY + 0.40;
+var monDropH = Math.abs(monPsuY - outletY);
+addBox(deskX + 0.30, (monPsuY + outletY) / 2, deskZ - 0.60, 0.025, monDropH, 0.025, 'orange', 'MON_PWR_DROP');
+addBox(deskX + 0.58, outletY, deskZ - 0.60, 0.55, 0.025, 0.025, 'orange', 'MON_PWR_PLUG');
 }
-addBox(12, 2.75, 0, 5, 0.5, 8, 'orange', 'CATWALK_A');
-addBox(12, 2.75, 8.5, 5, 0.5, 4, 'grey', 'CATWALK_B');
-addBox(12, 3.4, 1.5, 2, 0.8, 0.6, 'grey', 'VAULT_BAR');
-// Zone 4: Crate Pyramid
-addBox(0, 0.5, 12, 3, 1.0, 3, 'grey', 'CRATE_1m');
-addBox(3, 0.5, 12, 3, 1.0, 3, 'orange', 'CRATE_1m');
-addBox(1.5, 1.5, 12, 2.5, 1.0, 2.5, 'orange', 'TOP_CRATE');
-addBox(-3, 0.75, 12, 2, 1.5, 2, 'grey', 'CRATE_1.5m');
+
+
+// Initial desk build
+buildWorkstationGeometry();
+
+
+        // ==========================================
+        // DESK INTERACTION (SCREEN-SPACE CROSSHAIR RAY)
+        // ==========================================
+        var deskKeysDown = {};
+        window.addEventListener('keydown', function(e) {
+            if (e.code === 'KeyE' || e.key === 'e' || e.key === 'E') {
+                deskKeysDown['E'] = true;
+            }
+        }, true);
+        window.addEventListener('keyup', function(e) {
+            if (e.code === 'KeyE' || e.key === 'e' || e.key === 'E') {
+                deskKeysDown['E'] = false;
+            }
+        }, true);
+
+        var activeDeskButton = null; // 'UP' or 'DOWN' or null
+
+            var eWasDown = false;
+
+        function updateDeskInteraction(dt) {
+            if (typeof player === 'undefined' || !player.pos) return;
+
+            var eDown = !!deskKeysDown['E'];
+            var eJustPressed = eDown && !eWasDown;
+            eWasDown = eDown;
+
+            var dx = player.pos.x - deskX;
+            var dz = player.pos.z - (deskZ + 0.55);
+            var dist = Math.sqrt(dx * dx + dz * dz);
+
+            deskInteractPrompt = "";
+
+            if (dist < 3.6) {
+                var w = canvas.width;
+                var h = canvas.height;
+                var fovScale = h * 0.78;
+                var camPos = new Vec3(
+                    player.pos.x,
+                    player.pos.y + player.currentHeight - player.eyeOffset,
+                    player.pos.z
+                );
+
+                function getScreenDist(posObj) {
+                    var cv = worldToCamera(new Vec3(posObj.x, posObj.y, posObj.z), camPos, yaw, pitch);
+                    if (cv.z <= NEAR) return Infinity;
+                    var pr = project(cv, w, h, fovScale);
+                    return Math.hypot(pr.x - w / 2, pr.y - h / 2);
+                }
+
+                var targets = [
+                    { id: 'DESK_UP',   dist: getScreenDist(deskBtnUpPos) },
+                    { id: 'DESK_DOWN', dist: getScreenDist(deskBtnDownPos) },
+                    { id: 'MON_PWR',   dist: getScreenDist(monBtnPos) },
+                    { id: 'PC_PWR',    dist: getScreenDist(pcBtnPos) }
+                ];
+
+                targets.sort(function(a, b) { return a.dist - b.dist; });
+                var best = targets[0];
+
+                var targetId = (best.dist < 170)
+                    ? best.id
+                    : (player.pos.x <= (deskX - 0.85) ? 'DESK_UP' : 'DESK_DOWN');
+
+                if (targetId === 'DESK_UP') {
+                    deskInteractPrompt = "Hold [E] : RAISE DESK [▲]  |  [" + Math.round(deskHeightVal) + " / 90]";
+                    if (eDown) {
+                        var prevUp = deskHeightVal;
+                        deskHeightVal = Math.min(90, deskHeightVal + 25 * dt);
+                        if (deskHeightVal !== prevUp) buildWorkstationGeometry();
+                    }
+                } else if (targetId === 'DESK_DOWN') {
+                    deskInteractPrompt = "Hold [E] : LOWER DESK [▼]  |  [" + Math.round(deskHeightVal) + " / 90]";
+                    if (eDown) {
+                        var prevDn = deskHeightVal;
+                        deskHeightVal = Math.max(30, deskHeightVal - 25 * dt);
+                        if (deskHeightVal !== prevDn) buildWorkstationGeometry();
+                    }
+                } else if (targetId === 'MON_PWR') {
+                    deskInteractPrompt = "Press [E] : MONITOR POWER (" + (monitorOn ? "ON" : "OFF") + ")";
+                    if (eJustPressed) {
+                        monitorOn = !monitorOn;
+                        buildWorkstationGeometry();
+                    }
+                } else if (targetId === 'PC_PWR') {
+                    deskInteractPrompt = "Press [E] : PC TOWER POWER (" + (pcOn ? "ON" : "OFF") + ")";
+                    if (eJustPressed) {
+                        pcOn = !pcOn;
+                        buildWorkstationGeometry();
+                    }
+                }
+            }
+        }
+
+
+
+
 // ==========================================
 // 3. REALISTIC FIRST-PERSON PHYSICS ENGINE
 // ==========================================
@@ -458,7 +727,7 @@ if (keys.ArrowLeft) yaw += turnSpeed * dt;
 if (keys.ArrowRight) yaw -= turnSpeed * dt;
 if (keys.ArrowUp) pitch = Math.min(Math.PI / 2 - 0.05, pitch + turnSpeed * 0.7 * dt);
 if (keys.ArrowDown) pitch = Math.max(-Math.PI / 2 + 0.05, pitch - turnSpeed * 0.7 * dt);
-var wantsCrouch = keys.KeyC || keys.ControlLeft;
+var wantsCrouch = crouchToggled;
 if (wantsCrouch) {
 if (!player.crouching) {
 if (!player.grounded) {
@@ -541,6 +810,7 @@ Math.hypot(player.vel.x, player.vel.z).toFixed(1) + ' m/s';
 document.getElementById('state-val').textContent =
 player.grounded ? (player.crouching ? 'CROUCHED' : 'GROUNDED') : 'AIRBORNE';
 }
+
 // ==========================================
 // 4. VECTOR 3D RENDERER (VALVE DEV STYLE)
 // ==========================================
@@ -555,172 +825,237 @@ var fg = (c.g * factor) * (1 - fog) + 31 * fog;
 var fb = (c.b * factor) * (1 - fog) + 38 * fog;
 return 'rgb(' + (fr | 0) + ',' + (fg | 0) + ',' + (fb | 0) + ')';
 }
-function render() {
-var w = canvas.width;
-var h = canvas.height;
-var fovScale = h * 0.78;
-ctx.fillStyle = '#1c1f26';
-ctx.fillRect(0, 0, w, h);
-var camPos = new Vec3(
-player.pos.x,
-player.pos.y + player.currentHeight - player.eyeOffset,
-player.pos.z
-);
-var drawList = [];
-for (var idx = 0; idx < faces.length; idx++) {
-var f = faces[idx];
-var toCam = camPos.sub(f.center);
-if (toCam.dot(f.normal) <= 0) continue;
-var camVerts = [];
-var anyInFront = false;
-var maxZ = -Infinity;
-var distSum = 0;
-for (var vIdx = 0; vIdx < f.verts.length; vIdx++) {
-    var cv = worldToCamera(f.verts[vIdx], camPos, yaw, pitch);
-    if (cv.z >= NEAR) anyInFront = true;
-    if (cv.z > maxZ) maxZ = cv.z;
-    distSum += cv.length();
-    camVerts.push(cv);
-}
-if (!anyInFront) continue;
-
-var clipped = clipPolygonNear(camVerts);
-if (clipped.length < 3) continue;
-
-// Slight priority bias for top surfaces (+Y) so they never flicker against vertical walls
-var sortDepth = maxZ - (f.normal.y > 0 ? 0.02 : 0);
-
-drawList.push({
-    face: f,
-    clipped: clipped,
-    dist: distSum / camVerts.length,
-    sortDepth: sortDepth
+// ==========================================
+// 4. RENDERER & DESK INTERACTION HUD
+// ==========================================
+var isHoldingE = false;
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'e' || e.key === 'E' || e.code === 'KeyE') isHoldingE = true;
+});
+window.addEventListener('keyup', function(e) {
+    if (e.key === 'e' || e.key === 'E' || e.code === 'KeyE') isHoldingE = false;
 });
 
+var crouchToggled = false;
+
+window.addEventListener('keydown', function(e) {
+    if ((e.code === 'KeyC' || e.code === 'ControlLeft') && !e.repeat) {
+        crouchToggled = !crouchToggled;
+    }
+});
+
+
+function render() {
+    var w = canvas.width;
+    var h = canvas.height;
+    var fovScale = h * 0.78;
+    ctx.fillStyle = '#1c1f26';
+    ctx.fillRect(0, 0, w, h);
+
+    var camPos = new Vec3(
+        player.pos.x,
+        player.pos.y + player.currentHeight - player.eyeOffset,
+        player.pos.z
+    );
+
+    var drawList = [];
+    for (var idx = 0; idx < faces.length; idx++) {
+        var f = faces[idx];
+        var toCam = camPos.sub(f.center);
+        if (toCam.dot(f.normal) <= 0) continue;
+
+        var camVerts = [];
+        var anyInFront = false;
+        var maxZ = -Infinity;
+        var distSum = 0;
+        for (var vIdx = 0; vIdx < f.verts.length; vIdx++) {
+            var cv = worldToCamera(f.verts[vIdx], camPos, yaw, pitch);
+            if (cv.z >= NEAR) anyInFront = true;
+            if (cv.z > maxZ) maxZ = cv.z;
+            distSum += cv.length();
+            camVerts.push(cv);
+        }
+        if (!anyInFront) continue;
+
+        var clipped = clipPolygonNear(camVerts);
+        if (clipped.length < 3) continue;
+
+        var sortDepth = maxZ - (f.normal.y > 0 ? 0.02 : 0);
+        drawList.push({
+            face: f,
+            clipped: clipped,
+            dist: distSum / camVerts.length,
+            sortDepth: sortDepth
+        });
+    }
+
+    drawList.sort(function(a, b) { return b.sortDepth - a.sortDepth; });
+
+    for (var dIdx = 0; dIdx < drawList.length; dIdx++) {
+        var item = drawList[dIdx];
+        var face = item.face;
+        var clipped = item.clipped;
+        var dist = item.dist;
+        var proj = [];
+        for (var pIdx = 0; pIdx < clipped.length; pIdx++) {
+            proj.push(project(clipped[pIdx], w, h, fovScale));
+        }
+
+        var isOrange = (face.theme === 'orange');
+        var fillRGB = isOrange ? ORANGE_FILL : GREY_FILL;
+        var gridRGB = isOrange ? ORANGE_GRID : GREY_GRID;
+
+        // 1. Solid Shaded Quad Fill
+        ctx.beginPath();
+        ctx.moveTo(proj[0].x, proj[0].y);
+        for (var i = 1; i < proj.length; i++) {
+            ctx.lineTo(proj[i].x, proj[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = shadeColor(fillRGB, face.shade, dist);
+        ctx.fill();
+
+        // 2. Vector Surface Grid Lines
+        if (dist < 38) {
+            ctx.save();
+            ctx.clip();
+            ctx.strokeStyle = shadeColor(gridRGB, face.shade, dist);
+            ctx.lineWidth = 1;
+            var v0 = face.v0;
+            var v1 = face.v1;
+            var v3 = face.v3;
+            var stepsU = Math.min(30, Math.floor(face.uLen));
+            var stepsV = Math.min(30, Math.floor(face.vLen));
+            ctx.beginPath();
+            for (var u = 1; u < stepsU; u++) {
+                var tu = u / face.uLen;
+                var pA = v0.add(v1.sub(v0).scale(tu));
+                var pB = v3.add(v1.sub(v0).scale(tu));
+                var lineU = [
+                    worldToCamera(pA, camPos, yaw, pitch),
+                    worldToCamera(pB, camPos, yaw, pitch)
+                ];
+                var segU = clipPolygonNear(lineU);
+                if (segU.length === 2) {
+                    var s0 = project(segU[0], w, h, fovScale);
+                    var s1 = project(segU[1], w, h, fovScale);
+                    ctx.moveTo(s0.x, s0.y);
+                    ctx.lineTo(s1.x, s1.y);
+                }
+            }
+            for (var v = 1; v < stepsV; v++) {
+                var tv = v / face.vLen;
+                var qA = v0.add(v3.sub(v0).scale(tv));
+                var qB = v1.add(v3.sub(v0).scale(tv));
+                var lineV = [
+                    worldToCamera(qA, camPos, yaw, pitch),
+                    worldToCamera(qB, camPos, yaw, pitch)
+                ];
+                var segV = clipPolygonNear(lineV);
+                if (segV.length === 2) {
+                    var t0 = project(segV[0], w, h, fovScale);
+                    var t1 = project(segV[1], w, h, fovScale);
+                    ctx.moveTo(t0.x, t0.y);
+                    ctx.lineTo(t1.x, t1.y);
+                }
+            }
+            ctx.stroke();
+
+            // Center Vector Crosshair & Measurement Callout
+            if (face.normal.y === 0 && dist < 22) {
+                var cCam = worldToCamera(face.center, camPos, yaw, pitch);
+                if (cCam.z > NEAR) {
+                    var cProj = project(cCam, w, h, fovScale);
+                    var arm = Math.max(3, 18 / cCam.z);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+                    ctx.beginPath();
+                    ctx.moveTo(cProj.x - arm, cProj.y);
+                    ctx.lineTo(cProj.x + arm, cProj.y);
+                    ctx.moveTo(cProj.x, cProj.y - arm);
+                    ctx.lineTo(cProj.x, cProj.y + arm);
+                    ctx.stroke();
+                    if (dist < 14 && face.uLen <= 10) {
+                        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                        var fontSize = Math.max(9, Math.min(14, (140 / cCam.z) | 0));
+                        ctx.font = fontSize + 'px monospace';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(face.label, cProj.x, cProj.y - arm - 4);
+                    }
+                }
+            }
+            ctx.restore();
+        }
+
+        // 3. Crisp Vector Edge Outline
+        ctx.beginPath();
+        ctx.moveTo(proj[0].x, proj[0].y);
+        for (var e = 1; e < proj.length; e++) {
+            ctx.lineTo(proj[e].x, proj[e].y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = isOrange ? 'rgba(255, 220, 180, 0.55)' : 'rgba(180, 185, 195, 0.45)';
+        ctx.lineWidth = 1.25;
+        ctx.stroke();
+    }
+
+    // 4. Draw Sit-Stand Desk HUD Prompt
+    if (typeof deskInteractPrompt !== 'undefined' && deskInteractPrompt) {
+        ctx.save();
+        ctx.font = 'bold 16px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(15, 18, 24, 0.85)';
+        ctx.fillRect(w / 2 - 250, h - 80, 500, 36);
+        ctx.strokeStyle = '#ff8c24';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(w / 2 - 250, h - 80, 500, 36);
+        ctx.fillStyle = '#ff9d3b';
+        ctx.fillText(deskInteractPrompt, w / 2, h - 57);
+        ctx.restore();
+    }
+
+            // ==========================================
+            // DRAW BASE64 OVERLAY (UNCOMMENT TO USE)
+            // ==========================================
+            /*
+            if (typeof overlayReady !== 'undefined' && overlayReady) {
+                ctx.save();
+                ctx.globalAlpha = 1.0; // Change to 0.1 - 0.9 for transparency
+                ctx.drawImage(overlayImg, 0, 0, w, h); // Stretches to full screen
+                ctx.restore();
+            }
+            */
+
+
+
 }
-drawList.sort(function(a, b) { return b.sortDepth - a.sortDepth; });
-for (var dIdx = 0; dIdx < drawList.length; dIdx++) {
-var item = drawList[dIdx];
-var face = item.face;
-var clipped = item.clipped;
-var dist = item.dist;
-var proj = [];
-for (var pIdx = 0; pIdx < clipped.length; pIdx++) {
-proj.push(project(clipped[pIdx], w, h, fovScale));
-}
-var isOrange = (face.theme === 'orange');
-var fillRGB = isOrange ? ORANGE_FILL : GREY_FILL;
-var gridRGB = isOrange ? ORANGE_GRID : GREY_GRID;
-// 1. Solid Shaded Quad Fill
-ctx.beginPath();
-ctx.moveTo(proj[0].x, proj[0].y);
-for (var i = 1; i < proj.length; i++) {
-ctx.lineTo(proj[i].x, proj[i].y);
-}
-ctx.closePath();
-ctx.fillStyle = shadeColor(fillRGB, face.shade, dist);
-ctx.fill();
-// 2. Vector Surface Grid Lines
-if (dist < 38) {
-ctx.save();
-ctx.clip();
-ctx.strokeStyle = shadeColor(gridRGB, face.shade, dist);
-ctx.lineWidth = 1;
-var v0 = face.v0;
-var v1 = face.v1;
-var v3 = face.v3;
-var stepsU = Math.min(30, Math.floor(face.uLen));
-var stepsV = Math.min(30, Math.floor(face.vLen));
-ctx.beginPath();
-for (var u = 1; u < stepsU; u++) {
-var tu = u / face.uLen;
-var pA = v0.add(v1.sub(v0).scale(tu));
-var pB = v3.add(v1.sub(v0).scale(tu));
-var lineU = [];
-lineU.push(worldToCamera(pA, camPos, yaw, pitch));
-lineU.push(worldToCamera(pB, camPos, yaw, pitch));
-var segU = clipPolygonNear(lineU);
-if (segU.length === 2) {
-var s0 = project(segU[0], w, h, fovScale);
-var s1 = project(segU[1], w, h, fovScale);
-ctx.moveTo(s0.x, s0.y);
-ctx.lineTo(s1.x, s1.y);
-}
-}
-for (var v = 1; v < stepsV; v++) {
-var tv = v / face.vLen;
-var qA = v0.add(v3.sub(v0).scale(tv));
-var qB = v1.add(v3.sub(v0).scale(tv));
-var lineV = [];
-lineV.push(worldToCamera(qA, camPos, yaw, pitch));
-lineV.push(worldToCamera(qB, camPos, yaw, pitch));
-var segV = clipPolygonNear(lineV);
-if (segV.length === 2) {
-var t0 = project(segV[0], w, h, fovScale);
-var t1 = project(segV[1], w, h, fovScale);
-ctx.moveTo(t0.x, t0.y);
-ctx.lineTo(t1.x, t1.y);
-}
-}
-ctx.stroke();
-// Center Vector Crosshair & Measurement Callout
-if (face.normal.y === 0 && dist < 22) {
-var cCam = worldToCamera(face.center, camPos, yaw, pitch);
-if (cCam.z > NEAR) {
-var cProj = project(cCam, w, h, fovScale);
-var arm = Math.max(3, 18 / cCam.z);
-ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-ctx.beginPath();
-ctx.moveTo(cProj.x - arm, cProj.y);
-ctx.lineTo(cProj.x + arm, cProj.y);
-ctx.moveTo(cProj.x, cProj.y - arm);
-ctx.lineTo(cProj.x, cProj.y + arm);
-ctx.stroke();
-if (dist < 14 && face.uLen <= 10) {
-ctx.fillStyle = 'rgba(255,255,255,0.85)';
-var fontSize = Math.max(9, Math.min(14, (140 / cCam.z) | 0));
-ctx.font = fontSize + 'px monospace';
-ctx.textAlign = 'center';
-ctx.fillText(face.label, cProj.x, cProj.y - arm - 4);
-}
-}
-}
-ctx.restore();
-}
-// 3. Crisp Vector Edge Outline
-ctx.beginPath();
-ctx.moveTo(proj[0].x, proj[0].y);
-for (var e = 1; e < proj.length; e++) {
-ctx.lineTo(proj[e].x, proj[e].y);
-}
-ctx.closePath();
-ctx.strokeStyle = isOrange ? 'rgba(255, 220, 180, 0.55)' : 'rgba(180, 185, 195, 0.45)';
-ctx.lineWidth = 1.25;
-ctx.stroke();
-}
-}
+
 // ==========================================
 // 5. FIXED-TIMESTEP MAIN LOOP
 // ==========================================
 var lastTime = performance.now();
 var FIXED_DT = 1 / 120;
 var accumulator = 0;
+
 function loop(now) {
-requestAnimationFrame(loop);
-var dt = Math.min((now - lastTime) / 1000, 0.1);
-lastTime = now;
-if (gameActive) {
-accumulator += dt;
-while (accumulator >= FIXED_DT) {
-updatePhysics(FIXED_DT);
-accumulator -= FIXED_DT;
+    requestAnimationFrame(loop);
+    var dt = Math.min((now - lastTime) / 1000, 0.1);
+    lastTime = now;
+
+    if (gameActive) {
+        accumulator += dt;
+        while (accumulator >= FIXED_DT) {
+            updatePhysics(FIXED_DT);
+            accumulator -= FIXED_DT;
+        }
+        updateDeskInteraction(dt);
+    }
+
+    render();
 }
-}
+
 render();
-}
-// Render initial frame immediately behind the overlay
-render();
 requestAnimationFrame(loop);
+
 
 </script>
 </body>
