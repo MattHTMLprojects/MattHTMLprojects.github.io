@@ -106,18 +106,21 @@
         <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">Drop a JPG/PNG with a pure green background (#00FF00) to auto-generate transparent vector sprite code into your project.</p>
         
         <!-- Row Container: Drop Zone (Left) & Example Image (Right) -->
-        <div style="display: flex; gap: 20px; align-items: stretch; width: 100%; box-sizing: border-box;">
+        <div style="display: flex; gap: 20px; align-items: flex-end; width: 100%; box-sizing: border-box;">
             
             <!-- Compact Left-Aligned Drop Zone -->
-            <div id="drop-zone" style="border: 2px dashed #00FF00; padding: 50px 20px; text-align: center; cursor: pointer; background: #151515; border-radius: 6px; transition: 0.2s; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
+            <div id="drop-zone" style="border: 2px dashed #00FF00; height: 200px; padding: 20px; text-align: center; cursor: pointer; background: #151515; border-radius: 6px; transition: 0.2s; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
                 <span style="font-size: 12px; color: #ccc;">Drag & Drop your sprite here or </span>
                 <span style="font-size: 12px; color: #00FF00; text-decoration: underline; font-weight: bold; margin-top: 4px;">Browse File</span>
                 <input type="file" id="chroma-file-input" accept="image/*" style="display:none;" />
             </div>
 
-            <!-- Example Rally Car Box (200x200) Right-Aligned on the Same Row -->
-            <div style="width: 200px; height: 200px; flex-shrink: 0; border: 1px solid #333; border-radius: 6px; overflow: hidden; background: #111; display: flex; align-items: center; justify-content: center;">
-                <img src="ExampleRallyCar.jpg" alt="Example Rally Car" style="width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated;" />
+            <!-- Right Column: Label + Example Rally Car Box -->
+            <div style="display: flex; flex-direction: column; flex-shrink: 0;">
+                <span style="font-size: 12px; color: #ccc; margin-bottom: 6px; text-align: center;">Example: Rally Car with Green-Screen</span>
+                <div style="width: 200px; height: 200px; border: 1px solid #333; border-radius: 6px; overflow: hidden; background: #111; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                    <img src="ExampleRallyCar.jpg" alt="Example Rally Car" style="width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated;" />
+                </div>
             </div>
 
         </div>
@@ -133,6 +136,7 @@
             </div>
         </div>
     </div>
+
     
     
     
