@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Vector Source Dev Parkour</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #181a1f;
+            font-family: 'Consolas', 'Courier New', monospace;
+            user-select: none;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        #crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            border: 1.5px solid rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 10;
+        }
+        #hud {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            color: #ff9900;
+            background: rgba(15, 16, 20, 0.85);
+            padding: 12px 16px;
+            border-left: 4px solid #ff7b00;
+            font-size: 13px;
+            line-height: 1.5;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #blocker {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 16, 20, 0.78);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 999;
+            cursor: pointer;
+            text-align: center;
+        }
+        #blocker h1 {
+            margin: 0 0 10px 0;
+            color: #ff7b00;
+            letter-spacing: 2px;
+            font-size: 26px;
+        }
+        #blocker p {
+            margin: 5px 0;
+            color: #ccc;
+            font-size: 14px;
+        }
+        .key {
+            display: inline-block;
+            background: #2c2f36;
+            border: 1px solid #666;
+            border-radius: 3px;
+            padding: 1px 6px;
+            color: #fff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="crosshair"></div>
+    <div id="hud">
+        <strong>VECTOR_DEV_TEST_01 (LOCAL)</strong><br>
+        POS: <span id="pos-val">0.0, 0.00, 2.0</span><br>
+        VEL: <span id="vel-val">0.0 m/s</span><br>
+        STATE: <span id="state-val">GROUNDED</span><br>
+        LOOK: <span id="look-mode">CLICK SCREEN TO START</span>
+    </div>
+
+    <div id="blocker" onclick="enterGame()">
+        <h1>CLICK TO ENTER VECTOR PLAYGROUND</h1>
+        <p><span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> Move &nbsp;|&nbsp; <span class="key">SHIFT</span> Sprint &nbsp;|&nbsp; <span class="key">SPACE</span> Jump &nbsp;|&nbsp; <span class="key">C</span> Crouch</p>
+        <p style="margin-top: 8px; color: #aaa; font-size: 13px;">Mouse Look (or Click-Drag / <span class="key">←</span> <span class="key">→</span> <span class="key">↑</span> <span class="key">↓</span>)</p>
+    </div>
+
+    <script>
+        var canvas = document.getElementById('gameCanvas');
+        var ctx = canvas.getContext('2d');
+        var blocker = document.getElementById('blocker');
+        var lookModeEl = document.getElementById('look-mode');
+
+        var gameActive = false;
+        var pointerLocked = false;
+        var isDragging = false;
+
+        function enterGame() {
+            gameActive = true;
+            blocker.style.display = 'none';
+            lookModeEl.textContent = 'DRAG MOUSE OR USE ARROW KEYS';
+            try {
+                if (canvas.requestPointerLock) {
+                    var p = canvas.requestPointerLock();
+                    if (p && p.catch) {
+                        p.catch(function() {});
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // ==========================================
+        // 1. VECTOR MATH & 3D SOFTWARE PIPELINE
+        // ==========================================
+        function Vec3(x, y, z) {
+            this.x = x || 0;
+            this.y = y || 0;
+            this.z = z || 0;
+        }
+        Vec3.prototype.add = function(v) { return new Vec3(this.x + v.x, this.y + v.y, this.z + v.z); };
+        Vec3.prototype.sub = function(v) { return new Vec3(this.x - v.x, this.y - v.y, this.z - v.z); };
+        Vec3.prototype.scale = function(s) { return new Vec3(this.x * s, this.y * s, this.z * s); };
+        Vec3.prototype.dot = function(v) { return this.x * v.x + this.y * v.y + this.z * v.z; };
+        Vec3.prototype.length = function() { return Math.hypot(this.x, this.y, this.z); };
+        Vec3.prototype.normalize = function() {
+            var l = this.length();
+            return l > 0 ? this.scale(1 / l) : new Vec3(0, 0, 0);
+        };
+
+        function worldToCamera(p, camPos, yaw, pitch) {
+            var dx = p.x - camPos.x;
+            var dy = p.y - camPos.y;
+            var dz = p.z - camPos.z;
+
+            var cy = Math.cos(-yaw);
+            var sy = Math.sin(-yaw);
+            var x1 = dx * cy - dz * sy;
+            var z1 = dx * sy + dz * cy;
+
+            var cp = Math.cos(pitch);
+            var sp = Math.sin(pitch);
+            var y2 = dy * cp - z1 * sp;
+            var z2 = dy * sp + z1 * cp;
+
+            return new Vec3(x1, y2, z2);
+        }
+
+        var NEAR = 0.15;
+        function clipPolygonNear(verts) {
+            var out = [];
+            var len = verts.length;
+            for (var i = 0; i < len; i++) {
+                var curr = verts[i];
+                var next = verts[(i + 1) % len];
+                var currIn = curr.z >= NEAR;
+                var nextIn = next.z >= NEAR;
+
+                if (currIn) out.push(curr);
+                if (currIn !== nextIn) {
+                    var t = (NEAR - curr.z) / (next.z - curr.z);
+                    out.push(new Vec3(
+                        curr.x + (next.x - curr.x) * t,
+                        curr.y + (next.y - curr.y) * t,
+                        NEAR
+                    ));
+                }
+            }
+            return out;
+        }
+
+        function project(v, width, height, fovScale) {
+            var invZ = fovScale / v.z;
+            return {
+                x: width * 0.5 + v.x * invZ,
+                y: height * 0.5 - v.y * invZ
+            };
+        }
+
+        // ==========================================
+        // 2. WORLD GEOMETRY & VECTOR DEV TEXTURES
+        // ==========================================
+        var colliders = [];
+        var faces = [];
+
+        function addBox(x, y, z, w, h, d, theme, label) {
+            theme = theme || 'grey';
+            var minX = x - w / 2, maxX = x + w / 2;
+            var minY = y - h / 2, maxY = y + h / 2;
+            var minZ = z - d / 2, maxZ = z + d / 2;
+
+            colliders.push({ minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ });
+
+            var p000 = new Vec3(minX, minY, minZ);
+            var p100 = new Vec3(maxX, minY, minZ);
+            var p110 = new Vec3(maxX, maxY, minZ);
+            var p010 = new Vec3(minX, maxY, minZ);
+            var p001 = new Vec3(minX, minY, maxZ);
+            var p101 = new Vec3(maxX, minY, maxZ);
+            var p111 = new Vec3(maxX, maxY, maxZ);
+            var p011 = new Vec3(minX, maxY, maxZ);
+
+            var boxFaces = [
+                { v0: p001, v1: p101, v2: p111, v3: p011, normal: new Vec3(0, 0, 1),  uLen: w, vLen: h, shade: 1.00 },
+                { v0: p100, v1: p000, v2: p010, v3: p110, normal: new Vec3(0, 0, -1), uLen: w, vLen: h, shade: 0.85 },
+                { v0: p101, v1: p100, v2: p110, v3: p111, normal: new Vec3(1, 0, 0),  uLen: d, vLen: h, shade: 0.92 },
+                { v0: p000, v1: p001, v2: p011, v3: p010, normal: new Vec3(-1, 0, 0), uLen: d, vLen: h, shade: 0.78 },
+                { v0: p011, v1: p111, v2: p110, v3: p010, normal: new Vec3(0, 1, 0),  uLen: w, vLen: d, shade: 1.08 },
+                { v0: p000, v1: p100, v2: p101, v3: p001, normal: new Vec3(0, -1, 0), uLen: w, vLen: d, shade: 0.60 }
+            ];
+
+            for (var i = 0; i < boxFaces.length; i++) {
+                var f = boxFaces[i];
+                var center = f.v0.add(f.v2).scale(0.5);
+                var faceVerts = [];
+                faceVerts.push(f.v0);
+                faceVerts.push(f.v1);
+                faceVerts.push(f.v2);
+                faceVerts.push(f.v3);
+
+                faces.push({
+                    verts: faceVerts,
+                    v0: f.v0,
+                    v1: f.v1,
+                    v3: f.v3,
+                    normal: f.normal,
+                    center: center,
+                    uLen: f.uLen,
+                    vLen: f.vLen,
+                    theme: theme,
+                    shade: f.shade,
+                    label: label || (theme === 'orange' ? 'DEV_WALL_01' : 'DEV_FLOOR_01')
+                });
+            }
+        }
+
+        // Ground Floor
+        addBox(0, -0.5, 0, 60, 1, 60, 'grey', 'DEV_FLOOR_60x60');
+
+        // Outer Arena Perimeter Walls
+        addBox(0, 4, -30, 60, 8, 1, 'orange', 'PERIMETER_N');
+        addBox(0, 4, 30, 60, 8, 1, 'orange', 'PERIMETER_S');
+        addBox(-30, 4, 0, 1, 8, 60, 'orange', 'PERIMETER_W');
+        addBox(30, 4, 0, 1, 8, 60, 'orange', 'PERIMETER_E');
+
+        // Zone 1: Jump Calibration Boxes
+        addBox(-8, 0.25, -6, 2.5, 0.5, 2.5, 'orange', 'H: 0.50m');
+        addBox(-4, 0.50, -6, 2.5, 1.0, 2.5, 'grey',   'H: 1.00m');
+        addBox(0,  0.625, -6, 2.5, 1.25, 2.5, 'orange', 'H: 1.25m');
+addBox(4,  0.75, -6, 2.5, 1.5, 2.5, 'grey',   'H: 1.50m (CROUCH)');
+// Zone 2: Low & High Walls
+addBox(-10, 0.5, 4, 8, 1.0, 0.8, 'orange', 'WALL 1.0m');
+addBox(-10, 0.65, 9, 8, 1.3, 0.8, 'grey',   'WALL 1.3m');
+addBox(-10, 1.1, 14, 8, 2.2, 0.8, 'orange', 'WALL 2.2m');
+addBox(-13, 0.5, 12.6, 2, 1.0, 2, 'grey',   'STEP 1.0m');
+// Zone 3: Staircase & Elevated Catwalk
+for (var s = 0; s < 6; s++) {
+addBox(12, 0.25 + s * 0.5, -10 + s * 1.2, 3, 0.5, 1.2, s % 2 === 0 ? 'grey' : 'orange', 'STEP ' + (s + 1));
+}
+addBox(12, 2.75, 0, 5, 0.5, 8, 'orange', 'CATWALK_A');
+addBox(12, 2.75, 8.5, 5, 0.5, 4, 'grey', 'CATWALK_B');
+addBox(12, 3.4, 1.5, 2, 0.8, 0.6, 'grey', 'VAULT_BAR');
+// Zone 4: Crate Pyramid
+addBox(0, 0.5, 12, 3, 1.0, 3, 'grey', 'CRATE_1m');
+addBox(3, 0.5, 12, 3, 1.0, 3, 'orange', 'CRATE_1m');
+addBox(1.5, 1.5, 12, 2.5, 1.0, 2.5, 'orange', 'TOP_CRATE');
+addBox(-3, 0.75, 12, 2, 1.5, 2, 'grey', 'CRATE_1.5m');
+// ==========================================
+// 3. REALISTIC FIRST-PERSON PHYSICS ENGINE
+// ==========================================
+var player = {
+    pos: new Vec3(0, 0, 2),
+    vel: new Vec3(0, 0, 0),
+    radius: 0.38,
+    standingHeight: 1.8,
+    crouchHeight: 1.05,
+    proneHeight: 0.45,       // Low crawl height
+    currentHeight: 1.8,
+    eyeOffset: 0.15,
+    grounded: false,
+    crouching: false,
+    prone: false,            // Prone state flag
+
+    gravity: 22.0,
+    jumpImpulse: 8.2,
+    walkSpeed: 5.5,
+    sprintSpeed: 8.2,
+    crouchSpeed: 2.8,
+    proneSpeed: 1.3,         // Slow crawl speed
+    groundAccel: 65.0,
+    airAccel: 14.0,
+    groundFriction: 10.0,
+    coyoteTimer: 0,
+    jumpBufferTimer: 0
+};
+
+var keys = {};
+var yaw = Math.PI;
+var pitch = -0.05;
+var mouseSensitivity = 0.0025; // Lower = slower (e.g., 0.001), Higher = faster (e.g., 0.005)
+canvas.addEventListener('mousedown', function() {
+isDragging = true;
+if (!pointerLocked && canvas.requestPointerLock) {
+try {
+var p = canvas.requestPointerLock();
+if (p && p.catch) p.catch(function() {});
+} catch (e) {}
+}
+});
+window.addEventListener('mouseup', function() {
+isDragging = false;
+});
+document.addEventListener('pointerlockchange', function() {
+    pointerLocked = (document.pointerLockElement === canvas);
+    if (pointerLocked) {
+        gameActive = true;
+        blocker.style.display = 'none';
+        lookModeEl.textContent = 'MOUSE LOCKED (ESC TO PAUSE)';
+    } else {
+        gameActive = false;
+        blocker.style.display = 'flex';
+        lookModeEl.textContent = 'PAUSED (CLICK TO RESUME)';
+    }
+});
+
+
+document.addEventListener('mousemove', function(e) {
+    if (!gameActive) return;
+    if (pointerLocked || isDragging) {
+        var mx = e.movementX || 0;
+        var my = e.movementY || 0;
+
+        // Discard Chrome/Windows Pointer Lock cursor-reset spikes
+        if (Math.abs(mx) > 80 || Math.abs(my) > 80) {
+            return;
+        }
+
+        yaw -= mx * mouseSensitivity;
+        pitch -= my * mouseSensitivity;
+
+        var maxPitch = 1.35;
+        pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
+    }
+});
+
+document.addEventListener('keydown', function(e) {
+    keys[e.code] = true;
+
+    // Prevent browser shortcuts (Space scroll, Ctrl+W, etc.) while playing
+    if (gameActive && (e.code === 'Space' || e.ctrlKey || e.code === 'ControlLeft' || e.code === 'ControlRight')) {
+        e.preventDefault();
+    }
+
+    // Live mouse sensitivity adjustment with [ and ]
+    if (e.code === 'BracketLeft')  mouseSensitivity = Math.max(0.0005, mouseSensitivity - 0.0005);
+    if (e.code === 'BracketRight') mouseSensitivity = Math.min(0.0150, mouseSensitivity + 0.0005);
+
+    // Toggle Prone with Z (only when grounded, or press Z again to get up)
+    if (e.code === 'KeyZ' && !e.repeat) {
+        if (!player.prone && player.grounded) {
+            player.prone = true;
+            player.crouching = false;
+        } else if (player.prone) {
+            // Check headroom before leaving prone
+            if (!intersectsAny(player.pos, player.standingHeight)) {
+                player.prone = false;
+            } else if (!intersectsAny(player.pos, player.crouchHeight)) {
+                player.prone = false;
+                player.crouching = true;
+            }
+        }
+    }
+
+    // Pressing Space while prone stands you up instead of jumping
+    if (e.code === 'Space') {
+        if (player.prone) {
+            if (!intersectsAny(player.pos, player.standingHeight)) {
+                player.prone = false;
+            } else if (!intersectsAny(player.pos, player.crouchHeight)) {
+                player.prone = false;
+                player.crouching = true;
+            }
+        } else {
+            player.jumpBufferTimer = 0.12;
+        }
+    }
+});
+
+document.addEventListener('keyup', function(e) {
+    keys[e.code] = false;
+});
+
+
+function intersectsAny(pos, height) {
+var minX = pos.x - player.radius, maxX = pos.x + player.radius;
+var minY = pos.y, maxY = pos.y + height;
+var minZ = pos.z - player.radius, maxZ = pos.z + player.radius;
+for (var i = 0; i < colliders.length; i++) {
+var b = colliders[i];
+if (maxX > b.minX && minX < b.maxX &&
+maxY > b.minY && minY < b.maxY &&
+maxZ > b.minZ && minZ < b.maxZ) {
+return b;
+}
+}
+return null;
+}
+
+function lockPointer() {
+    if (!canvas.requestPointerLock) return;
+    try {
+        // Request raw, unaccelerated mouse input
+        var p = canvas.requestPointerLock({ unadjustedMovement: true });
+        if (p && p.catch) {
+            p.catch(function() {
+                // Fallback if OS/browser doesn't support unadjustedMovement
+                canvas.requestPointerLock();
+            });
+        }
+    } catch (e) {
+        try { canvas.requestPointerLock(); } catch (err) {}
+    }
+}
+
+
+function accelerate(wishDir, wishSpeed, accel, dt) {
+var currentSpeed = player.vel.x * wishDir.x + player.vel.z * wishDir.z;
+var addSpeed = wishSpeed - currentSpeed;
+if (addSpeed <= 0) return;
+var accelSpeed = Math.min(addSpeed, accel * wishSpeed * dt);
+player.vel.x += accelSpeed * wishDir.x;
+player.vel.z += accelSpeed * wishDir.z;
+}
+function updatePhysics(dt) {
+var turnSpeed = 2.2;
+if (keys.ArrowLeft) yaw += turnSpeed * dt;
+if (keys.ArrowRight) yaw -= turnSpeed * dt;
+if (keys.ArrowUp) pitch = Math.min(Math.PI / 2 - 0.05, pitch + turnSpeed * 0.7 * dt);
+if (keys.ArrowDown) pitch = Math.max(-Math.PI / 2 + 0.05, pitch - turnSpeed * 0.7 * dt);
+var wantsCrouch = keys.KeyC || keys.ControlLeft;
+if (wantsCrouch) {
+if (!player.crouching) {
+if (!player.grounded) {
+player.pos.y += (player.standingHeight - player.crouchHeight) * 0.6;
+}
+player.crouching = true;
+}
+} else if (player.crouching) {
+if (!intersectsAny(player.pos, player.standingHeight)) {
+player.crouching = false;
+}
+}
+var targetHeight = player.crouching ? player.crouchHeight : player.standingHeight;
+player.currentHeight += (targetHeight - player.currentHeight) * Math.min(1, dt * 18);
+var forward = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw));
+var right = new Vec3(Math.cos(yaw), 0, Math.sin(yaw));
+var wishDir = new Vec3(0, 0, 0);
+if (keys.KeyW) wishDir = wishDir.add(forward);
+if (keys.KeyS) wishDir = wishDir.sub(forward);
+if (keys.KeyD) wishDir = wishDir.add(right);
+if (keys.KeyA) wishDir = wishDir.sub(right);
+wishDir = wishDir.normalize();
+var maxSpeed = player.crouching
+? player.crouchSpeed
+: (keys.ShiftLeft ? player.sprintSpeed : player.walkSpeed);
+if (player.grounded) {
+var speed = Math.hypot(player.vel.x, player.vel.z);
+if (speed > 0) {
+var newSpeed = Math.max(0, speed - speed * player.groundFriction * dt);
+player.vel.x *= newSpeed / speed;
+player.vel.z *= newSpeed / speed;
+}
+accelerate(wishDir, maxSpeed, player.groundAccel, dt);
+} else {
+accelerate(wishDir, maxSpeed, player.airAccel, dt);
+}
+player.coyoteTimer = player.grounded ? 0.1 : player.coyoteTimer - dt;
+if (player.jumpBufferTimer > 0) player.jumpBufferTimer -= dt;
+if (player.jumpBufferTimer > 0 && player.coyoteTimer > 0) {
+player.vel.y = player.jumpImpulse;
+player.grounded = false;
+player.coyoteTimer = 0;
+player.jumpBufferTimer = 0;
+}
+player.vel.y -= player.gravity * dt;
+// X Axis
+player.pos.x += player.vel.x * dt;
+var hit = intersectsAny(player.pos, player.currentHeight);
+if (hit) {
+if (player.vel.x > 0) player.pos.x = hit.minX - player.radius - 0.0001;
+else if (player.vel.x < 0) player.pos.x = hit.maxX + player.radius + 0.0001;
+player.vel.x = 0;
+}
+// Z Axis
+player.pos.z += player.vel.z * dt;
+hit = intersectsAny(player.pos, player.currentHeight);
+if (hit) {
+if (player.vel.z > 0) player.pos.z = hit.minZ - player.radius - 0.0001;
+else if (player.vel.z < 0) player.pos.z = hit.maxZ + player.radius + 0.0001;
+player.vel.z = 0;
+}
+// Y Axis
+player.pos.y += player.vel.y * dt;
+player.grounded = false;
+hit = intersectsAny(player.pos, player.currentHeight);
+if (hit) {
+if (player.vel.y <= 0) {
+player.pos.y = hit.maxY;
+player.vel.y = 0;
+player.grounded = true;
+} else {
+player.pos.y = hit.minY - player.currentHeight - 0.0001;
+player.vel.y = 0;
+}
+}
+document.getElementById('pos-val').textContent =
+player.pos.x.toFixed(1) + ', ' + player.pos.y.toFixed(2) + ', ' + player.pos.z.toFixed(1);
+document.getElementById('vel-val').textContent =
+Math.hypot(player.vel.x, player.vel.z).toFixed(1) + ' m/s';
+document.getElementById('state-val').textContent =
+player.grounded ? (player.crouching ? 'CROUCHED' : 'GROUNDED') : 'AIRBORNE';
+}
+// ==========================================
+// 4. VECTOR 3D RENDERER (VALVE DEV STYLE)
+// ==========================================
+var ORANGE_FILL = { r: 217, g: 107, b: 20 };
+var GREY_FILL   = { r: 88,  g: 90,  b: 94 };
+var ORANGE_GRID = { r: 250, g: 165, b: 95 };
+var GREY_GRID   = { r: 135, g: 140, b: 148 };
+function shadeColor(c, factor, dist) {
+var fog = Math.min(0.65, dist / 65);
+var fr = (c.r * factor) * (1 - fog) + 28 * fog;
+var fg = (c.g * factor) * (1 - fog) + 31 * fog;
+var fb = (c.b * factor) * (1 - fog) + 38 * fog;
+return 'rgb(' + (fr | 0) + ',' + (fg | 0) + ',' + (fb | 0) + ')';
+}
+function render() {
+var w = canvas.width;
+var h = canvas.height;
+var fovScale = h * 0.78;
+ctx.fillStyle = '#1c1f26';
+ctx.fillRect(0, 0, w, h);
+var camPos = new Vec3(
+player.pos.x,
+player.pos.y + player.currentHeight - player.eyeOffset,
+player.pos.z
+);
+var drawList = [];
+for (var idx = 0; idx < faces.length; idx++) {
+var f = faces[idx];
+var toCam = camPos.sub(f.center);
+if (toCam.dot(f.normal) <= 0) continue;
+var camVerts = [];
+var anyInFront = false;
+var maxZ = -Infinity;
+var distSum = 0;
+for (var vIdx = 0; vIdx < f.verts.length; vIdx++) {
+    var cv = worldToCamera(f.verts[vIdx], camPos, yaw, pitch);
+    if (cv.z >= NEAR) anyInFront = true;
+    if (cv.z > maxZ) maxZ = cv.z;
+    distSum += cv.length();
+    camVerts.push(cv);
+}
+if (!anyInFront) continue;
+
+var clipped = clipPolygonNear(camVerts);
+if (clipped.length < 3) continue;
+
+// Slight priority bias for top surfaces (+Y) so they never flicker against vertical walls
+var sortDepth = maxZ - (f.normal.y > 0 ? 0.02 : 0);
+
+drawList.push({
+    face: f,
+    clipped: clipped,
+    dist: distSum / camVerts.length,
+    sortDepth: sortDepth
+});
+
+}
+drawList.sort(function(a, b) { return b.sortDepth - a.sortDepth; });
+for (var dIdx = 0; dIdx < drawList.length; dIdx++) {
+var item = drawList[dIdx];
+var face = item.face;
+var clipped = item.clipped;
+var dist = item.dist;
+var proj = [];
+for (var pIdx = 0; pIdx < clipped.length; pIdx++) {
+proj.push(project(clipped[pIdx], w, h, fovScale));
+}
+var isOrange = (face.theme === 'orange');
+var fillRGB = isOrange ? ORANGE_FILL : GREY_FILL;
+var gridRGB = isOrange ? ORANGE_GRID : GREY_GRID;
+// 1. Solid Shaded Quad Fill
+ctx.beginPath();
+ctx.moveTo(proj[0].x, proj[0].y);
+for (var i = 1; i < proj.length; i++) {
+ctx.lineTo(proj[i].x, proj[i].y);
+}
+ctx.closePath();
+ctx.fillStyle = shadeColor(fillRGB, face.shade, dist);
+ctx.fill();
+// 2. Vector Surface Grid Lines
+if (dist < 38) {
+ctx.save();
+ctx.clip();
+ctx.strokeStyle = shadeColor(gridRGB, face.shade, dist);
+ctx.lineWidth = 1;
+var v0 = face.v0;
+var v1 = face.v1;
+var v3 = face.v3;
+var stepsU = Math.min(30, Math.floor(face.uLen));
+var stepsV = Math.min(30, Math.floor(face.vLen));
+ctx.beginPath();
+for (var u = 1; u < stepsU; u++) {
+var tu = u / face.uLen;
+var pA = v0.add(v1.sub(v0).scale(tu));
+var pB = v3.add(v1.sub(v0).scale(tu));
+var lineU = [];
+lineU.push(worldToCamera(pA, camPos, yaw, pitch));
+lineU.push(worldToCamera(pB, camPos, yaw, pitch));
+var segU = clipPolygonNear(lineU);
+if (segU.length === 2) {
+var s0 = project(segU[0], w, h, fovScale);
+var s1 = project(segU[1], w, h, fovScale);
+ctx.moveTo(s0.x, s0.y);
+ctx.lineTo(s1.x, s1.y);
+}
+}
+for (var v = 1; v < stepsV; v++) {
+var tv = v / face.vLen;
+var qA = v0.add(v3.sub(v0).scale(tv));
+var qB = v1.add(v3.sub(v0).scale(tv));
+var lineV = [];
+lineV.push(worldToCamera(qA, camPos, yaw, pitch));
+lineV.push(worldToCamera(qB, camPos, yaw, pitch));
+var segV = clipPolygonNear(lineV);
+if (segV.length === 2) {
+var t0 = project(segV[0], w, h, fovScale);
+var t1 = project(segV[1], w, h, fovScale);
+ctx.moveTo(t0.x, t0.y);
+ctx.lineTo(t1.x, t1.y);
+}
+}
+ctx.stroke();
+// Center Vector Crosshair & Measurement Callout
+if (face.normal.y === 0 && dist < 22) {
+var cCam = worldToCamera(face.center, camPos, yaw, pitch);
+if (cCam.z > NEAR) {
+var cProj = project(cCam, w, h, fovScale);
+var arm = Math.max(3, 18 / cCam.z);
+ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+ctx.beginPath();
+ctx.moveTo(cProj.x - arm, cProj.y);
+ctx.lineTo(cProj.x + arm, cProj.y);
+ctx.moveTo(cProj.x, cProj.y - arm);
+ctx.lineTo(cProj.x, cProj.y + arm);
+ctx.stroke();
+if (dist < 14 && face.uLen <= 10) {
+ctx.fillStyle = 'rgba(255,255,255,0.85)';
+var fontSize = Math.max(9, Math.min(14, (140 / cCam.z) | 0));
+ctx.font = fontSize + 'px monospace';
+ctx.textAlign = 'center';
+ctx.fillText(face.label, cProj.x, cProj.y - arm - 4);
+}
+}
+}
+ctx.restore();
+}
+// 3. Crisp Vector Edge Outline
+ctx.beginPath();
+ctx.moveTo(proj[0].x, proj[0].y);
+for (var e = 1; e < proj.length; e++) {
+ctx.lineTo(proj[e].x, proj[e].y);
+}
+ctx.closePath();
+ctx.strokeStyle = isOrange ? 'rgba(255, 220, 180, 0.55)' : 'rgba(180, 185, 195, 0.45)';
+ctx.lineWidth = 1.25;
+ctx.stroke();
+}
+}
+// ==========================================
+// 5. FIXED-TIMESTEP MAIN LOOP
+// ==========================================
+var lastTime = performance.now();
+var FIXED_DT = 1 / 120;
+var accumulator = 0;
+function loop(now) {
+requestAnimationFrame(loop);
+var dt = Math.min((now - lastTime) / 1000, 0.1);
+lastTime = now;
+if (gameActive) {
+accumulator += dt;
+while (accumulator >= FIXED_DT) {
+updatePhysics(FIXED_DT);
+accumulator -= FIXED_DT;
+}
+}
+render();
+}
+// Render initial frame immediately behind the overlay
+render();
+requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>
