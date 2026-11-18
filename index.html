@@ -387,7 +387,7 @@ a {
    PERMANENT CONTROLS
 ================================================ */
 
-#paintButton,
+#backgroundButton,
 #resetButton,
 #notebookButton {
   position: fixed;
@@ -441,7 +441,7 @@ a {
 }
 
 
-#paintButton {
+#backgroundButton {
   left: 24px;
   top: 74px;
 
@@ -455,14 +455,14 @@ a {
   transform: scale(1.06);
 }
 
-#paintButton:hover,
-#paintButton.open {
+#backgroundButton:hover,
+#backgroundButton.open {
   background: #99D3FF;
   transform: scale(1.06);
 }
 
 #resetButton:active,
-#paintButton:active {
+#backgroundButton:active {
   transform: scale(0.95);
 }
 
@@ -1464,7 +1464,7 @@ a {
     top: 12px;
   }
 
-  #paintButton {
+  #backgroundButton {
     left: 12px;
     top: 62px;
   }
@@ -1581,12 +1581,12 @@ a {
 </button>
 
 <button
-  id="paintButton"
+  id="backgroundButton"
   type="button"
   title="Choose background"
   aria-expanded="false"
 >
-  🎨
+  🖼️
 </button>
 
 <button
@@ -2411,9 +2411,9 @@ const wallpaperLayer =
     "wallpaperLayer"
   );
 
-const paintButton =
+const backgroundButton =
   document.getElementById(
-    "paintButton"
+    "backgroundButton"
   );
 
 const backgroundPanel =
@@ -2902,17 +2902,17 @@ function closeBackgroundPanel() {
     "open"
   );
 
-  paintButton.classList.remove(
+  backgroundButton.classList.remove(
     "open"
   );
 
-  paintButton.setAttribute(
+  backgroundButton.setAttribute(
     "aria-expanded",
     "false"
   );
 }
 
-paintButton.addEventListener(
+backgroundButton.addEventListener(
   "click",
   function() {
     const isOpen =
@@ -2920,12 +2920,12 @@ paintButton.addEventListener(
         "open"
       );
 
-    paintButton.classList.toggle(
+    backgroundButton.classList.toggle(
       "open",
       isOpen
     );
 
-    paintButton.setAttribute(
+    backgroundButton.setAttribute(
       "aria-expanded",
       String(isOpen)
     );
@@ -3576,7 +3576,7 @@ document.addEventListener(
         "#backgroundPanel"
       ) &&
       !event.target.closest(
-        "#paintButton"
+        "#backgroundButton"
       ) &&
       !event.target.closest(
         "#resetButton"
