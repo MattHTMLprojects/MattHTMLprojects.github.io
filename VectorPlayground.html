@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Offline Vector Source Dev Parkour</title>
+    <title>VECTOR PLAYGROUND</title>
     <style>
         html, body {
             margin: 0;
@@ -24,8 +24,8 @@
             position: fixed;
             top: 50%;
             left: 50%;
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border: 1.5px solid rgba(255, 255, 255, 0.9);
             border-radius: 50%;
             transform: translate(-50%, -50%);
@@ -88,6 +88,7 @@
     <div id="crosshair"></div>
     <div id="hud">
         <strong>VECTOR_DEV_TEST_01 (LOCAL)</strong><br>
+        ROOM: <span id="room-val">MAIN HUB</span><br>
         POS: <span id="pos-val">0.0, 0.00, 2.0</span><br>
         VEL: <span id="vel-val">0.0 m/s</span><br>
         STATE: <span id="state-val">GROUNDED</span><br>
@@ -96,27 +97,11 @@
 
     <div id="blocker" onclick="enterGame()">
         <h1>[CLICK TO ENTER] MATT'S VECTOR PLAYGROUND</h1>
-        <p><span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> Move &nbsp;|&nbsp; <span class="key">SHIFT</span> Sprint &nbsp;|&nbsp; <span class="key">SPACE</span> Jump &nbsp;|&nbsp; <span class="key">C</span> Crouch</p>
-        <p> <span class="key">E</span> Interact &nbsp;|&nbsp; Mouse Look (or Click-Drag / <span class="key">←</span> <span class="key">→</span> <span class="key">↑</span> <span class="key">↓</span>)</p>
+        <p><span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> Move &nbsp;|&nbsp; <span class="key">SHIFT</span> Sprint &nbsp;|&nbsp; <span class="key">SPACE</span> Jump &nbsp;|&nbsp; <span class="key">C</span> Crouch &nbsp;|&nbsp; <span class="key">Z</span> Prone</p>
+        <p><span class="key">E</span> Interact / Doors &nbsp;|&nbsp; <span class="key">CLICK</span> Shoot Vector Blaster &nbsp;|&nbsp; Mouse Look</p>
     </div>
 
     <script>
-
-        // ==========================================
-        // OPTIONAL BASE64 OVERLAY IMAGE (UNCOMMENT TO USE)
-        // ==========================================
-        /*
-        var overlayImg = new Image();
-        var overlayReady = false;
-        overlayImg.onload = function() {
-            overlayReady = true;
-        };
-        // Replace the string below with your full Base64 data URL (e.g., data:image/png;base64,...)
-        overlayImg.src = "data:image/png;base64,PASTE_YOUR_BASE64_STRING_HERE";
-        */
-
-
-
         var canvas = document.getElementById('gameCanvas');
         var ctx = canvas.getContext('2d');
         var blocker = document.getElementById('blocker');
@@ -133,9 +118,7 @@
             try {
                 if (canvas.requestPointerLock) {
                     var p = canvas.requestPointerLock();
-                    if (p && p.catch) {
-                        p.catch(function() {});
-                    }
+                    if (p && p.catch) p.catch(function() {});
                 }
             } catch (e) {}
         }
@@ -226,7 +209,12 @@
             var minY = y - h / 2, maxY = y + h / 2;
             var minZ = z - d / 2, maxZ = z + d / 2;
 
-            colliders.push({ minX: minX, maxX: maxX, minY: minY, maxY: maxY, minZ: minZ, maxZ: maxZ });
+            colliders.push({
+                minX: minX, maxX: maxX,
+                minY: minY, maxY: maxY,
+                minZ: minZ, maxZ: maxZ,
+                label: label || ''
+            });
 
             var p000 = new Vec3(minX, minY, minZ);
             var p100 = new Vec3(maxX, minY, minZ);
@@ -267,181 +255,93 @@
             }
         }
 
-        // --- STATIC WORLD GEOMETRY ---
-        addBox(0, -0.5, 0, 60, 1, 60, 'grey', 'DEV_FLOOR_60x60');
-
-        // Outer Arena Perimeter Walls
-        addBox(0, 4, -30, 60, 8, 1, 'orange', 'PERIMETER_N');
-        addBox(0, 4, 30, 60, 8, 1, 'orange', 'PERIMETER_S');
-        addBox(-30, 4, 0, 1, 8, 60, 'orange', 'PERIMETER_W');
-        addBox(30, 4, 0, 1, 8, 60, 'orange', 'PERIMETER_E');
-
-        // Zone 1: Jump Calibration Boxes
-        addBox(-8, 0.25, -6, 2.5, 0.5, 2.5, 'orange', 'H: 0.50m');
-        addBox(-4, 0.50, -6, 2.5, 1.0, 2.5, 'grey',   'H: 1.00m');
-        addBox(0,  0.625, -6, 2.5, 1.25, 2.5, 'orange', 'H: 1.25m');
-        addBox(4,  0.75, -6, 2.5, 1.5, 2.5, 'grey',   'H: 1.50m (CROUCH)');
-
-        // Zone 2: Low & High Walls
-        addBox(-10, 0.5, 4, 8, 1.0, 0.8, 'orange', 'WALL 1.0m');
-        addBox(-10, 0.65, 9, 8, 1.3, 0.8, 'grey',   'WALL 1.3m');
-        addBox(-10, 1.1, 14, 8, 2.2, 0.8, 'orange', 'WALL 2.2m');
-        addBox(-13, 0.5, 12.6, 2, 1.0, 2, 'grey',   'STEP 1.0m');
-
-        // Zone 3: Staircase & Elevated Catwalk
-        for (var s = 0; s < 6; s++) {
-            addBox(12, 0.25 + s * 0.5, -10 + s * 1.2, 3, 0.5, 1.2, s % 2 === 0 ? 'grey' : 'orange', 'STEP ' + (s + 1));
-        }
-        addBox(12, 2.75, 0, 5, 0.5, 8, 'orange', 'CATWALK_A');
-        addBox(12, 2.75, 8.5, 5, 0.5, 4, 'grey', 'CATWALK_B');
-        addBox(12, 3.4, 1.5, 2, 0.8, 0.6, 'grey', 'VAULT_BAR');
-
-        // Zone 4: Crate Pyramid
-        addBox(0, 0.5, 12, 3, 1.0, 3, 'grey', 'CRATE_1m');
-        addBox(3, 0.5, 12, 3, 1.0, 3, 'orange', 'CRATE_1m');
-        addBox(1.5, 1.5, 12, 2.5, 1.0, 2.5, 'orange', 'TOP_CRATE');
-        addBox(-3, 0.75, 12, 2, 1.5, 2, 'grey', 'CRATE_1.5m');
-
-        // Static Wall Outlet on North Perimeter Wall
-        addBox(0.85, 0.45, -29.45, 0.22, 0.30, 0.08, 'grey', 'WALL_OUTLET');
-
-        // Save static array lengths so we can cleanly rebuild ONLY the desk when it moves
-        var STATIC_COLLIDER_COUNT = colliders.length;
-        var STATIC_FACE_COUNT = faces.length;
-
         // ==========================================
         // 3. INTERACTIVE SIT-STAND WORKSTATION [30 - 90]
         // ==========================================
         var deskX = 0;
         var deskZ = -28.6;
-        var deskHeightVal = 75; // Range: 30 (Sit) to 90 (Stand)
+        var deskHeightVal = 75;
         var deskBtnUpPos = { x: 0, y: 0, z: 0 };
         var deskBtnDownPos = { x: 0, y: 0, z: 0 };
-        var deskInteractPrompt = ""; // Render this string on your 2D HUD canvas
+        var deskInteractPrompt = "";
 
-        // Input tracking for [E] key
-        var isHoldingE = false;
-        window.addEventListener('keydown', function(e) {
-            if (e.code === 'KeyE') isHoldingE = true;
-        });
-        window.addEventListener('keyup', function(e) {
-            if (e.code === 'KeyE') isHoldingE = false;
-        });
-
-
-        // Power state variables (add right below deskInteractPrompt = "";)
         var monitorOn = false;
         var pcOn = false;
         var monBtnPos = { x: 0, y: 0, z: 0 };
         var pcBtnPos = { x: 0, y: 0, z: 0 };
 
+        var STATIC_COLLIDER_COUNT = 0;
+        var STATIC_FACE_COUNT = 0;
 
         function buildWorkstationGeometry() {
-            // Clear previous dynamic desk colliders and faces
-            colliders.length = STATIC_COLLIDER_COUNT;
-            faces.length = STATIC_FACE_COUNT;
-
-            // Map [30..90] display value to world height [0.72m .. 1.32m]
-            var deskTopY = 0.72 + ((deskHeightVal - 30) / 60) * 0.60;
-            var displayNum = Math.round(deskHeightVal);
-
-            // 1. Sit-Stand Desk Frame & Desktop
-            addBox(deskX, deskTopY - 0.03, deskZ, 3.2, 0.06, 1.4, 'orange', 'DESK [' + displayNum + ']');
-
-            // Fixed Outer Base Legs & Floor Feet
-            addBox(deskX - 1.35, 0.03, deskZ, 0.18, 0.06, 1.1, 'orange', 'DESK_FOOT_L');
-            addBox(deskX + 1.35, 0.03, deskZ, 0.18, 0.06, 1.1, 'orange', 'DESK_FOOT_R');
-            addBox(deskX - 1.35, 0.34, deskZ, 0.16, 0.62, 0.16, 'grey', 'LEG_BASE_L');
-            addBox(deskX + 1.35, 0.34, deskZ, 0.16, 0.62, 0.16, 'grey', 'LEG_BASE_R');
-
-            // Telescoping Inner Columns (Stretch with desk height)
-            var innerLegH = deskTopY - 0.06;
-            addBox(deskX - 1.35, innerLegH / 2, deskZ, 0.11, innerLegH, 0.11, 'orange', 'LEG_TELESCOPE_L');
-            addBox(deskX + 1.35, innerLegH / 2, deskZ, 0.11, innerLegH, 0.11, 'orange', 'LEG_TELESCOPE_R');
-
-            // Under-desk Crossbar
-            addBox(deskX, deskTopY - 0.25, deskZ - 0.35, 2.6, 0.08, 0.08, 'grey', 'CROSSBAR');
-
-            // 2. Interactive Control Panel with [30-90] Readout + UP / DOWN Buttons
-            var ctrlX = deskX - 0.85;
-            var ctrlY = deskTopY - 0.07;
-            var ctrlZ = deskZ + 0.68;
-            addBox(ctrlX, ctrlY, ctrlZ, 0.38, 0.05, 0.12, 'grey', 'HEIGHT: ' + displayNum);
-
-            // Raise Button [UP] (Left side of controller)
-            deskBtnUpPos = { x: ctrlX - 0.10, y: ctrlY, z: ctrlZ + 0.05 };
-            addBox(deskBtnUpPos.x, deskBtnUpPos.y, deskBtnUpPos.z, 0.08, 0.035, 0.05, 'orange', 'UP [E]');
-
-            // Lower Button [DOWN] (Right side of controller)
-            deskBtnDownPos = { x: ctrlX + 0.10, y: ctrlY, z: ctrlZ + 0.05 };
-            addBox(deskBtnDownPos.x, deskBtnDownPos.y, deskBtnDownPos.z, 0.08, 0.035, 0.05, 'orange', 'DN [E]');
-
-            // 3. Ultrawide Monitor + Bottom-Right Power Button
-            addBox(deskX - 0.25, deskTopY + 0.02, deskZ - 0.35, 0.45, 0.04, 0.30, 'grey', 'MON_BASE');
-            addBox(deskX - 0.25, deskTopY + 0.28, deskZ - 0.42, 0.10, 0.50, 0.08, 'orange', 'MON_STAND');
-            addBox(deskX - 0.25, deskTopY + 0.48, deskZ - 0.32, 1.25, 0.58, 0.06, 'grey', 'MONITOR_BEZEL');
-
-            // Screen logic: Orange ONLY when both monitorOn AND pcOn are true
-            var screenTheme = (monitorOn && pcOn) ? 'orange' : 'grey';
-            var screenLabel = !monitorOn ? 'MONITOR_OFF' : (pcOn ? 'SYSTEM_ONLINE' : 'NO_SIGNAL');
-            addBox(deskX - 0.25, deskTopY + 0.48, deskZ - 0.285, 1.17, 0.50, 0.01, screenTheme, screenLabel);
-
-            // Physical Power Button on Bottom-Right of Monitor Bezel
-            monBtnPos = {
-                x: (deskX - 0.25) + 0.54,
-                y: (deskTopY + 0.48) - 0.26,
-                z: (deskZ - 0.32) + 0.035
-            };
-          addBox(monBtnPos.x, monBtnPos.y, monBtnPos.z, 0.06, 0.03, 0.02, monitorOn ? 'orange' : 'grey', 'MON_PWR');
-
-            // 4. Keyboard & Mouse
-            addBox(deskX - 0.35, deskTopY + 0.02, deskZ + 0.22, 0.65, 0.04, 0.24, 'grey', 'KEYBOARD');
-            addBox(deskX + 0.22, deskTopY + 0.025, deskZ + 0.22, 0.12, 0.05, 0.20, 'orange', 'MOUSE');
-
-            // 5. Pencil Cup & Pencils
-            var cupX = deskX - 1.15;
-            var cupZ = deskZ + 0.15;
-            addBox(cupX, deskTopY + 0.09, cupZ, 0.14, 0.18, 0.14, 'orange', 'PENCIL_CUP');
-            addBox(cupX - 0.03, deskTopY + 0.15, cupZ - 0.02, 0.02, 0.26, 0.02, 'grey', 'PENCIL_01');
-            addBox(cupX + 0.02, deskTopY + 0.16, cupZ + 0.03, 0.02, 0.28, 0.02, 'grey', 'PENCIL_02');
-            addBox(cupX + 0.03, deskTopY + 0.14, cupZ - 0.03, 0.02, 0.24, 0.02, 'grey', 'PEN_03');
-
-            // 6. Open-Glass PC Tower (Side Facing Left for Clear View)
-            var pcX = deskX + 1.05;
-            var pcZ = deskZ - 0.05;
-            var pcW = 0.46, pcH = 0.85, pcD = 0.85;
-            var pcBaseY = deskTopY;
-
-            // Physical Power Button on Front-Top of PC Case
-            pcBtnPos = {
-                x: pcX - 0.12,
-                y: pcBaseY + pcH - 0.06,
-                z: pcZ + pcD / 2 + 0.01
-            };
-            addBox(pcBtnPos.x, pcBtnPos.y, pcBtnPos.z, 0.06, 0.06, 0.03, pcOn ? 'orange' : 'grey', 'PC_PWR');
-
-
-            addBox(pcX, pcBaseY + 0.02, pcZ, pcW, 0.04, pcD, 'grey', 'PC_BOTTOM');
-            addBox(pcX, pcBaseY + pcH - 0.02, pcZ, pcW, 0.04, pcD, 'grey', 'PC_TOP');
-            addBox(pcX + pcW/2 - 0.02, pcBaseY + pcH/2, pcZ, 0.04, pcH, pcD, 'orange', 'PC_MB_TRAY');
-            addBox(pcX, pcBaseY + pcH/2, pcZ - pcD/2 + 0.02, pcW, pcH, 0.04, 'grey', 'PC_REAR_IO');
-            addBox(pcX, pcBaseY + pcH/2, pcZ + pcD/2 - 0.02, pcW, pcH, 0.04, 'orange', 'PC_FRONT');
-            addBox(pcX - pcW/2 + 0.02, pcBaseY + pcH/2, pcZ - pcD/2 + 0.02, 0.04, pcH, 0.04, 'grey', 'GLASS_FRAME_1');
-            addBox(pcX - pcW/2 + 0.02, pcBaseY + pcH/2, pcZ + pcD/2 - 0.02, 0.04, pcH, 0.04, 'grey', 'GLASS_FRAME_2');
-
-            // Internal Components
-            addBox(pcX - 0.02, pcBaseY + 0.14, pcZ - 0.18, 0.32, 0.18, 0.34, 'orange', 'PSU_850W');
-            addBox(pcX + 0.16, pcBaseY + 0.52, pcZ - 0.04, 0.04, 0.48, 0.44, 'grey', 'MOTHERBOARD');
-            addBox(pcX + 0.04, pcBaseY + 0.62, pcZ - 0.06, 0.18, 0.16, 0.16, 'orange', 'CPU_COOLER');
+colliders.length = STATIC_COLLIDER_COUNT;
+faces.length = STATIC_FACE_COUNT;
+var deskTopY = 0.72 + ((deskHeightVal - 30) / 60) * 0.60;
+var displayNum = Math.round(deskHeightVal);
+addBox(deskX, deskTopY - 0.03, deskZ, 3.2, 0.06, 1.4, 'orange', 'DESK [' + displayNum + ']');
+addBox(deskX - 1.35, 0.03, deskZ, 0.18, 0.06, 1.1, 'orange', 'DESK_FOOT_L');
+addBox(deskX + 1.35, 0.03, deskZ, 0.18, 0.06, 1.1, 'orange', 'DESK_FOOT_R');
+addBox(deskX - 1.35, 0.34, deskZ, 0.16, 0.62, 0.16, 'grey', 'LEG_BASE_L');
+addBox(deskX + 1.35, 0.34, deskZ, 0.16, 0.62, 0.16, 'grey', 'LEG_BASE_R');
+var innerLegH = deskTopY - 0.06;
+addBox(deskX - 1.35, innerLegH / 2, deskZ, 0.11, innerLegH, 0.11, 'orange', 'LEG_TELESCOPE_L');
+addBox(deskX + 1.35, innerLegH / 2, deskZ, 0.11, innerLegH, 0.11, 'orange', 'LEG_TELESCOPE_R');
+addBox(deskX, deskTopY - 0.25, deskZ - 0.35, 2.6, 0.08, 0.08, 'grey', 'CROSSBAR');
+var ctrlX = deskX - 0.85;
+var ctrlY = deskTopY - 0.07;
+var ctrlZ = deskZ + 0.68;
+addBox(ctrlX, ctrlY, ctrlZ, 0.38, 0.05, 0.12, 'grey', 'HEIGHT: ' + displayNum);
+deskBtnUpPos = { x: ctrlX - 0.10, y: ctrlY, z: ctrlZ + 0.05 };
+addBox(deskBtnUpPos.x, deskBtnUpPos.y, deskBtnUpPos.z, 0.08, 0.035, 0.05, 'orange', 'UP [E]');
+deskBtnDownPos = { x: ctrlX + 0.10, y: ctrlY, z: ctrlZ + 0.05 };
+addBox(deskBtnDownPos.x, deskBtnDownPos.y, deskBtnDownPos.z, 0.08, 0.035, 0.05, 'orange', 'DN [E]');
+addBox(deskX - 0.25, deskTopY + 0.02, deskZ - 0.35, 0.45, 0.04, 0.30, 'grey', 'MON_BASE');
+addBox(deskX - 0.25, deskTopY + 0.28, deskZ - 0.42, 0.10, 0.50, 0.08, 'orange', 'MON_STAND');
+addBox(deskX - 0.25, deskTopY + 0.48, deskZ - 0.32, 1.25, 0.58, 0.06, 'grey', 'MONITOR_BEZEL');
+var screenTheme = (monitorOn && pcOn) ? 'orange' : 'grey';
+var screenLabel = !monitorOn ? 'MONITOR_OFF' : (pcOn ? 'SYSTEM_ONLINE' : 'NO_SIGNAL');
+addBox(deskX - 0.25, deskTopY + 0.48, deskZ - 0.285, 1.17, 0.50, 0.01, screenTheme, screenLabel);
+monBtnPos = {
+x: (deskX - 0.25) + 0.54,
+y: (deskTopY + 0.48) - 0.26,
+z: (deskZ - 0.32) + 0.035
+};
+addBox(monBtnPos.x, monBtnPos.y, monBtnPos.z, 0.06, 0.03, 0.02, monitorOn ? 'orange' : 'grey', 'MON_PWR');
+addBox(deskX - 0.35, deskTopY + 0.02, deskZ + 0.22, 0.65, 0.04, 0.24, 'grey', 'KEYBOARD');
+addBox(deskX + 0.22, deskTopY + 0.025, deskZ + 0.22, 0.12, 0.05, 0.20, 'orange', 'MOUSE');
+var cupX = deskX - 1.15;
+var cupZ = deskZ + 0.15;
+addBox(cupX, deskTopY + 0.09, cupZ, 0.14, 0.18, 0.14, 'orange', 'PENCIL_CUP');
+addBox(cupX - 0.03, deskTopY + 0.15, cupZ - 0.02, 0.02, 0.26, 0.02, 'grey', 'PENCIL_01');
+addBox(cupX + 0.02, deskTopY + 0.16, cupZ + 0.03, 0.02, 0.28, 0.02, 'grey', 'PENCIL_02');
+addBox(cupX + 0.03, deskTopY + 0.14, cupZ - 0.03, 0.02, 0.24, 0.02, 'grey', 'PEN_03');
+var pcX = deskX + 1.05;
+var pcZ = deskZ - 0.05;
+var pcW = 0.46, pcH = 0.85, pcD = 0.85;
+var pcBaseY = deskTopY;
+pcBtnPos = {
+x: pcX - 0.12,
+y: pcBaseY + pcH - 0.06,
+z: pcZ + pcD / 2 + 0.01
+};
+addBox(pcBtnPos.x, pcBtnPos.y, pcBtnPos.z, 0.06, 0.06, 0.03, pcOn ? 'orange' : 'grey', 'PC_PWR');
+addBox(pcX, pcBaseY + 0.02, pcZ, pcW, 0.04, pcD, 'grey', 'PC_BOTTOM');
+addBox(pcX, pcBaseY + pcH - 0.02, pcZ, pcW, 0.04, pcD, 'grey', 'PC_TOP');
+addBox(pcX + pcW/2 - 0.02, pcBaseY + pcH/2, pcZ, 0.04, pcH, pcD, 'orange', 'PC_MB_TRAY');
+addBox(pcX, pcBaseY + pcH/2, pcZ - pcD/2 + 0.02, pcW, pcH, 0.04, 'grey', 'PC_REAR_IO');
+addBox(pcX, pcBaseY + pcH/2, pcZ + pcD/2 - 0.02, pcW, pcH, 0.04, 'orange', 'PC_FRONT');
+addBox(pcX - pcW/2 + 0.02, pcBaseY + pcH/2, pcZ - pcD/2 + 0.02, 0.04, pcH, 0.04, 'grey', 'GLASS_FRAME_1');
+addBox(pcX - pcW/2 + 0.02, pcBaseY + pcH/2, pcZ + pcD/2 - 0.02, 0.04, pcH, 0.04, 'grey', 'GLASS_FRAME_2');
+addBox(pcX - 0.02, pcBaseY + 0.14, pcZ - 0.18, 0.32, 0.18, 0.34, 'orange', 'PSU_850W');
+addBox(pcX + 0.16, pcBaseY + 0.52, pcZ - 0.04, 0.04, 0.48, 0.44, 'grey', 'MOTHERBOARD');
+addBox(pcX + 0.04, pcBaseY + 0.62, pcZ - 0.06, 0.18, 0.16, 0.16, 'orange', 'CPU_COOLER');
 addBox(pcX + 0.01, pcBaseY + 0.40, pcZ + 0.04, 0.26, 0.09, 0.52, 'orange', 'GFX_CARD_GPU');
-// 7. Internal & Desktop Cables
 addBox(pcX + 0.08, pcBaseY + 0.34, pcZ + 0.14, 0.03, 0.24, 0.04, 'grey', 'CABLE_24PIN_ATX');
 addBox(pcX - 0.04, pcBaseY + 0.30, pcZ + 0.18, 0.03, 0.16, 0.03, 'grey', 'CABLE_GPU_PCIE');
 addBox(deskX + 0.40, deskTopY + 0.25, deskZ - 0.48, 1.30, 0.025, 0.025, 'orange', 'CABLE_DISPLAYPORT');
 addBox(pcX, deskTopY + 0.22, deskZ - 0.48, 0.025, 0.16, 0.025, 'orange', 'CABLE_DP_DROP');
 addBox(deskX + 0.35, deskTopY + 0.02, deskZ - 0.15, 1.40, 0.02, 0.02, 'grey', 'CABLE_KB_USB');
 addBox(deskX + 0.65, deskTopY + 0.02, deskZ - 0.10, 0.85, 0.02, 0.02, 'orange', 'CABLE_MOUSE_USB');
-// 8. Dynamic Wall Power Cables (Stretch cleanly to wall outlet at Y = 0.45)
 var outletY = 0.45;
 var pcPsuY = deskTopY + 0.14;
 var pcDropH = Math.abs(pcPsuY - outletY);
@@ -453,234 +353,763 @@ var monDropH = Math.abs(monPsuY - outletY);
 addBox(deskX + 0.30, (monPsuY + outletY) / 2, deskZ - 0.60, 0.025, monDropH, 0.025, 'orange', 'MON_PWR_DROP');
 addBox(deskX + 0.58, outletY, deskZ - 0.60, 0.55, 0.025, 0.025, 'orange', 'MON_PWR_PLUG');
 }
-
-
-// Initial desk build
-buildWorkstationGeometry();
-
-
-        // ==========================================
-        // DESK INTERACTION (SCREEN-SPACE CROSSHAIR RAY)
-        // ==========================================
-        var deskKeysDown = {};
-        window.addEventListener('keydown', function(e) {
-            if (e.code === 'KeyE' || e.key === 'e' || e.key === 'E') {
-                deskKeysDown['E'] = true;
-            }
-        }, true);
-        window.addEventListener('keyup', function(e) {
-            if (e.code === 'KeyE' || e.key === 'e' || e.key === 'E') {
-                deskKeysDown['E'] = false;
-            }
-        }, true);
-
-        var activeDeskButton = null; // 'UP' or 'DOWN' or null
-
-            var eWasDown = false;
-
-        function updateDeskInteraction(dt) {
-            if (typeof player === 'undefined' || !player.pos) return;
-
-            var eDown = !!deskKeysDown['E'];
-            var eJustPressed = eDown && !eWasDown;
-            eWasDown = eDown;
-
-            var dx = player.pos.x - deskX;
-            var dz = player.pos.z - (deskZ + 0.55);
-            var dist = Math.sqrt(dx * dx + dz * dz);
-
-            deskInteractPrompt = "";
-
-            if (dist < 3.6) {
-                var w = canvas.width;
-                var h = canvas.height;
-                var fovScale = h * 0.78;
-                var camPos = new Vec3(
-                    player.pos.x,
-                    player.pos.y + player.currentHeight - player.eyeOffset,
-                    player.pos.z
-                );
-
-                function getScreenDist(posObj) {
-                    var cv = worldToCamera(new Vec3(posObj.x, posObj.y, posObj.z), camPos, yaw, pitch);
-                    if (cv.z <= NEAR) return Infinity;
-                    var pr = project(cv, w, h, fovScale);
-                    return Math.hypot(pr.x - w / 2, pr.y - h / 2);
-                }
-
-                var targets = [
-                    { id: 'DESK_UP',   dist: getScreenDist(deskBtnUpPos) },
-                    { id: 'DESK_DOWN', dist: getScreenDist(deskBtnDownPos) },
-                    { id: 'MON_PWR',   dist: getScreenDist(monBtnPos) },
-                    { id: 'PC_PWR',    dist: getScreenDist(pcBtnPos) }
-                ];
-
-                targets.sort(function(a, b) { return a.dist - b.dist; });
-                var best = targets[0];
-
-                var targetId = (best.dist < 170)
-                    ? best.id
-                    : (player.pos.x <= (deskX - 0.85) ? 'DESK_UP' : 'DESK_DOWN');
-
-                if (targetId === 'DESK_UP') {
-                    deskInteractPrompt = "Hold [E] : RAISE DESK [▲]  |  [" + Math.round(deskHeightVal) + " / 90]";
-                    if (eDown) {
-                        var prevUp = deskHeightVal;
-                        deskHeightVal = Math.min(90, deskHeightVal + 25 * dt);
-                        if (deskHeightVal !== prevUp) buildWorkstationGeometry();
-                    }
-                } else if (targetId === 'DESK_DOWN') {
-                    deskInteractPrompt = "Hold [E] : LOWER DESK [▼]  |  [" + Math.round(deskHeightVal) + " / 90]";
-                    if (eDown) {
-                        var prevDn = deskHeightVal;
-                        deskHeightVal = Math.max(30, deskHeightVal - 25 * dt);
-                        if (deskHeightVal !== prevDn) buildWorkstationGeometry();
-                    }
-                } else if (targetId === 'MON_PWR') {
-                    deskInteractPrompt = "Press [E] : MONITOR POWER (" + (monitorOn ? "ON" : "OFF") + ")";
-                    if (eJustPressed) {
-                        monitorOn = !monitorOn;
-                        buildWorkstationGeometry();
-                    }
-                } else if (targetId === 'PC_PWR') {
-                    deskInteractPrompt = "Press [E] : PC TOWER POWER (" + (pcOn ? "ON" : "OFF") + ")";
-                    if (eJustPressed) {
-                        pcOn = !pcOn;
-                        buildWorkstationGeometry();
-                    }
-                }
-            }
-        }
-
-
-
-
 // ==========================================
-// 3. REALISTIC FIRST-PERSON PHYSICS ENGINE
+// 4. PLAYER STATE & INPUTS
 // ==========================================
 var player = {
-    pos: new Vec3(0, 0, 2),
-    vel: new Vec3(0, 0, 0),
-    radius: 0.38,
-    standingHeight: 1.8,
-    crouchHeight: 1.05,
-    proneHeight: 0.45,       // Low crawl height
-    currentHeight: 1.8,
-    eyeOffset: 0.15,
-    grounded: false,
-    crouching: false,
-    prone: false,            // Prone state flag
-
-    gravity: 22.0,
-    jumpImpulse: 8.2,
-    walkSpeed: 5.5,
-    sprintSpeed: 8.2,
-    crouchSpeed: 2.8,
-    proneSpeed: 1.3,         // Slow crawl speed
-    groundAccel: 65.0,
-    airAccel: 14.0,
-    groundFriction: 10.0,
-    coyoteTimer: 0,
-    jumpBufferTimer: 0
+pos: new Vec3(0, 0, 2),
+vel: new Vec3(0, 0, 0),
+radius: 0.38,
+standingHeight: 1.8,
+crouchHeight: 1.05,
+proneHeight: 0.45,
+currentHeight: 1.8,
+eyeOffset: 0.15,
+grounded: false,
+crouching: false,
+prone: false,
+gravity: 22.0,
+jumpImpulse: 8.2,
+walkSpeed: 5.5,
+sprintSpeed: 8.2,
+crouchSpeed: 2.8,
+proneSpeed: 1.3,
+groundAccel: 65.0,
+airAccel: 14.0,
+groundFriction: 10.0,
+coyoteTimer: 0,
+jumpBufferTimer: 0
 };
-
 var keys = {};
 var yaw = Math.PI;
 var pitch = -0.05;
-var mouseSensitivity = 0.0025; // Lower = slower (e.g., 0.001), Higher = faster (e.g., 0.005)
-canvas.addEventListener('mousedown', function() {
+var mouseSensitivity = 0.0025;
+var crouchToggled = false;
+var eKeysDown = {};
+var eWasDown = false;
+var isTouchingSurfRamp = false;
+// ==========================================
+// 5. VECTOR BLAST 1v1 ARENA & BOT STATE
+// ==========================================
+var blastScoreYou = 0;
+var blastScoreCpu = 0;
+var playerHp = 100;
+var playerLaserTimer = 0;
+var playerLaserTarget = null;
+var weaponRecoil = 0;
+var screenFlashColor = null;
+var screenFlashTimer = 0;
+        var bot = {
+            active: false,
+            pos: new Vec3(0, 0, -16),
+            vel: new Vec3(0, 0, 0),
+            grounded: true,
+            hp: 100,
+            fireCooldown: 0.9,
+            strafeDir: 1,
+            strafeTimer: 0.6,
+            jumpTimer: 1.1,
+            laserTimer: 0,
+            laserEnd: new Vec3(0, 1, 0),
+            respawnTimer: 0
+        };
+
+window.addEventListener('keydown', function(e) {
+if (e.code === 'KeyE' || e.key === 'e' || e.key === 'E') {
+eKeysDown['E'] = true;
+}
+}, true);
+window.addEventListener('keyup', function(e) {
+if (e.code === 'KeyE' || e.key === 'e' || e.key === 'E') {
+eKeysDown['E'] = false;
+}
+}, true);
+canvas.addEventListener('mousedown', function(e) {
 isDragging = true;
 if (!pointerLocked && canvas.requestPointerLock) {
 try {
 var p = canvas.requestPointerLock();
 if (p && p.catch) p.catch(function() {});
-} catch (e) {}
+} catch (err) {}
+}
+if (gameActive && currentRoom === 'VECTOR_BLAST' && e.button === 0) {
+shootVectorBlaster();
 }
 });
 window.addEventListener('mouseup', function() {
 isDragging = false;
 });
 document.addEventListener('pointerlockchange', function() {
-    pointerLocked = (document.pointerLockElement === canvas);
-    if (pointerLocked) {
-        gameActive = true;
-        blocker.style.display = 'none';
-        lookModeEl.textContent = 'MOUSE LOCKED (ESC TO PAUSE)';
-    } else {
-        gameActive = false;
-        blocker.style.display = 'flex';
-        lookModeEl.textContent = 'PAUSED (CLICK TO RESUME)';
-    }
+pointerLocked = (document.pointerLockElement === canvas);
+if (pointerLocked) {
+gameActive = true;
+blocker.style.display = 'none';
+lookModeEl.textContent = 'MOUSE LOCKED (ESC TO PAUSE)';
+} else {
+gameActive = false;
+blocker.style.display = 'flex';
+lookModeEl.textContent = 'PAUSED (CLICK TO RESUME)';
+}
 });
-
-
 document.addEventListener('mousemove', function(e) {
-    if (!gameActive) return;
-    if (pointerLocked || isDragging) {
-        var mx = e.movementX || 0;
-        var my = e.movementY || 0;
-
-        // Discard Chrome/Windows Pointer Lock cursor-reset spikes
-        if (Math.abs(mx) > 80 || Math.abs(my) > 80) {
-            return;
-        }
-
-        yaw -= mx * mouseSensitivity;
-        pitch -= my * mouseSensitivity;
-
-        var maxPitch = 1.35;
-        pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
-    }
+if (!gameActive) return;
+if (pointerLocked || isDragging) {
+var mx = e.movementX || 0;
+var my = e.movementY || 0;
+if (Math.abs(mx) > 80 || Math.abs(my) > 80) return;
+yaw -= mx * mouseSensitivity;
+pitch -= my * mouseSensitivity;
+var maxPitch = 1.35;
+pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
+}
 });
-
 document.addEventListener('keydown', function(e) {
-    keys[e.code] = true;
-
-    // Prevent browser shortcuts (Space scroll, Ctrl+W, etc.) while playing
-    if (gameActive && (e.code === 'Space' || e.ctrlKey || e.code === 'ControlLeft' || e.code === 'ControlRight')) {
-        e.preventDefault();
-    }
-
-    // Live mouse sensitivity adjustment with [ and ]
-    if (e.code === 'BracketLeft')  mouseSensitivity = Math.max(0.0005, mouseSensitivity - 0.0005);
-    if (e.code === 'BracketRight') mouseSensitivity = Math.min(0.0150, mouseSensitivity + 0.0005);
-
-    // Toggle Prone with Z (only when grounded, or press Z again to get up)
-    if (e.code === 'KeyZ' && !e.repeat) {
-        if (!player.prone && player.grounded) {
-            player.prone = true;
-            player.crouching = false;
-        } else if (player.prone) {
-            // Check headroom before leaving prone
-            if (!intersectsAny(player.pos, player.standingHeight)) {
-                player.prone = false;
-            } else if (!intersectsAny(player.pos, player.crouchHeight)) {
-                player.prone = false;
-                player.crouching = true;
-            }
-        }
-    }
-
-    // Pressing Space while prone stands you up instead of jumping
-    if (e.code === 'Space') {
-        if (player.prone) {
-            if (!intersectsAny(player.pos, player.standingHeight)) {
-                player.prone = false;
-            } else if (!intersectsAny(player.pos, player.crouchHeight)) {
-                player.prone = false;
-                player.crouching = true;
-            }
-        } else {
-            player.jumpBufferTimer = 0.12;
-        }
-    }
+keys[e.code] = true;
+if (gameActive && (e.code === 'Space' || e.ctrlKey || e.code === 'ControlLeft' || e.code === 'ControlRight')) {
+e.preventDefault();
+}
+if (e.code === 'BracketLeft')  mouseSensitivity = Math.max(0.0005, mouseSensitivity - 0.0005);
+if (e.code === 'BracketRight') mouseSensitivity = Math.min(0.0150, mouseSensitivity + 0.0005);
+if ((e.code === 'KeyC' || e.code === 'ControlLeft') && !e.repeat) {
+crouchToggled = !crouchToggled;
+if (crouchToggled) player.prone = false;
+}
+if (e.code === 'KeyZ' && !e.repeat) {
+if (!player.prone && player.grounded) {
+player.prone = true;
+player.crouching = false;
+crouchToggled = false;
+} else if (player.prone) {
+if (!intersectsAny(player.pos, player.standingHeight)) {
+player.prone = false;
+} else if (!intersectsAny(player.pos, player.crouchHeight)) {
+player.prone = false;
+player.crouching = true;
+crouchToggled = true;
+}
+}
+}
+if (e.code === 'Space') {
+if (player.prone) {
+if (!intersectsAny(player.pos, player.standingHeight)) {
+player.prone = false;
+} else if (!intersectsAny(player.pos, player.crouchHeight)) {
+player.prone = false;
+player.crouching = true;
+crouchToggled = true;
+}
+} else {
+player.jumpBufferTimer = 0.12;
+}
+}
 });
-
 document.addEventListener('keyup', function(e) {
-    keys[e.code] = false;
+keys[e.code] = false;
 });
+// ==========================================
+// 6. ROOM & DOOR MANAGEMENT SYSTEM
+// ==========================================
+var currentRoom = 'MAIN';
+var activeDoors = [];
+var BLAST_STATIC_COLLIDERS = 0;
+var BLAST_STATIC_FACES = 0;
+function resetPlayerPosition(x, y, z, newYaw) {
+player.pos.x = x;
+player.pos.y = y;
+player.pos.z = z;
+player.vel.x = 0;
+player.vel.y = 0;
+player.vel.z = 0;
+player.grounded = false;
+player.prone = false;
+player.crouching = false;
+crouchToggled = false;
+if (typeof newYaw === 'number') yaw = newYaw;
+}
+function addDoor(x, y, z, facingAxis, targetRoom, label, isLocked) {
+var w = facingAxis === 'X' ? 0.18 : 1.7;
+var d = facingAxis === 'X' ? 1.7 : 0.18;
+var h = 2.6;
+addBox(x, y + h / 2, z, w, h, d, isLocked ? 'grey' : 'orange', label);
+var handleOffsetX = facingAxis === 'X' ? (x < 0 ? 0.12 : -0.12) : 0.55;
+var handleOffsetZ = facingAxis === 'X' ? 0.55 : (z < 0 ? 0.12 : -0.12);
+addBox(x + handleOffsetX, y + 1.1, z + handleOffsetZ, 0.12, 0.12, 0.12, 'grey', 'HANDLE');
+activeDoors.push({
+x: x,
+y: y + 1.3,
+z: z,
+targetRoom: targetRoom,
+label: label,
+isLocked: !!isLocked
+});
+}
+function addSurfRamp(centerX, topY, startZ, lengthZ, dropPerStep, steps) {
+var stepLen = lengthZ / steps;
+for (var i = 0; i < steps; i++) {
+var curZ = startZ + i * stepLen;
+var dropY = topY - (i * dropPerStep);
+for (var w = 0; w < 5; w++) {
+addBox(centerX - 0.6 - (w * 0.45), dropY - (w * 0.35), curZ, 0.6, 0.4, stepLen + 0.1, w % 2 === 0 ? 'orange' : 'grey', 'SURF_L');
+addBox(centerX + 0.6 + (w * 0.45), dropY - (w * 0.35), curZ, 0.6, 0.4, stepLen + 0.1, w % 2 === 0 ? 'orange' : 'grey', 'SURF_R');
+}
+}
+}
+function buildMainHubRoom() {
+bot.active = false;
+document.getElementById('room-val').textContent = 'MAIN HUB';
+addBox(0, -0.5, 0, 60, 1, 60, 'grey', 'DEV_FLOOR_60x60');
+// Outer Arena Perimeter Walls
+addBox(0, 4, -30, 60, 8, 1, 'orange', 'PERIMETER_N');
+addBox(0, 4, 30, 60, 8, 1, 'orange', 'PERIMETER_S');
+addBox(-30, 4, 0, 1, 8, 60, 'orange', 'PERIMETER_W');
+addBox(30, 4, 0, 1, 8, 60, 'orange', 'PERIMETER_E');
+// 4 DOORS ON FAR LEFT WALL (PERIMETER_W at x = -29.45)
+addDoor(-29.45, 0, -18, 'X', 'VECTOR_BLAST', 'DOOR 1: VECTOR BLAST', false);
+addDoor(-29.45, 0,  -6, 'X', 'VECTOR_CLIMB', 'DOOR 2: VECTOR CLIMB', false);
+addDoor(-29.45, 0,   6, 'X', 'VECTOR_SURF',  'DOOR 3: VECTOR SURF',  false);
+addDoor(-29.45, 0,  18, 'X', 'LOCKED',       'DOOR 4: UNDER CONSTRUCTION', true);
+// Zone 1: Jump Calibration Boxes
+addBox(-8, 0.25, -6, 2.5, 0.5, 2.5, 'orange', 'H: 0.50m');
+addBox(-4, 0.50, -6, 2.5, 1.0, 2.5, 'grey',   'H: 1.00m');
+addBox(0,  0.625, -6, 2.5, 1.25, 2.5, 'orange', 'H: 1.25m');
+addBox(4,  0.75, -6, 2.5, 1.5, 2.5, 'grey',   'H: 1.50m (CROUCH)');
+// Zone 2: Low & High Walls
+addBox(-10, 0.5, 4, 8, 1.0, 0.8, 'orange', 'WALL 1.0m');
+addBox(-10, 0.65, 9, 8, 1.3, 0.8, 'grey',   'WALL 1.3m');
+addBox(-10, 1.1, 14, 8, 2.2, 0.8, 'orange', 'WALL 2.2m');
+addBox(-13, 0.5, 12.6, 2, 1.0, 2, 'grey',   'STEP 1.0m');
+// Zone 3: Staircase & Elevated Catwalk
+for (var s = 0; s < 6; s++) {
+addBox(12, 0.25 + s * 0.5, -10 + s * 1.2, 3, 0.5, 1.2, s % 2 === 0 ? 'grey' : 'orange', 'STEP ' + (s + 1));
+}
+addBox(12, 2.75, 0, 5, 0.5, 8, 'orange', 'CATWALK_A');
+addBox(12, 2.75, 8.5, 5, 0.5, 4, 'grey', 'CATWALK_B');
+addBox(12, 3.4, 1.5, 2, 0.8, 0.6, 'grey', 'VAULT_BAR');
+// Zone 4: Crate Pyramid
+addBox(0, 0.5, 12, 3, 1.0, 3, 'grey', 'CRATE_1m');
+addBox(3, 0.5, 12, 3, 1.0, 3, 'orange', 'CRATE_1m');
+addBox(1.5, 1.5, 12, 2.5, 1.0, 2.5, 'orange', 'TOP_CRATE');
+addBox(-3, 0.75, 12, 2, 1.5, 2, 'grey', 'CRATE_1.5m');
+// Static Wall Outlet
+addBox(0.85, 0.45, -29.45, 0.22, 0.30, 0.08, 'grey', 'WALL_OUTLET');
+STATIC_COLLIDER_COUNT = colliders.length;
+STATIC_FACE_COUNT = faces.length;
+buildWorkstationGeometry();
+}
+// ==========================================
+// DOOR 1: VECTOR BLAST (1v1 + CEILING JUMBOTRON)
+// ==========================================
+function rebuildBlastDynamicEntities() {
+colliders.length = BLAST_STATIC_COLLIDERS;
+faces.length = BLAST_STATIC_FACES;
+// 1. Center-Ceiling Basketball-Style Hanging Jumbotron (4-sided)
+var scoreText = 'YOU: ' + blastScoreYou + '  |  CPU: ' + blastScoreCpu;
+addBox(0, 13.5, 0, 0.3, 3.0, 0.3, 'grey', 'JUMBOTRON_MOUNT');
+addBox(0, 11.2, 0, 6.4, 1.8, 6.4, 'grey', 'ARENA_JUMBOTRON');
+// 4 Score Panels facing N, S, E, W
+addBox(0, 11.2,  3.25, 5.8, 1.3, 0.1, 'orange', scoreText);
+addBox(0, 11.2, -3.25, 5.8, 1.3, 0.1, 'orange', scoreText);
+addBox( 3.25, 11.2, 0, 0.1, 1.3, 5.8, 'orange', scoreText);
+addBox(-3.25, 11.2, 0, 0.1, 1.3, 5.8, 'orange', scoreText);
+// 2. Computer Opponent Geometry (when alive)
+if (bot.active && bot.respawnTimer <= 0) {
+var bx = bot.pos.x, by = bot.pos.y, bz = bot.pos.z;
+// Legs & Torso
+addBox(bx, by + 0.55, bz, 0.55, 1.1, 0.45, 'grey', 'CPU_BOT [' + bot.hp + ' HP]');
+// Glowing Orange Visor Head
+addBox(bx, by + 1.45, bz, 0.45, 0.45, 0.45, 'orange', 'CPU_VISOR');
+// Computer's Vector Blaster Rifle
+var toPlayer = new Vec3(player.pos.x - bx, 0, player.pos.z - bz).normalize();
+addBox(bx + toPlayer.x * 0.45, by + 1.05, bz + toPlayer.z * 0.45, 0.22, 0.22, 0.65, 'orange', 'CPU_BLASTER');
+}
+}
+function buildVectorBlastRoom() {
+blastScoreYou = 0;
+blastScoreCpu = 0;
+playerHp = 100;
+document.getElementById('room-val').textContent = 'VECTOR BLAST | HP: 100 | YOU 0 - 0 CPU';
+// Arena Floor, Ceiling & Walls
+addBox(0, -0.5, 0, 52, 1, 52, 'grey', 'BLAST_FLOOR');
+addBox(0, 15.5, 0, 52, 1, 52, 'grey', 'BLAST_CEILING');
+addBox(0, 7.5, -26, 52, 16, 1, 'orange', 'BLAST_WALL_N');
+addBox(0, 7.5,  26, 52, 16, 1, 'orange', 'BLAST_WALL_S');
+addBox(-26, 7.5, 0, 1, 16, 52, 'orange', 'BLAST_WALL_W');
+addBox( 26, 7.5, 0, 1, 16, 52, 'orange', 'BLAST_WALL_E');
+// Return Door on South Wall
+addDoor(0, 0, 25.42, 'Z', 'MAIN', 'EXIT TO MAIN HUB', false);
+// Arena Cover Pillars
+addBox(-11, 3.0, -11, 3.2, 6, 3.2, 'grey', 'PILLAR_NW');
+addBox( 11, 3.0, -11, 3.2, 6, 3.2, 'grey', 'PILLAR_NE');
+addBox(-11, 3.0,  11, 3.2, 6, 3.2, 'grey', 'PILLAR_SW');
+addBox( 11, 3.0,  11, 3.2, 6, 3.2, 'grey', 'PILLAR_SE');
+// Elevated Center Deck & Ramps
+addBox(0, 1.25, -4, 9, 2.5, 6, 'orange', 'CENTER_DECK');
+for (var i = 0; i < 5; i++) {
+addBox(0, 0.25 + i * 0.5, 1.5 - i * 0.6, 3.5, 0.5, 0.8, 'grey', 'DECK_STEP');
+}
+BLAST_STATIC_COLLIDERS = colliders.length;
+BLAST_STATIC_FACES = faces.length;
+// Spawn Bot immediately ready to fight
+bot.active = true;
+bot.pos = new Vec3(0, 0.1, -18);
+bot.vel = new Vec3(0, 0, 0);
+bot.hp = 100;
+bot.fireCooldown = 0.8;
+bot.respawnTimer = 0;
+resetPlayerPosition(0, 0.1, 20, Math.PI);
+rebuildBlastDynamicEntities();
+}
+function shootVectorBlaster() {
+if (weaponRecoil > 0.15) return; // Fire rate cap
+weaponRecoil = 1.0;
+playerLaserTimer = 0.12;
+var camPos = new Vec3(player.pos.x, player.pos.y + player.currentHeight - player.eyeOffset, player.pos.z);
+var lookDir = new Vec3(
+-Math.sin(yaw) * Math.cos(pitch),
+Math.sin(pitch),
+Math.cos(yaw) * Math.cos(pitch)
+).normalize();
+playerLaserTarget = camPos.add(lookDir.scale(45));
+if (!bot.active || bot.respawnTimer > 0) return;
+// Check crosshair alignment to Bot center mass
+var botCenter = new Vec3(bot.pos.x, bot.pos.y + 0.95, bot.pos.z);
+var toBot = botCenter.sub(camPos);
+var dist = toBot.length();
+var dot = toBot.normalize().dot(lookDir);
+// Hit cone check + line-of-sight wall check
+var hitRadiusAngle = Math.atan2(0.75, dist);
+if (dot >= Math.cos(hitRadiusAngle)) {
+var blocked = false;
+for (var s = 1; s < dist; s += 0.8) {
+var testPt = camPos.add(lookDir.scale(s));
+for (var c = 0; c < BLAST_STATIC_COLLIDERS; c++) {
+var b = colliders[c];
+if (testPt.x > b.minX && testPt.x < b.maxX &&
+testPt.y > b.minY && testPt.y < b.maxY &&
+testPt.z > b.minZ && testPt.z < b.maxZ) {
+blocked = true;
+playerLaserTarget = testPt;
+break;
+}
+}
+if (blocked) break;
+}
+if (!blocked) {
+playerLaserTarget = botCenter;
+bot.hp -= 35;
+if (bot.hp <= 0) {
+blastScoreYou++;
+bot.respawnTimer = 1.6;
+screenFlashColor = 'rgba(255, 140, 36, 0.25)';
+screenFlashTimer = 0.25;
+}
+document.getElementById('room-val').textContent =
+'VECTOR BLAST | HP: ' + playerHp + ' | YOU ' + blastScoreYou + ' - ' + blastScoreCpu + ' CPU';
+rebuildBlastDynamicEntities();
+}
+}
+}
 
 
+        function botCollidesAt(x, y, z) {
+            var r = 0.45;
+            var h = 1.75;
+            for (var c = 1; c < BLAST_STATIC_COLLIDERS; c++) {
+                var b = colliders[c];
+                if (x + r > b.minX && x - r < b.maxX &&
+                    y + h > b.minY && y < b.maxY &&
+                    z + r > b.minZ && z - r < b.maxZ) {
+                    return b;
+                }
+            }
+            return null;
+        }
+
+        function updateVectorBlastBot(dt) {
+            if (!bot.active || currentRoom !== 'VECTOR_BLAST') return;
+
+            if (bot.laserTimer > 0) bot.laserTimer -= dt;
+            if (playerLaserTimer > 0) playerLaserTimer -= dt;
+            if (weaponRecoil > 0) weaponRecoil = Math.max(0, weaponRecoil - dt * 4.5);
+            if (screenFlashTimer > 0) screenFlashTimer -= dt;
+
+            if (bot.respawnTimer > 0) {
+                bot.respawnTimer -= dt;
+                if (bot.respawnTimer <= 0) {
+                    var spawns = [
+                        new Vec3(-19, 0.1, -19),
+                        new Vec3( 19, 0.1, -19),
+                        new Vec3(-19, 0.1,  15),
+                        new Vec3( 19, 0.1,  15)
+                    ];
+                    // Pick spawn farthest from player
+                    spawns.sort(function(a, b) {
+                        return b.sub(player.pos).length() - a.sub(player.pos).length();
+                    });
+                    bot.pos = new Vec3(spawns[0].x, spawns[0].y, spawns[0].z);
+                    bot.vel = new Vec3(0, 0, 0);
+                    bot.hp = 100;
+                    bot.fireCooldown = 0.75;
+                    rebuildBlastDynamicEntities();
+                }
+                return;
+            }
+
+            // 1. Rapid Pro Counter-Strafing (Quick A/D jukes)
+            bot.strafeTimer -= dt;
+            if (bot.strafeTimer <= 0) {
+                bot.strafeDir *= -1;
+                bot.strafeTimer = 0.35 + Math.random() * 0.65;
+            }
+
+            // 2. Strafe-Jumping / Bunny-Hop Timing
+            bot.jumpTimer -= dt;
+            if (bot.grounded && bot.jumpTimer <= 0) {
+                bot.vel.y = 7.6;
+                bot.grounded = false;
+                bot.jumpTimer = 0.75 + Math.random() * 0.95;
+            }
+
+            // 3. Tactical Positioning (Aggressive push vs. Evasive kite)
+            var toPlayer = new Vec3(player.pos.x - bot.pos.x, 0, player.pos.z - bot.pos.z);
+            var dist = toPlayer.length();
+            var dir = toPlayer.normalize();
+            var strafeVec = new Vec3(-dir.z * bot.strafeDir, 0, dir.x * bot.strafeDir);
+
+            var forwardWeight = 0;
+            if (bot.hp <= 35) {
+                forwardWeight = -0.85; // Low HP: kite backward while strafing
+            } else if (playerHp <= 50 || dist > 15) {
+                forwardWeight = 0.75;  // Player weak or far: aggressive rush
+            } else if (dist < 6.5) {
+                forwardWeight = -0.65; // Too close: create spacing
+            }
+
+            var wishDir = strafeVec.add(dir.scale(forwardWeight)).normalize();
+
+            // 4. Quake-Style Ground & Air Acceleration
+            var maxBotSpeed = bot.grounded ? 7.8 : 9.4; // Faster air-strafe speed
+            var accel = bot.grounded ? 55.0 : 22.0;
+
+            if (bot.grounded) {
+                var spd = Math.hypot(bot.vel.x, bot.vel.z);
+                if (spd > 0) {
+                    var drop = Math.max(0, spd - spd * 8.0 * dt);
+                    bot.vel.x *= drop / spd;
+                    bot.vel.z *= drop / spd;
+                }
+            }
+
+            var currentProj = bot.vel.x * wishDir.x + bot.vel.z * wishDir.z;
+            var addSpeed = maxBotSpeed - currentProj;
+            if (addSpeed > 0) {
+                var accelSpeed = Math.min(addSpeed, accel * maxBotSpeed * dt);
+                bot.vel.x += accelSpeed * wishDir.x;
+                bot.vel.z += accelSpeed * wishDir.z;
+            }
+
+            // Gravity
+            bot.vel.y -= 22.0 * dt;
+
+            // 5. Axis-Separated Collision & Wall Sliding
+            // X Axis
+            var nextX = Math.max(-24.2, Math.min(24.2, bot.pos.x + bot.vel.x * dt));
+            if (!botCollidesAt(nextX, bot.pos.y, bot.pos.z)) {
+                bot.pos.x = nextX;
+            } else {
+                bot.vel.x = 0;
+                bot.strafeDir *= -1; // Reverse strafe off wall
+            }
+
+            // Z Axis
+            var nextZ = Math.max(-24.2, Math.min(24.2, bot.pos.z + bot.vel.z * dt));
+            if (!botCollidesAt(bot.pos.x, bot.pos.y, nextZ)) {
+                bot.pos.z = nextZ;
+            } else {
+                bot.vel.z = 0;
+                bot.strafeDir *= -1;
+            }
+
+            // Y Axis (Floor & Elevated Platform Landing)
+            var nextY = bot.pos.y + bot.vel.y * dt;
+            bot.grounded = false;
+            if (nextY <= 0) {
+                bot.pos.y = 0;
+                bot.vel.y = 0;
+                bot.grounded = true;
+            } else {
+                var yHit = botCollidesAt(bot.pos.x, nextY, bot.pos.z);
+                if (yHit) {
+                    if (bot.vel.y <= 0) {
+                        bot.pos.y = yHit.maxY;
+                        bot.vel.y = 0;
+                        bot.grounded = true;
+                    } else {
+                        bot.vel.y = 0;
+                    }
+                } else {
+                    bot.pos.y = nextY;
+                }
+            }
+
+            // 6. Pro Blaster Firing Logic
+            bot.fireCooldown -= dt;
+            if (bot.fireCooldown <= 0) {
+                bot.fireCooldown = 0.85 + Math.random() * 0.45;
+                var botEye = new Vec3(bot.pos.x, bot.pos.y + 1.35, bot.pos.z);
+                var playerCenter = new Vec3(player.pos.x, player.pos.y + player.currentHeight * 0.65, player.pos.z);
+                var shotVec = playerCenter.sub(botEye);
+                var shotDist = shotVec.length();
+                var shotDir = shotVec.normalize();
+
+                var pillarHit = null;
+                for (var s = 1; s < shotDist; s += 0.8) {
+                    var pt = botEye.add(shotDir.scale(s));
+                    for (var k = 0; k < BLAST_STATIC_COLLIDERS; k++) {
+                        var box = colliders[k];
+                        if (pt.x > box.minX && pt.x < box.maxX &&
+                            pt.y > box.minY && pt.y < box.maxY &&
+                            pt.z > box.minZ && pt.z < box.maxZ) {
+                            pillarHit = pt;
+                            break;
+                        }
+                    }
+                    if (pillarHit) break;
+                }
+
+                bot.laserTimer = 0.16;
+                if (pillarHit) {
+                    bot.laserEnd = pillarHit;
+                } else {
+                    bot.laserEnd = playerCenter;
+                    // Moving fast makes you harder for the bot to hit!
+                    var playerSpeed = Math.hypot(player.vel.x, player.vel.z);
+                    var hitChance = playerSpeed > 6.5 ? 0.38 : 0.62;
+                    if (Math.random() < hitChance) {
+                        playerHp -= 20;
+                        screenFlashColor = 'rgba(255, 45, 45, 0.35)';
+                        screenFlashTimer = 0.25;
+                        if (playerHp <= 0) {
+                            blastScoreCpu++;
+                            playerHp = 100;
+                            resetPlayerPosition(0, 0.1, 20, Math.PI);
+                        }
+                        document.getElementById('room-val').textContent =
+                            'VECTOR BLAST | HP: ' + playerHp + ' | YOU ' + blastScoreYou + ' - ' + blastScoreCpu + ' CPU';
+                    }
+                }
+            }
+
+            rebuildBlastDynamicEntities();
+        }
+
+
+
+// ==========================================
+// DOOR 2: VECTOR CLIMB (MASSIVE 110m GAUNTLET)
+// ==========================================
+function buildVectorClimbRoom() {
+bot.active = false;
+document.getElementById('room-val').textContent = 'VECTOR CLIMB (110m TOWER) | [C] CROUCH / [Z] PRONE';
+// 24x24 Mega-Tower Shaft (115m tall)
+addBox(0, -0.5, 0, 24, 1, 24, 'grey', 'CLIMB_BASE');
+addBox(0, 57, -12, 24, 115, 1, 'orange', 'TOWER_N');
+addBox(0, 57,  12, 24, 115, 1, 'orange', 'TOWER_S');
+addBox(-12, 57, 0, 1, 115, 24, 'orange', 'TOWER_W');
+addBox( 12, 57, 0, 1, 115, 24, 'orange', 'TOWER_E');
+// Bottom Return Door
+addDoor(0, 0, 11.42, 'Z', 'MAIN', 'EXIT TO MAIN HUB', false);
+// STAGE 1 (0m - 20m): Staggered Diagonal Wall Jumps
+var y = 0;
+for (var i = 0; i < 14; i++) {
+y += 1.38;
+var side = (i % 2 === 0) ? -1 : 1;
+var px = side * (3.5 + (i % 3) * 1.8);
+var pz = -8 + (i * 1.15);
+var size = Math.max(1.6, 2.8 - i * 0.07);
+addBox(px, y, pz, size, 0.45, size, i % 2 === 0 ? 'orange' : 'grey', 'S1_PAD_' + (i + 1));
+}
+// STAGE 2 (20m - 36m): Crouch & Prone Obstacle Gauntlet Decks
+y += 1.2;
+addBox(0, y, 7, 16, 0.5, 5, 'orange', 'S2_CROUCH_BRIDGE');
+// Two low crouch beams (1.15m clearance)
+addBox(-3, y + 1.65, 7, 1.5, 1.0, 5, 'grey', 'CROUCH_BEAM_1 [C]');
+addBox( 3, y + 1.65, 7, 1.5, 1.0, 5, 'grey', 'CROUCH_BEAM_2 [C]');
+// Prone Crawl Tunnel along West Wall (0.65m clearance)
+y += 1.3;
+addBox(-8, y, -1, 4.5, 0.5, 14, 'grey', 'S2_PRONE_TUNNEL');
+addBox(-8, y + 1.40, -1, 4.5, 1.0, 9, 'orange', 'PRONE_SLAB [Z]');
+// STAGE 3 (36m - 68m): Precision Small Pillars & Long Sprint Jumps
+y += 1.2;
+for (var j = 0; j < 22; j++) {
+y += 1.42;
+var ang = j * 0.55;
+var rad = 6.5 + Math.sin(j * 0.8) * 2.5;
+var bx = Math.cos(ang) * rad;
+var bz = Math.sin(ang) * rad;
+var w = (j % 4 === 0) ? 1.4 : 1.9;
+addBox(bx, y, bz, w, 0.45, w, j % 2 === 0 ? 'orange' : 'grey', 'S3_PILLAR_' + (j + 1));
+}
+// STAGE 4 (68m - 84m): High-Altitude Crouch-Jump & Prone Switchbacks
+y += 1.3;
+addBox(0, y, -7, 18, 0.5, 4.5, 'grey', 'S4_HIGH_DECK');
+addBox(-4, y + 1.65, -7, 1.6, 1.0, 4.5, 'orange', 'HIGH_CROUCH [C]');
+addBox( 4, y + 1.38, -7, 2.5, 1.0, 4.5, 'orange', 'HIGH_PRONE [Z]');
+// STAGE 5 (84m - 108m): Final Tight Spiral Ascent
+for (var k = 0; k < 17; k++) {
+y += 1.42;
+var a2 = k * 0.62;
+var rx = Math.cos(a2) * 7.2;
+var rz = Math.sin(a2) * 7.2;
+addBox(rx, y, rz, 1.55, 0.4, 1.55, k % 2 === 0 ? 'orange' : 'grey', 'FINAL_STEP_' + (k + 1));
+}
+// SUMMIT VICTORY PLATFORM (108m+)
+y += 1.2;
+addBox(0, y, 0, 10, 0.6, 10, 'orange', 'SUMMIT_108M_VICTORY');
+addDoor(0, y + 0.3, -4.42, 'Z', 'MAIN', 'SUMMIT VICTORY! RETURN TO HUB', false);
+resetPlayerPosition(0, 0.1, 8, Math.PI);
+}
+// ==========================================
+// DOOR 3: VECTOR SURF (260m COURSE + HAZARD WATER)
+// ==========================================
+function buildVectorSurfRoom() {
+bot.active = false;
+document.getElementById('room-val').textContent = 'VECTOR SURF (260m) | HOLD [A] OR [D] | AVOID WATER';
+// Long Canyon Enclosure (Width 36, Length 280, Height 75)
+// Water hazard sits at Y = 0
+addBox(0, -0.5, 110, 36, 1, 280, 'orange', 'SURF_HAZARD_WATER');
+addBox(0, 37, -30, 36, 75, 1, 'orange', 'SURF_BACK_WALL');
+addBox(0, 37, 250, 36, 75, 1, 'orange', 'SURF_END_WALL');
+addBox(-18, 37, 110, 1, 75, 280, 'orange', 'SURF_WALL_W');
+addBox( 18, 37, 110, 1, 75, 280, 'orange', 'SURF_WALL_E');
+// High Spawn Deck (Y = 58m) + Return Door behind player
+addBox(0, 57.5, -24, 12, 1, 10, 'orange', 'SURF_SPAWN_DECK');
+addDoor(0, 58.0, -28.42, 'Z', 'MAIN', 'EXIT TO MAIN HUB', false);
+// 5-Stage Extended Surf Course
+// Ramp 1: Long Straight Opener
+addSurfRamp(0, 55, -16, 44, 0.26, 32);
+// Ramp 2: Flick Left
+addSurfRamp(-6.5, 44, 32, 44, 0.25, 32);
+// Ramp 3: Wide Flick Right
+addSurfRamp(6.5, 33, 80, 44, 0.25, 32);
+// Ramp 4: Center High-Speed Drop
+addSurfRamp(0, 22, 128, 44, 0.24, 32);
+// Ramp 5: Final Left-to-Center Glide
+addSurfRamp(-4.5, 12, 176, 40, 0.22, 30);
+// Bottom Finish Platform & Return Door
+addBox(0, 2.5, 232, 24, 1, 24, 'orange', 'SURF_FINISH_PAD');
+addDoor(0, 3.0, 243.42, 'Z', 'MAIN', 'SURF COMPLETE! RETURN TO HUB', false);
+resetPlayerPosition(0, 58.1, -24, 0);
+}
+function loadRoom(roomId) {
+currentRoom = roomId;
+colliders.length = 0;
+faces.length = 0;
+activeDoors.length = 0;
+deskInteractPrompt = "";
+if (roomId === 'MAIN') {
+buildMainHubRoom();
+resetPlayerPosition(0, 0.1, 2, Math.PI);
+} else if (roomId === 'VECTOR_BLAST') {
+buildVectorBlastRoom();
+} else if (roomId === 'VECTOR_CLIMB') {
+buildVectorClimbRoom();
+} else if (roomId === 'VECTOR_SURF') {
+buildVectorSurfRoom();
+}
+}
+// ==========================================
+// 7. UNIFIED INTERACTION (DOORS + WORKSTATION)
+// ==========================================
+function updateInteractions(dt)
+{
+var eDown = !!eKeysDown['E'];
+var eJustPressed = eDown && !eWasDown;
+eWasDown = eDown;
+deskInteractPrompt = "";
+var nearDoor = null;
+for (var i = 0; i < activeDoors.length; i++) {
+var d = activeDoors[i];
+var dist = Math.hypot(player.pos.x - d.x, player.pos.y + 1.0 - d.y, player.pos.z - d.z);
+if (dist < 2.8) {
+nearDoor = d;
+break;
+}
+}
+if (nearDoor) {
+if (nearDoor.isLocked) {
+deskInteractPrompt = "[ Under construction ]";
+} else {
+deskInteractPrompt = "Press [E] : " + nearDoor.label;
+if (eJustPressed) {
+loadRoom(nearDoor.targetRoom);
+return;
+}
+}
+return;
+}
+if (currentRoom !== 'MAIN') return;
+var dx = player.pos.x - deskX;
+var dz = player.pos.z - (deskZ + 0.55);
+var deskDist = Math.sqrt(dx * dx + dz * dz);
+if (deskDist < 3.6) {
+var w = canvas.width;
+var h = canvas.height;
+var fovScale = h * 0.78;
+var camPos = new Vec3(
+player.pos.x,
+player.pos.y + player.currentHeight - player.eyeOffset,
+player.pos.z
+);
+function getScreenDist(posObj) {
+var cv = worldToCamera(new Vec3(posObj.x, posObj.y, posObj.z), camPos, yaw, pitch);
+if (cv.z <= NEAR) return Infinity;
+var pr = project(cv, w, h, fovScale);
+return Math.hypot(pr.x - w / 2, pr.y - h / 2);
+}
+var targets = [
+{ id: 'DESK_UP',   dist: getScreenDist(deskBtnUpPos) },
+{ id: 'DESK_DOWN', dist: getScreenDist(deskBtnDownPos) },
+{ id: 'MON_PWR',   dist: getScreenDist(monBtnPos) },
+{ id: 'PC_PWR',    dist: getScreenDist(pcBtnPos) }
+];
+targets.sort(function(a, b) { return a.dist - b.dist; });
+var best = targets[0];
+var targetId = (best.dist < 170)
+? best.id
+: (player.pos.x <= (deskX - 0.85) ? 'DESK_UP' : 'DESK_DOWN');
+if (targetId === 'DESK_UP') {
+deskInteractPrompt = "Hold [E] : RAISE DESK [▲]  |  [" + Math.round(deskHeightVal) + " / 90]";
+if (eDown) {
+var prevUp = deskHeightVal;
+deskHeightVal = Math.min(90, deskHeightVal + 25 * dt);
+if (deskHeightVal !== prevUp) buildWorkstationGeometry();
+}
+} else if (targetId === 'DESK_DOWN') {
+deskInteractPrompt = "Hold [E] : LOWER DESK [▼]  |  [" + Math.round(deskHeightVal) + " / 90]";
+if (eDown) {
+var prevDn = deskHeightVal;
+deskHeightVal = Math.max(30, deskHeightVal - 25 * dt);
+if (deskHeightVal !== prevDn) buildWorkstationGeometry();
+}
+} else if (targetId === 'MON_PWR') {
+deskInteractPrompt = "Press [E] : MONITOR POWER (" + (monitorOn ? "ON" : "OFF") + ")";
+if (eJustPressed) {
+monitorOn = !monitorOn;
+buildWorkstationGeometry();
+}
+} else if (targetId === 'PC_PWR') {
+deskInteractPrompt = "Press [E] : PC TOWER POWER (" + (pcOn ? "ON" : "OFF") + ")";
+if (eJustPressed) {
+pcOn = !pcOn;
+buildWorkstationGeometry();
+}
+}
+}
+}
+// ==========================================
+// 8. PHYSICS ENGINE (CROUCH, PRONE, SURF & WATER)
+// ==========================================
 function intersectsAny(pos, height) {
 var minX = pos.x - player.radius, maxX = pos.x + player.radius;
 var minY = pos.y, maxY = pos.y + height;
@@ -695,24 +1124,6 @@ return b;
 }
 return null;
 }
-
-function lockPointer() {
-    if (!canvas.requestPointerLock) return;
-    try {
-        // Request raw, unaccelerated mouse input
-        var p = canvas.requestPointerLock({ unadjustedMovement: true });
-        if (p && p.catch) {
-            p.catch(function() {
-                // Fallback if OS/browser doesn't support unadjustedMovement
-                canvas.requestPointerLock();
-            });
-        }
-    } catch (e) {
-        try { canvas.requestPointerLock(); } catch (err) {}
-    }
-}
-
-
 function accelerate(wishDir, wishSpeed, accel, dt) {
 var currentSpeed = player.vel.x * wishDir.x + player.vel.z * wishDir.z;
 var addSpeed = wishSpeed - currentSpeed;
@@ -727,7 +1138,7 @@ if (keys.ArrowLeft) yaw += turnSpeed * dt;
 if (keys.ArrowRight) yaw -= turnSpeed * dt;
 if (keys.ArrowUp) pitch = Math.min(Math.PI / 2 - 0.05, pitch + turnSpeed * 0.7 * dt);
 if (keys.ArrowDown) pitch = Math.max(-Math.PI / 2 + 0.05, pitch - turnSpeed * 0.7 * dt);
-var wantsCrouch = crouchToggled;
+var wantsCrouch = crouchToggled && !player.prone;
 if (wantsCrouch) {
 if (!player.crouching) {
 if (!player.grounded) {
@@ -740,7 +1151,9 @@ if (!intersectsAny(player.pos, player.standingHeight)) {
 player.crouching = false;
 }
 }
-var targetHeight = player.crouching ? player.crouchHeight : player.standingHeight;
+var targetHeight = player.prone
+? player.proneHeight
+: (player.crouching ? player.crouchHeight : player.standingHeight);
 player.currentHeight += (targetHeight - player.currentHeight) * Math.min(1, dt * 18);
 var forward = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw));
 var right = new Vec3(Math.cos(yaw), 0, Math.sin(yaw));
@@ -750,9 +1163,9 @@ if (keys.KeyS) wishDir = wishDir.sub(forward);
 if (keys.KeyD) wishDir = wishDir.add(right);
 if (keys.KeyA) wishDir = wishDir.sub(right);
 wishDir = wishDir.normalize();
-var maxSpeed = player.crouching
-? player.crouchSpeed
-: (keys.ShiftLeft ? player.sprintSpeed : player.walkSpeed);
+var maxSpeed = player.prone
+? player.proneSpeed
+: (player.crouching ? player.crouchSpeed : (keys.ShiftLeft ? player.sprintSpeed : player.walkSpeed));
 if (player.grounded) {
 var speed = Math.hypot(player.vel.x, player.vel.z);
 if (speed > 0) {
@@ -773,10 +1186,12 @@ player.coyoteTimer = 0;
 player.jumpBufferTimer = 0;
 }
 player.vel.y -= player.gravity * dt;
+isTouchingSurfRamp = false;
 // X Axis
 player.pos.x += player.vel.x * dt;
 var hit = intersectsAny(player.pos, player.currentHeight);
 if (hit) {
+if (hit.label === 'SURF_L' || hit.label === 'SURF_R') isTouchingSurfRamp = true;
 if (player.vel.x > 0) player.pos.x = hit.minX - player.radius - 0.0001;
 else if (player.vel.x < 0) player.pos.x = hit.maxX + player.radius + 0.0001;
 player.vel.x = 0;
@@ -785,6 +1200,7 @@ player.vel.x = 0;
 player.pos.z += player.vel.z * dt;
 hit = intersectsAny(player.pos, player.currentHeight);
 if (hit) {
+if (hit.label === 'SURF_L' || hit.label === 'SURF_R') isTouchingSurfRamp = true;
 if (player.vel.z > 0) player.pos.z = hit.minZ - player.radius - 0.0001;
 else if (player.vel.z < 0) player.pos.z = hit.maxZ + player.radius + 0.0001;
 player.vel.z = 0;
@@ -794,7 +1210,17 @@ player.pos.y += player.vel.y * dt;
 player.grounded = false;
 hit = intersectsAny(player.pos, player.currentHeight);
 if (hit) {
-if (player.vel.y <= 0) {
+if (hit.label === 'SURF_HAZARD_WATER') {
+// Fell into the water below -> Restart at top of Surf Deck
+screenFlashColor = 'rgba(30, 140, 255, 0.35)';
+screenFlashTimer = 0.3;
+resetPlayerPosition(0, 58.1, -24, 0);
+return;
+} else if (hit.label === 'SURF_L' || hit.label === 'SURF_R') {
+isTouchingSurfRamp = true;
+player.pos.y = hit.maxY;
+player.vel.y = 0;
+} else if (player.vel.y <= 0) {
 player.pos.y = hit.maxY;
 player.vel.y = 0;
 player.grounded = true;
@@ -803,256 +1229,287 @@ player.pos.y = hit.minY - player.currentHeight - 0.0001;
 player.vel.y = 0;
 }
 }
+// VECTOR SURF: Counter-Strike style slope gliding when holding A or D
+if (currentRoom === 'VECTOR_SURF' && isTouchingSurfRamp && (keys.KeyA || keys.KeyD)) {
+player.vel.y = Math.max(player.vel.y, -2.2);
+player.vel.z = Math.min(player.vel.z + 20.0 * dt, 24.0);
+}
 document.getElementById('pos-val').textContent =
 player.pos.x.toFixed(1) + ', ' + player.pos.y.toFixed(2) + ', ' + player.pos.z.toFixed(1);
 document.getElementById('vel-val').textContent =
 Math.hypot(player.vel.x, player.vel.z).toFixed(1) + ' m/s';
 document.getElementById('state-val').textContent =
-player.grounded ? (player.crouching ? 'CROUCHED' : 'GROUNDED') : 'AIRBORNE';
+isTouchingSurfRamp ? 'SURFING' : (player.grounded ? (player.prone ? 'PRONE' : (player.crouching ? 'CROUCHED' : 'GROUNDED')) : 'AIRBORNE');
 }
-
 // ==========================================
-// 4. VECTOR 3D RENDERER (VALVE DEV STYLE)
+// 9. VECTOR 3D RENDERER + WEAPON VIEWMODEL
 // ==========================================
 var ORANGE_FILL = { r: 217, g: 107, b: 20 };
 var GREY_FILL   = { r: 88,  g: 90,  b: 94 };
 var ORANGE_GRID = { r: 250, g: 165, b: 95 };
 var GREY_GRID   = { r: 135, g: 140, b: 148 };
+var WATER_FILL  = { r: 24,  g: 105, b: 195 };
+var WATER_GRID  = { r: 110, g: 195, b: 255 };
 function shadeColor(c, factor, dist) {
-var fog = Math.min(0.65, dist / 65);
+var fog = Math.min(0.65, dist / 125);
 var fr = (c.r * factor) * (1 - fog) + 28 * fog;
 var fg = (c.g * factor) * (1 - fog) + 31 * fog;
 var fb = (c.b * factor) * (1 - fog) + 38 * fog;
 return 'rgb(' + (fr | 0) + ',' + (fg | 0) + ',' + (fb | 0) + ')';
 }
-// ==========================================
-// 4. RENDERER & DESK INTERACTION HUD
-// ==========================================
-var isHoldingE = false;
-window.addEventListener('keydown', function(e) {
-    if (e.key === 'e' || e.key === 'E' || e.code === 'KeyE') isHoldingE = true;
-});
-window.addEventListener('keyup', function(e) {
-    if (e.key === 'e' || e.key === 'E' || e.code === 'KeyE') isHoldingE = false;
-});
-
-var crouchToggled = false;
-
-window.addEventListener('keydown', function(e) {
-    if ((e.code === 'KeyC' || e.code === 'ControlLeft') && !e.repeat) {
-        crouchToggled = !crouchToggled;
-    }
-});
-
-
-function render() {
-    var w = canvas.width;
-    var h = canvas.height;
-    var fovScale = h * 0.78;
-    ctx.fillStyle = '#1c1f26';
-    ctx.fillRect(0, 0, w, h);
-
-    var camPos = new Vec3(
-        player.pos.x,
-        player.pos.y + player.currentHeight - player.eyeOffset,
-        player.pos.z
-    );
-
-    var drawList = [];
-    for (var idx = 0; idx < faces.length; idx++) {
-        var f = faces[idx];
-        var toCam = camPos.sub(f.center);
-        if (toCam.dot(f.normal) <= 0) continue;
-
-        var camVerts = [];
-        var anyInFront = false;
-        var maxZ = -Infinity;
-        var distSum = 0;
-        for (var vIdx = 0; vIdx < f.verts.length; vIdx++) {
-            var cv = worldToCamera(f.verts[vIdx], camPos, yaw, pitch);
-            if (cv.z >= NEAR) anyInFront = true;
-            if (cv.z > maxZ) maxZ = cv.z;
-            distSum += cv.length();
-            camVerts.push(cv);
-        }
-        if (!anyInFront) continue;
-
-        var clipped = clipPolygonNear(camVerts);
-        if (clipped.length < 3) continue;
-
-        var sortDepth = maxZ - (f.normal.y > 0 ? 0.02 : 0);
-        drawList.push({
-            face: f,
-            clipped: clipped,
-            dist: distSum / camVerts.length,
-            sortDepth: sortDepth
-        });
-    }
-
-    drawList.sort(function(a, b) { return b.sortDepth - a.sortDepth; });
-
-    for (var dIdx = 0; dIdx < drawList.length; dIdx++) {
-        var item = drawList[dIdx];
-        var face = item.face;
-        var clipped = item.clipped;
-        var dist = item.dist;
-        var proj = [];
-        for (var pIdx = 0; pIdx < clipped.length; pIdx++) {
-            proj.push(project(clipped[pIdx], w, h, fovScale));
-        }
-
-        var isOrange = (face.theme === 'orange');
-        var fillRGB = isOrange ? ORANGE_FILL : GREY_FILL;
-        var gridRGB = isOrange ? ORANGE_GRID : GREY_GRID;
-
-        // 1. Solid Shaded Quad Fill
-        ctx.beginPath();
-        ctx.moveTo(proj[0].x, proj[0].y);
-        for (var i = 1; i < proj.length; i++) {
-            ctx.lineTo(proj[i].x, proj[i].y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = shadeColor(fillRGB, face.shade, dist);
-        ctx.fill();
-
-        // 2. Vector Surface Grid Lines
-        if (dist < 38) {
-            ctx.save();
-            ctx.clip();
-            ctx.strokeStyle = shadeColor(gridRGB, face.shade, dist);
-            ctx.lineWidth = 1;
-            var v0 = face.v0;
-            var v1 = face.v1;
-            var v3 = face.v3;
-            var stepsU = Math.min(30, Math.floor(face.uLen));
-            var stepsV = Math.min(30, Math.floor(face.vLen));
-            ctx.beginPath();
-            for (var u = 1; u < stepsU; u++) {
-                var tu = u / face.uLen;
-                var pA = v0.add(v1.sub(v0).scale(tu));
-                var pB = v3.add(v1.sub(v0).scale(tu));
-                var lineU = [
-                    worldToCamera(pA, camPos, yaw, pitch),
-                    worldToCamera(pB, camPos, yaw, pitch)
-                ];
-                var segU = clipPolygonNear(lineU);
-                if (segU.length === 2) {
-                    var s0 = project(segU[0], w, h, fovScale);
-                    var s1 = project(segU[1], w, h, fovScale);
-                    ctx.moveTo(s0.x, s0.y);
-                    ctx.lineTo(s1.x, s1.y);
-                }
-            }
-            for (var v = 1; v < stepsV; v++) {
-                var tv = v / face.vLen;
-                var qA = v0.add(v3.sub(v0).scale(tv));
-                var qB = v1.add(v3.sub(v0).scale(tv));
-                var lineV = [
-                    worldToCamera(qA, camPos, yaw, pitch),
-                    worldToCamera(qB, camPos, yaw, pitch)
-                ];
-                var segV = clipPolygonNear(lineV);
-                if (segV.length === 2) {
-                    var t0 = project(segV[0], w, h, fovScale);
-                    var t1 = project(segV[1], w, h, fovScale);
-                    ctx.moveTo(t0.x, t0.y);
-                    ctx.lineTo(t1.x, t1.y);
-                }
-            }
-            ctx.stroke();
-
-            // Center Vector Crosshair & Measurement Callout
-            if (face.normal.y === 0 && dist < 22) {
-                var cCam = worldToCamera(face.center, camPos, yaw, pitch);
-                if (cCam.z > NEAR) {
-                    var cProj = project(cCam, w, h, fovScale);
-                    var arm = Math.max(3, 18 / cCam.z);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-                    ctx.beginPath();
-                    ctx.moveTo(cProj.x - arm, cProj.y);
-                    ctx.lineTo(cProj.x + arm, cProj.y);
-                    ctx.moveTo(cProj.x, cProj.y - arm);
-                    ctx.lineTo(cProj.x, cProj.y + arm);
-                    ctx.stroke();
-                    if (dist < 14 && face.uLen <= 10) {
-                        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                        var fontSize = Math.max(9, Math.min(14, (140 / cCam.z) | 0));
-                        ctx.font = fontSize + 'px monospace';
-                        ctx.textAlign = 'center';
-                        ctx.fillText(face.label, cProj.x, cProj.y - arm - 4);
-                    }
-                }
-            }
-            ctx.restore();
-        }
-
-        // 3. Crisp Vector Edge Outline
-        ctx.beginPath();
-        ctx.moveTo(proj[0].x, proj[0].y);
-        for (var e = 1; e < proj.length; e++) {
-            ctx.lineTo(proj[e].x, proj[e].y);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = isOrange ? 'rgba(255, 220, 180, 0.55)' : 'rgba(180, 185, 195, 0.45)';
-        ctx.lineWidth = 1.25;
-        ctx.stroke();
-    }
-
-    // 4. Draw Sit-Stand Desk HUD Prompt
-    if (typeof deskInteractPrompt !== 'undefined' && deskInteractPrompt) {
-        ctx.save();
-        ctx.font = 'bold 16px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(15, 18, 24, 0.85)';
-        ctx.fillRect(w / 2 - 250, h - 80, 500, 36);
-        ctx.strokeStyle = '#ff8c24';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(w / 2 - 250, h - 80, 500, 36);
-        ctx.fillStyle = '#ff9d3b';
-        ctx.fillText(deskInteractPrompt, w / 2, h - 57);
-        ctx.restore();
-    }
-
-            // ==========================================
-            // DRAW BASE64 OVERLAY (UNCOMMENT TO USE)
-            // ==========================================
-            /*
-            if (typeof overlayReady !== 'undefined' && overlayReady) {
-                ctx.save();
-                ctx.globalAlpha = 1.0; // Change to 0.1 - 0.9 for transparency
-                ctx.drawImage(overlayImg, 0, 0, w, h); // Stretches to full screen
-                ctx.restore();
-            }
-            */
-
-
-
+function drawVectorBlasterViewmodel(w, h) {
+var recoilX = weaponRecoil * 18;
+var recoilY = weaponRecoil * 22;
+var bobX = Math.sin(performance.now() * 0.008) * (Math.hypot(player.vel.x, player.vel.z) * 0.8);
+var bobY = Math.abs(Math.cos(performance.now() * 0.008)) * (Math.hypot(player.vel.x, player.vel.z) * 0.8);
+var gx = w * 0.72 + recoilX + bobX;
+var gy = h * 0.78 + recoilY + bobY;
+ctx.save();
+// Blaster Main Chassis
+ctx.fillStyle = '#2d313a';
+ctx.strokeStyle = '#ff8c24';
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(gx - 35, gy + 110);
+ctx.lineTo(gx - 15, gy - 45);
+ctx.lineTo(gx + 45, gy - 45);
+ctx.lineTo(gx + 95, gy + 110);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+// Glowing Orange Energy Barrel & Sight
+ctx.fillStyle = '#ff7b00';
+ctx.fillRect(gx + 4, gy - 68, 22, 26);
+ctx.strokeStyle = '#ffd6a8';
+ctx.strokeRect(gx + 4, gy - 68, 22, 26);
+// Top Vector Sight Rail
+ctx.fillStyle = '#181a1f';
+ctx.fillRect(gx - 4, gy - 35, 38, 70);
+ctx.strokeStyle = '#ff9d3b';
+ctx.strokeRect(gx - 4, gy - 35, 38, 70);
+ctx.restore();
 }
-
+function render() {
+var w = canvas.width;
+var h = canvas.height;
+var fovScale = h * 0.78;
+ctx.fillStyle = '#1c1f26';
+ctx.fillRect(0, 0, w, h);
+var camPos = new Vec3(
+player.pos.x,
+player.pos.y + player.currentHeight - player.eyeOffset,
+player.pos.z
+);
+var drawList = [];
+for (var idx = 0; idx < faces.length; idx++) {
+var f = faces[idx];
+var toCam = camPos.sub(f.center);
+if (toCam.dot(f.normal) <= 0) continue;
+var camVerts = [];
+var anyInFront = false;
+var maxZ = -Infinity;
+var distSum = 0;
+for (var vIdx = 0; vIdx < f.verts.length; vIdx++) {
+var cv = worldToCamera(f.verts[vIdx], camPos, yaw, pitch);
+if (cv.z >= NEAR) anyInFront = true;
+if (cv.z > maxZ) maxZ = cv.z;
+distSum += cv.length();
+camVerts.push(cv);
+}
+if (!anyInFront) continue;
+var clipped = clipPolygonNear(camVerts);
+if (clipped.length < 3) continue;
+var sortDepth = maxZ - (f.normal.y > 0 ? 0.02 : 0);
+drawList.push({
+face: f,
+clipped: clipped,
+dist: distSum / camVerts.length,
+sortDepth: sortDepth
+});
+}
+drawList.sort(function(a, b) { return b.sortDepth - a.sortDepth; });
+for (var dIdx = 0; dIdx < drawList.length; dIdx++) {
+var item = drawList[dIdx];
+var face = item.face;
+var clipped = item.clipped;
+var dist = item.dist;
+var proj = [];
+for (var pIdx = 0; pIdx < clipped.length; pIdx++) {
+proj.push(project(clipped[pIdx], w, h, fovScale));
+}
+var isWater = (face.label === 'SURF_HAZARD_WATER');
+var isOrange = (face.theme === 'orange');
+var fillRGB = isWater ? WATER_FILL : (isOrange ? ORANGE_FILL : GREY_FILL);
+var gridRGB = isWater ? WATER_GRID : (isOrange ? ORANGE_GRID : GREY_GRID);
+ctx.beginPath();
+ctx.moveTo(proj[0].x, proj[0].y);
+for (var i = 1; i < proj.length; i++) {
+ctx.lineTo(proj[i].x, proj[i].y);
+}
+ctx.closePath();
+ctx.fillStyle = shadeColor(fillRGB, face.shade, dist);
+ctx.fill();
+if (dist < 48) {
+ctx.save();
+ctx.clip();
+ctx.strokeStyle = shadeColor(gridRGB, face.shade, dist);
+ctx.lineWidth = 1;
+var v0 = face.v0;
+var v1 = face.v1;
+var v3 = face.v3;
+var stepsU = Math.min(30, Math.floor(face.uLen));
+var stepsV = Math.min(30, Math.floor(face.vLen));
+ctx.beginPath();
+for (var u = 1; u < stepsU; u++) {
+var tu = u / face.uLen;
+var pA = v0.add(v1.sub(v0).scale(tu));
+var pB = v3.add(v1.sub(v0).scale(tu));
+var lineU = [
+worldToCamera(pA, camPos, yaw, pitch),
+worldToCamera(pB, camPos, yaw, pitch)
+];
+var segU = clipPolygonNear(lineU);
+if (segU.length === 2) {
+var s0 = project(segU[0], w, h, fovScale);
+var s1 = project(segU[1], w, h, fovScale);
+ctx.moveTo(s0.x, s0.y);
+ctx.lineTo(s1.x, s1.y);
+}
+}
+for (var v = 1; v < stepsV; v++) {
+var tv = v / face.vLen;
+var qA = v0.add(v3.sub(v0).scale(tv));
+var qB = v1.add(v3.sub(v0).scale(tv));
+var lineV = [
+worldToCamera(qA, camPos, yaw, pitch),
+worldToCamera(qB, camPos, yaw, pitch)
+];
+var segV = clipPolygonNear(lineV);
+if (segV.length === 2) {
+var t0 = project(segV[0], w, h, fovScale);
+var t1 = project(segV[1], w, h, fovScale);
+ctx.moveTo(t0.x, t0.y);
+ctx.lineTo(t1.x, t1.y);
+}
+}
+ctx.stroke();
+if (face.normal.y === 0 && dist < 34) {
+var cCam = worldToCamera(face.center, camPos, yaw, pitch);
+if (cCam.z > NEAR) {
+var cProj = project(cCam, w, h, fovScale);
+var isScoreboard = face.label.indexOf('YOU:') === 0;
+if (!isScoreboard) {
+var arm = Math.max(3, 18 / cCam.z);
+ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+ctx.beginPath();
+ctx.moveTo(cProj.x - arm, cProj.y);
+ctx.lineTo(cProj.x + arm, cProj.y);
+ctx.moveTo(cProj.x, cProj.y - arm);
+ctx.lineTo(cProj.x, cProj.y + arm);
+ctx.stroke();
+}
+if (dist < 32 && face.uLen <= 10) {
+ctx.fillStyle = isScoreboard ? '#ffffff' : 'rgba(255,255,255,0.92)';
+var baseSize = isScoreboard ? 260 : 140;
+var fontSize = Math.max(10, Math.min(24, (baseSize / cCam.z) | 0));
+ctx.font = (isScoreboard ? 'bold ' : '') + fontSize + 'px monospace';
+ctx.textAlign = 'center';
+ctx.fillText(face.label, cProj.x, isScoreboard ? cProj.y + 6 : (cProj.y - 8));
+}
+}
+}
+ctx.restore();
+}
+ctx.beginPath();
+ctx.moveTo(proj[0].x, proj[0].y);
+for (var e = 1; e < proj.length; e++) {
+ctx.lineTo(proj[e].x, proj[e].y);
+}
+ctx.closePath();
+ctx.strokeStyle = isWater ? 'rgba(120, 210, 255, 0.7)' : (isOrange ? 'rgba(255, 220, 180, 0.55)' : 'rgba(180, 185, 195, 0.45)');
+ctx.lineWidth = 1.25;
+ctx.stroke();
+}
+// VECTOR BLAST: Render Lasers & Carried Blaster Viewmodel
+if (currentRoom === 'VECTOR_BLAST') {
+// Enemy Bot Laser Tracer
+if (bot.laserTimer > 0 && bot.active) {
+var bStart = worldToCamera(new Vec3(bot.pos.x, bot.pos.y + 1.15, bot.pos.z), camPos, yaw, pitch);
+var bEnd = worldToCamera(bot.laserEnd, camPos, yaw, pitch);
+var bSeg = clipPolygonNear([bStart, bEnd]);
+if (bSeg.length === 2) {
+var bp0 = project(bSeg[0], w, h, fovScale);
+var bp1 = project(bSeg[1], w, h, fovScale);
+ctx.save();
+ctx.strokeStyle = '#ff3b3b';
+ctx.lineWidth = 4;
+ctx.beginPath();
+ctx.moveTo(bp0.x, bp0.y);
+ctx.lineTo(bp1.x, bp1.y);
+ctx.stroke();
+ctx.restore();
+}
+}
+// Player Laser Tracer
+if (playerLaserTimer > 0 && playerLaserTarget) {
+var pEnd = worldToCamera(playerLaserTarget, camPos, yaw, pitch);
+if (pEnd.z > NEAR) {
+var pp1 = project(pEnd, w, h, fovScale);
+ctx.save();
+ctx.strokeStyle = '#ff9d3b';
+ctx.lineWidth = 3.5;
+ctx.beginPath();
+ctx.moveTo(w * 0.73, h * 0.72);
+ctx.lineTo(pp1.x, pp1.y);
+ctx.stroke();
+ctx.restore();
+}
+}
+// First-Person Vector Blaster Model
+drawVectorBlasterViewmodel(w, h);
+}
+// Damage / Respawn Screen Flash
+if (screenFlashTimer > 0 && screenFlashColor) {
+ctx.fillStyle = screenFlashColor;
+ctx.fillRect(0, 0, w, h);
+}
+// Interaction / Door HUD Prompt
+if (deskInteractPrompt) {
+ctx.save();
+ctx.font = 'bold 16px monospace';
+ctx.textAlign = 'center';
+ctx.fillStyle = 'rgba(15, 18, 24, 0.88)';
+ctx.fillRect(w / 2 - 270, h - 80, 540, 36);
+ctx.strokeStyle = '#ff8c24';
+ctx.lineWidth = 1.5;
+ctx.strokeRect(w / 2 - 270, h - 80, 540, 36);
+ctx.fillStyle = '#ff9d3b';
+ctx.fillText(deskInteractPrompt, w / 2, h - 57);
+ctx.restore();
+}
+}
 // ==========================================
-// 5. FIXED-TIMESTEP MAIN LOOP
+// 10. INITIALIZE & FIXED-TIMESTEP MAIN LOOP
 // ==========================================
+loadRoom('MAIN');
 var lastTime = performance.now();
 var FIXED_DT = 1 / 120;
 var accumulator = 0;
-
 function loop(now) {
-    requestAnimationFrame(loop);
-    var dt = Math.min((now - lastTime) / 1000, 0.1);
-    lastTime = now;
-
-    if (gameActive) {
-        accumulator += dt;
-        while (accumulator >= FIXED_DT) {
-            updatePhysics(FIXED_DT);
-            accumulator -= FIXED_DT;
-        }
-        updateDeskInteraction(dt);
-    }
-
-    render();
+requestAnimationFrame(loop);
+var dt = Math.min((now - lastTime) / 1000, 0.1);
+lastTime = now;
+if (gameActive) {
+accumulator += dt;
+while (accumulator >= FIXED_DT) {
+updatePhysics(FIXED_DT);
+accumulator -= FIXED_DT;
 }
-
+updateInteractions(dt);
+updateVectorBlastBot(dt);
+}
+render();
+}
 render();
 requestAnimationFrame(loop);
 
