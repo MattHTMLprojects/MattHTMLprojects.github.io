@@ -45,6 +45,36 @@
             pointer-events: none;
             z-index: 10;
         }
+        #cash-hud {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            color: #ff9900;
+            background: rgba(15, 16, 20, 0.88);
+            padding: 10px 16px;
+            border: 2px solid #ff7b00;
+            font-size: 14px;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 10;
+            text-align: right;
+        }
+        #task-hud {
+            position: fixed;
+            top: 66px;
+            right: 15px;
+            width: 280px;
+            color: #ff9900;
+            background: rgba(24, 26, 31, 0.90);
+            padding: 12px 15px;
+            border: 2px solid #ff7b00;
+            font-size: 13px;
+            line-height: 1.5;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
+
         #blocker {
             position: fixed;
             top: 0;
@@ -94,6 +124,12 @@
         STATE: <span id="state-val">GROUNDED</span><br>
         LOOK: <span id="look-mode">CLICK SCREEN TO START</span>
     </div>
+    <div id="cash-hud">VECTOR CASH: $<span id="cash-val">0</span></div>
+    <div id="task-hud">
+        <strong id="task-title">CURRENT TASK</strong><br>
+        <span id="task-desc"></span>
+    </div>
+
 
     <div id="blocker">
         <h1>[CLICK TO ENTER] MATT'S VECTOR PLAYGROUND</h1>
@@ -368,6 +404,7 @@ function drawLaserPointer(ctx, camPos, yaw, pitch, fovScale) {
                 minX: minX, maxX: maxX,
                 minY: minY, maxY: maxY,
                 minZ: minZ, maxZ: maxZ,
+ theme: theme,
                 label: label || ''
             });
 
@@ -409,6 +446,79 @@ function drawLaserPointer(ctx, camPos, yaw, pitch, fovScale) {
                 });
             }
         }
+
+var surfWedges = [];
+
+// Creates a true smooth 3D angled surf wedge (triangular prism) + renders its 5 faces!
+// slopeSide: 'LEFT' (high on -X, slopes down toward +X — surf by holding A)
+//            'RIGHT' (high on +X, slopes down toward -X — surf by holding D)
+function addSurfWedge(centerX, bottomY, topY, startZ, endZ, lowX, highX, slopeSide, theme) {
+    theme = theme || 'orange';
+    var minZ = Math.min(startZ, endZ);
+    var maxZ = Math.max(startZ, endZ);
+    var minX = Math.min(lowX, highX);
+    var maxX = Math.max(lowX, highX);
+    var spanX = maxX - minX;
+    var spanY = topY - bottomY;
+    var spanZ = maxZ - minZ;
+
+    // Exact diagonal surface normal
+    var normal = (slopeSide === 'LEFT')
+        ? new Vec3(spanY, spanX, 0).normalize()
+        : new Vec3(-spanY, spanX, 0).normalize();
+
+    surfWedges.push({
+        minX: minX, maxX: maxX,
+        bottomY: bottomY, topY: topY,
+        minZ: minZ, maxZ: maxZ,
+        slopeSide: slopeSide,
+        normal: normal
+    });
+
+    // Build 3D vertices for the sloped top face & side walls so your existing renderer draws it!
+    var pBLF = new Vec3(minX, bottomY, maxZ);
+    var pBRF = new Vec3(maxX, bottomY, maxZ);
+    var pBLB = new Vec3(minX, bottomY, minZ);
+    var pBRB = new Vec3(maxX, bottomY, minZ);
+    var pTF  = (slopeSide === 'LEFT') ? new Vec3(minX, topY, maxZ) : new Vec3(maxX, topY, maxZ);
+    var pTB  = (slopeSide === 'LEFT') ? new Vec3(minX, topY, minZ) : new Vec3(maxX, topY, minZ);
+
+    var slopeLen = Math.hypot(spanX, spanY);
+    var wedgeFaces = (slopeSide === 'LEFT') ? [
+        // Main diagonal surf slope
+        { verts: [pTF, pBRF, pBRB, pTB], v0: pTF, v1: pBRF, v3: pTB, normal: normal, uLen: slopeLen, vLen: spanZ, shade: 1.05 },
+        // Vertical back wall
+        { verts: [pBLB, pBLF, pTF, pTB],  v0: pBLB, v1: pBLF, v3: pTB, normal: new Vec3(-1, 0, 0), uLen: spanZ, vLen: spanY, shade: 0.78 },
+        // Front & back triangular end caps (as 4-point degenerate quads for clipPolygonNear)
+        { verts: [pBLF, pBRF, pTF, pTF],  v0: pBLF, v1: pBRF, v3: pTF, normal: new Vec3(0, 0, 1), uLen: spanX, vLen: spanY, shade: 0.92 },
+        { verts: [pBRB, pBLB, pTB, pTB],  v0: pBRB, v1: pBLB, v3: pTB, normal: new Vec3(0, 0, -1), uLen: spanX, vLen: spanY, shade: 0.85 }
+    ] : [
+        // Main diagonal surf slope
+        { verts: [pBLF, pTF, pTB, pBLB],  v0: pBLF, v1: pTF, v3: pBLB, normal: normal, uLen: slopeLen, vLen: spanZ, shade: 1.05 },
+        // Vertical back wall
+        { verts: [pBRF, pBRB, pTB, pTF],  v0: pBRF, v1: pBRB, v3: pTF, normal: new Vec3(1, 0, 0), uLen: spanZ, vLen: spanY, shade: 0.78 },
+        // Front & back end caps
+        { verts: [pBLF, pBRF, pTF, pTF],  v0: pBLF, v1: pBRF, v3: pTF, normal: new Vec3(0, 0, 1), uLen: spanX, vLen: spanY, shade: 0.92 },
+        { verts: [pBRB, pBLB, pTB, pTB],  v0: pBRB, v1: pBLB, v3: pTB, normal: new Vec3(0, 0, -1), uLen: spanX, vLen: spanY, shade: 0.85 }
+    ];
+
+    for (var i = 0; i < wedgeFaces.length; i++) {
+        var wf = wedgeFaces[i];
+        var center = wf.verts[0].add(wf.verts[1]).add(wf.verts[2]).scale(1 / 3);
+        faces.push({
+            verts: wf.verts,
+            v0: wf.v0, v1: wf.v1, v3: wf.v3,
+            normal: wf.normal,
+            center: center,
+            uLen: wf.uLen, vLen: wf.vLen,
+            theme: theme,
+            shade: wf.shade,
+            label: 'SURF_WEDGE'
+        });
+    }
+}
+
+
 
         // ==========================================
         // 3. INTERACTIVE SIT-STAND WORKSTATION [30 - 90]
@@ -575,6 +685,186 @@ var screenFlashTimer = 0;
             laserEnd: new Vec3(0, 1, 0),
             respawnTimer: 0
         };
+
+var cityBots = [];
+var CITY_GREETINGS = ['Hi!', 'Hey!', 'Welcome to Vector City!', 'Nice day!', 'Yo!'];
+
+function initCityBots() {
+    cityBots.length = 0;
+    var shirtColors = ['#ff2a85', '#00f0ff', '#ff9d3b', '#b84dff', '#39ff14'];
+    for (var i = 0; i < 20; i++) {
+        // Spawn directly along the open Ocean Drive avenue & boardwalk (x between 1 and 18)
+        var spawnX = 1.5 + (i % 6) * 2.8;
+        var spawnZ = -2 + (i - 10) * 6.5;
+        cityBots.push({
+            pos: new Vec3(spawnX, 0, spawnZ),
+            dirAngle: (i % 2 === 0) ? Math.PI / 2 : -Math.PI / 2, // Walk north/south along the avenue
+            speed: 1.5 + (i % 3) * 0.4,
+            turnTimer: 2.0 + (i % 4),
+            walkPhase: i * 0.8,
+            color: shirtColors[i % shirtColors.length],
+            greeting: CITY_GREETINGS[i % CITY_GREETINGS.length]
+        });
+    }
+}
+
+
+function updateCityBots(dt) {
+    if (currentRoom !== 'VECTOR_CITY' && currentRoom.indexOf('INTERIOR_') !== 0) return;
+
+    for (var i = 0; i < cityBots.length; i++) {
+        var p = cityBots[i];
+
+if (p.role) {
+    p.walkPhase += dt * 5.0; // Drives arm/action animation in place!
+    continue;
+}
+
+
+        // If player sprints far away, recycle pedestrian ahead/around the player
+        var dx = p.pos.x - player.pos.x;
+        var dz = p.pos.z - player.pos.z;
+        if (dx * dx + dz * dz > 95 * 95) {
+            var spawnAngle = Math.random() * Math.PI * 2;
+            var spawnDist = 35 + Math.random() * 35;
+            p.pos.x = Math.min(26, Math.max(-90, player.pos.x + Math.cos(spawnAngle) * spawnDist));
+            p.pos.z = player.pos.z + Math.sin(spawnAngle) * spawnDist;
+        }
+
+        // Occasionally pick a new strolling direction
+        p.turnTimer -= dt;
+        if (p.turnTimer <= 0) {
+            p.dirAngle += (Math.random() - 0.5) * 2.2;
+            p.turnTimer = 2.0 + Math.random() * 3.5;
+        }
+
+        var nextX = p.pos.x + Math.cos(p.dirAngle) * p.speed * dt;
+        var nextZ = p.pos.z + Math.sin(p.dirAngle) * p.speed * dt;
+
+        // Keep pedestrians out of the deep ocean (x > 26)
+        var blocked = (nextX > 26);
+
+        // Simple collider check so they turn around instead of walking through walls
+        if (!blocked) {
+            for (var c = 0; c < colliders.length; c++) {
+                var b = colliders[c];
+                if (b.minY < 1.5 && b.maxY > 0.2) {
+                    if (nextX + 0.35 > b.minX && nextX - 0.35 < b.maxX &&
+                        nextZ + 0.35 > b.minZ && nextZ - 0.35 < b.maxZ) {
+                        blocked = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (blocked) {
+            p.dirAngle += Math.PI * 0.65 + (Math.random() - 0.5);
+            p.turnTimer = 1.5;
+        } else {
+            p.pos.x = nextX;
+            p.pos.z = nextZ;
+        }
+
+        p.walkPhase += dt * p.speed * 4.5;
+    }
+}
+
+// ==========================================
+// Endless Pizza Delivery Job State & Logic
+// ==========================================
+
+var vectorCash = 0;
+var pizzaJob = {
+    active: false,
+    deliveriesDone: 0,
+    shiftEarnings: 0,
+    targetX: 0,
+    targetZ: 0,
+    targetName: '',
+    payout: 25
+};
+
+function updateTaskHUD() {
+    document.getElementById('cash-val').textContent = vectorCash;
+    var taskBox = document.getElementById('task-hud');
+    if (!pizzaJob.active) {
+        taskBox.style.display = 'none';
+        return;
+    }
+    taskBox.style.display = 'block';
+    document.getElementById('task-title').textContent = 'PIZZA DELIVERY #' + (pizzaJob.deliveriesDone + 1);
+    document.getElementById('task-desc').innerHTML =
+        'DROP-OFF: <strong>' + pizzaJob.targetName + '</strong><br>' +
+        'TARGET POS: <strong>' + pizzaJob.targetX.toFixed(1) + ', ' + pizzaJob.targetZ.toFixed(1) + '</strong><br>' +
+        'PAYOUT: <strong>$' + pizzaJob.payout + '</strong> (SHIFT: $' + pizzaJob.shiftEarnings + ')<br>' +
+        '<span style="color:#ccc;font-size:11px;">Return to any Vector Pizza counter to clock out.</span>';
+}
+
+function assignNextPizzaDropoff() {
+    // Pick a customer door along Ocean Drive or nearby cross-streets (120m to 280m away)
+    var baseZ = window.lastEnteredDoorPos ? window.lastEnteredDoorPos.z : -80;
+    var dir = (Math.random() < 0.5) ? 1 : -1;
+    var offsetBlocks = 3 + Math.floor(Math.random() * 4); // 3 to 6 blocks away (120m - 240m)
+    var targetCZ = Math.round(baseZ / 40) + dir * offsetBlocks;
+
+    // Avoid landing on a cross-street chunk (where Math.abs(cz) % 3 === 1)
+    if (Math.abs(targetCZ) % 3 === 1) targetCZ += dir;
+
+    // Alternate between Oceanfront Apartments (cx = -1) and Midtown Towers (cx = -2)
+    var targetCX = (Math.random() < 0.65) ? -1 : -2;
+    pizzaJob.targetX = (targetCX * 40) + 14.2; // Right in front of the building's front door!
+    pizzaJob.targetZ = targetCZ * 40;
+
+    var dist = Math.hypot(pizzaJob.targetX - player.pos.x, pizzaJob.targetZ - player.pos.z);
+    pizzaJob.payout = 20 + Math.round(dist / 12) * 5;
+    pizzaJob.targetName = (targetCX === -1)
+        ? ('OCEAN APTS #' + (100 + Math.abs(targetCZ * 12)))
+        : ('MIDTOWN TOWER #' + (200 + Math.abs(targetCZ * 15)));
+
+    updateTaskHUD();
+}
+
+function updatePizzaJobInteractions(ePressed) {
+    // 1. Inside ANY Vector Pizza: interact with the counter cashier (pos: 1.5, 0, -4.0)
+    if (currentRoom === 'INTERIOR_PIZZA') {
+        var distToCounter = Math.hypot(player.pos.x - 1.5, player.pos.z - (-2.5));
+        if (distToCounter < 3.0) {
+            if (!pizzaJob.active) {
+                deskInteractPrompt = '[E] START PIZZA DELIVERY JOB';
+                if (ePressed) {
+                    pizzaJob.active = true;
+                    pizzaJob.deliveriesDone = 0;
+                    pizzaJob.shiftEarnings = 0;
+                    assignNextPizzaDropoff();
+                }
+            } else {
+                deskInteractPrompt = '[E] "I AM DONE FOR NOW" (END SHIFT: +$' + pizzaJob.shiftEarnings + ')';
+                if (ePressed) {
+                    pizzaJob.active = false;
+                    updateTaskHUD();
+                    if (cityBots.length > 0) {
+                        cityBots.greeting = 'Great shift! Earned $' + pizzaJob.shiftEarnings + '!';
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Outside in Vector City: deliver pizza when reaching the target door!
+    if (currentRoom === 'VECTOR_CITY' && pizzaJob.active) {
+        var distToDrop = Math.hypot(player.pos.x - pizzaJob.targetX, player.pos.z - pizzaJob.targetZ);
+        if (distToDrop < 4.5) {
+            deskInteractPrompt = '[E] DELIVER PIZZA TO ' + pizzaJob.targetName + ' (+$' + pizzaJob.payout + ')';
+            if (ePressed) {
+                vectorCash += pizzaJob.payout;
+                pizzaJob.shiftEarnings += pizzaJob.payout;
+                pizzaJob.deliveriesDone++;
+                assignNextPizzaDropoff();
+            }
+        }
+    }
+}
 
 
 
@@ -784,17 +1074,28 @@ label: label,
 isLocked: !!isLocked
 });
 }
+
 function addSurfRamp(centerX, topY, startZ, lengthZ, dropPerStep, steps) {
-var stepLen = lengthZ / steps;
-for (var i = 0; i < steps; i++) {
-var curZ = startZ + i * stepLen;
-var dropY = topY - (i * dropPerStep);
-for (var w = 0; w < 5; w++) {
-addBox(centerX - 0.6 - (w * 0.45), dropY - (w * 0.35), curZ, 0.6, 0.4, stepLen + 0.1, w % 2 === 0 ? 'orange' : 'grey', 'SURF_L');
-addBox(centerX + 0.6 + (w * 0.45), dropY - (w * 0.35), curZ, 0.6, 0.4, stepLen + 0.1, w % 2 === 0 ? 'orange' : 'grey', 'SURF_R');
+    var totalDrop = dropPerStep * steps;
+    var segLen = lengthZ / Math.max(1, Math.floor(steps / 2));
+    var numSegs = Math.max(1, Math.floor(steps / 2));
+    var rampHalfW = 3.2;
+    var rampH = 3.6;
+
+    for (var i = 0; i < numSegs; i++) {
+        var z0 = startZ + i * segLen;
+        var z1 = z0 + segLen;
+        var curTopY = topY - (i / numSegs) * totalDrop;
+        var curBotY = curTopY - rampH;
+
+        // Left-sloping wing (hold D to surf against it) & Right-sloping wing (hold A to surf against it)
+        addSurfWedge(centerX - rampHalfW / 2, curBotY, curTopY, z0, z1, centerX - rampHalfW, centerX - 0.15, 'RIGHT', i % 2 === 0 ? 'orange' : 'cyan');
+        addSurfWedge(centerX + rampHalfW / 2, curBotY, curTopY, z0, z1, centerX + 0.15, centerX + rampHalfW, 'LEFT',  i % 2 === 0 ? 'cyan' : 'pink');
+    }
 }
-}
-}
+
+
+
 function buildMainHubRoom() {
 bot.active = false;
 document.getElementById('room-val').textContent = 'MAIN HUB';
@@ -808,7 +1109,7 @@ addBox(30, 4, 0, 1, 8, 60, 'orange', 'PERIMETER_E');
 addDoor(-29.45, 0, -18, 'X', 'VECTOR_BLAST', 'DOOR 1: VECTOR BLAST', false);
 addDoor(-29.45, 0,  -6, 'X', 'VECTOR_CLIMB', 'DOOR 2: VECTOR CLIMB', false);
 addDoor(-29.45, 0,   6, 'X', 'VECTOR_SURF',  'DOOR 3: VECTOR SURF',  false);
-addDoor(-29.45, 0,  18, 'X', 'LOCKED',       'DOOR 4: UNDER CONSTRUCTION', true);
+addDoor(-29.45, 0,  18, 'X', 'VECTOR_CITY',  'DOOR 4: VECTOR CITY', false);
 // Zone 1: Jump Calibration Boxes
 addBox(-8, 0.25, -6, 2.5, 0.5, 2.5, 'orange', 'H: 0.50m');
 addBox(-4, 0.50, -6, 2.5, 1.0, 2.5, 'grey',   'H: 1.00m');
@@ -1242,10 +1543,312 @@ addBox(0, 2.5, 232, 24, 1, 24, 'orange', 'SURF_FINISH_PAD');
 addDoor(0, 3.0, 243.42, 'Z', 'MAIN', 'SURF COMPLETE! RETURN TO HUB', false);
 resetPlayerPosition(0, 58.1, -24, 0);
 }
+
+var CITY_CHUNK_SIZE = 40;
+var CITY_LOAD_RADIUS = 3; // Loads a 7x7 grid of chunks (280m x 280m active bubble)
+var lastCityChunkX = null;
+var lastCityChunkZ = null;
+
+// Deterministic pseudo-random helper so chunks always generate identical buildings
+function cityHash(cx, cz, salt) {
+    var n = Math.sin(cx * 127.1 + cz * 311.7 + salt * 74.7) * 43758.5453123;
+    return n - Math.floor(n);
+}
+
+function addPalmTree(x, z) {
+    addBox(x, 1.5, z, 0.35, 3.0, 0.35, 'orange', 'PALM');
+    addBox(x + 0.12, 4.2, z + 0.08, 0.30, 2.6, 0.30, 'orange', '');
+    addBox(x + 0.15, 5.5, z + 0.08, 3.4, 0.12, 0.55, 'cyan', '');
+    addBox(x + 0.15, 5.5, z + 0.08, 0.55, 0.12, 3.4, 'pink', '');
+    addBox(x + 0.15, 5.3, z + 0.08, 2.4, 0.10, 2.4, 'cyan', '');
+}
+
+function generateCityChunk(cx, cz) {
+    var wx = cx * CITY_CHUNK_SIZE;
+    var wz = cz * CITY_CHUNK_SIZE;
+    var S = CITY_CHUNK_SIZE;
+    var themes = ['pink', 'cyan', 'purple', 'orange'];
+
+    if (cx >= 2) {
+        var oceanTheme = (cx >= 4) ? 'pink' : 'water';
+        addBox(wx, -0.65, wz, S, 0.7, S, oceanTheme, 'CYBER_OCEAN');
+        if (cx === 2 && Math.abs(cz) % 3 === 1) {
+            addBox(wx, 0.35, wz, S, 0.7, 7, 'purple', 'VICE PIER');
+            addBox(wx + 12, 1.4, wz, 5, 2.2, 8, 'pink', 'PIER PAVILION');
+        }
+        return;
+    }
+
+    if (cx === 1) {
+        addBox(wx, -0.55, wz, S, 0.9, S, 'sand', 'VICE_BEACH');
+        addPalmTree(wx - 12, wz - 10);
+        addPalmTree(wx - 8,  wz + 12);
+        if (Math.abs(cz) % 4 === 2) {
+            addSurfRamp(wx - 4, 5.5, wz - 16, 32, 0.14, 16);
+        }
+        return;
+    }
+
+    if (cx === 0) {
+        addBox(wx - 6,  -0.50, wz, 28, 1.0, S, 'grey',   'OCEAN_DRIVE');
+        addBox(wx + 14, -0.45, wz, 12, 1.1, S, 'purple', 'BOARDWALK');
+        addPalmTree(wx + 9.5, wz - 10);
+        addPalmTree(wx + 9.5, wz + 10);
+        addBox(wx + 8.5, 2.2, wz, 0.2, 4.4, 0.2, 'cyan', '');
+        addBox(wx + 7.9, 4.3, wz, 1.4, 0.18, 0.3, 'pink', 'OCEAN DR');
+
+        if (cx === 0 && cz === 0) {
+            addBox(12, 2.0, -10, 3.2, 4.0, 0.6, 'pink', 'HUB PORTAL');
+            addDoor(12, 0, -9.6, 'Z', 'MAIN', 'RETURN TO MAIN HUB', false);
+        }
+        return;
+    }
+
+    // CITY BLOCKS (cx <= -1): Wide Cross-Streets, Plazas & Skyscrapers
+    addBox(wx, -0.50, wz, S, 1.0, S, 'grey', 'CITY_STREET');
+
+    // Every 3rd Z-chunk is an open East-West Cross-Street Avenue (except where extra Pizza parlors sit)
+    if (Math.abs(cz) % 3 === 1 && !(cx === -1 && Math.abs(cz + 2) % 7 === 0)) {
+        addBox(wx, -0.48, wz, S, 1.0, 14, 'purple', 'CROSS_AVENUE');
+        addBox(wx + 16, 2.2, wz - 8, 0.2, 4.4, 0.2, 'cyan', '');
+        addBox(wx + 16, 4.3, wz - 8, 0.3, 0.18, 1.4, 'pink', 'CROSS ST');
+        return;
+    }
+
+    var h1 = cityHash(cx, cz, 1);
+    var h2 = cityHash(cx, cz, 2);
+    var h3 = cityHash(cx, cz, 3);
+
+    // 20% chance for an open Neon Plaza instead of a building (inland only)
+    if (cx < -1 && h3 < 0.20) {
+        addBox(wx, -0.46, wz, 28, 1.0, 28, 'purple', 'NEON_PLAZA');
+        addBox(wx, 0.4, wz, 6, 0.8, 6, 'cyan', 'FOUNTAIN_BASE');
+        addBox(wx, 1.6, wz, 1.5, 2.4, 1.5, 'pink', 'NEON_MONUMENT');
+        addPalmTree(wx - 10, wz - 10);
+        addPalmTree(wx + 10, wz + 10);
+        return;
+    }
+
+    var tIdx = Math.floor(h1 * 4);
+    var mainTheme = themes[tIdx];
+    var trimTheme = themes[(tIdx + 1) % 4];
+
+    var depthBoost = Math.min(35, Math.abs(cx) * 6);
+    var bHeight = 12 + Math.floor(h2 * 24) + depthBoost;
+
+    addBox(wx, bHeight / 2, wz, 26, bHeight, 26, mainTheme, 'VICE_TOWER');
+    addBox(wx, bHeight + 0.6, wz, 26.8, 1.2, 26.8, trimTheme, '');
+
+    if (cx === -1) {
+        var shopMap = {
+            '-2': { room: 'INTERIOR_PIZZA',    sign: 'VECTOR PIZZA',      theme: 'orange', trim: 'pink' },
+            '-1': { room: 'INTERIOR_SHOP',     sign: 'VECTOR QUICK SHOP', theme: 'cyan',   trim: 'orange' },
+             '0': { room: 'INTERIOR_CLOTHING', sign: 'VECTOR CLOTHING',   theme: 'pink',   trim: 'cyan' },
+             '1': { room: 'INTERIOR_BURGERS',  sign: 'VECTOR BURGERS',    theme: 'orange', trim: 'cyan' },
+             '2': { room: 'INTERIOR_CARS',     sign: 'VECTOR CARS',       theme: 'purple', trim: 'pink' }
+        };
+        var biz = shopMap[String(cz)];
+        if (!biz && Math.abs(cz + 2) % 7 === 0) {
+            biz = { room: 'INTERIOR_PIZZA', sign: 'VECTOR PIZZA', theme: 'orange', trim: 'pink' };
+        }
+
+        if (biz) {
+            addBox(wx, bHeight / 2, wz, 26, bHeight, 26, biz.theme, biz.sign);
+            addBox(wx, bHeight + 0.6, wz, 26.8, 1.2, 26.8, biz.trim, '');
+            addBox(wx + 13.2, 3.4, wz, 0.4, 1.2, 9.5, biz.trim, biz.sign);
+            addDoor(wx + 13.05, 0, wz, 'X', biz.room, 'ENTER ' + biz.sign, false);
+        } else {
+            addBox(wx + 13.5, 3.2, wz, 1.6, 0.4, 22, trimTheme, 'BALCONY');
+            var aptNum = 100 + Math.abs(cz * 12);
+            addBox(wx + 13.2, bHeight - 1.5, wz, 0.4, 1.4, 8.5, trimTheme, 'OCEAN APTS #' + aptNum);
+            addDoor(wx + 13.05, 0, wz, 'X', 'LOCKED', 'OCEAN APTS (LOCKED)', true);
+        }
+    } else {
+        addDoor(wx + 13.05, 0, wz, 'X', 'LOCKED', 'PRIVATE TOWER (LOCKED)', true);
+        if (h1 > 0.45) {
+            addBox(wx, bHeight + 2.0, wz, 12, 3.5, 12, 'cyan', 'PENTHOUSE');
+            addBox(wx, bHeight + 6.5, wz, 1.0, 8.0, 1.0, 'pink', 'SPIRE');
+        }
+    }
+
+    if (h2 > 0.68 && cx <= -2) {
+        addBox(wx + 20, 12.0, wz, 14, 0.6, 3.2, 'cyan', 'SKYBRIDGE');
+    }
+}
+
+
+
+function updateVectorCityChunks(forceRebuild) {
+    if (currentRoom !== 'VECTOR_CITY') return;
+
+    var curCX = Math.round(player.pos.x / CITY_CHUNK_SIZE);
+    var curCZ = Math.round(player.pos.z / CITY_CHUNK_SIZE);
+
+    if (!forceRebuild && curCX === lastCityChunkX && curCZ === lastCityChunkZ) {
+        return;
+    }
+
+    lastCityChunkX = curCX;
+    lastCityChunkZ = curCZ;
+
+    colliders.length = 0;
+    faces.length = 0;
+    activeDoors.length = 0;
+
+    for (var dx = -CITY_LOAD_RADIUS; dx <= CITY_LOAD_RADIUS; dx++) {
+        for (var dz = -CITY_LOAD_RADIUS; dz <= CITY_LOAD_RADIUS; dz++) {
+            generateCityChunk(curCX + dx, curCZ + dz);
+        }
+    }
+}
+
+function buildVectorCityRoom() {
+    bot.active = false;
+    document.getElementById('room-val').textContent = 'VECTOR CITY';
+    lastCityChunkX = null;
+    lastCityChunkZ = null;
+        if (window.cityReturnPos) {
+        resetPlayerPosition(window.cityReturnPos.x, 0.1, window.cityReturnPos.z, 0);
+        window.cityReturnPos = null;
+    } else {
+        resetPlayerPosition(2, 0.1, -6, 0);
+    }
+
+    updateVectorCityChunks(true);
+initCityBots();
+}
+
+function buildInteriorShell(title, w, d, wallTheme, floorTheme, exitZ, returnWorldX, returnWorldZ) {
+    bot.active = false;
+    cityBots.length = 0;
+    document.getElementById('room-val').textContent = title;
+    resetPlayerPosition(0, 0.1, exitZ - 1.8, Math.PI);
+
+    // Floor, Ceiling & 4 Walls
+    addBox(0, -0.5, 0, w, 1, d, floorTheme, 'FLOOR');
+    addBox(0, 4.5,  0, w, 0.5, d, 'grey', 'CEILING');
+    addBox(0, 2.0, -d / 2, w, 4.5, 0.6, wallTheme, 'WALL_N');
+    addBox(0, 2.0,  d / 2, w, 4.5, 0.6, wallTheme, 'WALL_S');
+    addBox(-w / 2, 2.0, 0, 0.6, 4.5, d, wallTheme, 'WALL_W');
+    addBox( w / 2, 2.0, 0, 0.6, 4.5, d, wallTheme, 'WALL_E');
+
+    // Exit door back to Vector City (saves return coordinates on window)
+    window.cityReturnPos = { x: returnWorldX, z: returnWorldZ };
+    addDoor(0, 0, d / 2 - 0.35, 'Z', 'VECTOR_CITY', 'EXIT TO VECTOR CITY', false);
+}
+
+// 1. VECTOR PIZZA (New York Brick-Oven Style)
+function buildInteriorPizza() {
+
+    var retX = window.lastEnteredDoorPos ? window.lastEnteredDoorPos.x + 2.5 : -24;
+    var retZ = window.lastEnteredDoorPos ? window.lastEnteredDoorPos.z : -80;
+    buildInteriorShell('VECTOR PIZZA', 16, 18, 'orange', 'grey', 8.5, retX, retZ);
+    // NY Checkered Booths & Tables
+    addBox(-5.5, 0.45, 2, 2.4, 0.9, 1.4, 'pink', 'BOOTH_1');
+    addBox(-5.5, 0.45, -2, 2.4, 0.9, 1.4, 'pink', 'BOOTH_2');
+    // Front Glass Display Counter
+    addBox(1.5, 0.55, -2.5, 7.0, 1.1, 1.2, 'orange', 'SLICE COUNTER');
+    addBox(1.5, 1.25, -2.5, 6.8, 0.35, 1.0, 'cyan', 'HOT PIES');
+    // Back Brick Pizza Oven & Prep Table
+    addBox(2.5, 1.4, -7.2, 4.2, 2.8, 2.2, 'orange', 'NY BRICK OVEN');
+    addBox(-2.5, 0.5, -6.5, 3.6, 1.0, 1.4, 'grey', 'DOUGH PREP');
+
+    cityBots.push({
+        pos: new Vec3(1.5, 0, -4.0), dirAngle: Math.PI / 2, speed: 0, turnTimer: 99,
+        walkPhase: 0, color: '#ff9d3b', greeting: 'Two plain slices comin up!', role: 'counter'
+    });
+    cityBots.push({
+        pos: new Vec3(-2.2, 0, -5.2), dirAngle: -Math.PI / 2, speed: 0, turnTimer: 99,
+        walkPhase: 0, color: '#ff2a85', greeting: '*Tossing fresh NY dough*', role: 'pizza_chef'
+    });
+}
+
+// 2. VECTOR QUICK SHOP (7-Eleven Convenience Store)
+function buildInteriorQuickShop() {
+    buildInteriorShell('VECTOR QUICK SHOP', 16, 16, 'cyan', 'grey', 7.5, -24, -40);
+    // Aisles & Slushie Machines
+    addBox(-3.2, 1.0, 0, 1.0, 2.0, 7.5, 'orange', 'SNACK AISLE');
+    addBox( 0.8, 1.0, 0, 1.0, 2.0, 7.5, 'pink',   'DRINK AISLE');
+    addBox(-6.8, 1.1, -2, 1.2, 2.2, 8.0, 'cyan',  'COLD FRIDGES');
+    addBox( 5.5, 0.55, 3.5, 2.8, 1.1, 1.4, 'purple', 'CHECKOUT');
+    addBox( 6.5, 1.1, -3.5, 1.4, 2.2, 3.2, 'pink', 'VECTOR SLUSHIES');
+
+    cityBots.push({
+        pos: new Vec3(6.6, 0, 3.5), dirAngle: Math.PI, speed: 0, turnTimer: 99,
+        walkPhase: 0, color: '#00f0ff', greeting: 'Thank you, come again!', role: 'counter'
+    });
+    cityBots.push({
+        pos: new Vec3(-1.2, 0, 1.0), dirAngle: 0, speed: 0, turnTimer: 99,
+        walkPhase: 0, color: '#39ff14', greeting: '*Restocking neon sodas*', role: 'stocker'
+    });
+}
+
+// 3. VECTOR CLOTHING (Vice Boutique)
+function buildInteriorClothing() {
+    buildInteriorShell('VECTOR CLOTHING', 18, 16, 'pink', 'purple', 7.5, -24, 0);
+    // Clothing Racks, Mirror & Register
+    addBox(-4.5, 0.9, -2, 3.5, 1.8, 0.8, 'cyan', 'HAWAIIAN SHIRTS');
+    addBox(-4.5, 0.9,  2, 3.5, 1.8, 0.8, 'pink', 'NEON JACKETS');
+    addBox( 4.5, 0.9, -2, 3.5, 1.8, 0.8, 'orange', 'RETRO SHADES');
+    addBox( 0,   0.55, -5.5, 4.0, 1.1, 1.2, 'cyan', 'BOUTIQUE DESK');
+
+    cityBots.push({
+        pos: new Vec3(0, 0, -6.6), dirAngle: Math.PI / 2, speed: 0, turnTimer: 99,
+        walkPhase: 0, color: '#ff2a85', greeting: 'That pastel suit is pure Vice!', role: 'counter'
+    });
+    cityBots.push({
+        pos: new Vec3(-4.5, 0, -0.8), dirAngle: -Math.PI / 2, speed: 0, turnTimer: 99,
+        walkPhase: 0, color: '#00f0ff', greeting: '*Folding Hawaiian shirts*', role: 'stocker'
+    });
+}
+
+// 4. VECTOR BURGERS (Retro Diner)
+function buildInteriorBurgers() {
+    buildInteriorShell('VECTOR BURGERS', 18, 18, 'orange', 'cyan', 8.5, -24, 40);
+    // Order Counter, Dining Tables & Back Grill
+    addBox(0, 0.55, -2.0, 8.0, 1.1, 1.3, 'pink', 'ORDER HERE');
+    addBox(-5.0, 0.45, 3.0, 2.2, 0.9, 2.2, 'orange', 'DINER TABLE');
+    addBox( 5.0, 0.45, 3.0, 2.2, 0.9, 2.2, 'orange', 'DINER TABLE');
+    addBox(0, 0.6, -7.0, 7.5, 1.2, 1.6, 'grey', 'SIZZLE GRILL');
+
+    cityBots.push({
+        pos: new Vec3(-1.5, 0, -3.3), dirAngle: Math.PI / 2, speed: 0, turnTimer: 99,
+        walkPhase: 0, color: '#ff9d3b', greeting: 'Want fries with that Vector Burger?', role: 'counter'
+    });
+    cityBots.push({
+        pos: new Vec3(1.5, 0, -5.8), dirAngle: -Math.PI / 2, speed: 0, turnTimer: 99,
+        walkPhase: 0, color: '#ff2a85', greeting: '*Flipping double patties*', role: 'burger_cook'
+    });
+}
+
+// 5. VECTOR CARS (Exotic Neon Showroom)
+function buildInteriorCars() {
+    buildInteriorShell('VECTOR CARS', 24, 22, 'purple', 'grey', 10.5, -24, 80);
+    // Display Car #1 (Cyber Infernus - Pink/Cyan)
+    addBox(-5.5, 0.45, -1, 2.4, 0.65, 4.8, 'pink',   'VECTOR INFERNUS');
+    addBox(-5.5, 0.95, -1.2, 2.0, 0.55, 2.3, 'cyan', 'CABIN');
+    // Display Car #2 (Vice Cheetah - Orange/Purple)
+    addBox( 5.5, 0.45, -1, 2.4, 0.60, 4.8, 'orange', 'VECTOR CHEETAH');
+    addBox( 5.5, 0.92, -1.2, 2.0, 0.50, 2.2, 'purple', 'CABIN');
+    // Sales Desk
+    addBox(0, 0.55, -7.5, 4.5, 1.1, 1.4, 'cyan', 'AUTO SALES');
+
+    cityBots.push({
+        pos: new Vec3(0, 0, -8.8), dirAngle: Math.PI / 2, speed: 0, turnTimer: 99,
+        walkPhase: 0, color: '#b84dff', greeting: 'Zero down on the Vector Infernus!', role: 'counter'
+    });
+    cityBots.push({
+        pos: new Vec3(-3.8, 0, -1.0), dirAngle: Math.PI, speed: 0, turnTimer: 99,
+        walkPhase: 0, color: '#00f0ff', greeting: '*Polishing chrome rims*', role: 'mechanic'
+    });
+}
+
+
 function loadRoom(roomId) {
 currentRoom = roomId;
 colliders.length = 0;
 faces.length = 0;
+surfWedges.length = 0;
 activeDoors.length = 0;
 deskInteractPrompt = "";
 if (roomId === 'MAIN') {
@@ -1255,10 +1858,24 @@ resetPlayerPosition(0, 0.1, 2, Math.PI);
 buildVectorBlastRoom();
 } else if (roomId === 'VECTOR_CLIMB') {
 buildVectorClimbRoom();
-} else if (roomId === 'VECTOR_SURF') {
-buildVectorSurfRoom();
+    } else if (roomId === 'VECTOR_SURF') {
+        buildVectorSurfRoom();
+    } else if (roomId === 'VECTOR_CITY') {
+        buildVectorCityRoom();
+    } else if (roomId === 'INTERIOR_PIZZA') {
+        buildInteriorPizza();
+    } else if (roomId === 'INTERIOR_SHOP') {
+        buildInteriorQuickShop();
+    } else if (roomId === 'INTERIOR_CLOTHING') {
+        buildInteriorClothing();
+    } else if (roomId === 'INTERIOR_BURGERS') {
+        buildInteriorBurgers();
+    } else if (roomId === 'INTERIOR_CARS') {
+        buildInteriorCars();
+    }
 }
-}
+
+
 // ==========================================
 // 7. UNIFIED INTERACTION (DOORS + WORKSTATION)
 // ==========================================
@@ -1268,6 +1885,7 @@ var eDown = !!eKeysDown['E'];
 var eJustPressed = eDown && !eWasDown;
 eWasDown = eDown;
 deskInteractPrompt = "";
+updatePizzaJobInteractions(eJustPressed);
 var nearDoor = null;
 for (var i = 0; i < activeDoors.length; i++) {
 var d = activeDoors[i];
@@ -1279,16 +1897,21 @@ break;
 }
 if (nearDoor) {
 if (nearDoor.isLocked) {
-deskInteractPrompt = "[ Under construction ]";
+deskInteractPrompt = nearDoor.label || "[ Locked ]";
 } else {
 deskInteractPrompt = "Press [E] : " + nearDoor.label;
 if (eJustPressed) {
+if (nearDoor.targetRoom.indexOf('INTERIOR_') === 0) {
+    window.lastEnteredDoorPos = { x: nearDoor.x, z: nearDoor.z };
+}
 loadRoom(nearDoor.targetRoom);
 return;
 }
 }
 return;
 }
+
+
 if (currentRoom !== 'MAIN') return;
 var dx = player.pos.x - deskX;
 var dz = player.pos.z - (deskZ + 0.55);
@@ -1382,6 +2005,7 @@ return b;
 }
 return null;
 }
+
 function accelerate(wishDir, wishSpeed, accel, dt) {
 var currentSpeed = player.vel.x * wishDir.x + player.vel.z * wishDir.z;
 var addSpeed = wishSpeed - currentSpeed;
@@ -1390,6 +2014,7 @@ var accelSpeed = Math.min(addSpeed, accel * wishSpeed * dt);
 player.vel.x += accelSpeed * wishDir.x;
 player.vel.z += accelSpeed * wishDir.z;
 }
+
 function updatePhysics(dt) {
 var turnSpeed = 2.2;
 if (keys.ArrowLeft) yaw += turnSpeed * dt;
@@ -1424,17 +2049,21 @@ wishDir = wishDir.normalize();
 var maxSpeed = player.prone
 ? player.proneSpeed
 : (player.crouching ? player.crouchSpeed : (keys.ShiftLeft ? player.sprintSpeed : player.walkSpeed));
+
 if (player.grounded) {
-var speed = Math.hypot(player.vel.x, player.vel.z);
-if (speed > 0) {
-var newSpeed = Math.max(0, speed - speed * player.groundFriction * dt);
-player.vel.x *= newSpeed / speed;
-player.vel.z *= newSpeed / speed;
-}
-accelerate(wishDir, maxSpeed, player.groundAccel, dt);
+    var speed = Math.hypot(player.vel.x, player.vel.z);
+    if (speed > 0) {
+        var newSpeed = Math.max(0, speed - speed * player.groundFriction * dt);
+        player.vel.x *= newSpeed / speed;
+        player.vel.z *= newSpeed / speed;
+    }
+    accelerate(wishDir, maxSpeed, player.groundAccel, dt);
 } else {
-accelerate(wishDir, maxSpeed, player.airAccel, dt);
+    // True CS:S Air-Strafe: low wishspeed cap (1.35) + high air accel lets mouse + A/D curve momentum!
+    accelerate(wishDir, 1.35, 140.0, dt);
 }
+
+
 player.coyoteTimer = player.grounded ? 0.1 : player.coyoteTimer - dt;
 if (player.jumpBufferTimer > 0) player.jumpBufferTimer -= dt;
 if (player.jumpBufferTimer > 0 && player.coyoteTimer > 0) {
@@ -1487,11 +2116,57 @@ player.pos.y = hit.minY - player.currentHeight - 0.0001;
 player.vel.y = 0;
 }
 }
-// VECTOR SURF: Counter-Strike style slope gliding when holding A or D
-if (currentRoom === 'VECTOR_SURF' && isTouchingSurfRamp && (keys.KeyA || keys.KeyD)) {
-player.vel.y = Math.max(player.vel.y, -2.2);
-player.vel.z = Math.min(player.vel.z + 20.0 * dt, 24.0);
+
+// TRUE CS:S SURF WEDGE COLLISION & VELOCITY PROJECTION
+for (var wIdx = 0; wIdx < surfWedges.length; wIdx++) {
+    var sw = surfWedges[wIdx];
+    if (player.pos.z + player.radius < sw.minZ || player.pos.z - player.radius > sw.maxZ) continue;
+    if (player.pos.x + player.radius < sw.minX || player.pos.x - player.radius > sw.maxX) continue;
+    if (player.pos.y > sw.topY + 0.25 || player.pos.y + player.currentHeight < sw.bottomY) continue;
+
+    // Calculate exact slope height at player's X position
+    var t = (sw.slopeSide === 'LEFT')
+        ? (player.pos.x - sw.minX) / (sw.maxX - sw.minX)
+        : (sw.maxX - player.pos.x) / (sw.maxX - sw.minX);
+    t = Math.max(0, Math.min(1, t));
+    var slopeY = sw.topY - t * (sw.topY - sw.bottomY);
+
+    // If player's feet touch or dip below the diagonal plane while above the wedge base
+    if (player.pos.y <= slopeY + 0.08 && player.pos.y >= sw.bottomY - 0.4) {
+        isTouchingSurfRamp = true;
+        player.grounded = false; // Never apply ground friction while surfing!
+
+        // Push player smoothly onto the diagonal surface along its normal
+        var penetration = (slopeY - player.pos.y);
+        if (penetration > 0) {
+            player.pos = player.pos.add(sw.normal.scale(penetration * sw.normal.y));
+            if (player.pos.y < slopeY) player.pos.y = slopeY;
+        }
+
+        // Project velocity onto the slope plane (converts gravity into forward surf speed!)
+        var vn = player.vel.dot(sw.normal);
+        if (vn < 0) {
+            player.vel = player.vel.sub(sw.normal.scale(vn));
+        }
+
+        // Gentle forward board-glide boost when holding A or D into the slope
+        if (keys.KeyA || keys.KeyD) {
+            var horizSpeed = Math.hypot(player.vel.x, player.vel.z);
+            if (horizSpeed < 26.0) {
+                var glideDir = new Vec3(player.vel.x, 0, player.vel.z);
+                if (glideDir.length() < 0.5) {
+                    glideDir = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw));
+                } else {
+                    glideDir = glideDir.normalize();
+                }
+                player.vel.x += glideDir.x * 11.0 * dt;
+                player.vel.z += glideDir.z * 11.0 * dt;
+            }
+        }
+    }
 }
+
+
 document.getElementById('pos-val').textContent =
 player.pos.x.toFixed(1) + ', ' + player.pos.y.toFixed(2) + ', ' + player.pos.z.toFixed(1);
 document.getElementById('vel-val').textContent =
@@ -1499,6 +2174,7 @@ Math.hypot(player.vel.x, player.vel.z).toFixed(1) + ' m/s';
 document.getElementById('state-val').textContent =
 isTouchingSurfRamp ? 'SURFING' : (player.grounded ? (player.prone ? 'PRONE' : (player.crouching ? 'CROUCHED' : 'GROUNDED')) : 'AIRBORNE');
 }
+
 // ==========================================
 // 9. VECTOR 3D RENDERER + WEAPON VIEWMODEL
 // ==========================================
@@ -1508,6 +2184,17 @@ var ORANGE_GRID = { r: 250, g: 165, b: 95 };
 var GREY_GRID   = { r: 135, g: 140, b: 148 };
 var WATER_FILL  = { r: 24,  g: 105, b: 195 };
 var WATER_GRID  = { r: 110, g: 195, b: 255 };
+var PINK_FILL   = { r: 215, g: 38,  b: 135 };
+var PINK_GRID   = { r: 255, g: 130, b: 205 };
+var CYAN_FILL   = { r: 18,  g: 175, b: 205 };
+var CYAN_GRID   = { r: 130, g: 245, b: 255 };
+var PURPLE_FILL = { r: 85,  g: 32,  b: 145 };
+var PURPLE_GRID = { r: 175, g: 110, b: 255 };
+var SAND_FILL   = { r: 195, g: 165, b: 120 };
+var SAND_GRID   = { r: 235, g: 210, b: 165 };
+
+
+
 function shadeColor(c, factor, dist) {
 var fog = Math.min(0.65, dist / 125);
 var fr = (c.r * factor) * (1 - fog) + 28 * fog;
@@ -1548,6 +2235,185 @@ ctx.strokeRect(gx - 4, gy - 35, 38, 70);
 ctx.restore();
 }
 
+
+function drawVectorMinimap(ctx) {
+    // Tuck neatly below your top-left #hud panel
+    var mapSize = 156;
+    var padX = 15;
+    var padY = 170;
+    var cx = padX + mapSize / 2;
+    var cy = padY + mapSize / 2;
+    var zoom = (currentRoom === 'VECTOR_CITY') ? 1.45 : 2.3; // Pixels per meter
+
+    ctx.save();
+
+    // Clip to square radar frame
+    ctx.beginPath();
+    ctx.rect(padX, padY, mapSize, mapSize);
+    ctx.clip();
+
+    // Radar background
+    ctx.fillStyle = 'rgba(12, 14, 20, 0.88)';
+    ctx.fillRect(padX, padY, mapSize, mapSize);
+
+    // Subtle radar grid lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.lineWidth = 1;
+    for (var g = 1; g < 4; g++) {
+        var step = (mapSize / 4) * g;
+        ctx.beginPath();
+        ctx.moveTo(padX + step, padY);
+        ctx.lineTo(padX + step, padY + mapSize);
+        ctx.moveTo(padX, padY + step);
+        ctx.lineTo(padX + mapSize, padY + step);
+        ctx.stroke();
+    }
+
+    // Rotate map around player so "UP" on the radar is always where you are looking!
+    ctx.translate(cx, cy);
+    ctx.rotate(yaw);
+
+    var themeColors = {
+        orange: { fill: 'rgba(217, 107, 20, 0.45)',  stroke: '#ff9d3b' },
+        grey:   { fill: 'rgba(88, 90, 94, 0.35)',    stroke: '#8a909c' },
+        pink:   { fill: 'rgba(215, 38, 135, 0.45)',  stroke: '#ff4da6' },
+        cyan:   { fill: 'rgba(18, 175, 205, 0.45)',  stroke: '#33f3ff' },
+        purple: { fill: 'rgba(85, 32, 145, 0.48)',   stroke: '#b84dff' },
+        sand:   { fill: 'rgba(195, 165, 120, 0.35)', stroke: '#ebd2a7' },
+        water:  { fill: 'rgba(24, 105, 195, 0.45)',  stroke: '#6ec3ff' }
+    };
+
+    // Pass 1: Ground tiles (y <= 0.1) so roads, sand & water sit underneath buildings
+    // Pass 2: Elevated buildings, walls & props (y > 0.1)
+    for (var pass = 0; pass < 2; pass++) {
+        for (var i = 0; i < colliders.length; i++) {
+            var b = colliders[i];
+            if (b.maxY > 4.2 && b.minY > 3.5) continue; // Skip ceilings
+
+            var isGround = (b.maxY <= 0.15);
+            if ((pass === 0 && !isGround) || (pass === 1 && isGround)) continue;
+
+            var rx = (b.minX - player.pos.x) * zoom;
+            var rz = -(b.maxZ - player.pos.z) * zoom;
+            var rw = (b.maxX - b.minX) * zoom;
+            var rd = (b.maxZ - b.minZ) * zoom;
+
+            // Skip boxes completely outside radar bounds
+            if (rx > mapSize || rx + rw < -mapSize || rz > mapSize || rz + rd < -mapSize) continue;
+
+            var style = (b.label === 'SURF_HAZARD_WATER') ? themeColors.water : (themeColors[b.theme] || themeColors.grey);
+            ctx.fillStyle = style.fill;
+            ctx.strokeStyle = style.stroke;
+            ctx.lineWidth = isGround ? 0.6 : 1.1;
+
+            ctx.fillRect(rx, rz, rw, rd);
+            ctx.strokeRect(rx, rz, rw, rd);
+        }
+    }
+
+    // Draw Doors (Green = Enterable Shop/Room, Red = Locked)
+    for (var d = 0; d < activeDoors.length; d++) {
+        var door = activeDoors[d];
+        var dx = (door.x - player.pos.x) * zoom;
+        var dz = -(door.z - player.pos.z) * zoom;
+        ctx.fillStyle = door.isLocked ? '#ff3b3b' : '#39ff14';
+        ctx.beginPath();
+        ctx.arc(dx, dz, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Draw Pedestrians / Shop Staff Dots
+    if (currentRoom === 'VECTOR_CITY' || currentRoom.indexOf('INTERIOR_') === 0) {
+        for (var p = 0; p < cityBots.length; p++) {
+            var botP = cityBots[p];
+            var bx = (botP.pos.x - player.pos.x) * zoom;
+            var bz = -(botP.pos.z - player.pos.z) * zoom;
+            ctx.fillStyle = botP.color;
+            ctx.beginPath();
+            ctx.arc(bx, bz, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Draw Vector Blast Enemy Bot Dot
+    if (currentRoom === 'VECTOR_BLAST' && bot.active) {
+        var ex = (bot.pos.x - player.pos.x) * zoom;
+        var ez = -(bot.pos.z - player.pos.z) * zoom;
+        ctx.fillStyle = '#ff3b3b';
+        ctx.beginPath();
+        ctx.arc(ex, ez, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.restore();
+
+    // Player Center Arrow (always points straight up in screen space)
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#111318';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 6);
+    ctx.lineTo(cx + 4.5, cy + 5);
+    ctx.lineTo(cx, cy + 2.5);
+    ctx.lineTo(cx - 4.5, cy + 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Hub Portal Edge Waypoint Beacon when exploring far into Vector City!
+    if (currentRoom === 'VECTOR_CITY') {
+        var toHubX = 12 - player.pos.x;
+        var toHubZ = -9.6 - player.pos.z;
+        var hubDist = Math.hypot(toHubX, toHubZ);
+        if (hubDist > 12) {
+            var worldAngle = Math.atan2(-toHubZ, toHubX);
+            var screenAngle = worldAngle + yaw;
+            var rEdge = (mapSize / 2) - 8;
+            var bx = cx + Math.cos(screenAngle) * rEdge;
+            var by = cy + Math.sin(screenAngle) * rEdge;
+
+            ctx.fillStyle = '#ff2a85';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.arc(bx, by, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#ff99cc';
+            ctx.font = 'bold 10px monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText('HUB ' + Math.round(hubDist) + 'm', padX + 4, padY + mapSize - 5);
+        }
+        if (pizzaJob.active) {
+            var toDropX = pizzaJob.targetX - player.pos.x;
+            var toDropZ = pizzaJob.targetZ - player.pos.z;
+            var dropDist = Math.hypot(toDropX, toDropZ);
+            var dropAngle = Math.atan2(-toDropZ, toDropX) + yaw;
+            var clampedR = Math.min((mapSize / 2) - 8, dropDist * zoom);
+            var px = cx + Math.cos(dropAngle) * clampedR;
+            var py = cy + Math.sin(dropAngle) * clampedR;
+
+            ctx.fillStyle = '#ff9900';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(px, py, 5.0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+    }
+
+    // Outer Radar Border (matches HUD orange accent in Hub, neon cyan in Vector City)
+    ctx.strokeStyle = (currentRoom === 'VECTOR_CITY' || currentRoom.indexOf('INTERIOR_') === 0) ? '#00f0ff' : '#ff7b00';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(padX, padY, mapSize, mapSize);
+    ctx.restore();
+}
+
+
 function render() {
 var w = canvas.width;
 var h = canvas.height;
@@ -1564,6 +2430,7 @@ for (var idx = 0; idx < faces.length; idx++) {
 var f = faces[idx];
 var toCam = camPos.sub(f.center);
 if (toCam.dot(f.normal) <= 0) continue;
+if (currentRoom === 'VECTOR_CITY' && toCam.length() > 135) continue;
 var camVerts = [];
 var anyInFront = false;
 var maxZ = -Infinity;
@@ -1596,10 +2463,27 @@ var proj = [];
 for (var pIdx = 0; pIdx < clipped.length; pIdx++) {
 proj.push(project(clipped[pIdx], w, h, fovScale));
 }
-var isWater = (face.label === 'SURF_HAZARD_WATER');
-var isOrange = (face.theme === 'orange');
-var fillRGB = isWater ? WATER_FILL : (isOrange ? ORANGE_FILL : GREY_FILL);
-var gridRGB = isWater ? WATER_GRID : (isOrange ? ORANGE_GRID : GREY_GRID);
+
+var isWater  = (face.label === 'SURF_HAZARD_WATER' || face.theme === 'water');
+var fillRGB  = GREY_FILL;
+var gridRGB  = GREY_GRID;
+var edgeGlow = 'rgba(180, 185, 195, 0.45)';
+
+if (isWater) {
+    fillRGB = WATER_FILL; gridRGB = WATER_GRID; edgeGlow = 'rgba(120, 210, 255, 0.75)';
+} else if (face.theme === 'orange') {
+    fillRGB = ORANGE_FILL; gridRGB = ORANGE_GRID; edgeGlow = 'rgba(255, 220, 180, 0.55)';
+} else if (face.theme === 'pink') {
+    fillRGB = PINK_FILL; gridRGB = PINK_GRID; edgeGlow = 'rgba(255, 130, 210, 0.80)';
+} else if (face.theme === 'cyan') {
+    fillRGB = CYAN_FILL; gridRGB = CYAN_GRID; edgeGlow = 'rgba(120, 245, 255, 0.80)';
+} else if (face.theme === 'purple') {
+    fillRGB = PURPLE_FILL; gridRGB = PURPLE_GRID; edgeGlow = 'rgba(190, 130, 255, 0.70)';
+} else if (face.theme === 'sand') {
+    fillRGB = SAND_FILL; gridRGB = SAND_GRID; edgeGlow = 'rgba(240, 215, 170, 0.55)';
+}
+
+
 ctx.beginPath();
 ctx.moveTo(proj[0].x, proj[0].y);
 for (var i = 1; i < proj.length; i++) {
@@ -1685,7 +2569,8 @@ for (var e = 1; e < proj.length; e++) {
 ctx.lineTo(proj[e].x, proj[e].y);
 }
 ctx.closePath();
-ctx.strokeStyle = isWater ? 'rgba(120, 210, 255, 0.7)' : (isOrange ? 'rgba(255, 220, 180, 0.55)' : 'rgba(180, 185, 195, 0.45)');
+ctx.strokeStyle = edgeGlow;
+
 ctx.lineWidth = 1.25;
 ctx.stroke();
 }
@@ -1727,6 +2612,109 @@ ctx.restore();
 // First-Person Vector Blaster Model
 drawVectorBlasterViewmodel(w, h);
 }
+
+if (currentRoom === 'VECTOR_CITY' || currentRoom.indexOf('INTERIOR_') === 0) {
+    for (var i = 0; i < cityBots.length; i++) {
+        var p = cityBots[i];
+        var distToPlayer = p.pos.sub(player.pos).length();
+        if (distToPlayer > 85) continue;
+
+        var bob = Math.abs(Math.sin(p.walkPhase)) * 0.06;
+        var feetCam = worldToCamera(new Vec3(p.pos.x, 0, p.pos.z), camPos, yaw, pitch);
+        var headCam = worldToCamera(new Vec3(p.pos.x, 1.75 + bob, p.pos.z), camPos, yaw, pitch);
+
+        if (feetCam.z <= NEAR || headCam.z <= NEAR) continue;
+
+        var feetProj = project(feetCam, w, h, fovScale);
+        var headProj = project(headCam, w, h, fovScale);
+        var bodyH = Math.max(8, feetProj.y - headProj.y);
+        var bodyW = bodyH * 0.34;
+        var headR = bodyH * 0.13;
+
+        ctx.save();
+        ctx.strokeStyle = p.color;
+        ctx.fillStyle = 'rgba(20, 22, 30, 0.85)';
+        ctx.lineWidth = 2;
+
+        // Torso (neon Hawaiian shirt box)
+        var torsoTop = headProj.y + headR * 2.2;
+        var torsoH = bodyH * 0.42;
+        ctx.fillRect(headProj.x - bodyW / 2, torsoTop, bodyW, torsoH);
+        ctx.strokeRect(headProj.x - bodyW / 2, torsoTop, bodyW, torsoH);
+
+// Animated Arms (waves / tosses pizza dough / flips burgers / polishes)
+var armSwing = p.role ? Math.sin(p.walkPhase * 1.4) * (bodyH * 0.22) : Math.sin(p.walkPhase) * (bodyH * 0.08);
+var armLift  = (p.role === 'pizza_chef') ? Math.abs(Math.sin(p.walkPhase)) * (bodyH * 0.35) : 0;
+ctx.beginPath();
+ctx.moveTo(headProj.x - bodyW / 2, torsoTop + 4);
+ctx.lineTo(headProj.x - bodyW * 0.85, torsoTop + torsoH * 0.6 - armSwing - armLift);
+ctx.moveTo(headProj.x + bodyW / 2, torsoTop + 4);
+ctx.lineTo(headProj.x + bodyW * 0.85, torsoTop + torsoH * 0.6 + armSwing - armLift);
+ctx.stroke();
+
+// Floating spinning pizza dough above the NY Pizza Chef!
+if (p.role === 'pizza_chef') {
+    var doughY = headProj.y - 6 - Math.abs(Math.sin(p.walkPhase)) * (bodyH * 0.32);
+    ctx.strokeStyle = '#ffdf9e';
+    ctx.beginPath();
+    ctx.ellipse(headProj.x + bodyW * 0.5, doughY, bodyW * 0.55, bodyW * 0.16, 0, 0, Math.PI * 2);
+    ctx.stroke();
+ctx.strokeStyle = p.color; 
+}
+
+
+        // Head circle
+        ctx.beginPath();
+        ctx.arc(headProj.x, headProj.y + headR, headR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Animated walking legs
+        var stride = Math.sin(p.walkPhase) * (bodyW * 0.35);
+        ctx.beginPath();
+        ctx.moveTo(headProj.x - bodyW * 0.2, torsoTop + torsoH);
+        ctx.lineTo(headProj.x - bodyW * 0.2 - stride, feetProj.y);
+        ctx.moveTo(headProj.x + bodyW * 0.2, torsoTop + torsoH);
+        ctx.lineTo(headProj.x + bodyW * 0.2 + stride, feetProj.y);
+        ctx.stroke();
+
+        // Friendly "Hi!" bubble when walking close by (< 7.5m)
+        if (distToPlayer < 7.5) {
+            var labelY = headProj.y - 12;
+            ctx.font = 'bold 13px monospace';
+            var textW = ctx.measureText(p.greeting).width + 14;
+            ctx.fillStyle = 'rgba(15, 18, 26, 0.90)';
+            ctx.fillRect(headProj.x - textW / 2, labelY - 15, textW, 20);
+            ctx.strokeStyle = p.color;
+            ctx.lineWidth = 1.2;
+            ctx.strokeRect(headProj.x - textW / 2, labelY - 15, textW, 20);
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText(p.greeting, headProj.x, labelY);
+        }
+        ctx.restore();
+    }
+}
+
+if (currentRoom === 'VECTOR_CITY' && pizzaJob.active) {
+    var bBot = worldToCamera(new Vec3(pizzaJob.targetX, 0, pizzaJob.targetZ), camPos, yaw, pitch);
+    var bTop = worldToCamera(new Vec3(pizzaJob.targetX, 18, pizzaJob.targetZ), camPos, yaw, pitch);
+    var bSeg = clipPolygonNear([bBot, bTop]);
+    if (bSeg.length === 2) {
+        var bp0 = project(bSeg[0], w, h, fovScale);
+        var bp1 = project(bSeg[1], w, h, fovScale);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 153, 0, 0.75)';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(bp0.x, bp0.y);
+        ctx.lineTo(bp1.x, bp1.y);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+
 // Draw the 3D Laser Pointer Beam & Dot
 drawLaserPointer(ctx, camPos, yaw, pitch, fovScale);
 // Damage / Respawn Screen Flash
@@ -1748,7 +2736,10 @@ ctx.fillStyle = '#ff9d3b';
 ctx.fillText(deskInteractPrompt, w / 2, h - 57);
 ctx.restore();
 }
+drawVectorMinimap(ctx);
 }
+
+
 // ==========================================
 // 10. INITIALIZE & FIXED-TIMESTEP MAIN LOOP
 // ==========================================
@@ -1768,7 +2759,9 @@ if (gameActive) {
         accumulator -= FIXED_DT;
     }
     updateInteractions(dt);
+updateVectorCityChunks(false);
     updateVectorBlastBot(dt);
+updateCityBots(dt);
 
     var eyePos = new Vec3(
         player.pos.x,
