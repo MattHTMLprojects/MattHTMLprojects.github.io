@@ -95,7 +95,7 @@
         LOOK: <span id="look-mode">CLICK SCREEN TO START</span>
     </div>
 
-    <div id="blocker" onclick="enterGame()">
+    <div id="blocker">
         <h1>[CLICK TO ENTER] MATT'S VECTOR PLAYGROUND</h1>
         <p><span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> Move &nbsp;|&nbsp; <span class="key">SHIFT</span> Sprint &nbsp;|&nbsp; <span class="key">SPACE</span> Jump &nbsp;|&nbsp; <span class="key">C</span> Crouch &nbsp;|&nbsp; <span class="key">Z</span> Prone</p>
         <p><span class="key">E</span> Interact / Doors &nbsp;|&nbsp; <span class="key">CLICK</span> Shoot Vector Blaster &nbsp;|&nbsp; Mouse Look</p>
@@ -106,11 +106,141 @@
         var ctx = canvas.getContext('2d');
         var blocker = document.getElementById('blocker');
         var lookModeEl = document.getElementById('look-mode');
-
         var gameActive = false;
         var pointerLocked = false;
         var isDragging = false;
 
+ // NEWER CODE Raycast against world colliders so the laser dot lands directly on walls & desk props
+        function getLaserHitPoint(origin, dir, maxDist) {
+            var closestT = maxDist;
+            for (var i = 0; i < colliders.length; i++) {
+                var b = colliders[i];
+                var t1 = (b.minX - origin.x) / (dir.x || 1e-6);
+                var t2 = (b.maxX - origin.x) / (dir.x || 1e-6);
+                var t3 = (b.minY - origin.y) / (dir.y || 1e-6);
+                var t4 = (b.maxY - origin.y) / (dir.y || 1e-6);
+                var t5 = (b.minZ - origin.z) / (dir.z || 1e-6);
+                var t6 = (b.maxZ - origin.z) / (dir.z || 1e-6);
+
+                var tmin = Math.max(Math.min(t1, t2), Math.min(t3, t4), Math.min(t5, t6));
+                var tmax = Math.min(Math.max(t1, t2), Math.max(t3, t4), Math.max(t5, t6));
+
+                if (tmax >= 0 && tmin <= tmax && tmin > 0.1 && tmin < closestT) {
+                    closestT = tmin;
+                }
+            }
+            return origin.add(dir.scale(closestT));
+        }
+
+
+// Returns the exact 3D point your Vector Blaster & Laser are aiming at
+function getLaserAimTarget(camPos) {
+    var forward = new Vec3(
+        -Math.sin(yaw) * Math.cos(pitch),
+        Math.sin(pitch),
+        Math.cos(yaw) * Math.cos(pitch)
+    );
+    var right = new Vec3(Math.cos(yaw), 0, Math.sin(yaw));
+    var up = new Vec3(0, 1, 0);
+
+    // Subtle 6-8% sway keeps the laser dot right near your center of focus
+    var aimDir = forward
+        .add(right.scale(stickX * 0.08))
+        .add(up.scale(-stickY * 0.06))
+        .normalize();
+
+    return getLaserHitPoint(camPos, aimDir, 45.0);
+}
+
+// NEWER CODE Updates the laser dot position without touching camera yaw or pitch
+        function updateLaserPointer(dt, camPos) {
+            if (holdingLaser) {
+                var forward = new Vec3(
+                    -Math.sin(yaw) * Math.cos(pitch),
+                    Math.sin(pitch),
+                    Math.cos(yaw) * Math.cos(pitch)
+                );
+                laserPos = getLaserHitPoint(camPos, forward, 45.0);
+            } else if (!laserOnDesk) {
+                laserVel.y -= 18.0 * dt;
+                laserPos = laserPos.add(laserVel.scale(dt));
+
+                if (laserPos.y < 0.05) {
+                    laserPos.y = 0.05;
+                    laserVel.y = -laserVel.y * 0.6;
+                    laserVel.x *= 0.90;
+                    laserVel.z *= 0.90;
+                }
+            }
+        }
+
+
+  //NEWER CODE Renders the centered HUD sight ring, 3D laser beam, and pinpoint dot
+// Renders the centered HUD sight ring, 3D laser beam, and pinpoint dot
+function drawLaserPointer(ctx, camPos, yaw, pitch, fovScale) {
+    // Let the Vector Blaster viewmodel take over once inside VECTOR_BLAST
+    if (holdingLaser && currentRoom === 'VECTOR_BLAST') return;
+
+    var w = canvas.width;
+    var h = canvas.height;
+
+    ctx.save();
+
+    // Centered HUD aiming ring when holding the laser pointer
+    if (holdingLaser) {
+        var cx = w / 2;
+        var cy = h / 2;
+
+        ctx.strokeStyle = 'rgba(255, 157, 59, 0.22)'; // Subtle Vector Blast orange ring
+        ctx.lineWidth = 1.25;
+        ctx.beginPath();
+        ctx.arc(cx, cy, hudRingRadius, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    var dotCam = worldToCamera(laserPos, camPos, yaw, pitch);
+    if (dotCam.z <= NEAR) {
+        ctx.restore();
+        return;
+    }
+
+    var dotProj = project(dotCam, w, h, fovScale);
+
+    // Draw laser beam from the exact Vector Blaster muzzle position (w * 0.73, h * 0.72)
+    if (holdingLaser) {
+        var beamColor = (laserColor === '#ff6a00') ? '#ff9d3b' : laserColor;
+
+        ctx.strokeStyle = beamColor;
+        ctx.shadowColor = beamColor;
+        ctx.shadowBlur = 10;
+        ctx.lineWidth = 2.0; // Matches Vector Blaster's crisp tracer feel
+        ctx.beginPath();
+        ctx.moveTo(w * 0.73, h * 0.72); // Exact Vector Blaster muzzle coordinate!
+        ctx.lineTo(dotProj.x, dotProj.y);
+        ctx.stroke();
+    }
+
+    // Pinpoint glowing laser dot inside the center HUD ring
+    var activeColor = (laserColor === '#ff6a00') ? '#ff9d3b' : laserColor;
+    var dotRadius = holdingLaser ? 3.5 : Math.max(2.5, (0.04 * fovScale) / dotCam.z);
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = activeColor;
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.arc(dotProj.x, dotProj.y, dotRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outer orange/white halo ring
+    ctx.strokeStyle = activeColor;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(dotProj.x, dotProj.y, dotRadius + 2.5, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+/*
         function enterGame() {
             gameActive = true;
             blocker.style.display = 'none';
@@ -122,6 +252,7 @@
                 }
             } catch (e) {}
         }
+*/
 
         function resize() {
             canvas.width = window.innerWidth;
@@ -165,6 +296,30 @@
 
             return new Vec3(x1, y2, z2);
         }
+
+        // ==========================================
+        // CLEAN LASER POINTER AIMING SIGHT
+        // ==========================================
+        var holdingLaser = false;
+        var laserOnDesk = true;
+        var laserPos = new Vec3(0.52, 0.75, -28.32); // Starts on the workstation desk
+        var laserVel = new Vec3(0, 0, 0);
+        var laserColor = '#ff6a00'; // Tactical orange ('#ffffff' for pure white)
+        var hudRingRadius = 90;     // Centered HUD sight ring radius
+
+        function toggleLaserPointer(camPos) {
+            if (holdingLaser) {
+                holdingLaser = false;
+                laserOnDesk = false;
+                var forward = new Vec3(-Math.sin(yaw), Math.sin(pitch), Math.cos(yaw)).normalize();
+                laserVel = forward.scale(5.0).add(new Vec3(0, 2.0, 0));
+            } else if (laserPos.sub(camPos).length() < 3.5) {
+                holdingLaser = true;
+                laserOnDesk = false;
+                laserVel = new Vec3(0, 0, 0);
+            }
+        }
+
 
         var NEAR = 0.15;
         function clipPolygonNear(verts) {
@@ -277,6 +432,11 @@
 colliders.length = STATIC_COLLIDER_COUNT;
 faces.length = STATIC_FACE_COUNT;
 var deskTopY = 0.72 + ((deskHeightVal - 30) / 60) * 0.60;
+if (laserOnDesk && !holdingLaser) {
+    laserPos.x = deskX + 0.52; // Clean empty spot between Mouse (0.22) and PC (1.05)
+    laserPos.y = deskTopY + 0.03;
+    laserPos.z = deskZ + 0.28;
+}
 var displayNum = Math.round(deskHeightVal);
 addBox(deskX, deskTopY - 0.03, deskZ, 3.2, 0.06, 1.4, 'orange', 'DESK [' + displayNum + ']');
 addBox(deskX - 1.35, 0.03, deskZ, 0.18, 0.06, 1.1, 'orange', 'DESK_FOOT_L');
@@ -353,6 +513,8 @@ var monDropH = Math.abs(monPsuY - outletY);
 addBox(deskX + 0.30, (monPsuY + outletY) / 2, deskZ - 0.60, 0.025, monDropH, 0.025, 'orange', 'MON_PWR_DROP');
 addBox(deskX + 0.58, outletY, deskZ - 0.60, 0.55, 0.025, 0.025, 'orange', 'MON_PWR_PLUG');
 }
+
+
 // ==========================================
 // 4. PLAYER STATE & INPUTS
 // ==========================================
@@ -383,7 +545,7 @@ jumpBufferTimer: 0
 var keys = {};
 var yaw = Math.PI;
 var pitch = -0.05;
-var mouseSensitivity = 0.0025;
+var mouseSensitivity = 0.0055;
 var crouchToggled = false;
 var eKeysDown = {};
 var eWasDown = false;
@@ -414,98 +576,177 @@ var screenFlashTimer = 0;
             respawnTimer: 0
         };
 
-window.addEventListener('keydown', function(e) {
-if (e.code === 'KeyE' || e.key === 'e' || e.key === 'E') {
-eKeysDown['E'] = true;
+
+
+// ==========================================
+// INPUT, POINTER LOCK & PAUSE CONTROLS
+// ==========================================
+
+function requestCanvasLock() {
+    if (canvas.requestPointerLock) {
+        try {
+            // Request raw mouse input to prevent fast flicks from escaping on Windows
+            var p = canvas.requestPointerLock({ unadjustedMovement: true });
+            if (p && p.catch) {
+                p.catch(function() {
+                    // Fallback to standard pointer lock if OS doesn't support unadjustedMovement
+                    canvas.requestPointerLock();
+                });
+            }
+        } catch (err) {
+            canvas.requestPointerLock();
+        }
+    }
 }
-}, true);
-window.addEventListener('keyup', function(e) {
-if (e.code === 'KeyE' || e.key === 'e' || e.key === 'E') {
-eKeysDown['E'] = false;
+
+
+function setPaused(paused) {
+    gameActive = !paused;
+    isDragging = false;
+    if (paused) {
+        keys = {};
+        eKeysDown = {};
+        blocker.style.display = 'flex';
+        lookModeEl.textContent = 'PAUSED (CLICK TO RESUME)';
+        if (document.pointerLockElement === canvas && document.exitPointerLock) {
+            document.exitPointerLock();
+        }
+    } else {
+        blocker.style.display = 'none';
+        lookModeEl.textContent = pointerLocked ? 'MOUSE LOCKED (ESC TO PAUSE)' : 'DRAG MOUSE (ESC OR P TO PAUSE)';
+    }
 }
-}, true);
-canvas.addEventListener('mousedown', function(e) {
-isDragging = true;
-if (!pointerLocked && canvas.requestPointerLock) {
-try {
-var p = canvas.requestPointerLock();
-if (p && p.catch) p.catch(function() {});
-} catch (err) {}
-}
-if (gameActive && currentRoom === 'VECTOR_BLAST' && e.button === 0) {
-shootVectorBlaster();
-}
+
+// 1. Click the pause overlay (blocker) to lock pointer and resume
+blocker.addEventListener('click', function() {
+    requestCanvasLock();
 });
-window.addEventListener('mouseup', function() {
-isDragging = false;
-});
+
+// 2. Browser automatically fires this when pointer locks or when Esc unlocks it
 document.addEventListener('pointerlockchange', function() {
-pointerLocked = (document.pointerLockElement === canvas);
-if (pointerLocked) {
-gameActive = true;
-blocker.style.display = 'none';
-lookModeEl.textContent = 'MOUSE LOCKED (ESC TO PAUSE)';
-} else {
-gameActive = false;
-blocker.style.display = 'flex';
-lookModeEl.textContent = 'PAUSED (CLICK TO RESUME)';
-}
+    pointerLocked = (document.pointerLockElement === canvas);
+    setPaused(!pointerLocked);
 });
+
+// 3. Mouse down: Lock pointer if unlocked, otherwise shoot
+canvas.addEventListener('mousedown', function(e) {
+    if (!gameActive) return;
+    isDragging = true;
+
+    if (!pointerLocked && canvas.requestPointerLock) {
+        requestCanvasLock();
+        return;
+    }
+
+    if (currentRoom === 'VECTOR_BLAST' && e.button === 0) {
+        shootVectorBlaster();
+    }
+});
+
+window.addEventListener('mouseup', function() {
+    isDragging = false;
+});
+
+// 4. Mouse look
 document.addEventListener('mousemove', function(e) {
-if (!gameActive) return;
-if (pointerLocked || isDragging) {
-var mx = e.movementX || 0;
-var my = e.movementY || 0;
-if (Math.abs(mx) > 80 || Math.abs(my) > 80) return;
-yaw -= mx * mouseSensitivity;
-pitch -= my * mouseSensitivity;
-var maxPitch = 1.35;
-pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
-}
+    if (!gameActive) return;
+    if (pointerLocked || isDragging) {
+        var mx = e.movementX || 0;
+        var my = e.movementY || 0;
+
+        // Raised from 80 to 400 so fast mouse flicks register instead of getting dropped!
+        if (Math.abs(mx) > 400 || Math.abs(my) > 400) return;
+
+        yaw -= mx * mouseSensitivity;
+        pitch -= my * mouseSensitivity;
+
+        var maxPitch = 1.35;
+        pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
+    }
 });
+
+// 5. Capture 'E' key
+window.addEventListener('keydown', function(e) {
+    if (e.code === 'KeyE' || e.key === 'e' || e.key === 'E') {
+        eKeysDown['E'] = true;
+    }
+if ((e.code === 'KeyE' || e.key === 'e' || e.key === 'E') && !e.repeat) {
+    toggleLaserPointer(player.pos); // Replace player.pos with your camera position variable if different
+}
+if (e.code === 'KeyL' && !e.repeat) {
+    laserColor = (laserColor === '#ff6a00') ? '#ffffff' : '#ff6a00';
+}
+}, true);
+
+window.addEventListener('keyup', function(e) {
+    if (e.code === 'KeyE' || e.key === 'e' || e.key === 'E') {
+        eKeysDown['E'] = false;
+    }
+}, true);
+
+// 6. Main keyboard controls (Pause, Movement, Crouch, Prone, Jump)
 document.addEventListener('keydown', function(e) {
-keys[e.code] = true;
-if (gameActive && (e.code === 'Space' || e.ctrlKey || e.code === 'ControlLeft' || e.code === 'ControlRight')) {
-e.preventDefault();
-}
-if (e.code === 'BracketLeft')  mouseSensitivity = Math.max(0.0005, mouseSensitivity - 0.0005);
-if (e.code === 'BracketRight') mouseSensitivity = Math.min(0.0150, mouseSensitivity + 0.0005);
-if ((e.code === 'KeyC' || e.code === 'ControlLeft') && !e.repeat) {
-crouchToggled = !crouchToggled;
-if (crouchToggled) player.prone = false;
-}
-if (e.code === 'KeyZ' && !e.repeat) {
-if (!player.prone && player.grounded) {
-player.prone = true;
-player.crouching = false;
-crouchToggled = false;
-} else if (player.prone) {
-if (!intersectsAny(player.pos, player.standingHeight)) {
-player.prone = false;
-} else if (!intersectsAny(player.pos, player.crouchHeight)) {
-player.prone = false;
-player.crouching = true;
-crouchToggled = true;
-}
-}
-}
-if (e.code === 'Space') {
-if (player.prone) {
-if (!intersectsAny(player.pos, player.standingHeight)) {
-player.prone = false;
-} else if (!intersectsAny(player.pos, player.crouchHeight)) {
-player.prone = false;
-player.crouching = true;
-crouchToggled = true;
-}
-} else {
-player.jumpBufferTimer = 0.12;
-}
-}
+    // Pause toggle: 'P' always works, and 'Escape' works even if pointer lock was blocked
+    if (e.code === 'KeyP' || (!pointerLocked && e.code === 'Escape')) {
+        if (gameActive) {
+            setPaused(true);
+        } else {
+            requestCanvasLock();
+        }
+        return;
+    }
+
+    if (!gameActive) return;
+
+    keys[e.code] = true;
+
+    if (e.code === 'Space' || e.ctrlKey || e.code === 'ControlLeft' || e.code === 'ControlRight') {
+        e.preventDefault();
+    }
+    if (e.code === 'BracketLeft')  mouseSensitivity = Math.max(0.0005, mouseSensitivity - 0.0005);
+    if (e.code === 'BracketRight') mouseSensitivity = Math.min(0.0150, mouseSensitivity + 0.0005);
+
+    if ((e.code === 'KeyC' || e.code === 'ControlLeft') && !e.repeat) {
+        crouchToggled = !crouchToggled;
+        if (crouchToggled) player.prone = false;
+    }
+
+    if (e.code === 'KeyZ' && !e.repeat) {
+        if (!player.prone && player.grounded) {
+            player.prone = true;
+            player.crouching = false;
+            crouchToggled = false;
+        } else if (player.prone) {
+            if (!intersectsAny(player.pos, player.standingHeight)) {
+                player.prone = false;
+            } else if (!intersectsAny(player.pos, player.crouchHeight)) {
+                player.prone = false;
+                player.crouching = true;
+                crouchToggled = true;
+            }
+        }
+    }
+
+    if (e.code === 'Space') {
+        if (player.prone) {
+            if (!intersectsAny(player.pos, player.standingHeight)) {
+                player.prone = false;
+            } else if (!intersectsAny(player.pos, player.crouchHeight)) {
+                player.prone = false;
+                player.crouching = true;
+                crouchToggled = true;
+            }
+        } else {
+            player.jumpBufferTimer = 0.12;
+        }
+    }
 });
+
 document.addEventListener('keyup', function(e) {
-keys[e.code] = false;
+    keys[e.code] = false;
 });
+
+
 // ==========================================
 // 6. ROOM & DOOR MANAGEMENT SYSTEM
 // ==========================================
@@ -1068,17 +1309,31 @@ var pr = project(cv, w, h, fovScale);
 return Math.hypot(pr.x - w / 2, pr.y - h / 2);
 }
 var targets = [
-{ id: 'DESK_UP',   dist: getScreenDist(deskBtnUpPos) },
-{ id: 'DESK_DOWN', dist: getScreenDist(deskBtnDownPos) },
-{ id: 'MON_PWR',   dist: getScreenDist(monBtnPos) },
-{ id: 'PC_PWR',    dist: getScreenDist(pcBtnPos) }
+    { id: 'DESK_UP',   dist: getScreenDist(deskBtnUpPos) },
+    { id: 'DESK_DOWN', dist: getScreenDist(deskBtnDownPos) },
+    { id: 'MON_PWR',   dist: getScreenDist(monBtnPos) },
+    { id: 'PC_PWR',    dist: getScreenDist(pcBtnPos) }
 ];
+
+// Only add the laser pointer as a target if the player isn't already holding it
+if (!holdingLaser) {
+    targets.push({ id: 'LASER_PICKUP', dist: getScreenDist(laserPos) });
+}
+
 targets.sort(function(a, b) { return a.dist - b.dist; });
 var best = targets[0];
 var targetId = (best.dist < 170)
-? best.id
-: (player.pos.x <= (deskX - 0.85) ? 'DESK_UP' : 'DESK_DOWN');
-if (targetId === 'DESK_UP') {
+    ? best.id
+    : (player.pos.x <= (deskX - 0.85) ? 'DESK_UP' : 'DESK_DOWN');
+
+if (targetId === 'LASER_PICKUP') {
+    deskInteractPrompt = "Press [E] : PICK UP LASER POINTER";
+    if (eJustPressed) {
+        holdingLaser = true;
+        laserOnDesk = false;
+        laserVel = new Vec3(0, 0, 0);
+    }
+} else if (targetId === 'DESK_UP') {
 deskInteractPrompt = "Hold [E] : RAISE DESK [▲]  |  [" + Math.round(deskHeightVal) + " / 90]";
 if (eDown) {
 var prevUp = deskHeightVal;
@@ -1107,6 +1362,9 @@ buildWorkstationGeometry();
 }
 }
 }
+
+
+
 // ==========================================
 // 8. PHYSICS ENGINE (CROUCH, PRONE, SURF & WATER)
 // ==========================================
@@ -1289,6 +1547,7 @@ ctx.strokeStyle = '#ff9d3b';
 ctx.strokeRect(gx - 4, gy - 35, 38, 70);
 ctx.restore();
 }
+
 function render() {
 var w = canvas.width;
 var h = canvas.height;
@@ -1468,6 +1727,8 @@ ctx.restore();
 // First-Person Vector Blaster Model
 drawVectorBlasterViewmodel(w, h);
 }
+// Draw the 3D Laser Pointer Beam & Dot
+drawLaserPointer(ctx, camPos, yaw, pitch, fovScale);
 // Damage / Respawn Screen Flash
 if (screenFlashTimer > 0 && screenFlashColor) {
 ctx.fillStyle = screenFlashColor;
@@ -1495,19 +1756,28 @@ loadRoom('MAIN');
 var lastTime = performance.now();
 var FIXED_DT = 1 / 120;
 var accumulator = 0;
+
 function loop(now) {
 requestAnimationFrame(loop);
 var dt = Math.min((now - lastTime) / 1000, 0.1);
 lastTime = now;
 if (gameActive) {
-accumulator += dt;
-while (accumulator >= FIXED_DT) {
-updatePhysics(FIXED_DT);
-accumulator -= FIXED_DT;
+    accumulator += dt;
+    while (accumulator >= FIXED_DT) {
+        updatePhysics(FIXED_DT);
+        accumulator -= FIXED_DT;
+    }
+    updateInteractions(dt);
+    updateVectorBlastBot(dt);
+
+    var eyePos = new Vec3(
+        player.pos.x,
+        player.pos.y + player.currentHeight - player.eyeOffset,
+        player.pos.z
+    );
+    updateLaserPointer(dt, eyePos);
 }
-updateInteractions(dt);
-updateVectorBlastBot(dt);
-}
+
 render();
 }
 render();
