@@ -696,15 +696,19 @@ function initCityBots() {
         // Spawn directly along the open Ocean Drive avenue & boardwalk (x between 1 and 18)
         var spawnX = 1.5 + (i % 6) * 2.8;
         var spawnZ = -2 + (i - 10) * 6.5;
+        var spawnAsMannequin = Math.random() < 0.5; // 50% chance for 3D mannequin (change 0.5 to 0.7 for 70%, etc.)
         cityBots.push({
             pos: new Vec3(spawnX, 0, spawnZ),
-            dirAngle: (i % 2 === 0) ? Math.PI / 2 : -Math.PI / 2, // Walk north/south along the avenue
+            dirAngle: (i % 2 === 0) ? Math.PI / 2 : -Math.PI / 2,
             speed: 1.5 + (i % 3) * 0.4,
             turnTimer: 2.0 + (i % 4),
             walkPhase: i * 0.8,
             color: shirtColors[i % shirtColors.length],
-            greeting: CITY_GREETINGS[i % CITY_GREETINGS.length]
+            greeting: CITY_GREETINGS[i % CITY_GREETINGS.length],
+            isMannequin: spawnAsMannequin,
+            variant: Math.random() < 0.5 ? 'male' : 'female'
         });
+
     }
 }
 
@@ -729,6 +733,9 @@ if (p.role) {
             var spawnDist = 35 + Math.random() * 35;
             p.pos.x = Math.min(26, Math.max(-90, player.pos.x + Math.cos(spawnAngle) * spawnDist));
             p.pos.z = player.pos.z + Math.sin(spawnAngle) * spawnDist;
+p.isMannequin = Math.random() < 0.5;
+p.variant = Math.random() < 0.5 ? 'male' : 'female';
+
         }
 
         // Occasionally pick a new strolling direction
@@ -757,6 +764,22 @@ if (p.role) {
                 }
             }
         }
+
+        // Prevent bots (2D & 3D mannequins) from walking through each other
+        if (!blocked) {
+            for (var other = 0; other < cityBots.length; other++) {
+                if (other === i) continue;
+                var ob = cityBots[other];
+                var bdx = nextX - ob.pos.x;
+                var bdz = nextZ - ob.pos.z;
+                // 0.85m minimum personal space radius
+                if (bdx * bdx + bdz * bdz < 0.85 * 0.85) {
+                    blocked = true;
+                    break;
+                }
+            }
+        }
+
 
         if (blocked) {
             p.dirAngle += Math.PI * 0.65 + (Math.random() - 0.5);
@@ -2413,6 +2436,237 @@ function drawVectorMinimap(ctx) {
     ctx.restore();
 }
 
+function colorToDevTheme(hex) {
+    if (!hex) return 'orange';
+    var c = hex.toLowerCase();
+    if (c === '#ff2a85') return 'pink';
+    if (c === '#00f0ff') return 'cyan';
+    if (c === '#b84dff') return 'purple';
+    if (c === '#ff9d3b' || c === '#39ff14') return 'orange';
+    return 'orange';
+}
+
+// Helper 1: Builds a smooth 3D faceted cylinder / tapered cone out of quads
+function addMannequinCylinder(targetList, pos, sinA, cosA, lx, ly, lz, rTop, rBot, h, segs, theme) {
+    var halfH = h / 2;
+    function toW(x, y, z) {
+        return new Vec3(
+            pos.x + (x * sinA + z * cosA),
+            pos.y + y,
+            pos.z + (-x * cosA + z * sinA)
+        );
+    }
+    function normW(nx, ny, nz) {
+        return new Vec3(nx * sinA + nz * cosA, ny, -nx * cosA + nz * sinA);
+    }
+
+    var topCenter = toW(lx, ly + halfH, lz);
+    var botCenter = toW(lx, ly - halfH, lz);
+    var topNorm = normW(0, 1, 0);
+    var botNorm = normW(0, -1, 0);
+
+    for (var i = 0; i < segs; i++) {
+        var a0 = (i / segs) * Math.PI * 2;
+        var a1 = ((i + 1) / segs) * Math.PI * 2;
+        var midA = (a0 + a1) * 0.5;
+
+        var c0 = Math.cos(a0), s0 = Math.sin(a0);
+        var c1 = Math.cos(a1), s1 = Math.sin(a1);
+
+        var t0 = toW(lx + c0 * rTop, ly + halfH, lz + s0 * rTop);
+        var t1 = toW(lx + c1 * rTop, ly + halfH, lz + s1 * rTop);
+        var b0 = toW(lx + c0 * rBot, ly - halfH, lz + s0 * rBot);
+        var b1 = toW(lx + c1 * rBot, ly - halfH, lz + s1 * rBot);
+
+        // Outward side normal & lighting shade
+        var sideNorm = normW(Math.cos(midA), 0, Math.sin(midA));
+        var shade = 0.85 + 0.18 * Math.sin(midA);
+
+        // Curved Side Quad
+        targetList.push({
+            verts: [b0, b1, t1, t0],
+            v0: b0, v1: b1, v3: t0,
+            normal: sideNorm,
+            center: b0.add(t1).scale(0.5),
+            uLen: (2 * Math.PI * rTop) / segs,
+            vLen: h,
+            theme: theme,
+            shade: shade,
+            label: '',
+            isBotPart: true
+        });
+
+        // Top & Bottom Caps (degenerate 4-vert triangles for clipPolygonNear)
+        targetList.push({
+            verts: [t0, t1, topCenter, topCenter],
+            v0: t0, v1: t1, v3: topCenter,
+            normal: topNorm,
+            center: topCenter,
+            uLen: rTop, vLen: rTop,
+            theme: theme,
+            shade: 1.06,
+            label: '',
+            isBotPart: true
+        });
+        targetList.push({
+            verts: [b1, b0, botCenter, botCenter],
+            v0: b1, v1: b0, v3: botCenter,
+            normal: botNorm,
+            center: botCenter,
+            uLen: rBot, vLen: rBot,
+            theme: theme,
+            shade: 0.65,
+            label: '',
+            isBotPart: true
+        });
+    }
+}
+
+// Helper 2: Builds a smooth 3D sphere (for heads, ball joints, hands, and hair buns)
+function addMannequinSphere(targetList, pos, sinA, cosA, lx, ly, lz, rx, ry, rz, rings, segs, theme) {
+    function toW(x, y, z) {
+        return new Vec3(
+            pos.x + (x * sinA + z * cosA),
+            pos.y + y,
+            pos.z + (-x * cosA + z * sinA)
+        );
+    }
+    function normW(nx, ny, nz) {
+        return new Vec3(nx * sinA + nz * cosA, ny, -nx * cosA + nz * sinA).normalize();
+    }
+
+    for (var r = 0; r < rings; r++) {
+        var phi0 = (r / rings) * Math.PI;
+        var phi1 = ((r + 1) / rings) * Math.PI;
+        var midPhi = (phi0 + phi1) * 0.5;
+
+        var y0 = Math.cos(phi0), rad0 = Math.sin(phi0);
+        var y1 = Math.cos(phi1), rad1 = Math.sin(phi1);
+
+        for (var s = 0; s < segs; s++) {
+            var th0 = (s / segs) * Math.PI * 2;
+            var th1 = ((s + 1) / segs) * Math.PI * 2;
+            var midTh = (th0 + th1) * 0.5;
+
+            var p00 = toW(lx + rx * rad0 * Math.cos(th0), ly + ry * y0, lz + rz * rad0 * Math.sin(th0));
+            var p10 = toW(lx + rx * rad0 * Math.cos(th1), ly + ry * y0, lz + rz * rad0 * Math.sin(th1));
+            var p11 = toW(lx + rx * rad1 * Math.cos(th1), ly + ry * y1, lz + rz * rad1 * Math.sin(th1));
+            var p01 = toW(lx + rx * rad1 * Math.cos(th0), ly + ry * y1, lz + rz * rad1 * Math.sin(th0));
+
+            var n = normW(
+                Math.sin(midPhi) * Math.cos(midTh),
+                Math.cos(midPhi),
+                Math.sin(midPhi) * Math.sin(midTh)
+            );
+            var shade = 0.88 + 0.16 * Math.cos(midPhi);
+
+            targetList.push({
+                verts: [p01, p11, p10, p00],
+                v0: p01, v1: p11, v3: p00,
+                normal: n,
+                center: p00.add(p11).scale(0.5),
+                uLen: 0.2, vLen: 0.2,
+                theme: theme,
+                shade: shade,
+                label: '',
+                isBotPart: true
+            });
+        }
+    }
+}
+
+// Builds a smooth, rounded 3D mannequin (Masculine & Feminine variants)
+function buildMannequin(targetList, pos, dirAngle, walkPhase, shirtTheme, isDressed, role, isCombat, variant, customHairTheme) {
+    var sinA = Math.sin(dirAngle);
+    var cosA = Math.cos(dirAngle);
+    var bob = Math.abs(Math.sin(walkPhase)) * 0.04;
+    var swing = Math.sin(walkPhase) * 0.24;
+    var isFem = (variant === 'female');
+
+    var skin = 'grey';
+    var joint = 'orange';
+    var topTheme = isDressed ? shirtTheme : skin;
+    var botTheme = isDressed ? 'grey' : skin;
+
+    // 1. ROUNDED HEAD, NECK PEG & SCULPTED HAIR
+    addMannequinCylinder(targetList, pos, sinA, cosA, 0, 1.44 + bob, 0, isFem ? 0.048 : 0.058, isFem ? 0.052 : 0.062, 0.12, 8, joint);
+    addMannequinSphere(targetList, pos, sinA, cosA, 0, 1.61 + bob, 0.01, isFem ? 0.115 : 0.125, 0.145, isFem ? 0.125 : 0.135, 6, 10, skin);
+
+    if (isDressed) {
+        var hairTheme = customHairTheme || (isFem ? shirtTheme : 'orange');
+        if (isFem) {
+            // Rounded crown hair cap
+            addMannequinSphere(targetList, pos, sinA, cosA, 0, 1.64 + bob, -0.015, 0.125, 0.135, 0.132, 5, 10, hairTheme);
+            // Hair-down: 5 flowing shoulder-length strands framing the back & sides
+            addMannequinCylinder(targetList, pos, sinA, cosA,  0.00,  1.50 + bob, -0.115, 0.068, 0.085, 0.28, 8, hairTheme);
+            addMannequinCylinder(targetList, pos, sinA, cosA, -0.075, 1.50 + bob, -0.085, 0.055, 0.068, 0.27, 8, hairTheme);
+            addMannequinCylinder(targetList, pos, sinA, cosA,  0.075, 1.50 + bob, -0.085, 0.055, 0.068, 0.27, 8, hairTheme);
+            addMannequinCylinder(targetList, pos, sinA, cosA, -0.105, 1.51 + bob, -0.015, 0.045, 0.054, 0.25, 8, hairTheme);
+            addMannequinCylinder(targetList, pos, sinA, cosA,  0.105, 1.51 + bob, -0.015, 0.045, 0.054, 0.25, 8, hairTheme);
+        } else {
+            // Cropped hair cap on top & back of head
+            addMannequinSphere(targetList, pos, sinA, cosA, 0, 1.655 + bob, -0.01, 0.131, 0.115, 0.140, 5, 10, hairTheme);
+        }
+    }
+
+    // 2. TAPERED TORSO, BALL WAIST & ROUNDED HIPS/SKIRT
+    var chestR = isFem ? 0.165 : 0.205;
+    var waistR = isFem ? 0.110 : 0.145;
+    var hipR   = isFem ? 0.175 : 0.165;
+    var shoulderX = isFem ? 0.21 : 0.25;
+
+    addMannequinCylinder(targetList, pos, sinA, cosA, 0, 1.22 + bob, 0, chestR, waistR + 0.015, 0.34, 10, topTheme);
+    addMannequinSphere(targetList, pos, sinA, cosA, 0, 1.01 + bob, 0, waistR, 0.065, waistR * 0.85, 4, 8, joint);
+
+    if (isFem && isDressed && !role) {
+        addMannequinCylinder(targetList, pos, sinA, cosA, 0, 0.82 + bob, 0, waistR + 0.02, 0.23, 0.30, 10, shirtTheme);
+    } else {
+        addMannequinCylinder(targetList, pos, sinA, cosA, 0, 0.89 + bob, 0, waistR + 0.01, hipR, 0.16, 10, botTheme);
+    }
+
+    // 3. ROUNDED ARMS & SPHERICAL JOINTS
+    var sides = [-1, 1];
+    for (var s = 0; s < sides.length; s++) {
+        var side = sides[s];
+        var sx = side * shoulderX;
+        var armSwing = (side === -1) ? -swing : swing;
+        var armR = isFem ? 0.044 : 0.052;
+
+        addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.33 + bob, 0, armR + 0.014, armR + 0.014, armR + 0.014, 4, 8, joint);
+
+        if (isCombat && side === 1) {
+            addMannequinCylinder(targetList, pos, sinA, cosA, sx, 1.28 + bob, 0.14, armR, armR * 0.9, 0.22, 8, topTheme);
+            addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.28 + bob, 0.28, armR, armR, armR, 4, 8, joint);
+            addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.28 + bob, 0.44, armR * 0.9, armR * 0.9, 0.11, 4, 8, skin);
+        } else if (role === 'pizza_chef') {
+            var toss = Math.abs(Math.sin(walkPhase)) * 0.18;
+            addMannequinCylinder(targetList, pos, sinA, cosA, sx, 1.35 + bob + toss * 0.4, 0.10, armR, armR * 0.9, 0.20, 8, topTheme);
+            addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.46 + bob + toss, 0.22, armR * 0.9, 0.09, armR * 0.9, 4, 8, skin);
+            if (side === 1) {
+                addMannequinCylinder(targetList, pos, sinA, cosA, 0.15, 1.85 + toss * 1.8, 0.26, 0.21, 0.21, 0.03, 12, 'sand');
+            }
+        } else {
+            addMannequinCylinder(targetList, pos, sinA, cosA, sx, 1.18 + bob, armSwing * 0.4, armR, armR * 0.88, 0.22, 8, topTheme);
+            addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.04 + bob, armSwing * 0.7, armR * 0.95, armR * 0.95, armR * 0.95, 4, 8, joint);
+            addMannequinCylinder(targetList, pos, sinA, cosA, sx, 0.89 + bob, armSwing * 1.0, armR * 0.88, armR * 0.72, 0.22, 8, skin);
+            addMannequinSphere(targetList, pos, sinA, cosA, sx, 0.74 + bob, armSwing * 1.1, armR * 0.85, 0.055, armR * 0.95, 4, 8, joint);
+        }
+    }
+
+    // 4. ROUNDED LEGS & SPHERICAL KNEES
+    for (var l = 0; l < sides.length; l++) {
+        var lSide = sides[l];
+        var lx = lSide * (isFem ? 0.095 : 0.11);
+        var legSwing = (lSide === -1) ? swing : -swing;
+        var thighR = isFem ? 0.062 : 0.072;
+
+        addMannequinCylinder(targetList, pos, sinA, cosA, lx, 0.64 + bob * 0.5, legSwing * 0.5, thighR, thighR * 0.82, 0.32, 8, botTheme);
+        addMannequinSphere(targetList, pos, sinA, cosA, lx, 0.45 + bob * 0.5, legSwing * 0.8, thighR * 0.88, thighR * 0.88, thighR * 0.88, 4, 8, joint);
+        addMannequinCylinder(targetList, pos, sinA, cosA, lx, 0.24 + bob * 0.3, legSwing * 0.6, thighR * 0.82, thighR * 0.65, 0.32, 8, botTheme);
+        addMannequinSphere(targetList, pos, sinA, cosA, lx, 0.045, legSwing * 0.6 + 0.04, thighR * 0.85, 0.045, 0.115, 4, 8, isDressed ? shirtTheme : joint);
+    }
+}
+
 
 function render() {
 var w = canvas.width;
@@ -2425,9 +2679,37 @@ player.pos.x,
 player.pos.y + player.currentHeight - player.eyeOffset,
 player.pos.z
 );
+var allFaces = faces.slice();
+
+if (currentRoom === 'VECTOR_BLAST' && typeof bot !== 'undefined' && bot.active) {
+    var arenaAngle = Math.atan2(player.pos.x - bot.pos.x, player.pos.z - bot.pos.z);
+    var arenaVariant = ((blastScoreYou + blastScoreCpu) % 2 === 0) ? 'male' : 'female';
+    buildMannequin(allFaces, bot.pos, arenaAngle, performance.now() * 0.008, 'orange', false, null, true, arenaVariant);
+}
+
+var CITY_HAIR_THEMES = ['sand', 'orange', 'pink', 'cyan', 'purple', 'grey'];
+
+if (currentRoom === 'VECTOR_CITY' || currentRoom.indexOf('INTERIOR_') === 0) {
+    for (var bIdx = 0; bIdx < cityBots.length; bIdx++) {
+        var cb = cityBots[bIdx];
+        if (cb.isMannequin === undefined) {
+            cb.isMannequin = (Math.random() < 0.6);
+            cb.variant = (Math.random() < 0.5) ? 'male' : 'female';
+        }
+        if (!cb.hairTheme) {
+            cb.hairTheme = CITY_HAIR_THEMES[Math.floor(Math.random() * CITY_HAIR_THEMES.length)];
+        }
+        if (!cb.isMannequin) continue; // Let the 2D loop handle non-mannequins
+        if (cb.pos.sub(player.pos).length() > 85) continue;
+        var cityAngle = Math.atan2(Math.cos(cb.dirAngle), Math.sin(cb.dirAngle));
+        buildMannequin(allFaces, cb.pos, cityAngle, cb.walkPhase, colorToDevTheme(cb.color), true, cb.role, false, cb.variant, cb.hairTheme);
+    }
+}
+
+
 var drawList = [];
-for (var idx = 0; idx < faces.length; idx++) {
-var f = faces[idx];
+for (var idx = 0; idx < allFaces.length; idx++) {
+var f = allFaces[idx];
 var toCam = camPos.sub(f.center);
 if (toCam.dot(f.normal) <= 0) continue;
 if (currentRoom === 'VECTOR_CITY' && toCam.length() > 135) continue;
@@ -2536,7 +2818,7 @@ ctx.lineTo(t1.x, t1.y);
 }
 }
 ctx.stroke();
-if (face.normal.y === 0 && dist < 34) {
+if (face.normal.y === 0 && dist < 34 && !face.isBotPart) {
 var cCam = worldToCamera(face.center, camPos, yaw, pitch);
 if (cCam.z > NEAR) {
 var cProj = project(cCam, w, h, fovScale);
@@ -2616,6 +2898,7 @@ drawVectorBlasterViewmodel(w, h);
 if (currentRoom === 'VECTOR_CITY' || currentRoom.indexOf('INTERIOR_') === 0) {
     for (var i = 0; i < cityBots.length; i++) {
         var p = cityBots[i];
+if (p.isMannequin) continue; // Already drawn in 3D above!
         var distToPlayer = p.pos.sub(player.pos).length();
         if (distToPlayer > 85) continue;
 
