@@ -115,6 +115,9 @@
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
+    <img id="blast-007-overlay"
+         src="data:image/png;base64,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"
+         style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; object-fit: fill; pointer-events: none; z-index: 5; image-rendering: pixelated;" />
     <div id="crosshair"></div>
     <div id="hud">
         <strong>VECTOR_DEV_TEST_01 (LOCAL)</strong><br>
@@ -124,6 +127,7 @@
         STATE: <span id="state-val">GROUNDED</span><br>
         LOOK: <span id="look-mode">CLICK SCREEN TO START</span>
     </div>
+
     <div id="cash-hud">VECTOR CASH: $<span id="cash-val">0</span></div>
     <div id="task-hud">
         <strong id="task-title">CURRENT TASK</strong><br>
@@ -449,75 +453,148 @@ function drawLaserPointer(ctx, camPos, yaw, pitch, fovScale) {
 
 var surfWedges = [];
 
-// Creates a true smooth 3D angled surf wedge (triangular prism) + renders its 5 faces!
-// slopeSide: 'LEFT' (high on -X, slopes down toward +X — surf by holding A)
-//            'RIGHT' (high on +X, slopes down toward -X — surf by holding D)
-function addSurfWedge(centerX, bottomY, topY, startZ, endZ, lowX, highX, slopeSide, theme) {
-    theme = theme || 'orange';
-    var minZ = Math.min(startZ, endZ);
-    var maxZ = Math.max(startZ, endZ);
-    var minX = Math.min(lowX, highX);
-    var maxX = Math.max(lowX, highX);
-    var spanX = maxX - minX;
-    var spanY = topY - bottomY;
-    var spanZ = maxZ - minZ;
+function rotateXZ(x, z, cx, cz, cosA, sinA) {
+    var dx = x - cx;
+    var dz = z - cz;
+    return {
+        x: cx + dx * cosA - dz * sinA,
+        z: cz + dx * sinA + dz * cosA
+    };
+}
 
-    // Exact diagonal surface normal
-    var normal = (slopeSide === 'LEFT')
-        ? new Vec3(spanY, spanX, 0).normalize()
-        : new Vec3(-spanY, spanX, 0).normalize();
+function addUnifiedSurfSegment(pivotX, pivotZ, bottomY, topY, halfW, halfL, themeL, themeR, yawRad) {
+    var cosA = Math.cos(yawRad);
+    var sinA = Math.sin(yawRad);
+    var spanY = topY - bottomY;
+
+    function pt(lx, ly, lz) {
+        var r = rotateXZ(pivotX + lx, pivotZ + lz, pivotX, pivotZ, cosA, sinA);
+        return new Vec3(r.x, ly, r.z);
+    }
+
+    function rotNorm(nx, ny, nz) {
+        return new Vec3(nx * cosA - nz * sinA, ny, nx * sinA + nz * cosA).normalize();
+    }
+
+    var normL = rotNorm(-spanY, halfW, 0);
+    var normR = rotNorm( spanY, halfW, 0);
+    var halfDiag = Math.hypot(halfW, halfL) + 1.0;
 
     surfWedges.push({
-        minX: minX, maxX: maxX,
+        cx: pivotX, cz: pivotZ,
+        cosA: cosA, sinA: sinA,
+        minLocalX: -halfW, maxLocalX: 0,
+        halfL: halfL, halfDiag: halfDiag,
         bottomY: bottomY, topY: topY,
-        minZ: minZ, maxZ: maxZ,
-        slopeSide: slopeSide,
-        normal: normal
+        slopeSide: 'RIGHT',
+        normal: normL
     });
 
-    // Build 3D vertices for the sloped top face & side walls so your existing renderer draws it!
-    var pBLF = new Vec3(minX, bottomY, maxZ);
-    var pBRF = new Vec3(maxX, bottomY, maxZ);
-    var pBLB = new Vec3(minX, bottomY, minZ);
-    var pBRB = new Vec3(maxX, bottomY, minZ);
-    var pTF  = (slopeSide === 'LEFT') ? new Vec3(minX, topY, maxZ) : new Vec3(maxX, topY, maxZ);
-    var pTB  = (slopeSide === 'LEFT') ? new Vec3(minX, topY, minZ) : new Vec3(maxX, topY, minZ);
+    surfWedges.push({
+        cx: pivotX, cz: pivotZ,
+        cosA: cosA, sinA: sinA,
+        minLocalX: 0, maxLocalX: halfW,
+        halfL: halfL, halfDiag: halfDiag,
+        bottomY: bottomY, topY: topY,
+        slopeSide: 'LEFT',
+        normal: normR
+    });
 
-    var slopeLen = Math.hypot(spanX, spanY);
-    var wedgeFaces = (slopeSide === 'LEFT') ? [
-        // Main diagonal surf slope
-        { verts: [pTF, pBRF, pBRB, pTB], v0: pTF, v1: pBRF, v3: pTB, normal: normal, uLen: slopeLen, vLen: spanZ, shade: 1.05 },
-        // Vertical back wall
-        { verts: [pBLB, pBLF, pTF, pTB],  v0: pBLB, v1: pBLF, v3: pTB, normal: new Vec3(-1, 0, 0), uLen: spanZ, vLen: spanY, shade: 0.78 },
-        // Front & back triangular end caps (as 4-point degenerate quads for clipPolygonNear)
-        { verts: [pBLF, pBRF, pTF, pTF],  v0: pBLF, v1: pBRF, v3: pTF, normal: new Vec3(0, 0, 1), uLen: spanX, vLen: spanY, shade: 0.92 },
-        { verts: [pBRB, pBLB, pTB, pTB],  v0: pBRB, v1: pBLB, v3: pTB, normal: new Vec3(0, 0, -1), uLen: spanX, vLen: spanY, shade: 0.85 }
-    ] : [
-        // Main diagonal surf slope
-        { verts: [pBLF, pTF, pTB, pBLB],  v0: pBLF, v1: pTF, v3: pBLB, normal: normal, uLen: slopeLen, vLen: spanZ, shade: 1.05 },
-        // Vertical back wall
-        { verts: [pBRF, pBRB, pTB, pTF],  v0: pBRF, v1: pBRB, v3: pTF, normal: new Vec3(1, 0, 0), uLen: spanZ, vLen: spanY, shade: 0.78 },
-        // Front & back end caps
-        { verts: [pBLF, pBRF, pTF, pTF],  v0: pBLF, v1: pBRF, v3: pTF, normal: new Vec3(0, 0, 1), uLen: spanX, vLen: spanY, shade: 0.92 },
-        { verts: [pBRB, pBLB, pTB, pTB],  v0: pBRB, v1: pBLB, v3: pTB, normal: new Vec3(0, 0, -1), uLen: spanX, vLen: spanY, shade: 0.85 }
+    var pBLF = pt(-halfW, bottomY,  halfL);
+    var pBRF = pt( halfW, bottomY,  halfL);
+    var pTF  = pt( 0,     topY,     halfL);
+
+    var pBLB = pt(-halfW, bottomY, -halfL);
+    var pBRB = pt( halfW, bottomY, -halfL);
+    var pTB  = pt( 0,     topY,    -halfL);
+
+    var slopeLen = Math.hypot(halfW, spanY);
+    var spanZ = halfL * 2;
+    var spanX = halfW * 2;
+
+    var wedgeFaces = [
+        { verts: [pBLF, pTF, pTB, pBLB],  v0: pBLF, v1: pTF, v3: pBLB, normal: normL, uLen: slopeLen, vLen: spanZ, shade: 1.05, theme: themeL },
+        { verts: [pTF, pBRF, pBRB, pTB],  v0: pTF, v1: pBRF, v3: pTB, normal: normR, uLen: slopeLen, vLen: spanZ, shade: 1.05, theme: themeR },
+        { verts: [pBLF, pBRF, pTF, pTF],  v0: pBLF, v1: pBRF, v3: pTF, normal: rotNorm(0, 0,  1), uLen: spanX, vLen: spanY, shade: 0.92, theme: themeL },
+        { verts: [pBRB, pBLB, pTB, pTB],  v0: pBRB, v1: pBLB, v3: pTB, normal: rotNorm(0, 0, -1), uLen: spanX, vLen: spanY, shade: 0.85, theme: themeR }
     ];
 
     for (var i = 0; i < wedgeFaces.length; i++) {
         var wf = wedgeFaces[i];
-        var center = wf.verts[0].add(wf.verts[1]).add(wf.verts[2]).scale(1 / 3);
+        var vA = wf.verts.at(0);
+        var vB = wf.verts.at(1);
+        var vC = wf.verts.at(2);
+        var center = vA.add(vB).add(vC).scale(1 / 3);
         faces.push({
             verts: wf.verts,
             v0: wf.v0, v1: wf.v1, v3: wf.v3,
             normal: wf.normal,
             center: center,
             uLen: wf.uLen, vLen: wf.vLen,
-            theme: theme,
+            theme: wf.theme,
             shade: wf.shade,
             label: 'SURF_WEDGE'
         });
     }
 }
 
+function addCurvedSurfPath(waypoints, startTopY, endTopY, themeA, themeB, rampHalfW, rampH) {
+    rampHalfW = rampHalfW || 3.4;
+    rampH = rampH || 3.8;
+    themeA = themeA || 'grey';
+    themeB = themeB || 'sand';
+
+    var pts = [];
+    for (var i = 0; i < waypoints.length - 1; i++) {
+        var p0 = waypoints.at(Math.max(0, i - 1));
+        var p1 = waypoints.at(i);
+        var p2 = waypoints.at(i + 1);
+        var p3 = waypoints.at(Math.min(waypoints.length - 1, i + 2));
+        var dist = Math.hypot(p2.x - p1.x, p2.z - p1.z);
+        var subSteps = Math.max(2, Math.round(dist / 3.5));
+
+        for (var s = 0; s < subSteps; s++) {
+            var t = s / subSteps;
+            var t2 = t * t;
+            var t3 = t2 * t;
+            var x = 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3);
+            var z = 0.5 * ((2 * p1.z) + (-p0.z + p2.z) * t + (2 * p0.z - 5 * p1.z + 4 * p2.z - p3.z) * t2 + (-p0.z + 3 * p1.z - 3 * p2.z + p3.z) * t3);
+            pts.push({ x: x, z: z });
+        }
+    }
+    pts.push(waypoints.at(-1));
+
+    var totalSegs = pts.length - 1;
+    for (var k = 0; k < totalSegs; k++) {
+        var a = pts.at(k);
+        var b = pts.at(k + 1);
+        var midX = (a.x + b.x) * 0.5;
+        var midZ = (a.z + b.z) * 0.5;
+        var halfL = (Math.hypot(b.x - a.x, b.z - a.z) * 0.5) + 0.25;
+        var yawRad = Math.atan2(-(b.x - a.x), b.z - a.z);
+
+        var curTopY = startTopY - (k / totalSegs) * (startTopY - endTopY);
+        var curBotY = curTopY - rampH;
+
+        var c1 = (k % 2 === 0) ? themeA : themeB;
+        var c2 = (k % 2 === 0) ? themeB : themeA;
+
+        addUnifiedSurfSegment(midX, midZ, curBotY, curTopY, rampHalfW, halfL, c1, c2, yawRad);
+    }
+}
+
+function addSurfRamp(centerX, topY, startZ, lengthZ, dropPerStep, steps) {
+    var totalDrop = dropPerStep * steps;
+    var numSegs = Math.max(1, Math.floor(steps / 2));
+    var segLen = lengthZ / numSegs;
+    for (var i = 0; i < numSegs; i++) {
+        var z0 = startZ + i * segLen;
+        var midZ = z0 + segLen * 0.5;
+        var curTopY = topY - (i / numSegs) * totalDrop;
+        var curBotY = curTopY - 3.6;
+        addUnifiedSurfSegment(centerX, midZ, curBotY, curTopY, 3.2, segLen * 0.5 + 0.15, i % 2 === 0 ? 'orange' : 'cyan', i % 2 === 0 ? 'cyan' : 'pink', 0);
+    }
+}
 
 
         // ==========================================
@@ -538,7 +615,7 @@ function addSurfWedge(centerX, bottomY, topY, startZ, endZ, lowX, highX, slopeSi
         var STATIC_COLLIDER_COUNT = 0;
         var STATIC_FACE_COUNT = 0;
 
-        function buildWorkstationGeometry() {
+function buildWorkstationGeometry() {
 colliders.length = STATIC_COLLIDER_COUNT;
 faces.length = STATIC_FACE_COUNT;
 var deskTopY = 0.72 + ((deskHeightVal - 30) / 60) * 0.60;
@@ -953,8 +1030,61 @@ canvas.addEventListener('mousedown', function(e) {
 
     if (currentRoom === 'VECTOR_BLAST' && e.button === 0) {
         shootVectorBlaster();
+        return;
+    }
+
+    // MAIN HUB: Click part to select/edit, or click empty space to deselect!
+    if (currentRoom === 'MAIN' && e.button === 0) {
+        if (!hoveredMannequinPart) {
+            selectedMannequinPart = null;
+            return;
+        }
+
+        if (selectedMannequinPart !== hoveredMannequinPart) {
+            // First click: select & highlight part in cyan
+            selectedMannequinPart = hoveredMannequinPart;
+        } else {
+            // Second click on same part: unlock cursor and edit its values!
+            var partObj = MANNEQUIN_TUNE[selectedMannequinPart];
+            var keysList = Object.keys(partObj);
+            var currentVals = keysList.map(function(k) { return partObj[k]; }).join(', ');
+            var guideLines = keysList.map(function(k, idx) {
+                return (idx + 1) + '. ' + (MANNEQUIN_FIELD_LABELS[k] || k) + '  [current: ' + partObj[k] + ']';
+            }).join('\n');
+
+            if (document.exitPointerLock) document.exitPointerLock();
+
+            var input = window.prompt(
+                'EDIT [' + selectedMannequinPart.toUpperCase() + ']\n\n' +
+                guideLines + '\n\n' +
+                'Enter ' + keysList.length + ' comma-separated numbers in order:',
+                currentVals
+            );
+
+            if (input !== null) {
+                var nums = input.split(',').map(function(s) { return parseFloat(s.trim()); });
+                for (var kIdx = 0; kIdx < keysList.length; kIdx++) {
+                    if (!isNaN(nums[kIdx])) {
+                        partObj[keysList[kIdx]] = nums[kIdx];
+                    }
+                }
+                console.log('UPDATED MANNEQUIN_TUNE:', JSON.stringify(MANNEQUIN_TUNE, null, 2));
+            }
+        }
+    }
+
+});
+
+// Press [P] in MAIN HUB anytime to pop up all current mannequin values for easy copy-paste!
+window.addEventListener('keydown', function(e) {
+    if (currentRoom === 'MAIN' && e.code === 'KeyP') {
+        if (document.exitPointerLock) document.exitPointerLock();
+        var exportStr = JSON.stringify(MANNEQUIN_TUNE);
+        console.log('MANNEQUIN_TUNE EXPORT:', exportStr);
+        window.prompt('Copy your tuned mannequin JSON below and paste it to me:', exportStr);
     }
 });
+
 
 window.addEventListener('mouseup', function() {
     isDragging = false;
@@ -1096,25 +1226,6 @@ targetRoom: targetRoom,
 label: label,
 isLocked: !!isLocked
 });
-}
-
-function addSurfRamp(centerX, topY, startZ, lengthZ, dropPerStep, steps) {
-    var totalDrop = dropPerStep * steps;
-    var segLen = lengthZ / Math.max(1, Math.floor(steps / 2));
-    var numSegs = Math.max(1, Math.floor(steps / 2));
-    var rampHalfW = 3.2;
-    var rampH = 3.6;
-
-    for (var i = 0; i < numSegs; i++) {
-        var z0 = startZ + i * segLen;
-        var z1 = z0 + segLen;
-        var curTopY = topY - (i / numSegs) * totalDrop;
-        var curBotY = curTopY - rampH;
-
-        // Left-sloping wing (hold D to surf against it) & Right-sloping wing (hold A to surf against it)
-        addSurfWedge(centerX - rampHalfW / 2, curBotY, curTopY, z0, z1, centerX - rampHalfW, centerX - 0.15, 'RIGHT', i % 2 === 0 ? 'orange' : 'cyan');
-        addSurfWedge(centerX + rampHalfW / 2, curBotY, curTopY, z0, z1, centerX + 0.15, centerX + rampHalfW, 'LEFT',  i % 2 === 0 ? 'cyan' : 'pink');
-    }
 }
 
 
@@ -1471,101 +1582,281 @@ rebuildBlastDynamicEntities();
 
 
 // ==========================================
-// DOOR 2: VECTOR CLIMB (MASSIVE 110m GAUNTLET)
+// DOOR 2: VECTOR CLIMB - XC_CLIFF (220m PURE SKILL ENDURANCE)
 // ==========================================
 function buildVectorClimbRoom() {
-bot.active = false;
-document.getElementById('room-val').textContent = 'VECTOR CLIMB (110m TOWER) | [C] CROUCH / [Z] PRONE';
-// 24x24 Mega-Tower Shaft (115m tall)
-addBox(0, -0.5, 0, 24, 1, 24, 'grey', 'CLIMB_BASE');
-addBox(0, 57, -12, 24, 115, 1, 'orange', 'TOWER_N');
-addBox(0, 57,  12, 24, 115, 1, 'orange', 'TOWER_S');
-addBox(-12, 57, 0, 1, 115, 24, 'orange', 'TOWER_W');
-addBox( 12, 57, 0, 1, 115, 24, 'orange', 'TOWER_E');
-// Bottom Return Door
-addDoor(0, 0, 11.42, 'Z', 'MAIN', 'EXIT TO MAIN HUB', false);
-// STAGE 1 (0m - 20m): Staggered Diagonal Wall Jumps
-var y = 0;
-for (var i = 0; i < 14; i++) {
-y += 1.38;
-var side = (i % 2 === 0) ? -1 : 1;
-var px = side * (3.5 + (i % 3) * 1.8);
-var pz = -8 + (i * 1.15);
-var size = Math.max(1.6, 2.8 - i * 0.07);
-addBox(px, y, pz, size, 0.45, size, i % 2 === 0 ? 'orange' : 'grey', 'S1_PAD_' + (i + 1));
+    bot.active = false;
+    document.getElementById('room-val').textContent = 'XC_CLIFF (220m PURE SKILL) | ORANGE = CROUCH JUMP | [C] CROUCH / [Z] PRONE';
+
+    // 1. INVISIBLE WATER RESET TRIGGER AT Y = -1.5 (Strictly below the Y = 0.0 beach!)
+    colliders.push({
+        minX: -120, maxX: 120,
+        minY: -6,   maxY: -1.5,
+        minZ: -120, maxZ: 120,
+        theme: 'water',
+        label: 'CLIMB_WATER_FLOOR'
+    });
+
+
+    // TILED BLUE OCEAN AT Y = -6.0 (Skips under the beach so it never bleeds through)
+    for (var wx = -64; wx <= 64; wx += 16) {
+        for (var wz = -32; wz <= 80; wz += 16) {
+            if (Math.abs(wx) < 16 && Math.abs(wz) < 16) continue;
+            addBox(wx, -6.0, wz, 16, 0.5, 16, 'water', 'OCEAN_TILE');
+        }
+    }
+    // Sandy Coastal Beach flush at Y = 0.0 (top surface = 0.0)
+    addBox(0, -0.5, 0, 26, 1.0, 26, 'sand', 'CLIFF_BEACH_SPAWN');
+    addDoor(0, 0.0, 12.42, 'Z', 'MAIN', 'EXIT TO MAIN HUB', false);
+
+    // 2. MASSIVE 228m SHEER CLIFF FACE & FLANKING CANYON WALLS
+    addBox(0, 113, -16, 76, 228, 6, 'sand', 'CLIFF_MAIN_FACE');
+    addBox(-42, 108, -2, 10, 218, 30, 'grey', 'CLIFF_RIDGE_WEST');
+    addBox( 42, 108, -2, 10, 218, 30, 'grey', 'CLIFF_RIDGE_EAST');
+
+    // =========================================================
+    // STAGE 1 (0m - 25m): COASTAL ROCK OUTCROPS
+    // =========================================================
+    var y = 0.0;
+    for (var i = 0; i < 20; i++) {
+        var isBigJump = (i % 4 === 3);
+        y += isBigJump ? 1.42 : 1.15;
+        var zig = (i % 2 === 0) ? -1 : 1;
+        var px = (i === 0) ? -2.8 : zig * (isBigJump ? 6.6 : (2.6 + (i % 3) * 1.1));
+        var pz = -11.5 + (i % 3) * 1.0;
+        var w = isBigJump ? 2.3 : Math.max(2.3, 3.4 - i * 0.04);
+        var theme1 = isBigJump ? 'orange' : (i % 2 === 0 ? 'sand' : 'grey');
+        addBox(px, y, pz, w, 0.55, 2.7, theme1, 'XC_S1_LEDGE_' + (i + 1));
+    }
+
+    // =========================================================
+    // STAGE 2 (25m - 55m): CLIFF OVERHANGS [C] & CREVICE CRAWL [Z]
+    // =========================================================
+    y += 1.15;
+    addBox(0, y, -10.5, 24, 0.6, 4.5, 'grey', 'XC_S2_CATWALK');
+    addBox(-5.0, y + 1.70, -10.5, 2.2, 1.1, 4.5, 'sand', 'CLIFF_OVERHANG_1 [C]');
+    addBox( 5.0, y + 1.70, -10.5, 2.2, 1.1, 4.5, 'sand', 'CLIFF_OVERHANG_2 [C]');
+
+    y += 1.25;
+    addBox(-15, y, -4, 5.0, 0.6, 15, 'sand', 'XC_S2_CREVICE_FLOOR');
+    addBox(-15, y + 1.45, -4, 5.0, 1.1, 10, 'grey', 'CLIFF_CREVICE_ROOF [Z]');
+
+    for (var s2 = 0; s2 < 22; s2++) {
+        var isBig2 = (s2 % 4 === 3);
+        y += isBig2 ? 1.42 : 1.15;
+        var sx = -12 + s2 * 1.05;
+        var sz = -10.5 + (s2 % 2) * (isBig2 ? 2.4 : 1.4);
+        var theme2 = isBig2 ? 'orange' : (s2 % 2 === 0 ? 'sand' : 'grey');
+        addBox(sx, y, sz, 2.2, 0.5, 2.2, theme2, 'XC_S2_STEP_' + (s2 + 1));
+    }
+
+    // Rest Ledge 1 (~55m) - Breather platform, no checkpoint
+    y += 1.15;
+    addBox(12, y, -10.0, 8, 0.6, 5.5, 'grey', 'XC_REST_LEDGE_55M');
+    // =========================================================
+    // STAGE 3 (55m - 85m): WRAP-AROUND BUTTRESS AIR-STRAFES
+    // =========================================================
+    y += 1.15;
+    for (var b = 0; b < 8; b++) {
+        var dir = (b % 2 === 0) ? -1 : 1;
+        var bx = dir * 6.8;
+
+        addBox(bx - dir * 3.0, y, -10.5, 2.8, 0.55, 3.4, 'grey', 'XC_S3_APPROACH_' + (b + 1));
+        addBox(bx, y + 1.8, -9.6, 0.9, 4.6, 6.2, 'orange', 'XC_BUTTRESS_FIN_' + (b + 1));
+
+        y += 1.25;
+        addBox(bx + dir * 3.2, y, -10.5, 2.8, 0.55, 3.4, 'sand', 'XC_S3_CATCH_' + (b + 1));
+
+        y += 1.15;
+        addBox(0, y, -9.2, 2.4, 0.5, 2.4, 'grey', 'XC_S3_MID_' + (b + 1));
+        y += 1.15;
+    }
+    // =========================================================
+    // STAGE 4 (85m - 110m): CANYON JUMPS & PERIODIC LONGJUMPS
+    // =========================================================
+    for (var lj = 0; lj < 20; lj++) {
+        var isBig4 = (lj % 3 === 2);
+        y += isBig4 ? 1.42 : 1.12;
+        var zig4 = (lj % 2 === 0) ? -1 : 1;
+        var lx = zig4 * (isBig4 ? 7.6 : (3.2 + (lj % 2) * 1.4));
+        var lz = -10.5 + (lj % 2) * (isBig4 ? 3.6 : 2.0);
+        var theme4 = isBig4 ? 'orange' : (lj % 2 === 0 ? 'sand' : 'grey');
+        addBox(lx, y, lz, 2.1, 0.5, 2.1, theme4, 'XC_S4_LONGJUMP_' + (lj + 1));
+    }
+
+    // Rest Ledge 2 (~110m) - Midpoint Overlook
+    y += 1.15;
+    addBox(0, y, -10.0, 9, 0.6, 5.5, 'sand', 'XC_REST_LEDGE_110M');
+
+    // =========================================================
+    // STAGE 5 (110m - 139m): CLOUD RIDGE SWITCHBACKS [C] & [Z]
+    // =========================================================
+    y += 1.15;
+    addBox(0, y, -10.5, 28, 0.6, 4.5, 'sand', 'XC_S5_CLOUD_RIDGE');
+    addBox(-7.5, y + 1.70, -10.5, 2.2, 1.1, 4.5, 'orange', 'CLOUD_CROUCH_1 [C]');
+    addBox( 0.0, y + 1.42, -10.5, 3.2, 1.1, 4.5, 'orange', 'CLOUD_PRONE [Z]');
+    addBox( 7.5, y + 1.70, -10.5, 2.2, 1.1, 4.5, 'orange', 'CLOUD_CROUCH_2 [C]');
+    y += 1.25;
+    addBox(16, y, -3, 5.0, 0.6, 16, 'grey', 'XC_S5_EAST_TUNNEL');
+    addBox(16, y + 1.45, -3, 5.0, 1.1, 11, 'orange', 'EAST_PRONE_SLAB [Z]');
+
+    for (var s5 = 0; s5 < 22; s5++) {
+        var isBig5 = (s5 % 4 === 3);
+        y += isBig5 ? 1.42 : 1.15;
+        var zx = 14 - s5 * 1.25;
+        var zz = -10.5 + (s5 % 2) * (isBig5 ? 2.6 : 1.5);
+        var theme5 = isBig5 ? 'orange' : (s5 % 2 === 0 ? 'sand' : 'grey');
+        addBox(zx, y, zz, 2.0, 0.5, 2.0, theme5, 'XC_S5_STEP_' + (s5 + 1));
+    }
+    // =========================================================
+    // STAGE 6 (139m - 165m): TWIN CANYON PILLARS
+    // =========================================================
+    for (var tp = 0; tp < 20; tp++) {
+        var isBig6 = (tp % 3 === 2);
+        y += isBig6 ? 1.42 : 1.15;
+        var side6 = (tp % 2 === 0) ? -1 : 1;
+        var tx = side6 * (isBig6 ? 7.6 : 4.6);
+        var tz = -9.8 + (tp % 4) * 1.1;
+        var theme6 = isBig6 ? 'orange' : (tp % 2 === 0 ? 'grey' : 'sand');
+        addBox(tx, y, tz, 1.95, 0.5, 1.95, theme6, 'XC_S6_PILLAR_' + (tp + 1));
+    }
+
+    // Rest Ledge 3 (~165m) - High Cliff Balcony
+    y += 1.15;
+    addBox(-12, y, -10.0, 8, 0.6, 5.5, 'grey', 'XC_REST_LEDGE_165M');
+    // =========================================================
+    // STAGE 7 (165m - 195m): OPEN-AIR SKY BRIDGE TO NEEDLE SPIRE
+    // =========================================================
+    for (var sb = 0; sb < 24; sb++) {
+        var isBig7 = (sb % 4 === 3);
+        y += isBig7 ? 1.42 : 1.15;
+        var prog = sb / 23;
+        var bx7 = -10 + Math.sin(prog * Math.PI * 2.5) * 6.2;
+        var bz7 = -9.5 + prog * 14.5;
+        var theme7 = isBig7 ? 'orange' : (sb % 2 === 0 ? 'sand' : 'grey');
+        addBox(bx7, y, bz7, 1.95, 0.45, 1.95, theme7, 'XC_S7_SKYSTEP_' + (sb + 1));
+    }
+    // Rest Ledge 4 (~195m) - Needle Spire Base Ring
+    y += 1.15;
+    addBox(0, y, 5, 10, 0.6, 10, 'sand', 'XC_REST_LEDGE_195M');
+    // =========================================================
+    // STAGE 8 (195m - 220m): FINAL 360° NEEDLE SPIRE SPIRAL
+    // =========================================================
+    // Starts at Y = 175 (minY = 175, maxY = 219) so it never collides on the beach below
+    addBox(0, 197.0, 5, 4.4, 44, 4.4, 'grey', 'XC_NEEDLE_SPIRE_220M');
+
+    for (var k = 0; k < 20; k++) {
+        var isBig8 = (k % 4 === 3);
+        y += isBig8 ? 1.42 : 1.12;
+        var ang = k * (isBig8 ? 0.64 : 0.48);
+        var rad = 4.9;
+        var rx = Math.cos(ang) * rad;
+        var rz = 5 + Math.sin(ang) * rad;
+        var theme8 = isBig8 ? 'orange' : (k % 2 === 0 ? 'sand' : 'grey');
+        addBox(rx, y, rz, 1.85, 0.45, 1.85, theme8, 'XC_FINAL_SPIRE_' + (k + 1));
+    }
+    // =========================================================
+    // 220m SUMMIT VICTORY SHRINE
+    // =========================================================
+    y += 1.15;
+    addBox(0, y, 5, 14, 0.7, 14, 'sand', 'XC_CLIFF_SUMMIT_220M');
+    addBox(0, y + 0.5, -1.6, 14, 0.7, 0.8, 'orange', 'SUMMIT_PARAPET_N');
+    addDoor(0, y + 0.35, 11.42, 'Z', 'MAIN', '220m XC_CLIFF SUMMIT! RETURN TO HUB', false);
+
+    // Spawn at Z = 8, Y = 0.25, facing North (Math.PI = -Z) toward the Cliff Face!
+    resetPlayerPosition(0, 0.25, 8, Math.PI);
 }
-// STAGE 2 (20m - 36m): Crouch & Prone Obstacle Gauntlet Decks
-y += 1.2;
-addBox(0, y, 7, 16, 0.5, 5, 'orange', 'S2_CROUCH_BRIDGE');
-// Two low crouch beams (1.15m clearance)
-addBox(-3, y + 1.65, 7, 1.5, 1.0, 5, 'grey', 'CROUCH_BEAM_1 [C]');
-addBox( 3, y + 1.65, 7, 1.5, 1.0, 5, 'grey', 'CROUCH_BEAM_2 [C]');
-// Prone Crawl Tunnel along West Wall (0.65m clearance)
-y += 1.3;
-addBox(-8, y, -1, 4.5, 0.5, 14, 'grey', 'S2_PRONE_TUNNEL');
-addBox(-8, y + 1.40, -1, 4.5, 1.0, 9, 'orange', 'PRONE_SLAB [Z]');
-// STAGE 3 (36m - 68m): Precision Small Pillars & Long Sprint Jumps
-y += 1.2;
-for (var j = 0; j < 22; j++) {
-y += 1.42;
-var ang = j * 0.55;
-var rad = 6.5 + Math.sin(j * 0.8) * 2.5;
-var bx = Math.cos(ang) * rad;
-var bz = Math.sin(ang) * rad;
-var w = (j % 4 === 0) ? 1.4 : 1.9;
-addBox(bx, y, bz, w, 0.45, w, j % 2 === 0 ? 'orange' : 'grey', 'S3_PILLAR_' + (j + 1));
-}
-// STAGE 4 (68m - 84m): High-Altitude Crouch-Jump & Prone Switchbacks
-y += 1.3;
-addBox(0, y, -7, 18, 0.5, 4.5, 'grey', 'S4_HIGH_DECK');
-addBox(-4, y + 1.65, -7, 1.6, 1.0, 4.5, 'orange', 'HIGH_CROUCH [C]');
-addBox( 4, y + 1.38, -7, 2.5, 1.0, 4.5, 'orange', 'HIGH_PRONE [Z]');
-// STAGE 5 (84m - 108m): Final Tight Spiral Ascent
-for (var k = 0; k < 17; k++) {
-y += 1.42;
-var a2 = k * 0.62;
-var rx = Math.cos(a2) * 7.2;
-var rz = Math.sin(a2) * 7.2;
-addBox(rx, y, rz, 1.55, 0.4, 1.55, k % 2 === 0 ? 'orange' : 'grey', 'FINAL_STEP_' + (k + 1));
-}
-// SUMMIT VICTORY PLATFORM (108m+)
-y += 1.2;
-addBox(0, y, 0, 10, 0.6, 10, 'orange', 'SUMMIT_108M_VICTORY');
-addDoor(0, y + 0.3, -4.42, 'Z', 'MAIN', 'SUMMIT VICTORY! RETURN TO HUB', false);
-resetPlayerPosition(0, 0.1, 8, Math.PI);
-}
+
+
+
 // ==========================================
-// DOOR 3: VECTOR SURF (260m COURSE + HAZARD WATER)
+// DOOR 3: VECTOR SURF_SKYWORLD (CS:S LAYOUT)
 // ==========================================
 function buildVectorSurfRoom() {
-bot.active = false;
-document.getElementById('room-val').textContent = 'VECTOR SURF (260m) | HOLD [A] OR [D] | AVOID WATER';
-// Long Canyon Enclosure (Width 36, Length 280, Height 75)
-// Water hazard sits at Y = 0
-addBox(0, -0.5, 110, 36, 1, 280, 'orange', 'SURF_HAZARD_WATER');
-addBox(0, 37, -30, 36, 75, 1, 'orange', 'SURF_BACK_WALL');
-addBox(0, 37, 250, 36, 75, 1, 'orange', 'SURF_END_WALL');
-addBox(-18, 37, 110, 1, 75, 280, 'orange', 'SURF_WALL_W');
-addBox( 18, 37, 110, 1, 75, 280, 'orange', 'SURF_WALL_E');
-// High Spawn Deck (Y = 58m) + Return Door behind player
-addBox(0, 57.5, -24, 12, 1, 10, 'orange', 'SURF_SPAWN_DECK');
-addDoor(0, 58.0, -28.42, 'Z', 'MAIN', 'EXIT TO MAIN HUB', false);
-// 5-Stage Extended Surf Course
-// Ramp 1: Long Straight Opener
-addSurfRamp(0, 55, -16, 44, 0.26, 32);
-// Ramp 2: Flick Left
-addSurfRamp(-6.5, 44, 32, 44, 0.25, 32);
-// Ramp 3: Wide Flick Right
-addSurfRamp(6.5, 33, 80, 44, 0.25, 32);
-// Ramp 4: Center High-Speed Drop
-addSurfRamp(0, 22, 128, 44, 0.24, 32);
-// Ramp 5: Final Left-to-Center Glide
-addSurfRamp(-4.5, 12, 176, 40, 0.22, 30);
-// Bottom Finish Platform & Return Door
-addBox(0, 2.5, 232, 24, 1, 24, 'orange', 'SURF_FINISH_PAD');
-addDoor(0, 3.0, 243.42, 'Z', 'MAIN', 'SURF COMPLETE! RETURN TO HUB', false);
-resetPlayerPosition(0, 58.1, -24, 0);
+    bot.active = false;
+    document.getElementById('room-val').textContent = 'SURF_SKYWORLD | CURVED HEART LOOP | [A]/[D] TO CARVE';
+
+    // 1. CLOUD VOID FLOOR & SKYBOX
+    addBox(0, -1.0, 10, 240, 1, 240, 'water', 'SURF_HAZARD_WATER');
+    addBox(0, 48, -110, 240, 98, 1, 'grey', 'SKYWORLD_WALL_S');
+    addBox(0, 48,  130, 240, 98, 1, 'grey', 'SKYWORLD_WALL_N');
+    addBox(-120, 48, 10, 1, 98, 240, 'grey', 'SKYWORLD_WALL_W');
+    addBox( 120, 48, 10, 1, 98, 240, 'grey', 'SKYWORLD_WALL_E');
+
+    // 2. CENTER SPAWN BOX (WHITE SQUARE IN YOUR DRAWING: X = 0, Z = 0, Y = 62)
+    addBox(0, 61.5, 0, 16, 1, 16, 'grey', 'SKYWORLD_SPAWN_BOX');
+    addBox(-7.5, 62.6, 0, 1, 1.4, 16, 'sand', 'SPAWN_WALL_W');
+    addBox( 7.5, 62.6, 0, 1, 1.4, 16, 'sand', 'SPAWN_WALL_E');
+    addDoor(0, 62.0, -7.42, 'Z', 'MAIN', 'EXIT TO MAIN HUB', false);
+
+    // 3. CENTRAL SPINE RAMP (SURFS NORTH FROM SPAWN TO THE SPLIT)
+    addCurvedSurfPath([
+        { x: 0, z: 10 },
+        { x: 0, z: 34 },
+        { x: 0, z: 58 }
+    ], 60.5, 52.0, 'grey', 'sand', 3.6, 3.8);
+
+    // 4. LEFT HEART CURVE -> OUTER LEFT STRAIGHTAWAY
+    addCurvedSurfPath([
+        { x: -3,  z: 60 },
+        { x: -14, z: 76 },
+        { x: -32, z: 82 },
+        { x: -45, z: 70 },
+        { x: -46, z: 42 },
+        { x: -46, z: 14 }
+    ], 51.0, 37.5, 'grey', 'cyan', 3.5, 3.8);
+
+    // 5. RIGHT HEART CURVE -> OUTER RIGHT STRAIGHTAWAY
+    addCurvedSurfPath([
+        { x: 3,  z: 60 },
+        { x: 14, z: 76 },
+        { x: 32, z: 82 },
+        { x: 45, z: 70 },
+        { x: 46, z: 42 },
+        { x: 46, z: 14 }
+    ], 51.0, 37.5, 'grey', 'cyan', 3.5, 3.8);
+
+    // 6. LEFT & RIGHT RESTING PLATFORMS (SIDE BLACK SQUARES AT X = ±46, Z = 4)
+    addBox(-46, 36.2, 4, 13, 1.2, 14, 'grey', 'SKYWORLD_REST_LEFT');
+    addBox(-46, 37.0, 4, 13.5, 0.4, 14.5, 'sand', 'REST_LEFT_TRIM');
+
+    addBox( 46, 36.2, 4, 13, 1.2, 14, 'grey', 'SKYWORLD_REST_RIGHT');
+    addBox( 46, 37.0, 4, 13.5, 0.4, 14.5, 'sand', 'REST_RIGHT_TRIM');
+
+    // 7. BOTTOM STAGGERED DIAGONAL FUNNEL RAMPS (DASHED RED SEGMENTS)
+    // Left staggered diagonal steps
+    addCurvedSurfPath([{ x: -44, z: -6  }, { x: -33, z: -24 }], 35.0, 30.5, 'orange', 'sand', 3.4, 3.6);
+    addCurvedSurfPath([{ x: -36, z: -18 }, { x: -22, z: -38 }], 31.5, 26.5, 'cyan',   'grey', 3.4, 3.6);
+    addCurvedSurfPath([{ x: -24, z: -34 }, { x: -10, z: -50 }], 27.5, 22.0, 'orange', 'sand', 3.4, 3.6);
+
+    // Right staggered diagonal steps
+    addCurvedSurfPath([{ x: 44, z: -6  }, { x: 33, z: -24 }], 35.0, 30.5, 'orange', 'sand', 3.4, 3.6);
+    addCurvedSurfPath([{ x: 36, z: -18 }, { x: 22, z: -38 }], 31.5, 26.5, 'cyan',   'grey', 3.4, 3.6);
+    addCurvedSurfPath([{ x: 24, z: -34 }, { x: 10, z: -50 }], 27.5, 22.0, 'orange', 'sand', 3.4, 3.6);
+
+    // 8. BOTTOM CENTRAL LANDING & TELEPORTER PLATFORM (BOTTOM BLACK SQUARE)
+    addBox(0, 19.8, -60, 20, 1.2, 16, 'grey', 'SKYWORLD_BOTTOM_PAD');
+    addBox(0, 20.5, -60, 20.6, 0.4, 16.6, 'sand', 'BOTTOM_PAD_TRIM');
+    addBox(0, 20.7, -60, 7, 0.4, 7, 'cyan', 'SURF_TELEPORT_GUNROOM');
+
+    // 9. LOWER ARENA & CENTRAL JAIL CAGE UNDERNEATH (Y = 10)
+    addBox(0, 9.5, 10, 115, 1.2, 155, 'grey', 'SKYWORLD_LOWER_FLOOR');
+    addBox(0, 13.5, 22, 18, 7, 1, 'orange', 'JAIL_WALL_N');
+    addBox(0, 13.5, 38, 18, 7, 1, 'orange', 'JAIL_WALL_S');
+    addBox(-8.5, 13.5, 30, 1, 7, 16, 'orange', 'JAIL_WALL_W');
+    addBox( 8.5, 13.5, 30, 1, 7, 16, 'orange', 'JAIL_WALL_E');
+    addBox(0, 17.3, 30, 19, 0.8, 17, 'grey', 'JAIL_ROOF');
+    addBox(0, 10.3, -45, 8, 0.4, 8, 'cyan', 'SURF_TELEPORT_TOWER');
+
+    // 10. HIGH SKYWORLD SNIPER / GUN ROOM OVERLOOKING THE LOOP (Y = 74, Z = -86)
+    addBox(0, 73.5, -86, 30, 1.2, 18, 'grey', 'SKYWORLD_GUN_ROOM');
+    addBox(0, 74.7, -77.5, 30, 1.4, 1, 'sand', 'GUN_ROOM_LEDGE');
+    addDoor(0, 74.1, -94.42, 'Z', 'MAIN', 'SKYWORLD COMPLETE! RETURN TO HUB', false);
+
+    resetPlayerPosition(0, 62.1, 0, 0);
 }
+
+
 
 var CITY_CHUNK_SIZE = 40;
 var CITY_LOAD_RADIUS = 3; // Loads a 7x7 grid of chunks (280m x 280m active bubble)
@@ -1594,7 +1885,7 @@ function generateCityChunk(cx, cz) {
 
     if (cx >= 2) {
         var oceanTheme = (cx >= 4) ? 'pink' : 'water';
-        addBox(wx, -0.65, wz, S, 0.7, S, oceanTheme, 'CYBER_OCEAN');
+        addBox(wx, -0.50, wz, S, 1.0, S, oceanTheme, 'CYBER_OCEAN');
         if (cx === 2 && Math.abs(cz) % 3 === 1) {
             addBox(wx, 0.35, wz, S, 0.7, 7, 'purple', 'VICE PIER');
             addBox(wx + 12, 1.4, wz, 5, 2.2, 8, 'pink', 'PIER PAVILION');
@@ -1603,7 +1894,7 @@ function generateCityChunk(cx, cz) {
     }
 
     if (cx === 1) {
-        addBox(wx, -0.55, wz, S, 0.9, S, 'sand', 'VICE_BEACH');
+        addBox(wx, -0.50, wz, S, 1.0, S, 'sand', 'VICE_BEACH');
         addPalmTree(wx - 12, wz - 10);
         addPalmTree(wx - 8,  wz + 12);
         if (Math.abs(cz) % 4 === 2) {
@@ -1614,7 +1905,7 @@ function generateCityChunk(cx, cz) {
 
     if (cx === 0) {
         addBox(wx - 6,  -0.50, wz, 28, 1.0, S, 'grey',   'OCEAN_DRIVE');
-        addBox(wx + 14, -0.45, wz, 12, 1.1, S, 'purple', 'BOARDWALK');
+        addBox(wx + 14, -0.55, wz, 12, 1.1, S, 'purple', 'BOARDWALK');
         addPalmTree(wx + 9.5, wz - 10);
         addPalmTree(wx + 9.5, wz + 10);
         addBox(wx + 8.5, 2.2, wz, 0.2, 4.4, 0.2, 'cyan', '');
@@ -1627,16 +1918,18 @@ function generateCityChunk(cx, cz) {
         return;
     }
 
-    // CITY BLOCKS (cx <= -1): Wide Cross-Streets, Plazas & Skyscrapers
-    addBox(wx, -0.50, wz, S, 1.0, S, 'grey', 'CITY_STREET');
-
-    // Every 3rd Z-chunk is an open East-West Cross-Street Avenue (except where extra Pizza parlors sit)
+    // Every 3rd Z-chunk is an open East-West Cross-Street Avenue
     if (Math.abs(cz) % 3 === 1 && !(cx === -1 && Math.abs(cz + 2) % 7 === 0)) {
-        addBox(wx, -0.48, wz, S, 1.0, 14, 'purple', 'CROSS_AVENUE');
+        addBox(wx, -0.50, wz - 13.5, S, 1.0, 13, 'grey',   'CITY_STREET_N');
+        addBox(wx, -0.50, wz,        S, 1.0, 14, 'purple', 'CROSS_AVENUE');
+        addBox(wx, -0.50, wz + 13.5, S, 1.0, 13, 'grey',   'CITY_STREET_S');
         addBox(wx + 16, 2.2, wz - 8, 0.2, 4.4, 0.2, 'cyan', '');
         addBox(wx + 16, 4.3, wz - 8, 0.3, 0.18, 1.4, 'pink', 'CROSS ST');
         return;
     }
+
+    // Standard City Block Ground
+    addBox(wx, -0.50, wz, S, 1.0, S, 'grey', 'CITY_STREET');
 
     var h1 = cityHash(cx, cz, 1);
     var h2 = cityHash(cx, cz, 2);
@@ -1644,7 +1937,7 @@ function generateCityChunk(cx, cz) {
 
     // 20% chance for an open Neon Plaza instead of a building (inland only)
     if (cx < -1 && h3 < 0.20) {
-        addBox(wx, -0.46, wz, 28, 1.0, 28, 'purple', 'NEON_PLAZA');
+        addBox(wx, -0.50, wz, 28, 1.0, 28, 'purple', 'NEON_PLAZA');
         addBox(wx, 0.4, wz, 6, 0.8, 6, 'cyan', 'FOUNTAIN_BASE');
         addBox(wx, 1.6, wz, 1.5, 2.4, 1.5, 'pink', 'NEON_MONUMENT');
         addPalmTree(wx - 10, wz - 10);
@@ -1874,6 +2167,13 @@ faces.length = 0;
 surfWedges.length = 0;
 activeDoors.length = 0;
 deskInteractPrompt = "";
+
+var overlay007 = document.getElementById('blast-007-overlay');
+if (overlay007) {
+    overlay007.style.display = (roomId === 'VECTOR_BLAST') ? 'block' : 'none';
+}
+
+
 if (roomId === 'MAIN') {
 buildMainHubRoom();
 resetPlayerPosition(0, 0.1, 2, Math.PI);
@@ -2120,59 +2420,76 @@ player.pos.y += player.vel.y * dt;
 player.grounded = false;
 hit = intersectsAny(player.pos, player.currentHeight);
 if (hit) {
-if (hit.label === 'SURF_HAZARD_WATER') {
-// Fell into the water below -> Restart at top of Surf Deck
-screenFlashColor = 'rgba(30, 140, 255, 0.35)';
-screenFlashTimer = 0.3;
-resetPlayerPosition(0, 58.1, -24, 0);
-return;
-} else if (hit.label === 'SURF_L' || hit.label === 'SURF_R') {
-isTouchingSurfRamp = true;
-player.pos.y = hit.maxY;
-player.vel.y = 0;
-} else if (player.vel.y <= 0) {
-player.pos.y = hit.maxY;
-player.vel.y = 0;
-player.grounded = true;
-} else {
-player.pos.y = hit.minY - player.currentHeight - 0.0001;
-player.vel.y = 0;
-}
+    if (hit.label === 'SURF_HAZARD_WATER') {
+        screenFlashTimer = 0;
+        resetPlayerPosition(0, 62.3, 0, 0);
+        return;
+    } else if (hit.label === 'SURF_TELEPORT_TOWER') {
+        screenFlashTimer = 0;
+        resetPlayerPosition(0, 62.3, 0, 0);
+        return;
+    } else if (hit.label === 'SURF_TELEPORT_GUNROOM') {
+        screenFlashTimer = 0;
+        resetPlayerPosition(0, 74.4, -80, 0);
+        return;
+    } else if (hit.label === 'CLIMB_WATER_FLOOR') {
+        screenFlashTimer = 0;
+        resetPlayerPosition(0, 0.1, 6, 0);
+        return;
+    } else if (hit.label === 'SURF_L' || hit.label === 'SURF_R') {
+        isTouchingSurfRamp = true;
+        player.pos.y = hit.maxY;
+        player.vel.y = 0;
+    } else if (player.vel.y <= 0) {
+        player.pos.y = hit.maxY;
+        player.vel.y = 0;
+        player.grounded = true;
+    } else {
+        player.pos.y = hit.minY - player.currentHeight - 0.0001;
+        player.vel.y = 0;
+    }
 }
 
-// TRUE CS:S SURF WEDGE COLLISION & VELOCITY PROJECTION
+
+// TRUE CS:S UNIFIED CURVED & ANGLED SURF WEDGE COLLISION
 for (var wIdx = 0; wIdx < surfWedges.length; wIdx++) {
     var sw = surfWedges[wIdx];
-    if (player.pos.z + player.radius < sw.minZ || player.pos.z - player.radius > sw.maxZ) continue;
-    if (player.pos.x + player.radius < sw.minX || player.pos.x - player.radius > sw.maxX) continue;
-    if (player.pos.y > sw.topY + 0.25 || player.pos.y + player.currentHeight < sw.bottomY) continue;
+    if (player.pos.y > sw.topY + 0.45 || player.pos.y + player.currentHeight < sw.bottomY) continue;
 
-    // Calculate exact slope height at player's X position
+    var dx = player.pos.x - sw.cx;
+    var dz = player.pos.z - sw.cz;
+    if (Math.abs(dx) > sw.halfDiag || Math.abs(dz) > sw.halfDiag) continue;
+
+    // Exact inverse rotation into wedge's local XZ space
+    var localX =  dx * sw.cosA + dz * sw.sinA;
+    var localZ = -dx * sw.sinA + dz * sw.cosA;
+
+    if (Math.abs(localZ) > sw.halfL + player.radius) continue;
+    if (localX < sw.minLocalX - player.radius || localX > sw.maxLocalX + player.radius) continue;
+
+    // Calculate exact slope height across [minLocalX .. maxLocalX]
+    var spanX = sw.maxLocalX - sw.minLocalX;
     var t = (sw.slopeSide === 'LEFT')
-        ? (player.pos.x - sw.minX) / (sw.maxX - sw.minX)
-        : (sw.maxX - player.pos.x) / (sw.maxX - sw.minX);
+        ? (localX - sw.minLocalX) / spanX
+        : (sw.maxLocalX - localX) / spanX;
     t = Math.max(0, Math.min(1, t));
     var slopeY = sw.topY - t * (sw.topY - sw.bottomY);
 
-    // If player's feet touch or dip below the diagonal plane while above the wedge base
-    if (player.pos.y <= slopeY + 0.08 && player.pos.y >= sw.bottomY - 0.4) {
+    if (player.pos.y <= slopeY + 0.35 && player.pos.y >= sw.bottomY - 0.6) {
         isTouchingSurfRamp = true;
-        player.grounded = false; // Never apply ground friction while surfing!
+        player.grounded = false;
 
-        // Push player smoothly onto the diagonal surface along its normal
         var penetration = (slopeY - player.pos.y);
         if (penetration > 0) {
             player.pos = player.pos.add(sw.normal.scale(penetration * sw.normal.y));
             if (player.pos.y < slopeY) player.pos.y = slopeY;
         }
 
-        // Project velocity onto the slope plane (converts gravity into forward surf speed!)
         var vn = player.vel.dot(sw.normal);
         if (vn < 0) {
             player.vel = player.vel.sub(sw.normal.scale(vn));
         }
 
-        // Gentle forward board-glide boost when holding A or D into the slope
         if (keys.KeyA || keys.KeyD) {
             var horizSpeed = Math.hypot(player.vel.x, player.vel.z);
             if (horizSpeed < 26.0) {
@@ -2188,6 +2505,7 @@ for (var wIdx = 0; wIdx < surfWedges.length; wIdx++) {
         }
     }
 }
+
 
 
 document.getElementById('pos-val').textContent =
@@ -2215,6 +2533,11 @@ var PURPLE_FILL = { r: 85,  g: 32,  b: 145 };
 var PURPLE_GRID = { r: 175, g: 110, b: 255 };
 var SAND_FILL   = { r: 195, g: 165, b: 120 };
 var SAND_GRID   = { r: 235, g: 210, b: 165 };
+var BLACK_FILL    = { r: 18,  g: 20,  b: 25 };
+var BLACK_GRID    = { r: 62,  g: 68,  b: 82 };
+var CHARCOAL_FILL = { r: 44,  g: 48,  b: 56 };
+var CHARCOAL_GRID = { r: 95,  g: 102, b: 116 };
+
 
 
 
@@ -2226,6 +2549,8 @@ var fb = (c.b * factor) * (1 - fog) + 38 * fog;
 return 'rgb(' + (fr | 0) + ',' + (fg | 0) + ',' + (fb | 0) + ')';
 }
 function drawVectorBlasterViewmodel(w, h) {
+    var overlay007 = document.getElementById('blast-007-overlay');
+    if (overlay007 && overlay007.style.display === 'block') return;
 var recoilX = weaponRecoil * 18;
 var recoilY = weaponRecoil * 22;
 var bobX = Math.sin(performance.now() * 0.008) * (Math.hypot(player.vel.x, player.vel.z) * 0.8);
@@ -2493,6 +2818,7 @@ function addMannequinCylinder(targetList, pos, sinA, cosA, lx, ly, lz, rTop, rBo
             theme: theme,
             shade: shade,
             label: '',
+label: activeMannequinTag,
             isBotPart: true
         });
 
@@ -2506,6 +2832,8 @@ function addMannequinCylinder(targetList, pos, sinA, cosA, lx, ly, lz, rTop, rBo
             theme: theme,
             shade: 1.06,
             label: '',
+label: activeMannequinTag,
+
             isBotPart: true
         });
         targetList.push({
@@ -2575,97 +2903,199 @@ function addMannequinSphere(targetList, pos, sinA, cosA, lx, ly, lz, rx, ry, rz,
     }
 }
 
-// Builds a smooth, rounded 3D mannequin (Masculine & Feminine variants)
+var MANNEQUIN_TUNE = {
+    neck:      { y: 1.44, rTop: 0.058, rBot: 0.062, h: 0.12 },
+    head:      { y: 1.61, rx: 0.125, ry: 0.145, rz: 0.135 },
+    hairMale:  { y: 1.655, rx: 0.131, ry: 0.115, rz: 0.140 },
+    hairFem:   { y: 1.64, rx: 0.125, ry: 0.135, rz: 0.132, strandLen: 0.28 },
+    torso:     { y: 1.22, chestR: 0.205, waistR: 0.145, h: 0.34 },
+    waist:     { y: 1.01, rx: 0.145, ry: 0.065, rz: 0.123 },
+    hips:      { y: 0.89, rTop: 0.155, rBot: 0.165, h: 0.16 },
+    skirt:     { y: 0.82, rTop: 0.130, rBot: 0.230, h: 0.30 },
+    shoulders: { x: 0.25, y: 1.33, r: 0.066 },
+    upperArm:  { y: 1.18, rTop: 0.052, rBot: 0.046, h: 0.22 },
+    elbows:    { y: 1.04, r: 0.049 },
+    forearm:   { y: 0.89, rTop: 0.046, rBot: 0.037, h: 0.22 },
+    hands:     { y: 0.74, rx: 0.044, ry: 0.055, rz: 0.049 },
+    thighs:    { x: 0.11, y: 0.64, rTop: 0.072, rBot: 0.059, h: 0.32 },
+    knees:     { y: 0.45, r: 0.063 },
+    shins:     { y: 0.24, rTop: 0.059, rBot: 0.047, h: 0.32 },
+    feet:      { y: 0.045, rx: 0.061, ry: 0.045, rz: 0.115 }
+};
+
+var MANNEQUIN_FIELD_LABELS = {
+    x:         'Side-to-Side Distance from Center (x)',
+    y:         'Height from Floor (y)',
+    rx:        'Width / Left-Right Radius (rx)',
+    ry:        'Vertical / Top-Bottom Radius (ry)',
+    rz:        'Depth / Front-Back Radius (rz)',
+    r:         'Joint Ball Radius (r)',
+    rTop:      'Top Thickness Radius (rTop)',
+    rBot:      'Bottom Thickness Radius (rBot)',
+    h:         'Part Height / Length (h)',
+    chestR:    'Chest Width Radius (chestR)',
+    waistR:    'Waist Width Radius (waistR)',
+    strandLen: 'Hair Strand Length (strandLen)'
+};
+
+function formatMannequinPartInfo(partKey) {
+    var obj = MANNEQUIN_TUNE[partKey];
+    if (!obj) return '';
+    return Object.keys(obj).map(function(k) {
+        var desc = MANNEQUIN_FIELD_LABELS[k] || k;
+        return desc + ': ' + obj[k];
+    }).join('  |  ');
+}
+
+
+var hoveredMannequinPart = null;
+var selectedMannequinPart = null;
+var activeMannequinTag = '';
+
+
 function buildMannequin(targetList, pos, dirAngle, walkPhase, shirtTheme, isDressed, role, isCombat, variant, customHairTheme) {
     var sinA = Math.sin(dirAngle);
     var cosA = Math.cos(dirAngle);
     var bob = Math.abs(Math.sin(walkPhase)) * 0.04;
     var swing = Math.sin(walkPhase) * 0.24;
     var isFem = (variant === 'female');
+    var scaleFem = isFem ? 0.85 : 1.0;
 
-    var skin = 'grey';
-    var joint = 'orange';
-    var topTheme = isDressed ? shirtTheme : skin;
-    var botTheme = isDressed ? 'grey' : skin;
+    var skin = isFem ? 'grey' : 'sand';
+    var joint = isFem ? 'water' : 'black';
+    var topTheme = isFem ? 'cyan' : (isDressed ? 'charcoal' : skin);
+    var botTheme = isFem ? 'cyan' : (isDressed ? 'charcoal' : skin);
+    var T = MANNEQUIN_TUNE;
 
-    // 1. ROUNDED HEAD, NECK PEG & SCULPTED HAIR
-    addMannequinCylinder(targetList, pos, sinA, cosA, 0, 1.44 + bob, 0, isFem ? 0.048 : 0.058, isFem ? 0.052 : 0.062, 0.12, 8, joint);
-    addMannequinSphere(targetList, pos, sinA, cosA, 0, 1.61 + bob, 0.01, isFem ? 0.115 : 0.125, 0.145, isFem ? 0.125 : 0.135, 6, 10, skin);
+    // 1. NECK & HEAD
+    activeMannequinTag = 'neck';
+    addMannequinCylinder(targetList, pos, sinA, cosA, 0, T.neck.y + bob, 0, T.neck.rTop * scaleFem, T.neck.rBot * scaleFem, T.neck.h, 8, isFem ? 'cyan' : 'black');
 
-    if (isDressed) {
-        var hairTheme = customHairTheme || (isFem ? shirtTheme : 'orange');
+    activeMannequinTag = 'head';
+    addMannequinSphere(targetList, pos, sinA, cosA, 0, T.head.y + bob, 0.01, T.head.rx * (isFem ? 0.92 : 1), T.head.ry, T.head.rz * (isFem ? 0.93 : 1), 6, 10, skin);
+
+    // 2. HAIR / JET-BLACK BATMAN COWL & POINTED EARS
+    if (isDressed || isFem) {
+        var hairTheme = customHairTheme || (isFem ? 'sand' : 'black');
         if (isFem) {
-            // Rounded crown hair cap
-            addMannequinSphere(targetList, pos, sinA, cosA, 0, 1.64 + bob, -0.015, 0.125, 0.135, 0.132, 5, 10, hairTheme);
-            // Hair-down: 5 flowing shoulder-length strands framing the back & sides
-            addMannequinCylinder(targetList, pos, sinA, cosA,  0.00,  1.50 + bob, -0.115, 0.068, 0.085, 0.28, 8, hairTheme);
-            addMannequinCylinder(targetList, pos, sinA, cosA, -0.075, 1.50 + bob, -0.085, 0.055, 0.068, 0.27, 8, hairTheme);
-            addMannequinCylinder(targetList, pos, sinA, cosA,  0.075, 1.50 + bob, -0.085, 0.055, 0.068, 0.27, 8, hairTheme);
-            addMannequinCylinder(targetList, pos, sinA, cosA, -0.105, 1.51 + bob, -0.015, 0.045, 0.054, 0.25, 8, hairTheme);
-            addMannequinCylinder(targetList, pos, sinA, cosA,  0.105, 1.51 + bob, -0.015, 0.045, 0.054, 0.25, 8, hairTheme);
+            activeMannequinTag = 'hairFem';
+            addMannequinSphere(targetList, pos, sinA, cosA, 0, T.hairFem.y + bob, -0.015, T.hairFem.rx, T.hairFem.ry, T.hairFem.rz, 5, 10, hairTheme);
+            addMannequinCylinder(targetList, pos, sinA, cosA, -0.095, 1.56 + bob, 0.055, 0.026, 0.016, 0.16, 6, hairTheme);
+            addMannequinCylinder(targetList, pos, sinA, cosA,  0.095, 1.56 + bob, 0.055, 0.026, 0.016, 0.16, 6, hairTheme);
+            addMannequinSphere(targetList, pos, sinA, cosA, 0, 1.67 + bob, -0.135, 0.036, 0.036, 0.036, 4, 8, 'pink');
+            addMannequinSphere(targetList, pos, sinA, cosA, 0, 1.65 + bob, -0.175, 0.052, 0.065, 0.055, 5, 8, hairTheme);
+            var sLen = T.hairFem.strandLen;
+            addMannequinCylinder(targetList, pos, sinA, cosA, 0, 1.55 + bob, -0.195, 0.048, 0.058, sLen * 0.65, 8, hairTheme);
+            addMannequinCylinder(targetList, pos, sinA, cosA, 0, 1.39 + bob, -0.205, 0.054, 0.022, sLen * 0.60, 8, hairTheme);
         } else {
-            // Cropped hair cap on top & back of head
-            addMannequinSphere(targetList, pos, sinA, cosA, 0, 1.655 + bob, -0.01, 0.131, 0.115, 0.140, 5, 10, hairTheme);
+            activeMannequinTag = 'hairMale';
+            // Jet-Black Batman Cowl Dome (leaves lower jaw exposed)
+            addMannequinSphere(targetList, pos, sinA, cosA, 0, T.hairMale.y + 0.005 + bob, -0.005, T.hairMale.rx * 1.03, T.hairMale.ry * 1.15, T.hairMale.rz * 1.02, 6, 10, 'black');
+            // Left & Right Pointed Bat-Ears
+            addMannequinCylinder(targetList, pos, sinA, cosA, -0.088, T.head.y + 0.21 + bob, 0.00, 0.005, 0.028, 0.15, 6, 'black');
+            addMannequinCylinder(targetList, pos, sinA, cosA,  0.088, T.head.y + 0.21 + bob, 0.00, 0.005, 0.028, 0.15, 6, 'black');
         }
     }
 
-    // 2. TAPERED TORSO, BALL WAIST & ROUNDED HIPS/SKIRT
-    var chestR = isFem ? 0.165 : 0.205;
-    var waistR = isFem ? 0.110 : 0.145;
-    var hipR   = isFem ? 0.175 : 0.165;
-    var shoulderX = isFem ? 0.21 : 0.25;
+    // 3. CHARCOAL ARMORED TORSO, GOLD BAT-EMBLEM, UTILITY BELT & JET-BLACK CAPE
+    var chestR = T.torso.chestR * (isFem ? 0.80 : 1.04);
+    var waistR = T.torso.waistR * (isFem ? 0.74 : 1.0);
+    var hipR   = T.hips.rBot * (isFem ? 1.04 : 1.0);
+    var shoulderX = T.shoulders.x * (isFem ? 0.84 : 1.02);
 
-    addMannequinCylinder(targetList, pos, sinA, cosA, 0, 1.22 + bob, 0, chestR, waistR + 0.015, 0.34, 10, topTheme);
-    addMannequinSphere(targetList, pos, sinA, cosA, 0, 1.01 + bob, 0, waistR, 0.065, waistR * 0.85, 4, 8, joint);
-
-    if (isFem && isDressed && !role) {
-        addMannequinCylinder(targetList, pos, sinA, cosA, 0, 0.82 + bob, 0, waistR + 0.02, 0.23, 0.30, 10, shirtTheme);
-    } else {
-        addMannequinCylinder(targetList, pos, sinA, cosA, 0, 0.89 + bob, 0, waistR + 0.01, hipR, 0.16, 10, botTheme);
+    activeMannequinTag = 'torso';
+    addMannequinCylinder(targetList, pos, sinA, cosA, 0, T.torso.y + bob, 0, chestR, waistR + 0.015, T.torso.h, 10, topTheme);
+    if (isFem) {
+        addMannequinSphere(targetList, pos, sinA, cosA, 0, T.torso.y + 0.05 + bob, chestR * 0.86, 0.045, 0.055, 0.025, 4, 8, 'pink');
+    } else if (isDressed) {
+        // Gold Bat-Emblem Oval on Charcoal Chest
+        addMannequinSphere(targetList, pos, sinA, cosA, 0, T.torso.y + 0.06 + bob, chestR * 0.88, 0.085, 0.048, 0.024, 4, 8, 'orange');
+        // Jet-Black Bat-Cape hanging down the back
+        addMannequinCylinder(targetList, pos, sinA, cosA,  0.00, 0.78 + bob * 0.5, -0.17, 0.19, 0.28, 1.18, 8, 'black');
+        addMannequinCylinder(targetList, pos, sinA, cosA, -0.13, 0.80 + bob * 0.5, -0.14, 0.10, 0.16, 1.14, 6, 'black');
+        addMannequinCylinder(targetList, pos, sinA, cosA,  0.13, 0.80 + bob * 0.5, -0.14, 0.10, 0.16, 1.14, 6, 'black');
     }
 
-    // 3. ROUNDED ARMS & SPHERICAL JOINTS
+    activeMannequinTag = 'waist';
+    addMannequinSphere(targetList, pos, sinA, cosA, 0, T.waist.y + bob, 0, waistR * 1.05, T.waist.ry * 1.1, waistR * 0.95, 4, 8, isFem ? 'pink' : 'orange');
+    if (!isFem && isDressed) {
+        // Gold Utility Belt Pouches
+        addMannequinSphere(targetList, pos, sinA, cosA, -0.11, T.waist.y + bob,  0.11, 0.028, 0.036, 0.028, 4, 6, 'orange');
+        addMannequinSphere(targetList, pos, sinA, cosA,  0.11, T.waist.y + bob,  0.11, 0.028, 0.036, 0.028, 4, 6, 'orange');
+        addMannequinSphere(targetList, pos, sinA, cosA,  0.00, T.waist.y + bob,  0.14, 0.036, 0.038, 0.024, 4, 6, 'orange');
+    }
+
+    activeMannequinTag = 'hips';
+    addMannequinCylinder(targetList, pos, sinA, cosA, 0, T.hips.y + bob, 0, waistR + 0.01, hipR, T.hips.h, 10, isFem ? botTheme : 'black');
+
+    // 4. ARMS, JET-BLACK GAUNTLETS & GLOVES
     var sides = [-1, 1];
     for (var s = 0; s < sides.length; s++) {
         var side = sides[s];
         var sx = side * shoulderX;
         var armSwing = (side === -1) ? -swing : swing;
-        var armR = isFem ? 0.044 : 0.052;
+        var armR = T.upperArm.rTop * scaleFem;
+        var forearmTheme = isFem ? 'cyan' : 'black';
+        var handTheme = isFem ? 'cyan' : 'black';
 
-        addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.33 + bob, 0, armR + 0.014, armR + 0.014, armR + 0.014, 4, 8, joint);
+        activeMannequinTag = 'shoulders';
+        addMannequinSphere(targetList, pos, sinA, cosA, sx, T.shoulders.y + bob, 0, T.shoulders.r * scaleFem, T.shoulders.r * scaleFem, T.shoulders.r * scaleFem, 4, 8, isFem ? joint : 'charcoal');
 
         if (isCombat && side === 1) {
-            addMannequinCylinder(targetList, pos, sinA, cosA, sx, 1.28 + bob, 0.14, armR, armR * 0.9, 0.22, 8, topTheme);
-            addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.28 + bob, 0.28, armR, armR, armR, 4, 8, joint);
-            addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.28 + bob, 0.44, armR * 0.9, armR * 0.9, 0.11, 4, 8, skin);
+            activeMannequinTag = 'upperArm';
+            addMannequinCylinder(targetList, pos, sinA, cosA, sx, 1.28 + bob, 0.14, armR, armR * 0.9, T.upperArm.h, 8, topTheme);
+            activeMannequinTag = 'elbows';
+            addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.28 + bob, 0.28, T.elbows.r * scaleFem, T.elbows.r * scaleFem, T.elbows.r * scaleFem, 4, 8, joint);
+            activeMannequinTag = 'hands';
+            addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.28 + bob, 0.44, T.hands.rx * scaleFem, T.hands.ry, 0.11, 4, 8, handTheme);
         } else if (role === 'pizza_chef') {
             var toss = Math.abs(Math.sin(walkPhase)) * 0.18;
+            activeMannequinTag = 'upperArm';
             addMannequinCylinder(targetList, pos, sinA, cosA, sx, 1.35 + bob + toss * 0.4, 0.10, armR, armR * 0.9, 0.20, 8, topTheme);
+            activeMannequinTag = 'hands';
             addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.46 + bob + toss, 0.22, armR * 0.9, 0.09, armR * 0.9, 4, 8, skin);
             if (side === 1) {
                 addMannequinCylinder(targetList, pos, sinA, cosA, 0.15, 1.85 + toss * 1.8, 0.26, 0.21, 0.21, 0.03, 12, 'sand');
             }
         } else {
-            addMannequinCylinder(targetList, pos, sinA, cosA, sx, 1.18 + bob, armSwing * 0.4, armR, armR * 0.88, 0.22, 8, topTheme);
-            addMannequinSphere(targetList, pos, sinA, cosA, sx, 1.04 + bob, armSwing * 0.7, armR * 0.95, armR * 0.95, armR * 0.95, 4, 8, joint);
-            addMannequinCylinder(targetList, pos, sinA, cosA, sx, 0.89 + bob, armSwing * 1.0, armR * 0.88, armR * 0.72, 0.22, 8, skin);
-            addMannequinSphere(targetList, pos, sinA, cosA, sx, 0.74 + bob, armSwing * 1.1, armR * 0.85, 0.055, armR * 0.95, 4, 8, joint);
+            activeMannequinTag = 'upperArm';
+            addMannequinCylinder(targetList, pos, sinA, cosA, sx, T.upperArm.y + bob, armSwing * 0.4, armR, T.upperArm.rBot * scaleFem, T.upperArm.h, 8, topTheme);
+            activeMannequinTag = 'elbows';
+            addMannequinSphere(targetList, pos, sinA, cosA, sx, T.elbows.y + bob, armSwing * 0.7, T.elbows.r * scaleFem, T.elbows.r * scaleFem, T.elbows.r * scaleFem, 4, 8, joint);
+            activeMannequinTag = 'forearm';
+            addMannequinCylinder(targetList, pos, sinA, cosA, sx, T.forearm.y + bob, armSwing * 1.0, T.forearm.rTop * scaleFem, T.forearm.rBot * scaleFem, T.forearm.h, 8, forearmTheme);
+            if (isFem) {
+                addMannequinCylinder(targetList, pos, sinA, cosA, sx, T.hands.y + 0.05 + bob, armSwing * 1.08, T.forearm.rBot * scaleFem * 1.08, T.forearm.rBot * scaleFem * 1.08, 0.03, 8, 'pink');
+            } else if (isDressed) {
+                // Jet-Black Gauntlet Fin Spikes
+                addMannequinCylinder(targetList, pos, sinA, cosA, sx + side * 0.048, T.forearm.y + bob, armSwing * 1.0 - 0.02, 0.004, 0.022, 0.14, 5, 'black');
+            }
+            activeMannequinTag = 'hands';
+            addMannequinSphere(targetList, pos, sinA, cosA, sx, T.hands.y + bob, armSwing * 1.1, T.hands.rx * scaleFem, T.hands.ry, T.hands.rz * scaleFem, 4, 8, handTheme);
         }
     }
 
-    // 4. ROUNDED LEGS & SPHERICAL KNEES
+    // 5. CHARCOAL LEGS, KNEES & JET-BLACK BAT-BOOTS
     for (var l = 0; l < sides.length; l++) {
         var lSide = sides[l];
-        var lx = lSide * (isFem ? 0.095 : 0.11);
+        var lx = lSide * T.thighs.x * (isFem ? 0.86 : 1.0);
         var legSwing = (lSide === -1) ? swing : -swing;
-        var thighR = isFem ? 0.062 : 0.072;
+        var thighR = T.thighs.rTop * (isFem ? 0.86 : 1.0);
 
-        addMannequinCylinder(targetList, pos, sinA, cosA, lx, 0.64 + bob * 0.5, legSwing * 0.5, thighR, thighR * 0.82, 0.32, 8, botTheme);
-        addMannequinSphere(targetList, pos, sinA, cosA, lx, 0.45 + bob * 0.5, legSwing * 0.8, thighR * 0.88, thighR * 0.88, thighR * 0.88, 4, 8, joint);
-        addMannequinCylinder(targetList, pos, sinA, cosA, lx, 0.24 + bob * 0.3, legSwing * 0.6, thighR * 0.82, thighR * 0.65, 0.32, 8, botTheme);
-        addMannequinSphere(targetList, pos, sinA, cosA, lx, 0.045, legSwing * 0.6 + 0.04, thighR * 0.85, 0.045, 0.115, 4, 8, isDressed ? shirtTheme : joint);
+        activeMannequinTag = 'thighs';
+        addMannequinCylinder(targetList, pos, sinA, cosA, lx, T.thighs.y + bob * 0.5, legSwing * 0.5, thighR, T.thighs.rBot * (isFem ? 0.86 : 1.0), T.thighs.h, 8, botTheme);
+        activeMannequinTag = 'knees';
+        addMannequinSphere(targetList, pos, sinA, cosA, lx, T.knees.y + bob * 0.5, legSwing * 0.8, T.knees.r * (isFem ? 0.86 : 1.0), T.knees.r * (isFem ? 0.86 : 1.0), T.knees.r * (isFem ? 0.86 : 1.0), 4, 8, joint);
+        activeMannequinTag = 'shins';
+        addMannequinCylinder(targetList, pos, sinA, cosA, lx, T.shins.y + bob * 0.3, legSwing * 0.6, T.shins.rTop * (isFem ? 0.86 : 1.0), T.shins.rBot * (isFem ? 0.86 : 1.0), T.shins.h, 8, isFem ? botTheme : 'black');
+        activeMannequinTag = 'feet';
+        addMannequinSphere(targetList, pos, sinA, cosA, lx, T.feet.y, legSwing * 0.6 + 0.04, T.feet.rx * (isFem ? 0.86 : 1.0), T.feet.ry, T.feet.rz, 4, 8, isFem ? 'pink' : 'black');
     }
+
+    activeMannequinTag = '';
 }
+
+
 
 
 function render() {
@@ -2680,6 +3110,71 @@ player.pos.y + player.currentHeight - player.eyeOffset,
 player.pos.z
 );
 var allFaces = faces.slice();
+
+if (currentRoom === 'MAIN') {
+    buildMannequin(allFaces, new Vec3(-3.5, 0, -2.5), Math.PI * 0.5, 0, 'charcoal', true, null, false, 'male',   'black');
+    buildMannequin(allFaces, new Vec3(-1.8, 0, -2.5), Math.PI * 0.5, 0, 'cyan',     true, null, false, 'female', 'sand');
+
+
+    // Raycast from crosshair to detect which mannequin part you're looking at
+    var lookDir = new Vec3(
+        -Math.sin(yaw) * Math.cos(pitch),
+        Math.sin(pitch),
+        Math.cos(yaw) * Math.cos(pitch)
+    ).normalize();
+
+    var bestPart = null;
+    var bestDist = 8.0; // Max 8m inspection range
+
+    // Direct 3D sphere check for both Male (-3.5) and Female (-1.8) heads
+    var headCenters = [
+        new Vec3(-3.5, MANNEQUIN_TUNE.head.y, -2.5),
+        new Vec3(-1.8, MANNEQUIN_TUNE.head.y, -2.5)
+    ];
+    var headCatchRadius = Math.max(MANNEQUIN_TUNE.head.rx, MANNEQUIN_TUNE.head.ry) + 0.04;
+
+    for (var hIdx = 0; hIdx < headCenters.length; hIdx++) {
+        var toHead = headCenters[hIdx].sub(camPos);
+        var projHead = toHead.dot(lookDir);
+        if (projHead > 0.2 && projHead < bestDist) {
+            var perpHead = toHead.sub(lookDir.scale(projHead)).length();
+            if (perpHead <= headCatchRadius) {
+                bestDist = projHead;
+                bestPart = 'head';
+            }
+        }
+    }
+
+    // Fallback polygon check for all other body parts (only runs if not aiming at a head)
+    if (!bestPart) {
+        for (var mIdx = 0; mIdx < allFaces.length; mIdx++) {
+            var mf = allFaces[mIdx];
+            if (!mf.isBotPart || !mf.label) continue;
+            var toFace = mf.center.sub(camPos);
+            var projDist = toFace.dot(lookDir);
+            if (projDist <= 0.2 || projDist > bestDist) continue;
+            var perpDist = toFace.sub(lookDir.scale(projDist)).length();
+            if (perpDist < 0.14) {
+                bestDist = projDist;
+                bestPart = mf.label;
+            }
+        }
+    }
+    hoveredMannequinPart = bestPart;
+
+
+    // Show hovered/selected part values with plain-English labels in the HUD!
+    var hudText = 'MAIN HUB';
+    var activeKey = selectedMannequinPart || hoveredMannequinPart;
+    if (activeKey && MANNEQUIN_TUNE[activeKey]) {
+        var modeTag = (selectedMannequinPart === activeKey)
+            ? 'SELECTED (CLICK AGAIN TO EDIT)'
+            : 'AIMING AT';
+        hudText += ' | ' + modeTag + ': [' + activeKey.toUpperCase() + ']\n' + formatMannequinPartInfo(activeKey);
+    }
+    document.getElementById('room-val').innerText = hudText;
+}
+
 
 if (currentRoom === 'VECTOR_BLAST' && typeof bot !== 'undefined' && bot.active) {
     var arenaAngle = Math.atan2(player.pos.x - bot.pos.x, player.pos.z - bot.pos.z);
@@ -2763,7 +3258,12 @@ if (isWater) {
     fillRGB = PURPLE_FILL; gridRGB = PURPLE_GRID; edgeGlow = 'rgba(190, 130, 255, 0.70)';
 } else if (face.theme === 'sand') {
     fillRGB = SAND_FILL; gridRGB = SAND_GRID; edgeGlow = 'rgba(240, 215, 170, 0.55)';
+} else if (face.theme === 'black') {
+    fillRGB = BLACK_FILL; gridRGB = BLACK_GRID; edgeGlow = 'rgba(110, 120, 140, 0.55)';
+} else if (face.theme === 'charcoal') {
+    fillRGB = CHARCOAL_FILL; gridRGB = CHARCOAL_GRID; edgeGlow = 'rgba(140, 148, 165, 0.55)';
 }
+
 
 
 ctx.beginPath();
@@ -2878,19 +3378,24 @@ ctx.restore();
 }
 // Player Laser Tracer
 if (playerLaserTimer > 0 && playerLaserTarget) {
-var pEnd = worldToCamera(playerLaserTarget, camPos, yaw, pitch);
-if (pEnd.z > NEAR) {
-var pp1 = project(pEnd, w, h, fovScale);
-ctx.save();
-ctx.strokeStyle = '#ff9d3b';
-ctx.lineWidth = 3.5;
-ctx.beginPath();
-ctx.moveTo(w * 0.73, h * 0.72);
-ctx.lineTo(pp1.x, pp1.y);
-ctx.stroke();
-ctx.restore();
+    var pEnd = worldToCamera(playerLaserTarget, camPos, yaw, pitch);
+    if (pEnd.z > NEAR) {
+        var pp1 = project(pEnd, w, h, fovScale);
+        var is007 = (document.getElementById('blast-007-overlay')?.style.display === 'block');
+        var startX = is007 ? w * 0.72 : w * 0.73; // Horizontal position (0.50 = center, 0.73 = right)
+        var startY = is007 ? h * 0.58 : h * 0.72; // Vertical position (smaller = higher up!)
+
+        ctx.save();
+        ctx.strokeStyle = is007 ? '#ffe866' : '#ff9d3b';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(pp1.x, pp1.y);
+        ctx.stroke();
+        ctx.restore();
+    }
 }
-}
+
 // First-Person Vector Blaster Model
 drawVectorBlasterViewmodel(w, h);
 }
