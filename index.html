@@ -1,0 +1,5280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>The Nostalgic Desktop by Matt</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+
+  background: #333;
+  color: #fff;
+
+  font-family:
+    Tahoma,
+    "Segoe UI",
+    Arial,
+    sans-serif;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+
+.bottom-left-controls {
+  position: fixed;
+  left: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  z-index: 100000;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bottom-left-controls button {
+  position: static !important;
+  width: 52px;
+  height: 42px;
+  padding: 0;
+  margin: 0;
+
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  transition: background 0.15s, transform 0.15s, filter 0.15s;
+}
+
+#openAiBtn {
+  background: linear-gradient(45deg, #ea4335, #34a853, #4285f4);
+  font-size: 23px;
+}
+
+#openAiBtn:hover {
+  transform: scale(1.06);
+  background: linear-gradient(45deg, #ff6659, #ffd54f, #5cd67d, #6ba4ff);
+}
+
+#openAiBtn:active {
+  transform: scale(0.95);
+}
+
+#speechButton {
+  background: #3D3D3D;
+  font-size: 24px;
+}
+
+#speechButton:hover {
+  background: #f1cd4f;
+  transform: scale(1.06);
+}
+
+#speechButton:active {
+  transform: scale(0.95);
+}
+
+.ai-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100001; /* <-- Only change this number */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+
+.ai-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ai-modal-box {
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  background-color: #131314;
+  border: 1px solid #3c4043;
+  border-radius: 28px;
+  padding: 32px 24px 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.2s ease;
+}
+
+.ai-modal-backdrop.open .ai-modal-box {
+  transform: translateY(0) scale(1);
+}
+
+.ai-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: transparent;
+  border: none;
+  color: #9aa0a6;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.ai-close-btn:hover {
+  background-color: #282a2c;
+  color: #e3e3e3;
+}
+
+.ai-modal-header {
+  text-align: center;
+}
+
+.ai-modal-title {
+  margin: 0 0 6px;
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  background: linear-gradient(90deg, #FFFFFF, #D6D6D6, #42A5F5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.ai-modal-subtitle {
+  margin: 0;
+  color: #9aa0a6;
+  font-size: 0.9rem;
+}
+
+.ai-prompt-card {
+  background-color: #1e1f20;
+  border: 1px solid #3c4043;
+  border-radius: 24px;
+  padding: 14px 18px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.2s;
+}
+
+.ai-prompt-card:focus-within {
+  border-color: #8ab4f8;
+}
+
+.ai-prompt-card textarea {
+  box-sizing: border-box;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #e3e3e3;
+  font-family: inherit;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  min-height: clamp(140px, 25dvh, 300px); /* 140px on phones, scales smoothly up to 300px on desktops */
+  max-height: 50dvh;
+}
+
+
+
+.ai-prompt-card textarea::placeholder {
+  color: #9aa0a6;
+}
+
+.ai-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ai-mic-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-mic-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: 1px solid #3c4043;
+  color: #e3e3e3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.ai-mic-btn:hover {
+  background-color: #282a2c;
+  border-color: #8ab4f8;
+}
+
+.ai-mic-btn.recording {
+  background-color: rgba(242, 139, 130, 0.15);
+  border-color: #f28b82;
+  color: #f28b82;
+  animation: aiPulse 1.4s infinite;
+}
+
+@keyframes aiPulse {
+  0% { box-shadow: 0 0 0 0 rgba(242, 139, 130, 0.45); }
+  70% { box-shadow: 0 0 0 10px rgba(242, 139, 130, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(242, 139, 130, 0); }
+}
+
+.ai-mic-status {
+  font-size: 0.85rem;
+  color: #9aa0a6;
+}
+
+.ai-mic-status.active {
+  color: #f28b82;
+  font-weight: 500;
+}
+
+.ai-submit-btn {
+  background-color: #8ab4f8;
+  color: #131314;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.ai-submit-btn:hover {
+  background-color: #aecbfa;
+}
+
+.ai-submit-btn:active {
+  transform: scale(0.98);
+}
+
+/* Shared bottom-left stack for phones, tablets, and desktops */
+.bottom-left-controls {
+  position: fixed;
+  left: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  z-index: 100000;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px; /* Matches your 80px desktop spacing above 😎 */
+}
+
+/* Shared button size, shape, and centering inside the bottom-left stack */
+#openAiBtn,
+#speechButton {
+  position: static;
+  width: 52px;
+  height: 42px;
+  padding: 0;
+
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  transition: background 0.15s, transform 0.15s, filter 0.15s;
+}
+
+/* Google AI button colors & animations */
+#openAiBtn {
+  background: linear-gradient(45deg, #ea4335, #34a853, #4285f4);
+  font-size: 23px;
+}
+
+#openAiBtn:hover {
+  transform: scale(1.06);
+  background: linear-gradient(45deg, #ff6659, #ffd54f, #5cd67d, #6ba4ff);
+}
+
+#openAiBtn:active {
+  transform: scale(0.95);
+}
+
+/* Smiley text-to-speech button colors & animations */
+#speechButton {
+  background: #3D3D3D;
+  font-size: 24px;
+}
+
+#speechButton:hover {
+  background: #f1cd4f;
+  transform: scale(1.06);
+}
+
+#speechButton:active {
+  transform: scale(0.95);
+}
+
+
+
+/* ================================================
+   WALLPAPER
+================================================ */
+
+#wallpaperLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+
+  overflow: hidden;
+
+  background: #666666;
+}
+
+#wallpaperLayer svg {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+}
+
+
+/* ================================================
+   PERMANENT CONTROLS
+================================================ */
+
+#backgroundButton,
+#resetButton,
+#notebookButton {
+  position: fixed;
+  z-index: 100000;
+
+  width: 52px;
+  height: 42px;
+
+  border: 0;
+  border-radius: 10px;
+
+  color: #fff;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 15px rgba(0, 0, 0, 0.35);
+
+  transition:
+    background 0.15s,
+    transform 0.15s;
+}
+
+#resetButton {
+  left: 24px;
+  top: 22px;
+
+  background: #EBEBEB;
+
+  font-size: 23px;
+  font-weight: bold;
+}
+
+#notebookButton {
+  left: 24px;
+  top: 126px;
+
+  background: #9E9E9E;
+
+  font-size: 22px;
+}
+
+#notebookButton:hover {
+  background: #7D7D7D;
+
+  transform: scale(1.06);
+}
+
+#notebookButton:active {
+  transform: scale(0.95);
+}
+
+
+#backgroundButton {
+  left: 24px;
+  top: 74px;
+
+  background: #EBEBEB;
+
+  font-size: 21px;
+}
+
+#resetButton:hover {
+  background: #99D3FF;
+  transform: scale(1.06);
+}
+
+#backgroundButton:hover,
+#backgroundButton.open {
+  background: #99D3FF;
+  transform: scale(1.06);
+}
+
+#resetButton:active,
+#backgroundButton:active {
+  transform: scale(0.95);
+}
+
+
+/* ================================================
+   BACKGROUND PANEL
+================================================ */
+
+#backgroundPanel {
+  position: fixed;
+  z-index: 99999;
+
+  left: 88px;
+  top: 74px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  max-width: calc(100vw - 105px);
+  padding: 8px;
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+
+  background: rgba(31, 31, 31, 0.94);
+
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45);
+
+  overflow-x: auto;
+
+  opacity: 0;
+  visibility: hidden;
+
+  transform: translateX(-12px);
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.18s,
+    transform 0.18s,
+    visibility 0.18s;
+}
+
+#backgroundPanel.open {
+  opacity: 1;
+  visibility: visible;
+
+  transform: translateX(0);
+
+  pointer-events: auto;
+}
+
+.wallpaperChoice {
+  position: relative;
+
+  flex: 0 0 auto;
+
+  width: 76px;
+  height: 48px;
+  padding: 0;
+
+  border: 2px solid #555;
+  border-radius: 7px;
+
+  background: #333;
+
+  overflow: hidden;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.15s,
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+
+.wallpaperChoice:hover {
+  border-color: #00a4ef;
+
+  transform: scale(1.06);
+
+  box-shadow:
+    0 0 10px rgba(0, 164, 239, 0.45);
+}
+
+.wallpaperChoice.selected {
+  border-color: #fff;
+
+  box-shadow:
+    0 0 0 2px #00a4ef;
+}
+
+.wallpaperChoice svg {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+}
+
+.defaultWallpaper::after {
+  content: "Default";
+
+  position: absolute;
+  inset: 0;
+
+  display: grid;
+  place-items: center;
+
+  color: #ddd;
+
+  font-size: 10px;
+  font-weight: bold;
+}
+
+
+/* ================================================
+   DESKTOP ICON GRID
+================================================ */
+
+#desktopIcons {
+  position: fixed;
+  z-index: 20;
+
+  left: 112px;
+  top: 22px;
+  right: 22px;
+  bottom: 22px;
+
+  /* Icons will now position themselves */
+  display: block;
+
+  overflow: hidden;
+
+  pointer-events: none;
+}
+
+.desktop-icon {
+  position: absolute;
+
+  width: 92px;
+  height: 102px;
+  padding: 5px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+
+  border: 1px solid transparent;
+  border-radius: 5px;
+
+  background: transparent;
+  color: #fff;
+
+  text-decoration: none;
+
+  cursor: pointer;
+  pointer-events: auto;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+
+  touch-action: none;
+
+  outline: none;
+}
+
+.desktop-icon.dragging {
+  position: absolute;
+
+  z-index: 50000;
+
+  pointer-events: none;
+
+  opacity: 0.92;
+
+  transform: scale(1.08);
+
+  background:
+    rgba(25, 83, 169, 0.58);
+
+  border-color:
+    rgba(255, 255, 255, 0.78);
+
+  box-shadow:
+    0 8px 20px
+    rgba(0, 0, 0, 0.38);
+
+  transition: none;
+}
+
+.desktop-icon.drop-target {
+  background:
+    rgba(25, 83, 169, 0.30);
+
+  border-color:
+    rgba(255, 255, 255, 0.44);
+}
+
+.desktop-icon:hover,
+.desktop-icon:focus-visible,
+.desktop-icon.selected {
+  border-color:
+    rgba(255, 255, 255, 0.62);
+
+  background:
+    rgba(25, 83, 169, 0.42);
+}
+
+.desktop-icon:active {
+  background:
+    rgba(19, 66, 145, 0.64);
+}
+
+.icon-art {
+  width: 52px;
+  height: 52px;
+
+  display: grid;
+  place-items: center;
+
+  font-size: 40px;
+  line-height: 1;
+
+  pointer-events: none;
+
+  filter:
+    drop-shadow(
+      2px 3px 2px rgba(0, 0, 0, 0.52)
+    );
+
+  transition:
+    transform 130ms ease,
+    filter 130ms ease;
+}
+
+.desktop-icon:hover .icon-art {
+  transform:
+    translateY(-2px)
+    scale(1.05);
+
+  filter:
+    drop-shadow(
+      2px 4px 3px rgba(0, 0, 0, 0.56)
+    )
+    brightness(1.08);
+}
+
+.icon-label {
+  max-width: 100%;
+
+  margin-top: 4px;
+  padding: 1px 3px;
+
+  color: #fff;
+
+  font-size: 11px;
+  line-height: 1.1;
+  text-align: center;
+
+  pointer-events: none;
+
+  text-shadow:
+    1px 1px 2px #000,
+    -1px -1px 2px rgba(0, 0, 0, 0.78);
+}
+
+.desktop-icon.selected .icon-label {
+  background: #1556ac;
+}
+
+
+/* ================================================
+   RECYCLE BIN NOTIFICATION
+================================================ */
+
+#iconNotification {
+  position: fixed;
+  z-index: 100001;
+
+  left: 50%;
+  bottom: 25px;
+
+  width:
+    min(
+      330px,
+      calc(100vw - 30px)
+    );
+
+  padding: 10px 14px;
+
+  display: none;
+
+  transform: translateX(-50%);
+
+  color: #143c63;
+
+  border: 1px solid #1765af;
+  border-radius: 7px;
+
+  background:
+    linear-gradient(
+      #fff,
+      #dceeff
+    );
+
+  box-shadow:
+    0 5px 16px rgba(0, 0, 0, 0.44);
+
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+#iconNotification.show {
+  display: block;
+
+  animation:
+    noticeIn 0.25s ease-out;
+}
+
+@keyframes noticeIn {
+  from {
+    opacity: 0;
+
+    transform:
+      translate(-50%, 10px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translate(-50%, 0);
+  }
+}
+
+
+/* ================================================
+   SPIRAL NOTEBOOK WINDOW
+================================================ */
+
+.notebookWindow {
+  position: fixed;
+
+  left: 50%;
+  top: 50%;
+
+  width: 440px;
+  height: 520px;
+
+  max-width: calc(100vw - 20px);
+  max-height: calc(100vh - 20px);
+
+  transform: translate(-50%, -50%);
+
+  z-index: 50000;
+
+  filter:
+    drop-shadow(
+      0 14px 24px
+      rgba(0, 0, 0, 0.48)
+    );
+}
+
+.notebookFont {
+    position: absolute;
+    top: 45px;
+    right: 10px;
+    z-index: 2;
+}
+
+/* ================================================
+   NOTEBOOK COVER / PAPER
+================================================ */
+
+.notebook {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+
+  border-radius:
+    8px 13px 13px 8px;
+
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #fffdf2 0px,
+      #fffdf2 30px,
+      #999FF5 31px,
+      #fffdf2 32px
+    );
+
+  border:
+    1px solid #c9c2a7;
+
+  box-shadow:
+    inset 14px 0 18px
+    rgba(0, 0, 0, 0.07);
+}
+
+
+/* Red notebook margin */
+
+.notebook::before {
+  content: "";
+
+  position: absolute;
+
+  left: 62px;
+  top: 0;
+  bottom: 0;
+
+  width: 1px;
+
+  background:
+    rgba(220, 83, 83, 0.55);
+
+  pointer-events: none;
+}
+
+
+/* ================================================
+   SPIRAL BINDING
+================================================ */
+
+.notebookSpiral {
+  position: absolute;
+
+  left: -13px;
+  top: 16px;
+  bottom: 16px;
+
+  width: 35px;
+
+  z-index: 5;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+
+  pointer-events: none;
+}
+
+.notebookRing {
+  width: 31px;
+  height: 17px;
+
+  border:
+    4px solid #42474b;
+
+  border-right-color:
+    #9ba1a5;
+
+  border-radius: 50%;
+
+  background: transparent;
+
+  box-shadow:
+    1px 2px 2px
+    rgba(0, 0, 0, 0.28);
+}
+
+
+/* ================================================
+   NOTEBOOK DRAG AREA
+================================================ */
+
+.notebookHeader {
+  position: absolute;
+
+  left: 24px;
+  top: 0;
+  right: 0;
+
+  height: 45px;
+
+  z-index: 6;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  padding: 6px 8px;
+
+  cursor: grab;
+
+  touch-action: none;
+  user-select: none;
+}
+
+.notebookHeader:active {
+  cursor: grabbing;
+}
+
+
+/* ================================================
+   CLOSE BUTTON
+================================================ */
+
+.notebookClose {
+  width: 31px;
+  height: 31px;
+
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid rgba(70, 70, 70, 0.28);
+
+  border-radius: 7px;
+
+  background:
+    rgba(245, 245, 235, 0.88);
+
+  color: #555;
+
+  font-size: 17px;
+
+  cursor: pointer;
+}
+
+.notebookClose:hover {
+  background: #d9534f;
+  color: white;
+
+  border-color: #d9534f;
+}
+
+
+/* ================================================
+   NOTEBOOK CONTENT
+================================================ */
+
+.notebookPage {
+  position: absolute;
+
+  left: 76px;
+  top: 65px;
+  right: 25px;
+  bottom: 54px;
+
+  z-index: 3;
+}
+
+.notebookTitle {
+  margin: 0 0 10px;
+
+  color: #424242;
+
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.notebookText {
+  width: 100%;
+  height: calc(100% - 40px);
+
+  padding: 3px 5px;
+
+  resize: none;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #333;
+
+  font-family:
+    "Segoe Print",
+    "Comic Sans MS",
+    cursive;
+
+  font-size: 17px;
+  line-height: 32px;
+}
+
+
+/* ================================================
+   PAGE CONTROLS
+================================================ */
+
+.notebookNavigation {
+  position: absolute;
+
+  left: 76px;
+  right: 22px;
+  bottom: 12px;
+
+  z-index: 6;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 13px;
+}
+
+.notebookNavigation button {
+  width: 34px;
+  height: 28px;
+
+  padding: 0;
+
+  border:
+    1px solid #aaa;
+
+  border-radius: 6px;
+
+  background:
+    rgba(255, 255, 255, 0.82);
+
+  color: #444;
+
+  cursor: pointer;
+}
+
+.notebookNavigation button:hover {
+  background: #dbeeff;
+}
+
+.notebookPageNumber {
+  min-width: 78px;
+
+  color: #666;
+
+  font-size: 11px;
+  font-weight: bold;
+
+  text-align: center;
+}
+
+/* ================================================
+   TEXT TO SPEECH WINDOW
+================================================ */
+
+.speechWindow {
+  position: fixed;
+
+  left: 50%;
+  top: 50%;
+
+  width: 390px;
+  min-height: 490px;
+
+  max-width: calc(100vw - 20px);
+  max-height: calc(100vh - 20px);
+
+  transform: translate(-50%, -50%);
+
+  z-index: 60000;
+
+  overflow: hidden;
+
+  border:
+    2px solid rgba(255, 255, 255, 0.2);
+
+  border-radius: 15px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #182536,
+      #101720
+    );
+
+  color: white;
+
+  box-shadow:
+    0 18px 45px
+    rgba(0, 0, 0, 0.58);
+}
+
+
+/* ================================================
+   SPEECH WINDOW HEADER
+================================================ */
+
+.speechHeader {
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 7px 9px 7px 15px;
+
+  border-bottom:
+    1px solid rgba(255, 255, 255, 0.13);
+
+  background:
+    rgba(0, 0, 0, 0.18);
+
+  cursor: grab;
+
+  touch-action: none;
+  user-select: none;
+}
+
+.speechHeader:active {
+  cursor: grabbing;
+}
+
+.speechHeaderTitle {
+  color: #f3d969;
+
+  font-size: 14px;
+  font-weight: bold;
+
+  letter-spacing: 0.5px;
+}
+
+.speechClose {
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.22);
+
+  border-radius: 7px;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  color: white;
+
+  font-size: 16px;
+
+  cursor: pointer;
+}
+
+.speechClose:hover {
+  border-color: #d9534f;
+
+  background: #d9534f;
+}
+
+
+/* ================================================
+   SPEECH CHARACTER
+================================================ */
+
+.speechFaceArea {
+  position: relative;
+
+  height: 152px;
+
+  display: grid;
+  place-items: center;
+}
+
+.speechFace {
+  position: relative;
+
+  width: 125px;
+  height: 125px;
+
+  display: grid;
+  place-items: center;
+
+  font-size: 100px;
+  line-height: 1;
+
+  filter:
+    drop-shadow(
+      0 9px 10px
+      rgba(0, 0, 0, 0.38)
+    );
+
+  user-select: none;
+}
+
+.speechMouth {
+  position: absolute;
+
+  left: 55%;
+  top: 62%;
+
+  width: 65px;
+  height: 30px;
+
+  border-radius: 50%;
+
+  background: #1C1C1C;
+
+  transform:
+    translate(-50%, -50%)
+    scaleX(0.65)
+    scaleY(0.85);
+
+  transform-origin: center;
+
+  opacity: 0;
+
+  pointer-events: none;
+}
+
+.speechFace.talking
+.speechMouth {
+  opacity: 1;
+}
+
+.speechMouth.syllable {
+  animation:
+    talkingMouth 0.10s
+    steps(2, end);
+}
+
+@keyframes talkingMouth {
+  0% {
+    transform:
+      translate(-50%, -50%)
+      scaleX(0.55)
+      scaleY(0.40);
+  }
+
+  20% {
+    transform:
+      translate(-50%, -50%)
+      scaleX(1.75)
+      scaleY(1.05);
+  }
+
+  45% {
+    transform:
+      translate(-50%, -50%)
+      scaleX(0.85)
+      scaleY(0.65);
+  }
+
+  65% {
+    transform:
+      translate(-50%, -50%)
+      scaleX(1.65)
+      scaleY(1.10);
+  }
+
+  82% {
+    transform:
+      translate(-50%, -50%)
+      scaleX(0.95)
+      scaleY(0.70);
+  }
+
+  100% {
+    transform:
+      translate(-50%, -50%)
+      scaleX(0.55)
+      scaleY(0.40);
+  }
+}
+
+/* ================================================
+   SPEECH CONTROLS
+================================================ */
+
+.speechContent {
+  padding: 0 20px 20px;
+}
+
+.speechField {
+  margin-bottom: 13px;
+}
+
+.speechField label {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #ccd8e1;
+
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.speechField select,
+.speechField textarea {
+  width: 100%;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.2);
+
+  border-radius: 7px;
+
+  background: #202c37;
+  color: white;
+
+  font: inherit;
+}
+
+.speechField select {
+  height: 38px;
+
+  padding: 0 9px;
+}
+
+.speechField textarea {
+  height: 96px;
+
+  padding: 10px;
+
+  resize: none;
+
+  line-height: 1.4;
+}
+
+.speechField select:focus,
+.speechField textarea:focus {
+  outline:
+    2px solid #e5b92f;
+
+  outline-offset: 1px;
+}
+
+.speechActions {
+  display: flex;
+  gap: 9px;
+}
+
+.speechAction {
+  flex: 1;
+
+  min-height: 40px;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.2);
+
+  border-radius: 8px;
+
+  color: white;
+
+  cursor: pointer;
+}
+
+.speechSpeak {
+  background: #2d7f4b;
+}
+
+.speechSpeak:hover {
+  background: #3d9c5f;
+}
+
+.speechStop {
+  background: #7d3434;
+}
+
+.speechStop:hover {
+  background: #a14545;
+}
+
+.speechStatus {
+  min-height: 17px;
+
+  margin: 12px 0 0;
+
+  color: #becbd3;
+
+  font-size: 11px;
+  text-align: center;
+}
+
+
+/* ================================================
+   SMALL SCREEN SPEECH WINDOW
+================================================ */
+
+@media (max-width: 700px) {
+  .speechWindow {
+    width:
+      min(
+        390px,
+        calc(100vw - 20px)
+      );
+
+    min-height: 460px;
+  }
+}
+
+/* ================================================
+   SMALL SCREENS
+================================================ */
+
+@media (max-width: 700px) {
+  #resetButton {
+    left: 12px;
+    top: 12px;
+  }
+
+  #backgroundButton {
+    left: 12px;
+    top: 62px;
+  }
+
+#notebookButton {
+  left: 12px;
+  top: 112px;
+}
+
+  #backgroundPanel {
+    left: 74px;
+    top: 62px;
+
+    max-width:
+      calc(100vw - 86px);
+  }
+
+  .wallpaperChoice {
+    width: 64px;
+    height: 42px;
+  }
+
+  .bottom-left-controls {
+    left: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    gap: 8px; /* Matches your tight 8px mobile spacing at the top */
+  }
+
+
+  #desktopIcons {
+    left: 12px;
+    top: 166px;
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .icon-art {
+    width: 45px;
+    height: 45px;
+
+    font-size: 35px;
+  }
+
+  .icon-label {
+    font-size: 9px;
+  }
+
+.notebookWindow {
+  width:
+    min(
+      440px,
+      calc(100vw - 20px)
+    );
+
+  height:
+    min(
+      520px,
+      calc(100vh - 20px)
+    );
+}
+
+}
+</style>
+</head>
+
+<body>
+
+<div id="aiModal" class="ai-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+  <div class="ai-modal-box">
+    <button id="closeAiBtn" class="ai-close-btn" type="button" aria-label="Close popup">&times;</button>
+
+    <div class="ai-modal-header">
+      <h2 id="aiModalTitle" class="ai-modal-title">Internet AI Chat</h2>
+      <p class="ai-modal-subtitle">Type or tap the mic to ask a question</p>
+    </div>
+
+    <form id="aiForm" class="ai-prompt-card" action="https://google.com" method="GET" target="_blank">
+      <input type="hidden" name="udm" value="50">
+      <textarea id="promptInput" name="q" placeholder="Ask anything..." required></textarea>
+
+      <div class="toolbar ai-toolbar">
+        <div class="ai-mic-controls">
+          <button id="micBtn" class="ai-mic-btn" type="button" aria-label="Speak your question" title="Speak your question">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
+            </svg>
+          </button>
+          <span id="micStatus" class="ai-mic-status"></span>
+        </div>
+        <button type="submit" class="ai-submit-btn">Send</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================================================
+     WALLPAPER
+================================================ -->
+
+<div id="wallpaperLayer"></div>
+
+
+
+<!-- ================================================
+     PERMANENT CONTROLS
+================================================ -->
+
+<button
+  id="resetButton"
+  type="button"
+  title="Reset desktop"
+>
+  🔄
+</button>
+
+<button
+  id="backgroundButton"
+  type="button"
+  title="Choose background"
+  aria-expanded="false"
+>
+  🖼️
+</button>
+
+<button
+  id="notebookButton"
+  type="button"
+  title="Open notebook"
+  aria-label="Open notebook"
+>
+  📓
+</button>
+
+<div class="bottom-left-controls">
+  <button
+    id="openAiBtn"
+    class="ai-fab"
+    type="button"
+    aria-label="Ask AI"
+    title="Ask AI"
+  >
+    🔮
+  </button>
+
+  <button
+    id="speechButton"
+    type="button"
+    title="Open text to speech"
+    aria-label="Open text to speech"
+  >
+    😎
+  </button>
+</div>
+
+
+<!-- ================================================
+     BACKGROUND PANEL
+================================================ -->
+
+<div
+  id="backgroundPanel"
+  aria-label="Background choices"
+>
+  <button
+    class="wallpaperChoice defaultWallpaper selected"
+    type="button"
+    data-wallpaper="default"
+    title="Default gray"
+    aria-label="Default gray background"
+  ></button>
+
+
+  <button
+    class="wallpaperChoice"
+    type="button"
+    data-wallpaper="classic"
+    title="Classic geometric"
+    aria-label="Classic geometric background"
+  >
+    <svg
+      viewBox="0 0 160 100"
+      aria-hidden="true"
+    >
+      <rect
+        width="160"
+        height="100"
+        fill="#087f86"
+      />
+
+      <path
+        d="M0 76L52 38L92 64L160 20V100H0Z"
+        fill="#003f52"
+      />
+
+      <path
+        d="M0 89L61 58L107 82L160 50V100H0Z"
+        fill="#12a9a0"
+        opacity=".6"
+      />
+    </svg>
+  </button>
+
+
+  <button
+    class="wallpaperChoice"
+    type="button"
+    data-wallpaper="meadow"
+    title="Meadow and sky"
+    aria-label="Meadow and sky background"
+  >
+    <svg
+      viewBox="0 0 160 100"
+      aria-hidden="true"
+    >
+      <rect
+        width="160"
+        height="65"
+        fill="#68c6fa"
+      />
+
+      <rect
+        y="65"
+        width="160"
+        height="35"
+        fill="#4fa82c"
+      />
+
+      <ellipse
+        cx="45"
+        cy="25"
+        rx="30"
+        ry="9"
+        fill="#fff"
+        opacity=".8"
+      />
+
+      <path
+        d="M0 90Q70 55 160 80V100H0Z"
+        fill="#2c7d27"
+      />
+    </svg>
+  </button>
+
+
+  <button
+    class="wallpaperChoice"
+    type="button"
+    data-wallpaper="ribbons"
+    title="Luminous ribbons"
+    aria-label="Luminous ribbons background"
+  >
+    <svg
+      viewBox="0 0 160 100"
+      aria-hidden="true"
+    >
+      <rect
+        width="160"
+        height="100"
+        fill="#081532"
+      />
+
+      <path
+        d="M-20 83C28 20 65 11 181 64"
+        fill="none"
+        stroke="#596cff"
+        stroke-width="18"
+      />
+
+      <path
+        d="M-18 98C48 44 87 45 177 12"
+        fill="none"
+        stroke="#5ee9ff"
+        stroke-width="7"
+      />
+    </svg>
+  </button>
+
+
+  <button
+    class="wallpaperChoice"
+    type="button"
+    data-wallpaper="blueLight"
+    title="Blue light"
+    aria-label="Blue light background"
+  >
+    <svg
+      viewBox="0 0 160 100"
+      aria-hidden="true"
+    >
+      <rect
+        width="160"
+        height="100"
+        fill="#001329"
+      />
+
+      <rect
+        x="65"
+        y="18"
+        width="56"
+        height="64"
+        fill="#087fd7"
+      />
+
+      <path
+        d="M93 18V82M65 50H121"
+        stroke="#b6edff"
+        stroke-width="2"
+      />
+    </svg>
+  </button>
+
+
+  <button
+    class="wallpaperChoice"
+    type="button"
+    data-wallpaper="bloom"
+    title="Folded bloom"
+    aria-label="Folded bloom background"
+  >
+    <svg
+      viewBox="0 0 160 100"
+      aria-hidden="true"
+    >
+      <rect
+        width="160"
+        height="100"
+        fill="#17134d"
+      />
+
+      <path
+        d="M15 61C33 15 83 5 96 42C106 68 77 96 37 91C14 88 4 77 15 61Z"
+        fill="#5270f5"
+      />
+
+      <path
+        d="M61 19C111 5 156 26 143 63C134 87 100 96 77 82C105 67 103 37 61 19Z"
+        fill="#9d57ea"
+        opacity=".7"
+      />
+    </svg>
+  </button>
+
+<button
+  class="wallpaperChoice"
+  type="button"
+  data-wallpaper="cyber"
+  title="Cyber sunset"
+  aria-label="Cyber sunset background"
+>
+  <svg
+    viewBox="0 0 160 100"
+    aria-hidden="true"
+  >
+    <defs>
+      <linearGradient
+        id="cyberPreviewSky"
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="1"
+      >
+        <stop
+          offset="0"
+          stop-color="#07132c"
+        />
+
+        <stop
+          offset=".55"
+          stop-color="#190f38"
+        />
+
+        <stop
+          offset="1"
+          stop-color="#080b1b"
+        />
+      </linearGradient>
+
+      <linearGradient
+        id="cyberPreviewSun"
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="1"
+      >
+        <stop
+          offset="0"
+          stop-color="#FA8C33"
+        />
+
+        <stop
+          offset="1"
+          stop-color="#D4BD25"
+        />
+      </linearGradient>
+    </defs>
+
+    <rect
+      width="160"
+      height="100"
+      fill="url(#cyberPreviewSky)"
+    />
+
+    <circle
+      cx="118"
+      cy="30"
+      r="19"
+      fill="url(#cyberPreviewSun)"
+      opacity=".9"
+    />
+
+    <path
+      d="
+        M0 59 H160
+        M0 70 H160
+        M0 82 H160
+        M0 95 H160
+
+        M80 58 L22 100
+        M80 58 L51 100
+        M80 58 L80 100
+        M80 58 L109 100
+        M80 58 L138 100
+      "
+      fill="none"
+      stroke="#00eeff"
+      stroke-width="1.4"
+      opacity=".7"
+    />
+  </svg>
+</button>
+</div>
+
+
+<!-- ================================================
+     DESKTOP ICONS
+================================================ -->
+
+<div
+  id="desktopIcons"
+  aria-label="Desktop project icons"
+></div>
+
+
+<!-- ================================================
+     RECYCLE BIN NOTICE
+================================================ -->
+
+<div
+  id="iconNotification"
+  role="status"
+>
+  <strong>Recycle Bin</strong>
+  <br>
+
+  This icon is decorative and does not open anything.
+</div>
+
+
+<script>
+"use strict";
+
+
+(() => {
+  const openAiBtn = document.getElementById('openAiBtn');
+  const closeAiBtn = document.getElementById('closeAiBtn');
+  const aiModal = document.getElementById('aiModal');
+  const form = document.getElementById('aiForm');
+  const promptInput = document.getElementById('promptInput');
+  const micBtn = document.getElementById('micBtn');
+  const micStatus = document.getElementById('micStatus');
+
+  let recognition = null;
+  let isRecording = false;
+  let savedTextBeforeSpeech = '';
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      isRecording = true;
+      savedTextBeforeSpeech = promptInput.value.trim();
+      micBtn.classList.add('recording');
+      micStatus.textContent = 'Listening...';
+      micStatus.classList.add('active');
+    };
+
+    recognition.onresult = (event) => {
+      let spokenText = '';
+      for (let i = 0; i < event.results.length; i++) {
+        spokenText += event.results[i].transcript;
+      }
+      const prefix = savedTextBeforeSpeech ? savedTextBeforeSpeech + ' ' : '';
+      promptInput.value = prefix + spokenText;
+      promptInput.dispatchEvent(new Event('input'));
+    };
+
+    recognition.onerror = (event) => {
+      micStatus.textContent = event.error === 'not-allowed'
+        ? 'Mic blocked (check browser permissions)'
+        : 'Could not hear clearly. Try again.';
+      micStatus.classList.remove('active');
+    };
+
+    recognition.onend = () => {
+      isRecording = false;
+      micBtn.classList.remove('recording');
+      if (micStatus.textContent === 'Listening...') micStatus.textContent = '';
+      micStatus.classList.remove('active');
+      promptInput.focus();
+    };
+
+    micBtn.addEventListener('click', () => {
+      if (isRecording) {
+        recognition.stop();
+      } else {
+        micStatus.textContent = '';
+        recognition.start();
+      }
+    });
+  } else {
+    micBtn.style.display = 'none';
+    micStatus.textContent = 'Voice input unavailable in this browser (use keyboard mic)';
+  }
+
+
+  function openPopup() {
+    aiModal.classList.add('open');
+    setTimeout(() => promptInput.focus(), 50);
+  }
+
+  function closePopup() {
+    if (isRecording && recognition) recognition.stop();
+    micStatus.textContent = '';
+    aiModal.classList.remove('open');
+  }
+
+  openAiBtn.addEventListener('click', openPopup);
+  closeAiBtn.addEventListener('click', closePopup);
+  aiModal.addEventListener('click', (e) => { if (e.target === aiModal) closePopup(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && aiModal.classList.contains('open')) closePopup();
+  });
+
+  promptInput.addEventListener('input', () => {
+    promptInput.style.height = 'auto';
+    promptInput.style.height = promptInput.scrollHeight + 'px';
+  });
+
+  promptInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (promptInput.value.trim() !== '') form.requestSubmit();
+    }
+  });
+
+  form.addEventListener('submit', () => {
+    if (isRecording && recognition) recognition.stop();
+    setTimeout(() => {
+      promptInput.value = '';
+      promptInput.style.height = 'auto';
+      closePopup();
+    }, 100);
+  });
+})();
+
+
+/* ================================================
+   DESKTOP GRID
+================================================ */
+
+const GRID_CELL_WIDTH = 102;
+const GRID_CELL_HEIGHT = 112;
+
+const DEFAULT_ICON_POSITIONS = {
+  recycleIcon:       { col: 0, row: 0 },
+  fpsIcon:           { col: 0, row: 1 },
+  pianoIcon:         { col: 0, row: 2 },
+  djIcon:            { col: 0, row: 3 },
+  paintsvgIcon:      { col: 0, row: 4 },
+  audioconvertIcon:      { col: 0, row: 5 },
+
+  tvIcon:            { col: 1, row: 0 },
+  nerfIcon:          { col: 1, row: 1 },
+  tinyDinoIcon:      { col: 1, row: 2 },
+  steeringIcon:      { col: 1, row: 3 },
+  classicpaintingIcon:      { col: 1, row: 4 },
+
+  recipeDeskIcon:    { col: 2, row: 0 },
+  zombieFearIcon:    { col: 2, row: 1 },
+  grayscaleBlocksIcon: { col: 2, row: 2 },
+  partsBookIcon: 	{ col: 2, row: 3 },
+  vectorplaygroundIcon: 	{ col: 2, row: 4 }
+};
+
+
+/* ================================================
+   PROJECT ICONS
+================================================ */
+
+const projects = [
+  {
+    id: "recycleIcon",
+    label: "Recycle Bin",
+    icon: "🗑️",
+    url: ""
+  },
+
+  {
+    id: "fpsIcon",
+    label: "FPS Test",
+     icon: "🖥️",
+    url:
+      "https://matthtmlprojects.github.io/MonitorTest.html"
+  },
+
+  {
+    id: "pianoIcon",
+    label: "Synthesizer",
+    icon: "🎹",
+    url:
+      "https://matthtmlprojects.github.io/Synthesizer.html"
+  },
+
+  {
+    id: "djIcon",
+    label: "DJ Studio",
+    icon: "🎧",
+    url:
+      "https://matthtmlprojects.github.io/DJ.html"
+  },
+
+  {
+    id: "paintsvgIcon",
+    label: "Paint SVG",
+    icon: "🎨",
+    url:
+      "https://matthtmlprojects.github.io/PaintSVG.html"
+  },
+
+  {
+    id: "audioconvertIcon",
+    label: "Audio Convert",
+    icon: "🎶",
+    url:
+      "https://matthtmlprojects.github.io/AudioConvert.html"
+  },
+
+  {
+    id: "classicpaintingIcon",
+    label: "Classic Painting",
+    icon: "🖌️",
+    url:
+      "https://matthtmlprojects.github.io/ClassicPainting.html"
+  },
+
+  {
+    id: "tvIcon",
+    label: "Retro TV",
+    icon: "📺",
+    url:
+      "https://matthtmlprojects.github.io/RetroTV.html"
+  },
+
+  {
+    id: "nerfIcon",
+    label: "NERF Battleground",
+    icon: "🔫",
+    url:
+      "https://matthtmlprojects.github.io/NERFbattleground.html"
+  },
+
+  {
+    id: "tinyDinoIcon",
+    label: "TinyDino",
+    icon: "🦖",
+    url:
+      "https://matthtmlprojects.github.io/tinydino.html"
+  },
+
+  {
+    id: "steeringIcon",
+    label: "Retro Drive",
+    icon: "🏎️",
+    url:
+      "https://matthtmlprojects.github.io/RetroDrive.html"
+  },
+
+  {
+    id: "vectorplaygroundIcon",
+    label: "Vector Playground",
+    icon: "🏃",
+    url:
+      "https://matthtmlprojects.github.io/VectorPlayground.html"
+  },
+
+  {
+    id: "recipeDeskIcon",
+    label: "Recipe Desk",
+    icon: "🍽️",
+    url:
+      "https://matthtmlprojects.github.io/RecipeDesk.html"
+  },
+
+  {
+    id: "zombieFearIcon",
+    label: "Zombie Fear",
+    icon: "🧟",
+    url:
+      "https://matthtmlprojects.github.io/ZombieFear.html"
+  },
+
+  {
+    id: "grayscaleBlocksIcon",
+    label: "Grayscale Blocks",
+    icon: "◼️",
+    url:
+      "https://matthtmlprojects.github.io/GrayscaleBlocks.html"
+  },
+
+  {
+    id: "partsBookIcon",
+    label: "The Parts Book",
+    icon: "📖",
+    url:
+      "https://matthtmlprojects.github.io/ThePartsBook.html"
+  }
+];
+
+
+const desktop =
+  document.getElementById(
+    "desktopIcons"
+  );
+
+
+projects.forEach(function(project) {
+  const element =
+    document.createElement(
+      project.url
+        ? "a"
+        : "button"
+    );
+
+  element.className =
+    "desktop-icon";
+
+  element.id =
+    project.id;
+
+  element.title =
+    project.url
+      ? "Open " + project.label
+      : project.label;
+
+
+  if(project.url) {
+    element.href =
+      project.url;
+
+    element.target =
+      "_blank";
+
+    element.rel =
+      "noopener noreferrer";
+  }
+  else {
+    element.type =
+      "button";
+  }
+
+
+  element.innerHTML = `
+    <span
+      class="icon-art"
+      aria-hidden="true"
+    >
+      ${project.icon}
+    </span>
+
+    <span class="icon-label">
+      ${project.label}
+    </span>
+  `;
+
+
+  desktop.appendChild(
+    element
+  );
+});
+
+/* ================================================
+   DESKTOP GRID POSITIONING
+================================================ */
+
+function getGridSize() {
+
+  const rect =
+    desktop.getBoundingClientRect();
+
+  return {
+    columns: Math.max(
+      1,
+      Math.floor(
+        rect.width /
+        GRID_CELL_WIDTH
+      )
+    ),
+
+    rows: Math.max(
+      1,
+      Math.floor(
+        rect.height /
+        GRID_CELL_HEIGHT
+      )
+    )
+  };
+
+}
+
+
+function positionIcon(
+  icon,
+  col,
+  row
+) {
+
+  icon.dataset.gridCol =
+    String(col);
+
+  icon.dataset.gridRow =
+    String(row);
+
+
+  icon.style.left =
+    col *
+    GRID_CELL_WIDTH +
+    "px";
+
+  icon.style.top =
+    row *
+    GRID_CELL_HEIGHT +
+    "px";
+
+}
+
+
+function positionAllIcons() {
+
+  icons.forEach(function(icon) {
+
+    const defaultPosition =
+      DEFAULT_ICON_POSITIONS[
+        icon.id
+      ] || {
+        col: 0,
+        row: 0
+      };
+
+
+    positionIcon(
+      icon,
+      defaultPosition.col,
+      defaultPosition.row
+    );
+
+  });
+
+}
+
+function findIconAtCell(
+  col,
+  row,
+  ignoredIcon = null
+) {
+
+  return icons.find(
+    function(icon) {
+
+      if(icon === ignoredIcon) {
+        return false;
+      }
+
+
+      return (
+        Number(
+          icon.dataset.gridCol
+        ) === col &&
+
+        Number(
+          icon.dataset.gridRow
+        ) === row
+      );
+
+    }
+  ) || null;
+
+}
+
+function getCellFromPointer(
+  pointerX,
+  pointerY
+) {
+
+  const desktopRect =
+    desktop.getBoundingClientRect();
+
+  const gridSize =
+    getGridSize();
+
+
+  let col =
+    Math.floor(
+      (
+        pointerX -
+        desktopRect.left
+      ) /
+      GRID_CELL_WIDTH
+    );
+
+
+  let row =
+    Math.floor(
+      (
+        pointerY -
+        desktopRect.top
+      ) /
+      GRID_CELL_HEIGHT
+    );
+
+
+  col =
+    Math.max(
+      0,
+      Math.min(
+        gridSize.columns - 1,
+        col
+      )
+    );
+
+
+  row =
+    Math.max(
+      0,
+      Math.min(
+        gridSize.rows - 1,
+        row
+      )
+    );
+
+
+  return {
+    col,
+    row
+  };
+
+}
+
+
+/* ================================================
+   WALLPAPERS
+================================================ */
+
+const wallpaperLayer =
+  document.getElementById(
+    "wallpaperLayer"
+  );
+
+const backgroundButton =
+  document.getElementById(
+    "backgroundButton"
+  );
+
+const backgroundPanel =
+  document.getElementById(
+    "backgroundPanel"
+  );
+
+
+const wallpapers = {
+  classic: `
+    <svg
+      viewBox="0 0 1600 900"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <defs>
+        <linearGradient
+          id="classicBackground"
+          x1="0"
+          y1="0"
+          x2="1"
+          y2="1"
+        >
+          <stop
+            offset="0"
+            stop-color="#0b8c91"
+          />
+
+          <stop
+            offset="1"
+            stop-color="#033b47"
+          />
+        </linearGradient>
+      </defs>
+
+      <rect
+        width="1600"
+        height="900"
+        fill="url(#classicBackground)"
+      />
+
+      <path
+        d="M0 678L355 318L695 565L1094 224L1600 530V900H0Z"
+        fill="#002e45"
+        opacity=".6"
+      />
+
+      <path
+        d="M0 790L477 430L844 711L1226 392L1600 623V900H0Z"
+        fill="#12b1a2"
+        opacity=".55"
+      />
+    </svg>
+  `,
+
+
+  meadow: `
+    <svg
+      viewBox="0 0 1600 900"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <defs>
+        <linearGradient
+          id="meadowBackground"
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="1"
+        >
+          <stop
+            offset="0"
+            stop-color="#087aca"
+          />
+
+          <stop
+            offset=".65"
+            stop-color="#8ed8ff"
+          />
+
+          <stop
+            offset="1"
+            stop-color="#d9f3ff"
+          />
+        </linearGradient>
+      </defs>
+
+      <rect
+        width="1600"
+        height="900"
+        fill="url(#meadowBackground)"
+      />
+
+      <g
+        fill="#fff"
+        opacity=".75"
+      >
+        <ellipse
+          cx="350"
+          cy="210"
+          rx="220"
+          ry="60"
+        />
+
+        <ellipse
+          cx="1250"
+          cy="150"
+          rx="180"
+          ry="50"
+        />
+      </g>
+
+      <path
+        d="M0 655C315 443 640 454 884 610C1102 749 1349 686 1600 490V900H0Z"
+        fill="#6abb37"
+      />
+
+      <path
+        d="M0 790C353 584 678 614 932 756C1176 891 1387 794 1600 669V900H0Z"
+        fill="#287727"
+      />
+    </svg>
+  `,
+
+
+  ribbons: `
+    <svg
+      viewBox="0 0 1600 900"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <rect
+        width="1600"
+        height="900"
+        fill="#07142e"
+      />
+
+      <path
+        d="M-180 804C246 126 790 55 1770 606"
+        fill="none"
+        stroke="#5f58f2"
+        stroke-width="120"
+      />
+
+      <path
+        d="M-120 952C435 463 880 457 1698 62"
+        fill="none"
+        stroke="#62e9ff"
+        stroke-width="62"
+        opacity=".6"
+      />
+    </svg>
+  `,
+
+
+  blueLight: `
+    <svg
+      viewBox="0 0 1600 900"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <defs>
+        <radialGradient id="blueBackground">
+          <stop
+            offset="0"
+            stop-color="#78dcff"
+          />
+
+          <stop
+            offset=".25"
+            stop-color="#198ee8"
+          />
+
+          <stop
+            offset="1"
+            stop-color="#001126"
+          />
+        </radialGradient>
+      </defs>
+
+      <rect
+        width="1600"
+        height="900"
+        fill="#001126"
+      />
+
+      <rect
+        x="645"
+        y="129"
+        width="514"
+        height="622"
+        fill="url(#blueBackground)"
+      />
+
+      <path
+        d="M902 129V751M645 440H1159"
+        stroke="#b7edff"
+        stroke-width="8"
+        opacity=".7"
+      />
+    </svg>
+  `,
+
+
+  bloom: `
+    <svg
+      viewBox="0 0 1600 900"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <rect
+        width="1600"
+        height="900"
+        fill="#17134d"
+      />
+
+      <path
+        d="M170 622C287 121 790 33 936 389C1044 653 755 920 366 838C163 796 105 722 170 622Z"
+        fill="#5270f5"
+      />
+
+      <path
+        d="M586 147C1075-6 1500 238 1374 605C1298 827 968 920 737 745C1021 625 1008 310 586 147Z"
+        fill="#9d57ea"
+        opacity=".75"
+      />
+    </svg>
+  `,
+
+cyber: `
+  <svg
+    viewBox="0 0 1600 900"
+    preserveAspectRatio="xMidYMid slice"
+  >
+    <defs>
+
+      <linearGradient
+        id="cyberBackground"
+        x1="0"
+        y1="0"
+        x2="1"
+        y2="1"
+      >
+        <stop
+          offset="0"
+          stop-color="#07132c"
+        />
+
+        <stop
+          offset=".42"
+          stop-color="#101442"
+        />
+
+        <stop
+          offset=".70"
+          stop-color="#190f38"
+        />
+
+        <stop
+          offset="1"
+          stop-color="#070b1b"
+        />
+      </linearGradient>
+
+
+      <linearGradient
+        id="cyberSun"
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="1"
+      >
+        <stop
+          offset="0"
+          stop-color="#FA8C33"
+        />
+
+        <stop
+          offset=".55"
+          stop-color="#E87F05"
+        />
+
+        <stop
+          offset="1"
+          stop-color="#D4BD25"
+        />
+      </linearGradient>
+
+
+      <radialGradient
+        id="cyberSunGlow"
+      >
+        <stop
+          offset="0"
+          stop-color="#ff6c01"
+          stop-opacity=".50"
+        />
+
+        <stop
+          offset="1"
+          stop-color="#ff6c01"
+          stop-opacity="0"
+        />
+      </radialGradient>
+
+    </defs>
+
+
+    <!-- BACKGROUND -->
+
+    <rect
+      width="1600"
+      height="900"
+      fill="url(#cyberBackground)"
+    />
+
+
+    <!-- SUBTLE CYAN / MAGENTA ATMOSPHERE -->
+
+    <path
+      d="M0 0 H1600 V900 H0 Z"
+      fill="#00dcff"
+      opacity=".035"
+    />
+
+    <path
+      d="M850 0 H1600 V900 H1170 Z"
+      fill="#ff00d4"
+      opacity=".055"
+    />
+
+
+    <!-- SUN GLOW -->
+
+    <circle
+      cx="1245"
+      cy="205"
+      r="230"
+      fill="url(#cyberSunGlow)"
+    />
+
+
+    <!-- SUN -->
+
+    <circle
+      cx="1245"
+      cy="205"
+      r="118"
+      fill="url(#cyberSun)"
+      opacity=".90"
+    />
+
+
+ 
+
+
+    <!-- HORIZON GLOW -->
+
+    <rect
+      x="0"
+      y="518"
+      width="1600"
+      height="5"
+      fill="#00eeff"
+      opacity="1.0"
+    />
+
+
+    <!-- PERSPECTIVE GRID: HORIZONTAL -->
+
+    <g
+      fill="none"
+      stroke="#00eeff"
+      stroke-opacity=".52"
+      stroke-width="3"
+    >
+      <path d="M0 540 H1600"/>
+      <path d="M0 566 H1600"/>
+      <path d="M0 599 H1600"/>
+      <path d="M0 641 H1600"/>
+      <path d="M0 694 H1600"/>
+      <path d="M0 760 H1600"/>
+      <path d="M0 842 H1600"/>
+    </g>
+
+
+<!-- FULL-WIDTH PERSPECTIVE GRID: VERTICAL -->
+
+<g
+  fill="none"
+  stroke="#00eeff"
+  stroke-opacity=".52"
+  stroke-width="3"
+>
+  <!-- FAR LEFT HORIZON -->
+  <path d="M0 520 L-8000 900"/>
+  <path d="M50 520 L-7500 900"/>
+  <path d="M100 520 L-7000 900"/>
+  <path d="M150 520 L-6500 900"/>
+  <path d="M200 520 L-6000 900"/>
+  <path d="M250 520 L-5500 900"/>
+  <path d="M300 520 L-5000 900"/>
+  <path d="M350 520 L-4500 900"/>
+
+  <!-- MID LEFT -->
+  <path d="M400 520 L-4000 900"/>
+  <path d="M450 520 L-3500 900"/>
+  <path d="M500 520 L-3000 900"/>
+  <path d="M550 520 L-2500 900"/>
+  <path d="M600 520 L-2000 900"/>
+  <path d="M650 520 L-1500 900"/>
+  <path d="M700 520 L-1000 900"/>
+  <path d="M725 520 L-500 900"/>
+
+  <!-- INNER LEFT -->
+  <path d="M740 520 L0 900"/>
+  <path d="M748 520 L100 900"/>
+  <path d="M756 520 L200 900"/>
+  <path d="M764 520 L300 900"/>
+  <path d="M772 520 L400 900"/>
+  <path d="M780 520 L500 900"/>
+  <path d="M788 520 L600 900"/>
+  <path d="M794 520 L700 900"/>
+
+  <!-- CENTER -->
+  <path d="M800 520 L800 900"/>
+
+  <!-- INNER RIGHT -->
+  <path d="M806 520 L900 900"/>
+  <path d="M812 520 L1000 900"/>
+  <path d="M820 520 L1100 900"/>
+  <path d="M828 520 L1200 900"/>
+  <path d="M836 520 L1300 900"/>
+  <path d="M844 520 L1400 900"/>
+  <path d="M852 520 L1500 900"/>
+  <path d="M860 520 L1600 900"/>
+
+  <!-- MID RIGHT -->
+  <path d="M875 520 L2100 900"/>
+  <path d="M900 520 L2600 900"/>
+  <path d="M950 520 L3100 900"/>
+  <path d="M1000 520 L3600 900"/>
+  <path d="M1050 520 L4100 900"/>
+  <path d="M1100 520 L4600 900"/>
+  <path d="M1150 520 L5100 900"/>
+  <path d="M1200 520 L5600 900"/>
+
+  <!-- FAR RIGHT HORIZON -->
+  <path d="M1250 520 L6100 900"/>
+  <path d="M1300 520 L6600 900"/>
+  <path d="M1350 520 L7100 900"/>
+  <path d="M1400 520 L7600 900"/>
+  <path d="M1450 520 L8100 900"/>
+  <path d="M1500 520 L8600 900"/>
+  <path d="M1550 520 L9100 900"/>
+  <path d="M1600 520 L9600 900"/>
+
+  <!-- Missing LEFT HORIZON -->
+  <path d="M730 520 L-180 900"/>
+
+  <!-- Missing RIGHT HORIZON -->
+  <path d="M865 520 L1800 900"/>
+
+
+</g>
+
+<!-- GRID GLOW -->
+
+    <path
+      d="M0 525 H1600"
+      fill="none"
+      stroke="#00aeff"
+      stroke-width="16"
+      opacity=".10"
+    />
+
+  </svg>
+`
+
+};
+
+
+
+
+/* ================================================
+   BACKGROUND PANEL
+================================================ */
+
+function closeBackgroundPanel() {
+  backgroundPanel.classList.remove(
+    "open"
+  );
+
+  backgroundButton.classList.remove(
+    "open"
+  );
+
+  backgroundButton.setAttribute(
+    "aria-expanded",
+    "false"
+  );
+}
+
+backgroundButton.addEventListener(
+  "click",
+  function() {
+    const isOpen =
+      backgroundPanel.classList.toggle(
+        "open"
+      );
+
+    backgroundButton.classList.toggle(
+      "open",
+      isOpen
+    );
+
+    backgroundButton.setAttribute(
+      "aria-expanded",
+      String(isOpen)
+    );
+  }
+);
+
+
+document
+  .querySelectorAll(
+    ".wallpaperChoice"
+  )
+  .forEach(function(choice) {
+    choice.addEventListener(
+      "click",
+      function() {
+        const wallpaperName =
+          choice.dataset.wallpaper;
+
+
+        if(
+          wallpaperName === "default"
+        ) {
+          wallpaperLayer.innerHTML =
+            "";
+        }
+        else {
+          wallpaperLayer.innerHTML =
+            wallpapers[
+              wallpaperName
+            ];
+        }
+
+
+        wallpaperLayer.style.background =
+          "#666666";
+
+
+        document
+          .querySelectorAll(
+            ".wallpaperChoice"
+          )
+          .forEach(
+            function(otherChoice) {
+              otherChoice.classList.remove(
+                "selected"
+              );
+            }
+          );
+
+
+        choice.classList.add(
+          "selected"
+        );
+
+closeBackgroundPanel();
+      }
+    );
+  });
+
+
+/* ================================================
+   RESET
+================================================ */
+
+document
+  .getElementById(
+    "resetButton"
+  )
+  .addEventListener(
+    "click",
+    function() {
+      window.location.reload();
+    }
+  );
+
+
+/* ================================================
+   ICON SELECTION + GRID DRAGGING
+================================================ */
+
+const icons =
+  Array.from(
+    document.querySelectorAll(
+      ".desktop-icon"
+    )
+  );
+
+const recycle =
+  document.getElementById(
+    "recycleIcon"
+  );
+
+const notice =
+  document.getElementById(
+    "iconNotification"
+  );
+
+let noticeTimer = null;
+
+
+/* --------------------------------
+   DRAG STATE
+-------------------------------- */
+
+let draggedIcon = null;
+
+let dragPointerId = null;
+
+let dragStartX = 0;
+let dragStartY = 0;
+
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+
+let dragStarted = false;
+
+let targetCell = null;
+
+const ICON_DRAG_THRESHOLD = 6;
+
+
+/* ================================================
+   SELECTION
+================================================ */
+
+function clearSelection() {
+
+  icons.forEach(function(icon) {
+    icon.classList.remove(
+      "selected"
+    );
+  });
+
+}
+
+
+function selectIcon(icon) {
+
+  clearSelection();
+
+  icon.classList.add(
+    "selected"
+  );
+
+}
+
+
+/* ================================================
+   RECYCLE BIN
+================================================ */
+
+function showRecycleNotice() {
+
+  clearTimeout(
+    noticeTimer
+  );
+
+  notice.classList.add(
+    "show"
+  );
+
+  noticeTimer =
+    setTimeout(
+      function() {
+
+        notice.classList.remove(
+          "show"
+        );
+
+      },
+      3000
+    );
+
+}
+
+
+
+function updateTargetCell(
+  pointerX,
+  pointerY
+) {
+
+  targetCell =
+    getCellFromPointer(
+      pointerX,
+      pointerY
+    );
+
+}
+
+
+/* ================================================
+   BEGIN POINTER
+================================================ */
+
+function beginIconPointer(
+  event,
+  icon
+) {
+
+  if(
+    event.pointerType === "mouse" &&
+    event.button !== 0
+  ) {
+    return;
+  }
+
+
+  draggedIcon =
+    icon;
+
+  dragPointerId =
+    event.pointerId;
+
+  dragStartX =
+    event.clientX;
+
+  dragStartY =
+    event.clientY;
+
+
+  const rect =
+    icon.getBoundingClientRect();
+
+
+  dragOffsetX =
+    event.clientX -
+    rect.left;
+
+  dragOffsetY =
+    event.clientY -
+    rect.top;
+
+
+  dragStarted =
+    false;
+
+
+  selectIcon(
+    icon
+  );
+
+icon.dataset.originalCol =
+  icon.dataset.gridCol;
+
+icon.dataset.originalRow =
+  icon.dataset.gridRow;
+
+  icon.setPointerCapture(
+    event.pointerId
+  );
+
+}
+
+
+/* ================================================
+   START ACTUAL DRAG
+================================================ */
+
+function startIconDrag(
+  pointerX,
+  pointerY
+) {
+
+  if(
+    !draggedIcon ||
+    dragStarted
+  ) {
+    return;
+  }
+
+
+  dragStarted =
+    true;
+
+
+  const rect =
+    draggedIcon
+      .getBoundingClientRect();
+
+
+  /*
+    Preserve its current visual size
+    when switching from grid placement
+    to fixed positioning.
+  */
+
+  draggedIcon.style.width =
+    rect.width + "px";
+
+  draggedIcon.style.height =
+    rect.height + "px";
+
+
+  draggedIcon.classList.add(
+    "dragging"
+  );
+
+
+  moveDraggedIcon(
+    pointerX,
+    pointerY
+  );
+
+}
+
+
+/* ================================================
+   MOVE DRAGGED ICON
+================================================ */
+
+function moveDraggedIcon(
+  pointerX,
+  pointerY
+) {
+  if(
+    !draggedIcon ||
+    !dragStarted
+  ) {
+    return;
+  }
+
+  const desktopRect =
+    desktop.getBoundingClientRect();
+
+  let left =
+    pointerX -
+    desktopRect.left -
+    dragOffsetX;
+
+  let top =
+    pointerY -
+    desktopRect.top -
+    dragOffsetY;
+
+  const maximumLeft =
+    Math.max(
+      0,
+      desktopRect.width -
+      draggedIcon.offsetWidth
+    );
+
+  const maximumTop =
+    Math.max(
+      0,
+      desktopRect.height -
+      draggedIcon.offsetHeight
+    );
+
+  left =
+    Math.max(
+      0,
+      Math.min(
+        maximumLeft,
+        left
+      )
+    );
+
+  top =
+    Math.max(
+      0,
+      Math.min(
+        maximumTop,
+        top
+      )
+    );
+
+  draggedIcon.style.left =
+    left + "px";
+
+  draggedIcon.style.top =
+    top + "px";
+
+  updateTargetCell(
+    pointerX,
+    pointerY
+  );
+}
+
+/* ================================================
+   POINTER MOVE
+================================================ */
+
+function moveIconPointer(
+  event
+) {
+
+  if(
+    !draggedIcon ||
+    event.pointerId !==
+    dragPointerId
+  ) {
+    return;
+  }
+
+
+  const movement =
+    Math.hypot(
+      event.clientX -
+      dragStartX,
+
+      event.clientY -
+      dragStartY
+    );
+
+
+  if(
+    !dragStarted &&
+    movement >=
+    ICON_DRAG_THRESHOLD
+  ) {
+
+    startIconDrag(
+      event.clientX,
+      event.clientY
+    );
+
+  }
+
+
+  if(dragStarted) {
+
+    event.preventDefault();
+
+    moveDraggedIcon(
+      event.clientX,
+      event.clientY
+    );
+
+  }
+
+}
+
+
+/* ================================================
+   FINISH DRAG
+================================================ */
+
+function finishIconPointer(
+  event
+) {
+  if(
+    !draggedIcon ||
+    event.pointerId !== dragPointerId
+  ) {
+    return;
+  }
+
+  const icon = draggedIcon;
+
+  if(dragStarted) {
+    if(targetCell) {
+      const occupiedIcon =
+        findIconAtCell(
+          targetCell.col,
+          targetCell.row,
+          icon
+        );
+
+      /*
+        Move only when the destination
+        grid cell is empty.
+      */
+
+      if(!occupiedIcon) {
+        positionIcon(
+          icon,
+          targetCell.col,
+          targetCell.row
+        );
+      }
+      else {
+        /*
+          Return to the original cell if
+          another icon occupies the target.
+        */
+
+        positionIcon(
+          icon,
+          Number(
+            icon.dataset.originalCol
+          ),
+          Number(
+            icon.dataset.originalRow
+          )
+        );
+      }
+    }
+    else {
+      /*
+        Return to the original cell if
+        no valid target was found.
+      */
+
+      positionIcon(
+        icon,
+        Number(
+          icon.dataset.originalCol
+        ),
+        Number(
+          icon.dataset.originalRow
+        )
+      );
+    }
+
+    icon.classList.remove(
+      "dragging"
+    );
+
+    /*
+      Restore the normal icon dimensions.
+      Keep left and top because those hold
+      the snapped grid position.
+    */
+
+    icon.style.width = "";
+    icon.style.height = "";
+
+    /*
+      Prevent the link from opening at the
+      end of a drag.
+    */
+
+    icon.dataset.justDragged =
+      "true";
+
+    setTimeout(
+      function() {
+        delete icon.dataset.justDragged;
+      },
+      0
+    );
+  }
+
+  try {
+    if(
+      icon.hasPointerCapture(
+        event.pointerId
+      )
+    ) {
+      icon.releasePointerCapture(
+        event.pointerId
+      );
+    }
+  }
+  catch(error) {
+    /* Nothing needed */
+  }
+
+  draggedIcon = null;
+  dragPointerId = null;
+  dragStarted = false;
+  targetCell = null;
+}
+
+/* ================================================
+   ATTACH ICON CONTROLS
+================================================ */
+
+icons.forEach(function(icon) {
+
+  icon.addEventListener(
+    "pointerdown",
+    function(event) {
+
+      beginIconPointer(
+        event,
+        icon
+      );
+
+    }
+  );
+
+
+  icon.addEventListener(
+    "pointermove",
+    moveIconPointer
+  );
+
+
+  icon.addEventListener(
+    "pointerup",
+    finishIconPointer
+  );
+
+
+  icon.addEventListener(
+    "pointercancel",
+    finishIconPointer
+  );
+
+
+  icon.addEventListener(
+    "click",
+    function(event) {
+
+      /*
+        Dragging must never launch
+        the project's link.
+      */
+
+      if(
+        icon.dataset
+          .justDragged
+      ) {
+
+        event.preventDefault();
+        return;
+
+      }
+
+
+      selectIcon(
+        icon
+      );
+
+
+      if(icon === recycle) {
+
+        event.preventDefault();
+
+        showRecycleNotice();
+
+      }
+
+    }
+  );
+
+});
+
+
+/* ================================================
+   CLICK EMPTY DESKTOP
+================================================ */
+
+document.addEventListener(
+  "pointerdown",
+  function(event) {
+
+    if(
+      !event.target.closest(
+        ".desktop-icon"
+      ) &&
+      !event.target.closest(
+        "#iconNotification"
+      ) &&
+      !event.target.closest(
+        "#backgroundPanel"
+      ) &&
+      !event.target.closest(
+        "#backgroundButton"
+      ) &&
+      !event.target.closest(
+        "#resetButton"
+      ) &&
+!event.target.closest(
+  "#notebookButton"
+)&&
+!event.target.closest(
+  "#speechButton"
+)
+&&
+!event.target.closest(
+  ".speechWindow"
+)
+    ) {
+
+      clearSelection();
+
+      notice.classList.remove(
+        "show"
+      );
+
+closeBackgroundPanel();
+
+    }
+
+  }
+);
+
+
+/* ================================================
+   ESCAPE
+================================================ */
+
+document.addEventListener(
+  "keydown",
+  function(event) {
+
+    if(
+      event.key ===
+      "Escape"
+    ) {
+
+      clearSelection();
+
+      notice.classList.remove(
+        "show"
+      );
+
+    }
+
+  }
+);
+
+/* ================================================
+   SPIRAL NOTEBOOK
+================================================ */
+
+const notebookButton =
+  document.getElementById(
+    "notebookButton"
+  );
+
+let notebookWindow = null;
+
+let notebookPage = 0;
+
+const NOTEBOOK_PAGE_COUNT = 5;
+
+const notebookPages =
+  Array.from(
+    {
+      length:
+        NOTEBOOK_PAGE_COUNT
+    },
+    function() {
+      return "";
+    }
+  );
+
+
+/* --------------------------------
+   NOTEBOOK DRAG STATE
+-------------------------------- */
+
+let notebookDragging = false;
+
+let notebookPointerId = null;
+
+let notebookStartX = 0;
+let notebookStartY = 0;
+
+let notebookStartLeft = 0;
+let notebookStartTop = 0;
+
+
+/* ================================================
+   CREATE NOTEBOOK
+================================================ */
+
+function openNotebook() {
+
+  /*
+    Only one notebook can exist.
+  */
+
+  if(notebookWindow) {
+
+    notebookWindow.style.zIndex =
+      "50001";
+
+    return;
+
+  }
+
+
+  notebookWindow =
+    document.createElement(
+      "div"
+    );
+
+
+  notebookWindow.className =
+    "notebookWindow";
+
+
+  notebookWindow.innerHTML = `
+    <div class="notebook">
+
+      <div class="notebookSpiral">
+        ${Array.from(
+          { length: 16 },
+          function() {
+            return `
+              <div
+                class="notebookRing"
+              ></div>
+            `;
+          }
+        ).join("")}
+      </div>
+
+      <div class="notebookHeader">
+<button
+class="notebookClose"
+type="button"
+title="Close notebook"
+aria-label="Close notebook"
+>
+✕
+</button>
+</div>
+
+<select
+class="notebookFont"
+aria-label="Notebook font">
+<option value="Arial">Arial</option>
+<option value="Segoe Script">Segoe Script</option>
+<option value="Brush Script MT">Brush Script</option>
+<option value="Lucida Handwriting">Lucida Handwriting</option>
+<option value="Verdana">Verdana</option>
+<option value="Tahoma">Tahoma</option>
+<option value="Georgia">Georgia</option>
+<option value="Times New Roman">Times New Roman</option>
+<option value="Courier New">Courier New</option>
+<option value="Trebuchet MS">Trebuchet MS</option>
+<option value="Comic Sans MS">Comic Sans MS</option>
+<option value="Impact">Impact</option>
+<option value="system-ui">System</option>
+</select>
+
+      <div class="notebookPage">
+
+        <h2 class="notebookTitle">
+          Notes
+        </h2>
+
+        <textarea
+          class="notebookText"
+          maxlength="300"
+          spellcheck="true"
+          aria-label="Notebook page"
+        ></textarea>
+
+      </div>
+
+
+      <div class="notebookNavigation">
+
+        <button
+          class="notebookPrevious"
+          type="button"
+          title="Previous page"
+        >
+          ◀
+        </button>
+
+        <span
+          class="notebookPageNumber"
+        ></span>
+
+        <button
+          class="notebookNext"
+          type="button"
+          title="Next page"
+        >
+          ▶
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+
+  document.body.appendChild(
+    notebookWindow
+  );
+
+
+  const header =
+    notebookWindow.querySelector(
+      ".notebookHeader"
+    );
+
+  const closeButton =
+    notebookWindow.querySelector(
+      ".notebookClose"
+    );
+
+  const previousButton =
+    notebookWindow.querySelector(
+      ".notebookPrevious"
+    );
+
+  const nextButton =
+    notebookWindow.querySelector(
+      ".notebookNext"
+    );
+
+  const textArea =
+    notebookWindow.querySelector(
+      ".notebookText"
+    );
+
+const fontSelect =
+notebookWindow.querySelector(
+".notebookFont"
+);
+
+textArea.style.fontFamily =
+fontSelect.value;
+
+fontSelect.addEventListener(
+"change",
+function() {
+
+textArea.style.fontFamily =
+fontSelect.value;
+
+}
+);
+
+  /* ================================================
+     CLOSE NOTEBOOK
+  ================================================ */
+
+  closeButton.addEventListener(
+    "click",
+    function(event) {
+
+      event.stopPropagation();
+
+      saveCurrentNotebookPage();
+
+      notebookWindow.remove();
+
+      notebookWindow =
+        null;
+
+    }
+  );
+
+
+  /* ================================================
+     PAGE TEXT
+  ================================================ */
+
+  textArea.addEventListener(
+    "input",
+    function() {
+
+      notebookPages[
+        notebookPage
+      ] =
+        textArea.value;
+
+    }
+  );
+
+
+  /* ================================================
+     PREVIOUS PAGE
+  ================================================ */
+
+  previousButton.addEventListener(
+    "click",
+    function() {
+
+      saveCurrentNotebookPage();
+
+      notebookPage =
+        Math.max(
+          0,
+          notebookPage - 1
+        );
+
+      updateNotebookPage();
+
+    }
+  );
+
+
+  /* ================================================
+     NEXT PAGE
+  ================================================ */
+
+  nextButton.addEventListener(
+    "click",
+    function() {
+
+      saveCurrentNotebookPage();
+
+      notebookPage =
+        Math.min(
+          NOTEBOOK_PAGE_COUNT - 1,
+          notebookPage + 1
+        );
+
+      updateNotebookPage();
+
+    }
+  );
+
+
+  /* ================================================
+     START DRAGGING NOTEBOOK
+  ================================================ */
+
+  header.addEventListener(
+    "pointerdown",
+    function(event) {
+
+      if(
+        event.target.closest(
+          ".notebookClose"
+        )
+      ) {
+        return;
+      }
+
+
+      if(
+        event.pointerType ===
+          "mouse" &&
+        event.button !== 0
+      ) {
+        return;
+      }
+
+
+      event.preventDefault();
+
+
+      const rect =
+        notebookWindow
+          .getBoundingClientRect();
+
+
+      /*
+        The notebook initially uses
+        translate(-50%, -50%).
+
+        Convert it into ordinary pixel
+        coordinates before dragging.
+      */
+
+      notebookWindow.style.transform =
+        "none";
+
+      notebookWindow.style.left =
+        rect.left + "px";
+
+      notebookWindow.style.top =
+        rect.top + "px";
+
+
+      notebookDragging =
+        true;
+
+      notebookPointerId =
+        event.pointerId;
+
+      notebookStartX =
+        event.clientX;
+
+      notebookStartY =
+        event.clientY;
+
+      notebookStartLeft =
+        rect.left;
+
+      notebookStartTop =
+        rect.top;
+
+
+      header.setPointerCapture(
+        event.pointerId
+      );
+
+    }
+  );
+
+
+  /* ================================================
+     MOVE NOTEBOOK
+  ================================================ */
+
+  header.addEventListener(
+    "pointermove",
+    function(event) {
+
+      if(
+        !notebookDragging ||
+        event.pointerId !==
+          notebookPointerId
+      ) {
+        return;
+      }
+
+
+      let nextLeft =
+        notebookStartLeft +
+        (
+          event.clientX -
+          notebookStartX
+        );
+
+      let nextTop =
+        notebookStartTop +
+        (
+          event.clientY -
+          notebookStartY
+        );
+
+
+      const width =
+        notebookWindow.offsetWidth;
+
+      const height =
+        notebookWindow.offsetHeight;
+
+
+      /*
+        Keep the complete notebook
+        inside the visible browser.
+      */
+
+      nextLeft =
+        Math.max(
+          10,
+          Math.min(
+            window.innerWidth -
+            width -
+            10,
+            nextLeft
+          )
+        );
+
+
+      nextTop =
+        Math.max(
+          10,
+          Math.min(
+            window.innerHeight -
+            height -
+            10,
+            nextTop
+          )
+        );
+
+
+      notebookWindow.style.left =
+        nextLeft + "px";
+
+      notebookWindow.style.top =
+        nextTop + "px";
+
+    }
+  );
+
+
+  /* ================================================
+     STOP NOTEBOOK DRAG
+  ================================================ */
+
+  function stopNotebookDrag(
+    event
+  ) {
+
+    if(
+      !notebookDragging ||
+      event.pointerId !==
+        notebookPointerId
+    ) {
+      return;
+    }
+
+
+    notebookDragging =
+      false;
+
+    notebookPointerId =
+      null;
+
+
+    try {
+
+      if(
+        header.hasPointerCapture(
+          event.pointerId
+        )
+      ) {
+
+        header.releasePointerCapture(
+          event.pointerId
+        );
+
+      }
+
+    }
+    catch(error) {
+      /* Nothing needed */
+    }
+
+  }
+
+
+  header.addEventListener(
+    "pointerup",
+    stopNotebookDrag
+  );
+
+  header.addEventListener(
+    "pointercancel",
+    stopNotebookDrag
+  );
+
+
+  updateNotebookPage();
+
+}
+
+
+/* ================================================
+   SAVE CURRENT PAGE
+================================================ */
+
+function saveCurrentNotebookPage() {
+
+  if(!notebookWindow) {
+    return;
+  }
+
+
+  const textArea =
+    notebookWindow.querySelector(
+      ".notebookText"
+    );
+
+
+  if(textArea) {
+
+    notebookPages[
+      notebookPage
+    ] =
+      textArea.value;
+
+  }
+
+}
+
+
+/* ================================================
+   UPDATE NOTEBOOK PAGE
+================================================ */
+
+function updateNotebookPage() {
+
+  if(!notebookWindow) {
+    return;
+  }
+
+
+  const textArea =
+    notebookWindow.querySelector(
+      ".notebookText"
+    );
+
+  const pageNumber =
+    notebookWindow.querySelector(
+      ".notebookPageNumber"
+    );
+
+  const previousButton =
+    notebookWindow.querySelector(
+      ".notebookPrevious"
+    );
+
+  const nextButton =
+    notebookWindow.querySelector(
+      ".notebookNext"
+    );
+
+
+  textArea.value =
+    notebookPages[
+      notebookPage
+    ];
+
+
+  pageNumber.textContent =
+    "Page " +
+    (notebookPage + 1) +
+    " / " +
+    NOTEBOOK_PAGE_COUNT;
+
+
+  previousButton.disabled =
+    notebookPage === 0;
+
+
+  nextButton.disabled =
+    notebookPage ===
+    NOTEBOOK_PAGE_COUNT - 1;
+
+}
+
+
+/* ================================================
+   NOTEBOOK BUTTON
+================================================ */
+
+notebookButton.addEventListener(
+  "click",
+  openNotebook
+);
+
+
+/* ================================================
+   TEXT TO SPEECH
+================================================ */
+
+const speechButton =
+  document.getElementById(
+    "speechButton"
+  );
+
+const speechSynth =
+  window.speechSynthesis;
+
+let speechWindow = null;
+
+let speechVoices = [];
+
+let speechDragging = false;
+let speechPointerId = null;
+
+let speechStartX = 0;
+let speechStartY = 0;
+
+let speechStartLeft = 0;
+let speechStartTop = 0;
+
+
+/* ================================================
+   OPEN SPEECH WINDOW
+================================================ */
+
+function openSpeechWindow() {
+
+  /*
+    Only one window may exist.
+  */
+
+  if(speechWindow) {
+
+    speechWindow.style.zIndex =
+      "60001";
+
+    return;
+
+  }
+
+
+  speechWindow =
+    document.createElement(
+      "div"
+    );
+
+
+  speechWindow.className =
+    "speechWindow";
+
+
+  speechWindow.innerHTML = `
+    <div class="speechHeader">
+
+      <span class="speechHeaderTitle">
+        Smiley Speech
+      </span>
+
+      <button
+        class="speechClose"
+        type="button"
+        title="Close text to speech"
+        aria-label="Close text to speech"
+      >
+        ✕
+      </button>
+
+    </div>
+
+
+    <div class="speechFaceArea">
+
+      <div
+        class="speechFace"
+        aria-hidden="true"
+      >
+        😎
+
+        <span
+          class="speechMouth"
+        ></span>
+      </div>
+
+    </div>
+
+
+    <div class="speechContent">
+
+      <div class="speechField">
+
+        <label
+          for="speechLanguage"
+        >
+          Language
+        </label>
+
+        <select
+          id="speechLanguage"
+        ></select>
+
+      </div>
+
+
+      <div class="speechField">
+
+        <label
+          for="speechVoice"
+        >
+          Voice
+        </label>
+
+        <select
+          id="speechVoice"
+        ></select>
+
+      </div>
+
+
+      <div class="speechField">
+
+        <label
+          for="speechText"
+        >
+          What should Smiley say?
+        </label>
+
+        <textarea
+          id="speechText"
+          maxlength="500"
+          spellcheck="true"
+          placeholder="Type something here..."
+        ></textarea>
+
+      </div>
+
+
+      <div class="speechActions">
+
+        <button
+          class="speechAction speechSpeak"
+          type="button"
+        >
+          ▶ Speak
+        </button>
+
+        <button
+          class="speechAction speechStop"
+          type="button"
+        >
+          ■ Stop
+        </button>
+
+      </div>
+
+
+      <p
+        class="speechStatus"
+        role="status"
+        aria-live="polite"
+      >
+        Loading voices...
+      </p>
+
+    </div>
+  `;
+
+
+  document.body.appendChild(
+    speechWindow
+  );
+
+
+  const header =
+    speechWindow.querySelector(
+      ".speechHeader"
+    );
+
+  const closeButton =
+    speechWindow.querySelector(
+      ".speechClose"
+    );
+
+  const speakButton =
+    speechWindow.querySelector(
+      ".speechSpeak"
+    );
+
+  const stopButton =
+    speechWindow.querySelector(
+      ".speechStop"
+    );
+
+  const languageSelect =
+    speechWindow.querySelector(
+      "#speechLanguage"
+    );
+
+  const voiceSelect =
+    speechWindow.querySelector(
+      "#speechVoice"
+    );
+
+
+  closeButton.addEventListener(
+    "click",
+    function(event) {
+
+      event.stopPropagation();
+
+      stopSpeaking();
+
+      speechWindow.remove();
+
+      speechWindow = null;
+
+    }
+  );
+
+
+  languageSelect.addEventListener(
+    "change",
+    populateSpeechVoiceMenu
+  );
+
+
+  speakButton.addEventListener(
+    "click",
+    speakTypedText
+  );
+
+
+  stopButton.addEventListener(
+    "click",
+    stopSpeaking
+  );
+
+
+  setupSpeechWindowDragging(
+    header
+  );
+
+
+  /*
+    Some browsers expose voices immediately.
+    Others populate them shortly afterward.
+  */
+
+  loadSpeechVoices();
+
+}
+
+
+/* ================================================
+   LOAD DEVICE VOICES
+================================================ */
+
+function loadSpeechVoices() {
+
+  speechVoices =
+    speechSynth.getVoices();
+
+
+  if(
+    speechVoices.length === 0
+  ) {
+
+    updateSpeechStatus(
+      "Waiting for device voices..."
+    );
+
+    return;
+
+  }
+
+
+  populateSpeechLanguageMenu();
+
+}
+
+
+/* ================================================
+   LANGUAGE MENU
+================================================ */
+
+function getFriendlyLanguageName(
+  languageTag
+) {
+
+  try {
+
+    const locale =
+      new Intl.Locale(
+        languageTag
+      );
+
+
+    const languageNames =
+      new Intl.DisplayNames(
+        ["en"],
+        {
+          type: "language"
+        }
+      );
+
+
+    const regionNames =
+      new Intl.DisplayNames(
+        ["en"],
+        {
+          type: "region"
+        }
+      );
+
+
+    const languageName =
+      languageNames.of(
+        locale.language
+      );
+
+
+    if(locale.region) {
+
+      const regionName =
+        regionNames.of(
+          locale.region
+        );
+
+
+      return (
+        languageName +
+        " (" +
+        regionName +
+        ")"
+      );
+
+    }
+
+
+    return languageName;
+
+  }
+  catch(error) {
+
+    /*
+      Fall back to the original language
+      code if this particular browser
+      cannot format it.
+    */
+
+    return languageTag;
+
+  }
+
+}
+
+
+function populateSpeechLanguageMenu() {
+
+  if(!speechWindow) {
+    return;
+  }
+
+
+  const languageSelect =
+    speechWindow.querySelector(
+      "#speechLanguage"
+    );
+
+
+  const languages =
+    Array.from(
+      new Set(
+        speechVoices.map(
+          function(voice) {
+            return voice.lang;
+          }
+        )
+      )
+    ).sort();
+
+
+  languageSelect.innerHTML =
+    "";
+
+
+  languages.forEach(
+    function(language) {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        language;
+
+option.textContent =
+  getFriendlyLanguageName(
+    language
+  );
+
+      languageSelect.appendChild(
+        option
+      );
+
+    }
+  );
+
+
+  /*
+    Prefer an English voice initially
+    when one exists.
+  */
+
+  const englishLanguage =
+    languages.find(
+      function(language) {
+        return language
+          .toLowerCase()
+          .startsWith("en");
+      }
+    );
+
+
+  if(englishLanguage) {
+
+    languageSelect.value =
+      englishLanguage;
+
+  }
+
+
+  populateSpeechVoiceMenu();
+
+}
+
+
+/* ================================================
+   VOICE MENU
+================================================ */
+
+function populateSpeechVoiceMenu() {
+
+  if(!speechWindow) {
+    return;
+  }
+
+
+  const languageSelect =
+    speechWindow.querySelector(
+      "#speechLanguage"
+    );
+
+  const voiceSelect =
+    speechWindow.querySelector(
+      "#speechVoice"
+    );
+
+
+  const selectedLanguage =
+    languageSelect.value;
+
+
+  const matchingVoices =
+    speechVoices.filter(
+      function(voice) {
+
+        return (
+          voice.lang ===
+          selectedLanguage
+        );
+
+      }
+    );
+
+
+  voiceSelect.innerHTML =
+    "";
+
+
+  matchingVoices.forEach(
+    function(voice) {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        voice.voiceURI;
+
+      option.textContent =
+        voice.name +
+        (
+          voice.default
+            ? " — Default"
+            : ""
+        );
+
+      voiceSelect.appendChild(
+        option
+      );
+
+    }
+  );
+
+
+  updateSpeechStatus(
+    matchingVoices.length
+      ? matchingVoices.length +
+        " voice" +
+        (
+          matchingVoices.length === 1
+            ? ""
+            : "s"
+        ) +
+        " available"
+      : "No voice available for this language"
+  );
+
+}
+
+
+/* ================================================
+   SPEAK TEXT
+================================================ */
+
+function speakTypedText() {
+
+  if(!speechWindow) {
+    return;
+  }
+
+
+  const textArea =
+    speechWindow.querySelector(
+      "#speechText"
+    );
+
+  const languageSelect =
+    speechWindow.querySelector(
+      "#speechLanguage"
+    );
+
+  const voiceSelect =
+    speechWindow.querySelector(
+      "#speechVoice"
+    );
+
+
+  const text =
+    textArea.value.trim();
+
+
+  if(!text) {
+
+    updateSpeechStatus(
+      "Type something for Smiley to say."
+    );
+
+    textArea.focus();
+
+    return;
+
+  }
+
+
+  const selectedVoice =
+    speechVoices.find(
+      function(voice) {
+
+        return (
+          voice.voiceURI ===
+          voiceSelect.value
+        );
+
+      }
+    );
+
+
+  speechSynth.cancel();
+
+
+  const utterance =
+    new SpeechSynthesisUtterance(
+      text
+    );
+
+
+  if(selectedVoice) {
+
+    utterance.voice =
+      selectedVoice;
+
+  }
+
+
+  utterance.lang =
+    selectedVoice
+      ? selectedVoice.lang
+      : languageSelect.value;
+
+
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+
+  utterance.onstart =
+    function() {
+
+      setSpeechFaceTalking(
+        true
+      );
+
+      updateSpeechStatus(
+        "Smiley is speaking..."
+      );
+
+    };
+
+
+  utterance.onend =
+    function() {
+
+      setSpeechFaceTalking(
+        false
+      );
+
+      updateSpeechStatus(
+        "Finished speaking."
+      );
+
+    };
+
+
+  utterance.onerror =
+    function() {
+
+      setSpeechFaceTalking(
+        false
+      );
+
+      updateSpeechStatus(
+        "Speech could not be completed."
+      );
+
+    };
+
+utterance.onboundary =
+  function(event) {
+
+    pulseSpeechMouth();
+
+  };
+
+  speechSynth.speak(
+    utterance
+  );
+
+}
+
+
+/* ================================================
+   STOP SPEECH
+================================================ */
+
+function stopSpeaking() {
+
+  speechSynth.cancel();
+
+  setSpeechFaceTalking(
+    false
+  );
+
+
+  if(speechWindow) {
+
+    updateSpeechStatus(
+      "Speech stopped."
+    );
+
+  }
+
+}
+
+
+/* ================================================
+   TALKING FACE
+================================================ */
+
+function setSpeechFaceTalking(
+  talking
+) {
+
+  if(!speechWindow) {
+    return;
+  }
+
+
+  const face =
+    speechWindow.querySelector(
+      ".speechFace"
+    );
+
+
+  face.classList.toggle(
+    "talking",
+    talking
+  );
+
+}
+
+
+function pulseSpeechMouth() {
+
+  if(!speechWindow) {
+    return;
+  }
+
+  const mouth =
+    speechWindow.querySelector(
+      ".speechMouth"
+    );
+
+  if(!mouth) {
+    return;
+  }
+
+  /*
+    Removing/re-adding the class restarts
+    the animation for each speech boundary.
+  */
+
+  mouth.classList.remove(
+    "syllable"
+  );
+
+  void mouth.offsetWidth;
+
+  mouth.classList.add(
+    "syllable"
+  );
+}
+
+/* ================================================
+   STATUS MESSAGE
+================================================ */
+
+function updateSpeechStatus(
+  message
+) {
+
+  if(!speechWindow) {
+    return;
+  }
+
+
+  const status =
+    speechWindow.querySelector(
+      ".speechStatus"
+    );
+
+
+  status.textContent =
+    message;
+
+}
+
+
+/* ================================================
+   SPEECH WINDOW DRAGGING
+================================================ */
+
+function setupSpeechWindowDragging(
+  header
+) {
+
+  header.addEventListener(
+    "pointerdown",
+    function(event) {
+
+      if(
+        event.target.closest(
+          ".speechClose"
+        )
+      ) {
+        return;
+      }
+
+
+      if(
+        event.pointerType === "mouse" &&
+        event.button !== 0
+      ) {
+        return;
+      }
+
+
+      event.preventDefault();
+
+
+      const rect =
+        speechWindow
+          .getBoundingClientRect();
+
+
+      speechWindow.style.transform =
+        "none";
+
+      speechWindow.style.left =
+        rect.left + "px";
+
+      speechWindow.style.top =
+        rect.top + "px";
+
+
+      speechDragging =
+        true;
+
+      speechPointerId =
+        event.pointerId;
+
+      speechStartX =
+        event.clientX;
+
+      speechStartY =
+        event.clientY;
+
+      speechStartLeft =
+        rect.left;
+
+      speechStartTop =
+        rect.top;
+
+
+      header.setPointerCapture(
+        event.pointerId
+      );
+
+    }
+  );
+
+
+  header.addEventListener(
+    "pointermove",
+    function(event) {
+
+      if(
+        !speechDragging ||
+        event.pointerId !==
+          speechPointerId
+      ) {
+        return;
+      }
+
+
+      let nextLeft =
+        speechStartLeft +
+        (
+          event.clientX -
+          speechStartX
+        );
+
+      let nextTop =
+        speechStartTop +
+        (
+          event.clientY -
+          speechStartY
+        );
+
+
+      const width =
+        speechWindow.offsetWidth;
+
+      const height =
+        speechWindow.offsetHeight;
+
+
+      const maximumLeft =
+        Math.max(
+          10,
+          window.innerWidth -
+          width -
+          10
+        );
+
+      const maximumTop =
+        Math.max(
+          10,
+          window.innerHeight -
+          height -
+          10
+        );
+
+
+      nextLeft =
+        Math.max(
+          10,
+          Math.min(
+            maximumLeft,
+            nextLeft
+          )
+        );
+
+
+      nextTop =
+        Math.max(
+          10,
+          Math.min(
+            maximumTop,
+            nextTop
+          )
+        );
+
+
+      speechWindow.style.left =
+        nextLeft + "px";
+
+      speechWindow.style.top =
+        nextTop + "px";
+
+    }
+  );
+
+
+  function stopSpeechDrag(
+    event
+  ) {
+
+    if(
+      !speechDragging ||
+      event.pointerId !==
+        speechPointerId
+    ) {
+      return;
+    }
+
+
+    speechDragging =
+      false;
+
+    speechPointerId =
+      null;
+
+
+    try {
+
+      if(
+        header.hasPointerCapture(
+          event.pointerId
+        )
+      ) {
+
+        header.releasePointerCapture(
+          event.pointerId
+        );
+
+      }
+
+    }
+    catch(error) {
+      /* Nothing needed */
+    }
+
+  }
+
+
+  header.addEventListener(
+    "pointerup",
+    stopSpeechDrag
+  );
+
+  header.addEventListener(
+    "pointercancel",
+    stopSpeechDrag
+  );
+
+}
+
+
+/* ================================================
+   SPEECH BUTTON
+================================================ */
+
+speechButton.addEventListener(
+  "click",
+  openSpeechWindow
+);
+
+
+/* ================================================
+   VOICE LIST CHANGES
+================================================ */
+
+if(
+  "speechSynthesis" in window
+) {
+
+  speechSynth.addEventListener(
+    "voiceschanged",
+    loadSpeechVoices
+  );
+
+}
+
+positionAllIcons();
+
+</script>
+</body>
+</html>
