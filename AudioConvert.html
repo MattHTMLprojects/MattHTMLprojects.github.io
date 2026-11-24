@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="google" content="notranslate" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Audio & MP4 to WAV Base64 Converter [by Matt]</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121417;
+      --panel: #1b1f24;
+      --border: #2e343d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #3b82f6;
+      --ok: #3fb950;
+      --err: #f85149;
+    }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body {
+      margin: 0;
+      padding: 14px;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+    }
+    main {
+      width: 100%;
+      max-width: 600px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    h1 { font-size: 16px; margin: 0; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    input[type="file"] { width: 100%; font-size: 14px; color: var(--muted); }
+    label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+    select, button {
+      background: #262c34;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 11px;
+      font-size: 13px;
+    }
+
+button.danger {
+  background: #da3633;
+  border-color: #f85149;
+  color: #fff;
+  font-weight: 600;
+}
+    
+
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    button:disabled { opacity: 0.45; }
+    textarea {
+      width: 100%;
+      height: 150px;
+      background: #0d1117;
+      color: #a5d6ff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .status { font-size: 13px; color: var(--muted); min-height: 18px; }
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--err); }
+    audio { width: 100%; height: 38px; display: none; }
+    audio.visible { display: block; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Audio & MP4 to WAV Base64 Converter [by Matt]</h1>
+
+    <input id="fileInput" type="file" />
+
+    <div class="row">
+      <label>Sample Rate:
+        <select id="rateSelect">
+          <option value="3000" selected>3,000 Hz (Web Audio min)</option>
+          <option value="4000">4,000 Hz (Ultra Tiny)</option>
+          <option value="6000">6,000 Hz (Lo-Fi)</option>
+          <option value="8000">8,000 Hz (Tiny / Phone)</option>
+          <option value="11025">11,025 Hz (Retro SFX)</option>
+          <option value="16000">16,000 Hz (Voice / Clean)</option>
+          <option value="22050">22,050 Hz (Medium)</option>
+          <option value="44100">44,100 Hz (Full)</option>
+        </select>
+      </label>
+
+      <label>Bit Depth:
+        <select id="bitsSelect">
+          <option value="8" selected>8-bit PCM (Half size)</option>
+          <option value="16">16-bit PCM (Standard)</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="row">
+      <label><input type="radio" name="fmt" value="dataurl" checked /> Data URL</label>
+      <label><input type="radio" name="fmt" value="raw" /> Raw Base64</label>
+    </div>
+
+    <div class="row">
+      <button id="convertBtn" class="primary" disabled>Convert Output</button>
+      <button id="resetBtn" class="danger">Reset</button>
+      <button id="previewBtn" disabled>Preview Output</button>
+      <button id="copyBtn" disabled>Copy Base64</button>
+    </div>
+    
+
+    <audio id="player" controls playsinline></audio>
+
+    <textarea id="output" readonly placeholder="Converted WAV output..."></textarea>
+
+    <div id="status" class="status">Select an audio or MP4 file.</div>
+  </main>
+
+
+  <script>
+    window.onerror = (msg, src, line) => {
+      const s = document.getElementById("status");
+      if (s) {
+        s.style.color = "#f85149";
+        s.textContent = `Line ${line}: ${msg}`;
+      }
+    };
+  </script>
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    const rateSelect = document.getElementById("rateSelect");
+    const bitsSelect = document.getElementById("bitsSelect");
+    const convertBtn = document.getElementById("convertBtn");
+    const previewBtn = document.getElementById("previewBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const outputEl = document.getElementById("output");
+    const statusEl = document.getElementById("status");
+    const player = document.getElementById("player");
+    const fmtRadios = document.querySelectorAll('input[name="fmt"]');
+const resetBtn = document.getElementById("resetBtn");
+
+
+    let currentBlob = null;
+    let currentObjectUrl = null;
+    let cachedDataUrl = "";
+    let lastRawChannels = null;
+    let lastSrcRate = 44100;
+
+    function setStatus(msg, type = "") {
+      statusEl.textContent = msg;
+      statusEl.className = "status" + (type ? " " + type : "");
+    }
+
+    function getSelectedFormat() {
+      return document.querySelector('input[name="fmt"]:checked').value;
+    }
+
+    function refreshTextarea() {
+      if (!cachedDataUrl) return;
+      if (getSelectedFormat() === "raw") {
+        const idx = cachedDataUrl.indexOf(",");
+        outputEl.value = idx !== -1 ? cachedDataUrl.slice(idx + 1) : cachedDataUrl;
+      } else {
+        outputEl.value = cachedDataUrl;
+      }
+    }
+
+    function writeAscii(view, off, str) {
+      for (let i = 0; i < str.length; i++) {
+        view.setUint8(off + i, str.charCodeAt(i));
+      }
+    }
+
+    function encodePcmWav(channels, srcRate, targetRate, bitDepth) {
+      const step = srcRate / targetRate;
+      const ch0 = channels.at(0);
+      const ch1 = channels.length > 1 ? channels.at(1) : ch0;
+      const srcLen = ch0.length;
+      const outLen = Math.floor(srcLen / step);
+      const bytesPerSample = bitDepth / 8;
+
+      const dataSize = outLen * bytesPerSample;
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+
+      writeAscii(view, 0, "RIFF");
+      view.setUint32(4, 36 + dataSize, true);
+      writeAscii(view, 8, "WAVEfmt ");
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, targetRate, true);
+      view.setUint32(28, targetRate * bytesPerSample, true);
+      view.setUint16(32, bytesPerSample, true);
+      view.setUint16(34, bitDepth, true);
+      writeAscii(view, 36, "data");
+      view.setUint32(40, dataSize, true);
+
+      for (let i = 0; i < outLen; i++) {
+        const idx = Math.floor(i * step);
+        const mono = (ch0.at(idx) + ch1.at(idx)) * 0.5;
+        const s = Math.max(-1, Math.min(1, mono));
+
+        if (bitDepth === 8) {
+          view.setUint8(44 + i, Math.round((s + 1) * 127.5));
+        } else {
+          view.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+        }
+      }
+      return new Blob(Array.of(buffer), { type: "audio/wav" });
+    }
+
+    function encodeImaAdpcmWav(channels, srcRate, targetRate) {
+      const step = srcRate / targetRate;
+      const ch0 = channels.at(0);
+      const ch1 = channels.length > 1 ? channels.at(1) : ch0;
+      const srcLen = ch0.length;
+      const blockAlign = 256;
+      const samplesPerBlock = (blockAlign - 4) * 2 + 1;
+      const rawLen = Math.floor(srcLen / step);
+      const numBlocks = Math.max(1, Math.ceil(rawLen / samplesPerBlock));
+      const dataSize = numBlocks * blockAlign;
+
+      const idxTable = "-1,-1,-1,-1,2,4,6,8,-1,-1,-1,-1,2,4,6,8".split(",").map(Number);
+      const stepTable = "7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,1707,1878,2066,2272,2499,2749,3024,3327,3660,4026,4428,4871,5358,5894,6484,7132,7845,8630,9493,10442,11487,12635,13899,15289,16818,18500,20350,22385,24623,27086,29794,32767".split(",").map(Number);
+
+      const buffer = new ArrayBuffer(48 + dataSize);
+      const view = new DataView(buffer);
+
+      writeAscii(view, 0, "RIFF");
+      view.setUint32(4, 40 + dataSize, true);
+      writeAscii(view, 8, "WAVEfmt ");
+      view.setUint32(16, 20, true);
+      view.setUint16(20, 17, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, targetRate, true);
+      view.setUint32(28, Math.floor((targetRate * blockAlign) / samplesPerBlock), true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, 4, true);
+      view.setUint16(36, 2, true);
+      view.setUint16(38, samplesPerBlock, true);
+      writeAscii(view, 40, "data");
+      view.setUint32(44, dataSize, true);
+
+      const getSample = (n) => {
+        const start = Math.min(srcLen - 1, Math.floor(n * step));
+        const end = Math.min(srcLen, Math.max(start + 1, Math.floor((n + 1) * step)));
+        let sum = 0;
+        for (let k = start; k < end; k++) {
+          sum += (ch0.at(k) + ch1.at(k)) * 0.5;
+        }
+        const avg = sum / (end - start);
+        return Math.max(-32768, Math.min(32767, Math.round(avg * 32767)));
+      };
+      
+      
+
+      let predictor = getSample(0);
+      let stepIndex = 0;
+      let samplePos = 0;
+      let outOff = 48;
+
+      for (let b = 0; b < numBlocks; b++) {
+        predictor = getSample(samplePos++);
+        view.setInt16(outOff, predictor, true);
+        view.setUint8(outOff + 2, stepIndex);
+        view.setUint8(outOff + 3, 0);
+        outOff += 4;
+
+        for (let i = 0; i < blockAlign - 4; i++) {
+          let byte = 0;
+          for (let nib = 0; nib < 2; nib++) {
+            const s = getSample(samplePos++);
+            let diff = s - predictor;
+            let code = diff < 0 ? 8 : 0;
+            if (diff < 0) diff = -diff;
+
+            let st = stepTable.at(stepIndex);
+            let delta = st >> 3;
+            if (diff >= st) { code |= 4; diff -= st; delta += st; }
+            st >>= 1;
+            if (diff >= st) { code |= 2; diff -= st; delta += st; }
+            st >>= 1;
+            if (diff >= st) { code |= 1; delta += st; }
+
+            predictor += (code & 8) ? -delta : delta;
+            predictor = Math.max(-32768, Math.min(32767, predictor));
+            stepIndex = Math.max(0, Math.min(88, stepIndex + idxTable.at(code)));
+            byte |= (code & 0x0f) << (nib * 4);
+          }
+          view.setUint8(outOff++, byte);
+        }
+      }
+      return new Blob(Array.of(buffer), { type: "audio/wav" });
+    }
+
+    function rebuildWavFromCache() {
+      if (!lastRawChannels) return;
+      const rate = Number(rateSelect.value);
+      const bits = Number(bitsSelect.value);
+
+      currentBlob = bits === 4
+        ? encodeImaAdpcmWav(lastRawChannels, lastSrcRate, rate)
+        : encodePcmWav(lastRawChannels, lastSrcRate, rate, bits);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        cachedDataUrl = reader.result;
+        refreshTextarea();
+        previewBtn.disabled = false;
+        copyBtn.disabled = false;
+        convertBtn.disabled = false;
+        setStatus(
+          `Ready: ${rate} Hz, ${bits}-bit ${bits === 4 ? "ADPCM" : "PCM"} mono ` +
+          `(${(currentBlob.size / 1024).toFixed(1)} KB, ${outputEl.value.length.toLocaleString()} chars).`,
+          "ok"
+        );
+      };
+      reader.readAsDataURL(currentBlob);
+    }
+
+    async function captureVideoAudioFallback(file, audioCtx) {
+      setStatus("Capturing MP4 audio stream in real time...");
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.src = url;
+      video.playsInline = true;
+      video.muted = false;
+      video.volume = 1.0;
+      video.style.cssText = "position:fixed;width:1px;height:1px;opacity:0.01;pointer-events:none;";
+      document.body.appendChild(video);
+
+      try {
+        await new Promise((res, rej) => {
+          video.onloadedmetadata = res;
+          video.onerror = () => rej(new Error("Could not load MP4 stream."));
+        });
+
+        const source = audioCtx.createMediaElementSource(video);
+        const processor = audioCtx.createScriptProcessor(4096, 2, 2);
+        const leftChunks = Array.of();
+        const rightChunks = Array.of();
+
+        processor.onaudioprocess = (e) => {
+          if (video.paused || video.ended) return;
+          leftChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+          rightChunks.push(new Float32Array(e.inputBuffer.getChannelData(1)));
+        };
+
+        source.connect(processor);
+        processor.connect(audioCtx.destination);
+
+        await video.play();
+        await new Promise((res) => {
+          video.onended = res;
+          setTimeout(res, (video.duration || 10) * 1000 + 500);
+        });
+
+        processor.disconnect();
+        source.disconnect();
+
+        const totalLen = leftChunks.reduce((sum, c) => sum + c.length, 0);
+        if (totalLen === 0) {
+          throw new Error("0 audio frames captured from MP4.");
+        }
+
+        const left = new Float32Array(totalLen);
+        const right = new Float32Array(totalLen);
+        let pos = 0;
+        for (let i = 0; i < leftChunks.length; i++) {
+          left.set(leftChunks.at(i), pos);
+          right.set(rightChunks.at(i), pos);
+          pos += leftChunks.at(i).length;
+        }
+        lastRawChannels = Array.of(left, right);
+        lastSrcRate = audioCtx.sampleRate;
+      } finally {
+        video.pause();
+        video.remove();
+        URL.revokeObjectURL(url);
+      }
+    }
+    
+
+
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files.item(0);
+      convertBtn.disabled = !file;
+      lastRawChannels = null;
+      if (file) setStatus(`Loaded "${file.name}" (${(file.size / 1024).toFixed(1)} KB).`);
+    });
+
+    fmtRadios.forEach((r) => r.addEventListener("change", refreshTextarea));
+    rateSelect.addEventListener("change", rebuildWavFromCache);
+    bitsSelect.addEventListener("change", rebuildWavFromCache);
+
+    convertBtn.addEventListener("click", async () => {
+      const file = fileInput.files.item(0);
+      if (!file) return;
+
+      convertBtn.disabled = true;
+      previewBtn.disabled = true;
+      copyBtn.disabled = true;
+      setStatus("Decoding...");
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioCtx();
+      if (audioCtx.state === "suspended") await audioCtx.resume();
+
+      try {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const decoded = await audioCtx.decodeAudioData(arrayBuffer);
+          const channels = Array.of();
+for (let c = 0; c < decoded.numberOfChannels; c++) {
+channels.push(decoded.getChannelData(c));
+}
+lastRawChannels = channels;
+lastSrcRate = decoded.sampleRate;
+} catch {
+await captureVideoAudioFallback(file, audioCtx);
+}
+rebuildWavFromCache();
+} catch (err) {
+convertBtn.disabled = false;
+setStatus("Error: " + (err.message || err), "err");
+
+} finally {
+audioCtx.close().catch(() => {});
+}
+});
+
+
+    resetBtn.addEventListener("click", () => {
+      fileInput.value = "";
+      if (currentObjectUrl) {
+        URL.revokeObjectURL(currentObjectUrl);
+        currentObjectUrl = null;
+      }
+      player.pause();
+      player.removeAttribute("src");
+      player.classList.remove("visible");
+
+      currentBlob = null;
+      cachedDataUrl = "";
+      lastRawChannels = null;
+      outputEl.value = "";
+
+      rateSelect.value = "3000";
+      bitsSelect.value = "8";
+      convertBtn.disabled = true;
+      previewBtn.disabled = true;
+      copyBtn.disabled = true;
+      setStatus("Reset. Select an audio or MP4 file.");
+    });
+
+
+
+
+ previewBtn.addEventListener("click", async () => {
+   if (!currentBlob) return;
+   try {
+     const AudioCtx = window.AudioContext || window.webkitAudioContext;
+     const ctx = new AudioCtx();
+     if (ctx.state === "suspended") await ctx.resume();
+     const buf = await currentBlob.arrayBuffer();
+     const audioBuf = await ctx.decodeAudioData(buf);
+     const src = ctx.createBufferSource();
+     src.buffer = audioBuf;
+     src.connect(ctx.destination);
+     src.onended = () => ctx.close().catch(() => {});
+     src.start();
+     setStatus("Playing (" + audioBuf.duration.toFixed(2) + "s).", "ok");
+   } catch (err) {
+     setStatus("Preview error: " + (err.message || err), "err");
+   }
+ });
+
+
+
+
+
+</script>
+</body>
+</html>
