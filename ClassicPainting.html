@@ -1,0 +1,3623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classic Painting [by Matt]</title>
+  <style>
+    :root {
+      --bg-face: #c0c0c0;
+      --bg-dark: #808080;
+      --bg-darker: #404040;
+      --bg-light: #ffffff;
+      --bg-hilight: #dfdfdf;
+      --navy: #000080;
+      --canvas-area: #808080;
+      --text: #000000;
+      --font-ui: "Tahoma", "MS Sans Serif", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #2b2b2b;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .window {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-face);
+      border-top: 2px solid var(--bg-light);
+      border-left: 2px solid var(--bg-light);
+      border-right: 2px solid var(--bg-darker);
+      border-bottom: 2px solid var(--bg-darker);
+    }
+
+    /* Title Bar */
+    .title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 22px;
+      padding: 2px 4px;
+      background: linear-gradient(90deg, #000080, #C0C0C0);
+      color: #ffffff;
+      font-weight: bold;
+      letter-spacing: 0.2px;
+      flex-shrink: 0;
+    }
+
+    .title-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .mini-icon {
+      display: inline-grid;
+      grid-template-columns: repeat(2, 1fr);
+      width: 14px;
+      height: 14px;
+      padding: 1px;
+      background: #fff;
+      border: 1px solid #000;
+      gap: 1px;
+      flex-shrink: 0;
+    }
+    .mini-icon span:nth-child(1) { background: #000000; }
+    .mini-icon span:nth-child(2) { background: #808080; }
+    .mini-icon span:nth-child(3) { background: #D4D4D4; }
+    .mini-icon span:nth-child(4) { background: #C0C0C0; }
+
+    .win-controls {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .win-btn {
+      width: 16px;
+      height: 14px;
+      padding: 0;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: bold;
+      line-height: 1;
+      background: var(--bg-face);
+      color: #000;
+      border-top: 1px solid var(--bg-light);
+      border-left: 1px solid var(--bg-light);
+      border-right: 1px solid var(--bg-darker);
+      border-bottom: 1px solid var(--bg-darker);
+      cursor: pointer;
+    }
+
+    .win-btn:active {
+      border-top: 1px solid var(--bg-darker);
+      border-left: 1px solid var(--bg-darker);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+    }
+
+    /* Menu / QoL Bar */
+    .menu-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 4px;
+      background: var(--bg-face);
+      border-bottom: 1px solid var(--bg-dark);
+      flex-shrink: 0;
+    }
+
+    .qol-btn {
+      padding: 2px 7px;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      background: var(--bg-face);
+      color: var(--text);
+      border-top: 1px solid var(--bg-light);
+      border-left: 1px solid var(--bg-light);
+      border-right: 1px solid var(--bg-darker);
+      border-bottom: 1px solid var(--bg-darker);
+      cursor: pointer;
+    }
+
+    .qol-btn:hover:not(:disabled) {
+      background: var(--bg-hilight);
+    }
+
+    .qol-btn:active:not(:disabled), .qol-btn.active {
+      border-top: 1px solid var(--bg-darker);
+      border-left: 1px solid var(--bg-darker);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+      background: #b0b0b0;
+    }
+
+    .qol-btn:disabled {
+      color: var(--bg-dark);
+      cursor: default;
+    }
+
+    .qol-sep {
+      width: 1px;
+      height: 16px;
+      background: var(--bg-dark);
+      box-shadow: 1px 0 0 var(--bg-light);
+      margin: 0 2px;
+    }
+
+    .qol-pipe {
+      font-weight: bold;
+      color: var(--bg-darker);
+      padding: 0 4px;
+      user-select: none;
+    }
+
+    .qol-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+    }
+
+    .qol-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 1px 4px;
+    }
+
+    .qol-check input[type="checkbox"] {
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .qol-group select,
+    .qol-group input[type="number"] {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      height: 20px;
+      background: #fff;
+      color: #000;
+      border-top: 1px solid var(--bg-darker);
+      border-left: 1px solid var(--bg-darker);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+    }
+
+    .qol-group input[type="number"] {
+      width: 54px;
+      padding: 0 3px;
+    }
+
+    /* Main Workspace */
+    .workspace {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Left Tool Strip */
+    .tool-column {
+      width: 68px;
+      padding: 4px 3px;
+      background: var(--bg-face);
+      border-right: 1px solid var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 24px);
+      gap: 2px;
+    }
+
+    .tool-btn {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-face);
+      color: #000;
+      font-size: 12px;
+      border-top: 1px solid var(--bg-light);
+      border-left: 1px solid var(--bg-light);
+      border-right: 1px solid var(--bg-darker);
+      border-bottom: 1px solid var(--bg-darker);
+      cursor: pointer;
+    }
+
+    .tool-btn.select-icon {
+      font-size: 10px;
+      font-weight: bold;
+      letter-spacing: -1px;
+    }
+
+    .tool-btn.text-icon {
+      font-family: var(--font-ui);
+      font-size: 9px;
+      font-weight: bold;
+      letter-spacing: -0.5px;
+    }
+
+    .tool-btn:hover {
+      background: var(--bg-hilight);
+    }
+
+    .tool-btn.active {
+      background: #d8d8d8;
+      border-top: 1px solid var(--bg-darker);
+      border-left: 1px solid var(--bg-darker);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+      box-shadow: inset 1px 1px 0 var(--bg-dark);
+    }
+
+    .size-box {
+      width: 56px;
+      padding: 4px 2px;
+      background: var(--bg-face);
+      border-top: 1px solid var(--bg-dark);
+      border-left: 1px solid var(--bg-dark);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .size-option {
+      width: 48px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .size-option.active {
+      background: var(--navy);
+      border-color: #fff;
+    }
+
+    .size-line {
+      width: 36px;
+      background: #000;
+      border-radius: 1px;
+    }
+
+    .size-option.active .size-line {
+      background: #fff;
+    }
+
+    /* Selected Tool Name Readout in Left Strip */
+    .tool-readout {
+      width: 66px;
+      padding: 4px 3px;
+      background: var(--bg-face);
+      border-top: 1px solid var(--bg-dark);
+      border-left: 1px solid var(--bg-dark);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+    }
+
+    .tool-readout-caption {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--bg-darker);
+      font-weight: bold;
+    }
+
+    .tool-readout-value {
+      width: 100%;
+      padding: 2px 2px;
+      background: #fff;
+      color: var(--navy);
+      font-size: 10px;
+      font-weight: bold;
+      border-top: 1px solid var(--bg-darker);
+      border-left: 1px solid var(--bg-darker);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+      word-break: break-word;
+      line-height: 1.15;
+    }
+
+    /* Canvas Viewport */
+    .canvas-viewport {
+      flex: 1;
+      overflow: auto;
+      background: var(--canvas-area);
+      padding: 12px;
+      position: relative;
+      border-top: 2px solid var(--bg-darker);
+      border-left: 2px solid var(--bg-darker);
+      border-right: 2px solid var(--bg-light);
+      border-bottom: 2px solid var(--bg-light);
+    }
+
+    .canvas-viewport.pan-ready,
+    .canvas-viewport.pan-ready canvas#paintCanvas {
+      cursor: grab;
+    }
+
+    .canvas-viewport.panning,
+    .canvas-viewport.panning * {
+      cursor: grabbing !important;
+      user-select: none;
+    }
+
+    .canvas-stage {
+      position: relative;
+      display: inline-block;
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+      border: 1px solid #000;
+      background-color: #ffffff;
+      background-image:
+        linear-gradient(45deg, #d8d8d8 25%, transparent 25%),
+        linear-gradient(-45deg, #d8d8d8 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #d8d8d8 75%),
+        linear-gradient(-45deg, transparent 75%, #d8d8d8 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+
+    canvas#paintCanvas {
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+      image-rendering: pixelated;
+    }
+
+    canvas#previewCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      touch-action: none;
+      image-rendering: pixelated;
+    }
+
+    .grid-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+      background-image:
+        linear-gradient(to right, rgba(0, 0, 0, 0.16) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.16) 1px, transparent 1px);
+    }
+
+    .grid-overlay.visible {
+      display: block;
+    }
+
+    .text-entry-box {
+      position: absolute;
+      z-index: 10;
+      min-width: 140px;
+      min-height: 44px;
+      width: 200px;
+      height: 64px;
+      padding: 3px 5px;
+      border: 1px dashed #000080;
+      background: rgba(255, 255, 255, 0.92);
+      outline: none;
+      resize: both;
+      overflow: auto;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      font-family: var(--font-ui);
+      line-height: 1.25;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    /* Right Dock: Stackable Layers & Color/Tone Adjustments */
+    .side-dock {
+      width: 230px;
+      background: var(--bg-face);
+      border-left: 1px solid var(--bg-light);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 4px;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .dock-panel {
+      background: var(--bg-face);
+      border-top: 1px solid var(--bg-light);
+      border-left: 1px solid var(--bg-light);
+      border-right: 1px solid var(--bg-darker);
+      border-bottom: 1px solid var(--bg-darker);
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .dock-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--navy);
+      color: #ffffff;
+      padding: 2px 5px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .layer-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    .layer-toolbar .qol-btn {
+      padding: 2px 5px;
+      font-size: 10px;
+    }
+
+    .layer-opacity-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+    }
+
+    .layer-opacity-row input[type="range"] {
+      flex: 1;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    .layers-list {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 2px;
+      max-height: 150px;
+      overflow-y: auto;
+      background: #ffffff;
+      padding: 2px;
+      border-top: 1px solid var(--bg-darker);
+      border-left: 1px solid var(--bg-darker);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+    }
+
+    .layer-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 4px;
+      font-size: 11px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .layer-item.active {
+      background: var(--navy);
+      color: #ffffff;
+    }
+
+    .layer-item input[type="checkbox"] {
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .layer-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .layer-alpha-tag {
+      font-size: 10px;
+      opacity: 0.85;
+    }
+
+    .adj-row {
+      display: grid;
+      grid-template-columns: 62px 1fr 34px;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+    }
+
+    .adj-row input[type="range"] {
+      width: 100%;
+      height: 14px;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .adj-val {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    .adj-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    .adj-actions .qol-btn {
+      padding: 2px 5px;
+      font-size: 10px;
+    }
+
+    /* Bottom Color Palette + Hex Input */
+    .color-panel {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-face);
+      border-top: 1px solid var(--bg-light);
+      flex-shrink: 0;
+    }
+
+    .palette-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 6px;
+    }
+
+    .active-colors {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border-top: 1px solid var(--bg-dark);
+      border-left: 1px solid var(--bg-dark);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+      background: var(--bg-face);
+      flex-shrink: 0;
+    }
+
+    .secondary-color {
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 16px;
+      height: 16px;
+      border-top: 1px solid var(--bg-light);
+      border-left: 1px solid var(--bg-light);
+      border-right: 1px solid var(--bg-darker);
+      border-bottom: 1px solid var(--bg-darker);
+      cursor: pointer;
+    }
+
+    .primary-color {
+      position: absolute;
+      left: 4px;
+      top: 4px;
+      width: 17px;
+      height: 17px;
+      border-top: 1px solid var(--bg-light);
+      border-left: 1px solid var(--bg-light);
+      border-right: 1px solid var(--bg-darker);
+      border-bottom: 1px solid var(--bg-darker);
+      z-index: 2;
+      cursor: pointer;
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(14, 18px);
+      grid-template-rows: repeat(2, 16px);
+      gap: 1px;
+      background: var(--bg-dark);
+      padding: 1px;
+      border-top: 1px solid var(--bg-dark);
+      border-left: 1px solid var(--bg-dark);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+    }
+
+    .swatch {
+      width: 18px;
+      height: 16px;
+      padding: 0;
+      border: 1px solid #404040;
+      cursor: pointer;
+    }
+
+    .swatch:hover {
+      outline: 1px solid #fff;
+      z-index: 1;
+    }
+
+    .rgb-picker-popover {
+      position: fixed;
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      width: 190px;
+      padding: 8px;
+      background: var(--bg-face, #c0c0c0);
+      border-top: 1px solid var(--bg-light, #ffffff);
+      border-left: 1px solid var(--bg-light, #ffffff);
+      border-right: 1px solid var(--bg-darker, #404040);
+      border-bottom: 1px solid var(--bg-darker, #404040);
+      box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.45);
+      font-size: 11px;
+      color: #000;
+    }
+
+    .rgb-picker-popover.open {
+      display: flex;
+    }
+
+    .rgb-picker-row {
+      display: grid;
+      grid-template-columns: 16px 1fr 34px;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .rgb-picker-row input[type="range"] {
+      width: 100%;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .rgb-picker-row input[type="number"] {
+      width: 34px;
+      padding: 1px 2px;
+      font-size: 11px;
+      font-family: var(--font-mono, monospace);
+    }
+
+    .rgb-picker-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .rgb-picker-preview {
+      width: 24px;
+      height: 18px;
+      border: 1px solid #404040;
+      background: #000000;
+    }
+
+    .custom-swatch-wrap {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .custom-swatch-label {
+      font-size: 10px;
+      line-height: 1;
+      font-weight: bold;
+      color: #000;
+      user-select: none;
+    }
+
+    .custom-swatch {
+      width: 24px;
+      height: 20px;
+      padding: 0;
+      border-top: 1px solid var(--bg-darker);
+      border-left: 1px solid var(--bg-darker);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+      background: #dcdcdc;
+      cursor: pointer;
+    }
+
+    .custom-swatch:hover {
+      outline: 1px solid #fff;
+    }
+
+    .custom-swatch:not([data-has-color="true"]) {
+      background:
+        linear-gradient(45deg, transparent 46%, #808080 47%, #808080 53%, transparent 54%),
+        #e4e4e4;
+    }
+
+    /* Bottom Hex Bar */
+    .hex-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 6px 6px;
+      border-top: 1px solid #a0a0a0;
+      background: #c6c6c6;
+    }
+
+    .hex-label {
+      font-weight: bold;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hex-preview {
+      width: 22px;
+      height: 20px;
+      border-top: 1px solid var(--bg-darker);
+      border-left: 1px solid var(--bg-darker);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+      background: #000000;
+      flex-shrink: 0;
+    }
+
+    .hex-input-wrap {
+      display: inline-flex;
+      align-items: center;
+      background: #ffffff;
+      border-top: 1px solid var(--bg-darker);
+      border-left: 1px solid var(--bg-darker);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+      padding: 0 4px;
+      height: 22px;
+    }
+
+    .hex-prefix {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #404040;
+      margin-right: 1px;
+    }
+
+    input#hexInput {
+      width: 82px;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #000;
+      text-transform: lowercase;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    input#hexInput.invalid {
+      background: #ffe0e0;
+      color: #900;
+    }
+
+    .hex-hint {
+      font-size: 11px;
+      color: #333;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 2px 6px;
+      font-size: 11px;
+      background: var(--bg-face);
+      border-top: 1px solid var(--bg-light);
+      flex-shrink: 0;
+    }
+
+    .status-cell {
+      padding: 1px 6px;
+      border-top: 1px solid var(--bg-dark);
+      border-left: 1px solid var(--bg-dark);
+      border-right: 1px solid var(--bg-light);
+      border-bottom: 1px solid var(--bg-light);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .status-main {
+      flex: 1;
+    }
+
+    @media (max-width: 860px) {
+      .side-dock {
+        width: 190px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .side-dock {
+        display: none;
+      }
+      .swatches {
+        grid-template-columns: repeat(14, 15px);
+        grid-template-rows: repeat(2, 14px);
+      }
+      .swatch {
+        width: 15px;
+        height: 14px;
+      }
+      .hex-hint {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="window">
+    <!-- Title Bar -->
+    <div class="title-bar">
+      <div class="title-left">
+        <span class="mini-icon" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </span>
+        <span id="windowTitle">untitled - Painting</span>
+      </div>
+      <div class="win-controls" aria-hidden="true">
+        <button type="button" class="win-btn" tabindex="-1">_</button>
+        <button type="button" class="win-btn" tabindex="-1">□</button>
+        <button type="button" class="win-btn" tabindex="-1">×</button>
+      </div>
+    </div>
+
+    <!-- Menu / QoL Controls -->
+    <div class="menu-bar">
+      <button type="button" class="qol-btn" id="importBtn" title="Import an image (JPG, PNG, WEBP, GIF, BMP, SVG) into active layer">Import</button>
+      <input
+        type="file"
+        id="importFileInput"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/svg+xml,.jpg,.jpeg,.png,.webp,.gif,.bmp,.svg"
+        hidden
+      />
+      <button type="button" class="qol-btn" id="newBtn" title="New blank canvas">New</button>
+      <button type="button" class="qol-btn" id="saveBtn" title="Download image as PNG">Save PNG</button>
+      <label class="qol-check" title="If checked, saves true alpha transparency; if unchecked, flattens onto white">
+        <input type="checkbox" id="transparentPngToggle" checked />
+        <span>Transparent PNG</span>
+      </label>
+      <div class="qol-sep"></div>
+      <button type="button" class="qol-btn" id="copyBtn" title="Copy selection (Ctrl+C)" disabled>Copy</button>
+      <button type="button" class="qol-btn" id="pasteBtn" title="Paste copied selection (Ctrl+V)" disabled>Paste</button>
+      <button type="button" class="qol-btn" id="deleteSelBtn" title="Delete selected area (Select Tool only, Del/Backspace)" disabled>Delete Sel</button>
+      <button type="button" class="qol-btn" id="invertSelectionBtn" title="Invert selection (Ctrl+I)">Invert Sel</button>
+      <button type="button" class="qol-btn" id="unselectAllBtn" title="Unselect all active selection (enabled after using Select Tool or Magic Wand on canvas)" disabled>Unselect All</button>
+      <div class="qol-sep"></div>
+      <button type="button" class="qol-btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled>Undo</button>
+      <button type="button" class="qol-btn" id="redoBtn" title="Redo (Ctrl+Y)" disabled>Redo</button>
+      <div class="qol-sep"></div>
+      <label class="qol-group">
+        <span>W:</span>
+        <input type="number" id="canvasW" min="32" max="2400" value="640" />
+      </label>
+      <label class="qol-group">
+        <span>H:</span>
+        <input type="number" id="canvasH" min="32" max="2400" value="420" />
+      </label>
+      <button type="button" class="qol-btn" id="resizeBtn" title="Resize canvas keeping current art">Resize</button>
+      <div class="qol-sep"></div>
+      <label class="qol-group">
+        <span>Zoom:</span>
+        <select id="zoomSelect">
+          <option value="0.5">50%</option>
+          <option value="1" selected>100%</option>
+          <option value="2">200%</option>
+          <option value="3">300%</option>
+          <option value="4">400%</option>
+        </select>
+      </label>
+      <button type="button" class="qol-btn" id="gridBtn" title="Toggle pixel grid overlay">Grid</button>
+      <div class="qol-sep"></div>
+      <label class="qol-group" title="Color tolerance for Bucket & Magic Wand (0 = exact match, higher = selects/fills more similar pixels)">
+        <span>Tol:</span>
+        <input type="number" id="fillTolerance" min="0" max="255" value="32" />
+      </label>
+      <label class="qol-check" title="Smooths boundary pixels on bucket fills to reduce jagged edges">
+        <input type="checkbox" id="aaSmoothingToggle" checked />
+        <span>Anti-Aliased Edge Smoothing (Bucket Tool)</span>
+      </label>
+      <span class="qol-pipe" aria-hidden="true">|</span>
+      <label class="qol-group" title="Text tool font size in pixels">
+        <span>Text Size:</span>
+        <input type="number" id="textSizeInput" min="8" max="160" value="24" />
+        <span>px</span>
+      </label>
+    </div>
+
+    <!-- Workspace -->
+    <div class="workspace">
+      <!-- Left Tool Strip -->
+      <aside class="tool-column" aria-label="Drawing Tools">
+        <div class="tools-grid" id="toolsGrid">
+          <button type="button" class="tool-btn select-icon" data-tool="select" data-label="Select" title="Dotted Select / Move & Delete Selection (S)">[....]</button>
+          <button type="button" class="tool-btn" data-tool="magicwand" data-label="Magic Wand" title="Magic Wand / Flood Select (W, Shift+Click to add)">🪄</button>
+          <button type="button" class="tool-btn" data-tool="handmovetool" data-label="Hand" title="Pan / Move View (H or hold Space / Middle-Click)">🖐️</button>
+          <button type="button" class="tool-btn text-icon" data-tool="text" data-label="Text" title="Text Tool (T)">[Aa]</button>
+          <button type="button" class="tool-btn active" data-tool="pencil" data-label="Pencil" title="Pencil (P)">✏️</button>
+          <button type="button" class="tool-btn" data-tool="brush" data-label="Paintbrush" title="Paintbrush (B)">🖌️</button>
+          <button type="button" class="tool-btn" data-tool="eraser" data-label="Eraser" title="Eraser (E)">🩹</button>
+          <button type="button" class="tool-btn" data-tool="fill" data-label="Bucket" title="Bucket / Fill With Color (G)">🪣</button>
+          <button type="button" class="tool-btn" data-tool="eyedropper" data-label="Eyedropper" title="Eyedropper / Pick Color (I)">💉</button>
+          <button type="button" class="tool-btn" data-tool="line" data-label="Line" title="Line (L)">╱</button>
+          <button type="button" class="tool-btn" data-tool="rect" data-label="Rectangle" title="Rectangle (R)">▭</button>
+          <button type="button" class="tool-btn" data-tool="ellipse" data-label="Ellipse" title="Ellipse (O)">⬭</button>
+        </div>
+
+        <div class="size-box" id="sizeBox" title="Stroke / Brush Size">
+          <div class="size-option active" data-size="2">
+            <div class="size-line" style="height: 2px;"></div>
+          </div>
+          <div class="size-option" data-size="5">
+            <div class="size-line" style="height: 4px;"></div>
+          </div>
+          <div class="size-option" data-size="10">
+            <div class="size-line" style="height: 7px;"></div>
+          </div>
+          <div class="size-option" data-size="18">
+            <div class="size-line" style="height: 11px;"></div>
+          </div>
+        </div>
+
+        <!-- Selected Tool Name Readout in Left Strip -->
+        <div class="tool-readout" aria-live="polite" title="Currently Selected Tool">
+          <span class="tool-readout-caption">Tool</span>
+          <span class="tool-readout-value" id="activeToolName">Pencil</span>
+        </div>
+      </aside>
+
+      <!-- Canvas Viewport -->
+      <main class="canvas-viewport" id="viewport">
+        <div class="canvas-stage" id="canvasStage">
+          <canvas id="paintCanvas" width="640" height="420"></canvas>
+          <canvas id="previewCanvas" width="640" height="420"></canvas>
+          <div class="grid-overlay" id="gridOverlay"></div>
+        </div>
+      </main>
+
+      <!-- Right Dock: Layers + Color & Tone Adjustments -->
+      <aside class="side-dock" aria-label="Layers and Adjustments">
+        <!-- Layers Panel -->
+        <section class="dock-panel">
+          <div class="dock-header">
+            <span>Layers</span>
+            <span id="layerCountLabel">1</span>
+          </div>
+          <div class="layer-toolbar">
+            <button type="button" class="qol-btn" id="addLayerBtn" title="Add transparent layer above active">+ Add</button>
+            <button type="button" class="qol-btn" id="dupLayerBtn" title="Duplicate active layer">Dup</button>
+            <button type="button" class="qol-btn" id="delLayerBtn" title="Delete active layer">Del</button>
+            <button type="button" class="qol-btn" id="moveLayerUpBtn" title="Move active layer up">▲</button>
+            <button type="button" class="qol-btn" id="moveLayerDownBtn" title="Move active layer down">▼</button>
+          </div>
+          <div class="layer-opacity-row">
+            <span>Opacity:</span>
+            <input type="range" id="layerOpacityRange" min="0" max="100" value="100" />
+            <span id="layerOpacityVal" class="adj-val">100%</span>
+          </div>
+          <div class="layers-list" id="layersList"></div>
+        </section>
+
+        <!-- Color & Tone Adjustments Panel -->
+        <section class="dock-panel">
+          <div class="dock-header">
+            <span>Color &amp; Tone</span>
+          </div>
+          <div class="adj-row">
+            <label for="adjBrightness">Bright:</label>
+            <input type="range" id="adjBrightness" min="-100" max="100" value="0" />
+            <span id="adjBrightnessVal" class="adj-val">0</span>
+          </div>
+          <div class="adj-row">
+            <label for="adjContrast">Contrast:</label>
+            <input type="range" id="adjContrast" min="-100" max="100" value="0" />
+            <span id="adjContrastVal" class="adj-val">0</span>
+          </div>
+          <div class="adj-row">
+            <label for="adjHue">Hue:</label>
+            <input type="range" id="adjHue" min="-180" max="180" value="0" />
+            <span id="adjHueVal" class="adj-val">0°</span>
+          </div>
+          <div class="adj-row">
+            <label for="adjSaturation">Sat:</label>
+            <input type="range" id="adjSaturation" min="-100" max="100" value="0" />
+            <span id="adjSaturationVal" class="adj-val">0%</span>
+          </div>
+          <div class="adj-actions">
+            <button type="button" class="qol-btn" id="applyAdjBtn" title="Apply slider adjustments to active layer">Apply</button>
+            <button type="button" class="qol-btn" id="resetAdjBtn" title="Reset adjustment sliders">Reset</button>
+            <button type="button" class="qol-btn" id="invertColorsBtn" title="Invert RGB colors on active layer">Invert RGB</button>
+            <button type="button" class="qol-btn" id="grayscaleBtn" title="Convert active layer to grayscale">Grayscale</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <!-- Bottom Color Palette + Hex Input -->
+    <section class="color-panel" aria-label="Color Palette and Hex Input">
+      <div class="palette-row">
+        <div class="active-colors" title="Left click to edit primary, right click or click background to swap">
+          <div class="secondary-color" id="bgSwatch" title="Secondary / Eraser Color"></div>
+          <div class="primary-color" id="fgSwatch" title="Primary Color"></div>
+        </div>
+
+        <div class="swatches" id="swatches"></div>
+
+        <div class="custom-swatch-wrap">
+          <span class="custom-swatch-label">Custom</span>
+          <button
+            type="button"
+            id="customSwatchBtn"
+            class="swatch custom-swatch"
+            title="Custom RGB (Left: Choose/Primary, Right: Secondary)"
+            aria-label="Custom RGB color"
+          ></button>
+        </div>
+      </div>
+
+      <div class="hex-bar">
+        <label class="hex-label" for="hexInput">
+          <span class="hex-preview" id="hexPreview" aria-hidden="true"></span>
+          <span>Hex Color:</span>
+        </label>
+    
+        <div class="hex-input-wrap">
+          <span class="hex-prefix">#</span>
+          <input
+            type="text"
+            id="hexInput"
+            value="000000"
+            maxlength="7"
+            spellcheck="false"
+            autocomplete="off"
+            aria-label="Hex color code"
+          />
+        </div>
+        <button type="button" class="qol-btn" id="swapColorsBtn" title="Swap Primary and Secondary Colors">Swap</button>
+        <span class="hex-hint" id="hexStatus">Supports 3-digit (f0a) or 6-digit (ff00aa) hex</span>
+      </div>
+    </section>
+
+    <!-- Status Bar -->
+    <footer class="status-bar">
+      <div class="status-cell status-main" id="statusText">For Help, click Help Topics or use tools/shortcuts.</div>
+      <div class="status-cell" id="coordText">0, 0</div>
+      <div class="status-cell" id="dimText">640 × 420px</div>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const CLASSIC_PALETTE = [
+        "#000000", "#808080", "#800000", "#808000", "#008000", "#008080", "#000080",
+        "#800080", "#808040", "#004040", "#0080ff", "#004080", "#8000ff", "#804000",
+        "#ffffff", "#c0c0c0", "#ff0000", "#ffff00", "#00ff00", "#00ffff", "#0000ff",
+        "#ff00ff", "#ffff80", "#00ff80", "#80ffff", "#8080ff", "#ff0080", "#ff8040"
+      ];
+
+      const TOOL_NAMES = {
+        select: "Select",
+        magicwand: "Magic Wand",
+        handmovetool: "Hand",
+        text: "Text",
+        pencil: "Pencil",
+        brush: "Paintbrush",
+        eraser: "Eraser",
+        fill: "Bucket",
+        eyedropper: "Eyedropper",
+        line: "Line",
+        rect: "Rectangle",
+        ellipse: "Ellipse"
+      };
+
+      const canvas = document.getElementById("paintCanvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const previewCanvas = document.getElementById("previewCanvas");
+      const pCtx = previewCanvas.getContext("2d");
+
+      const viewport = document.getElementById("viewport");
+      const windowTitle = document.getElementById("windowTitle");
+      const swatchesEl = document.getElementById("swatches");
+      const fgSwatch = document.getElementById("fgSwatch");
+      const bgSwatch = document.getElementById("bgSwatch");
+      const activeToolNameEl = document.getElementById("activeToolName");
+      const hexInput = document.getElementById("hexInput");
+      const hexPreview = document.getElementById("hexPreview");
+      const hexStatus = document.getElementById("hexStatus");
+      const swapColorsBtn = document.getElementById("swapColorsBtn");
+
+      const toolsGrid = document.getElementById("toolsGrid");
+      const sizeBox = document.getElementById("sizeBox");
+      const importBtn = document.getElementById("importBtn");
+      const importFileInput = document.getElementById("importFileInput");
+      const copyBtn = document.getElementById("copyBtn");
+      const pasteBtn = document.getElementById("pasteBtn");
+      const deleteSelBtn = document.getElementById("deleteSelBtn");
+      const invertSelectionBtn = document.getElementById("invertSelectionBtn");
+      const unselectAllBtn = document.getElementById("unselectAllBtn");
+      const undoBtn = document.getElementById("undoBtn");
+      const redoBtn = document.getElementById("redoBtn");
+      const newBtn = document.getElementById("newBtn");
+      const saveBtn = document.getElementById("saveBtn");
+      const transparentPngToggle = document.getElementById("transparentPngToggle");
+      const resizeBtn = document.getElementById("resizeBtn");
+      const canvasWInput = document.getElementById("canvasW");
+      const canvasHInput = document.getElementById("canvasH");
+      const zoomSelect = document.getElementById("zoomSelect");
+      const gridBtn = document.getElementById("gridBtn");
+      const fillToleranceInput = document.getElementById("fillTolerance");
+      const aaSmoothingToggle = document.getElementById("aaSmoothingToggle");
+      const textSizeInput = document.getElementById("textSizeInput");
+      const gridOverlay = document.getElementById("gridOverlay");
+      const canvasStage = document.getElementById("canvasStage");
+
+      // Layers UI
+      const layersListEl = document.getElementById("layersList");
+      const layerCountLabel = document.getElementById("layerCountLabel");
+      const addLayerBtn = document.getElementById("addLayerBtn");
+      const dupLayerBtn = document.getElementById("dupLayerBtn");
+      const delLayerBtn = document.getElementById("delLayerBtn");
+      const moveLayerUpBtn = document.getElementById("moveLayerUpBtn");
+      const moveLayerDownBtn = document.getElementById("moveLayerDownBtn");
+      const layerOpacityRange = document.getElementById("layerOpacityRange");
+      const layerOpacityVal = document.getElementById("layerOpacityVal");
+
+      // Adjustments UI
+      const adjBrightness = document.getElementById("adjBrightness");
+      const adjContrast = document.getElementById("adjContrast");
+      const adjHue = document.getElementById("adjHue");
+      const adjSaturation = document.getElementById("adjSaturation");
+      const adjBrightnessVal = document.getElementById("adjBrightnessVal");
+      const adjContrastVal = document.getElementById("adjContrastVal");
+      const adjHueVal = document.getElementById("adjHueVal");
+      const adjSaturationVal = document.getElementById("adjSaturationVal");
+      const applyAdjBtn = document.getElementById("applyAdjBtn");
+      const resetAdjBtn = document.getElementById("resetAdjBtn");
+      const invertColorsBtn = document.getElementById("invertColorsBtn");
+      const grayscaleBtn = document.getElementById("grayscaleBtn");
+
+      const statusText = document.getElementById("statusText");
+      const coordText = document.getElementById("coordText");
+      const dimText = document.getElementById("dimText");
+
+      let currentTool = "pencil";
+      let strokeSize = 2;
+      let textFontSize = 24;
+      let fgColor = "#000000";
+      let bgColor = "#ffffff";
+      let activeButtonColor = "#000000";
+      let zoom = 1;
+      let gridEnabled = false;
+
+      let drawing = false;
+      let startPt = { x: 0, y: 0 };
+      let lastPt = { x: 0, y: 0 };
+
+      // Stackable layers (index 0 = bottom, last index = top)
+      let layers = [];
+      let activeLayerIndex = 0;
+      let layerCounter = 1;
+
+      // Rectangular selection & floating movable/pasted region state
+      let selectionRect = null;
+      let clipboardCanvas = null;
+      let floatingPaste = null;
+      let draggingFloating = false;
+      let dragOffset = { x: 0, y: 0 };
+      let hasUsedSelectionToolInCanvas = false;
+
+      // Pixel-mask selection state (used by Magic Wand & Invert Selection)
+      const maskSelection = {
+        active: false,
+        width: 0,
+        height: 0,
+        mask: null,
+        bounds: null,
+        dashOffset: 0
+      };
+
+      // Pan / Hand tool state
+      const panState = {
+        isPanning: false,
+        spaceHeld: false,
+        lastClientX: 0,
+        lastClientY: 0
+      };
+
+      // Active text box overlay
+      let activeTextInput = null;
+      let activeTextPt = null;
+
+      const history = [];
+      let historyIndex = -1;
+      const MAX_HISTORY = 25;
+
+      function createLayer(name, w, h, fillColor = null) {
+        const lCanvas = document.createElement("canvas");
+        lCanvas.width = w;
+        lCanvas.height = h;
+        const lCtx = lCanvas.getContext("2d", { willReadFrequently: true });
+        if (fillColor) {
+          lCtx.save();
+          lCtx.fillStyle = fillColor;
+          lCtx.fillRect(0, 0, w, h);
+          lCtx.restore();
+        }
+        return {
+          id: `layer_${layerCounter++}`,
+          name: name || `Layer ${layerCounter}`,
+          visible: true,
+          opacity: 1,
+          canvas: lCanvas,
+          ctx: lCtx
+        };
+      }
+
+      let customColorValue = null;
+
+      function rgbToHex(r, g, b) {
+        const clamp = n => Math.max(0, Math.min(255, Number.parseInt(n, 10) || 0));
+        const toHex = n => clamp(n).toString(16).padStart(2, "0");
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toLowerCase();
+      }
+
+      function hexToRgbParts(hex) {
+        const clean = (hex || "#000000").replace(/^#/, "");
+        const full = clean.length === 3
+          ? clean.split("").map(c => c + c).join("")
+          : clean.padEnd(6, "0").slice(0, 6);
+        return {
+          r: Number.parseInt(full.slice(0, 2), 16) || 0,
+          g: Number.parseInt(full.slice(2, 4), 16) || 0,
+          b: Number.parseInt(full.slice(4, 6), 16) || 0
+        };
+      }
+
+      const rgbPopover = (() => {
+        const pop = document.createElement("div");
+        pop.className = "rgb-picker-popover";
+        pop.setAttribute("role", "dialog");
+        pop.setAttribute("aria-label", "Custom RGB Color Picker");
+
+        pop.innerHTML = `
+          <div style="font-weight:bold;">Custom RGB Color</div>
+          <div class="rgb-picker-row">
+            <label for="rgbRRange">R</label>
+            <input type="range" id="rgbRRange" min="0" max="255" value="0" />
+            <input type="number" id="rgbRNum" min="0" max="255" value="0" />
+          </div>
+          <div class="rgb-picker-row">
+            <label for="rgbGRange">G</label>
+            <input type="range" id="rgbGRange" min="0" max="255" value="0" />
+            <input type="number" id="rgbGNum" min="0" max="255" value="0" />
+          </div>
+          <div class="rgb-picker-row">
+            <label for="rgbBRange">B</label>
+            <input type="range" id="rgbBRange" min="0" max="255" value="0" />
+            <input type="number" id="rgbBNum" min="0" max="255" value="0" />
+          </div>
+          <div class="rgb-picker-footer">
+            <span class="rgb-picker-preview" id="rgbPopPreview"></span>
+            <span id="rgbPopHex" style="font-family:var(--font-mono,monospace);">#000000</span>
+            <button type="button" id="rgbPopClose">Done</button>
+          </div>
+        `;
+        document.body.appendChild(pop);
+
+        document.addEventListener("pointerdown", e => {
+          const customBtn = document.getElementById("customSwatchBtn");
+          if (!pop.classList.contains("open")) return;
+          if (pop.contains(e.target) || customBtn?.contains(e.target)) return;
+          pop.classList.remove("open");
+        });
+
+        return pop;
+      })();
+
+      function openRgbPopoverForButton(customBtn) {
+        const rawHex = (hexInput?.value || "").trim().replace(/^#/, "");
+        const startHex = customColorValue ||
+          (/^[0-9a-f]{3}$/i.test(rawHex)
+            ? "#" + rawHex.split("").map(ch => ch + ch).join("")
+            : /^[0-9a-f]{6}$/i.test(rawHex)
+              ? "#" + rawHex
+              : "#000000");
+
+        const { r, g, b } = hexToRgbParts(startHex);
+
+        const rRange = rgbPopover.querySelector("#rgbRRange");
+        const gRange = rgbPopover.querySelector("#rgbGRange");
+        const bRange = rgbPopover.querySelector("#rgbBRange");
+        const rNum = rgbPopover.querySelector("#rgbRNum");
+        const gNum = rgbPopover.querySelector("#rgbGNum");
+        const bNum = rgbPopover.querySelector("#rgbBNum");
+        const popPreview = rgbPopover.querySelector("#rgbPopPreview");
+        const popHex = rgbPopover.querySelector("#rgbPopHex");
+        const closeBtn = rgbPopover.querySelector("#rgbPopClose");
+
+        rRange.value = rNum.value = r;
+        gRange.value = gNum.value = g;
+        bRange.value = bNum.value = b;
+
+        const applyCurrentRgb = () => {
+          const chosen = rgbToHex(rRange.value, gRange.value, bRange.value);
+          customColorValue = chosen;
+          customBtn.dataset.hasColor = "true";
+          customBtn.style.background = chosen;
+          customBtn.title = `${chosen.toUpperCase()} Custom RGB (Left: Choose/Primary, Right: Secondary)`;
+
+          popPreview.style.background = chosen;
+          popHex.textContent = chosen.toUpperCase();
+
+          setForegroundColor(chosen);
+          syncHexBox(chosen);
+          setStatus(`Selected custom RGB ${chosen.toUpperCase()}`);
+        };
+
+        const bindPair = (rangeEl, numEl) => {
+          rangeEl.oninput = () => {
+            numEl.value = rangeEl.value;
+            applyCurrentRgb();
+          };
+          numEl.oninput = () => {
+            const clamped = Math.max(0, Math.min(255, Number.parseInt(numEl.value, 10) || 0));
+            rangeEl.value = clamped;
+            applyCurrentRgb();
+          };
+        };
+
+        bindPair(rRange, rNum);
+        bindPair(gRange, gNum);
+        bindPair(bRange, bNum);
+
+        closeBtn.onclick = () => rgbPopover.classList.remove("open");
+
+        applyCurrentRgb();
+        rgbPopover.classList.add("open");
+
+        const rect = customBtn.getBoundingClientRect();
+        const popRect = rgbPopover.getBoundingClientRect();
+        const left = Math.max(8, Math.min(window.innerWidth - popRect.width - 8, rect.left - popRect.width / 2 + rect.width / 2));
+        const top = Math.max(8, rect.top - popRect.height - 8);
+        rgbPopover.style.left = `${left}px`;
+        rgbPopover.style.top = `${top}px`;
+      }
+
+      function syncHexBox(hexWithHash) {
+        if (!hexInput) return;
+        const cleanHex = hexWithHash.replace(/^#/, "").toLowerCase();
+        hexInput.value = cleanHex;
+        if (hexPreview) {
+          hexPreview.style.background = `#${cleanHex}`;
+        }
+        hexInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+
+      function buildPalette() {
+        swatchesEl.innerHTML = "";
+        CLASSIC_PALETTE.forEach(color => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "swatch";
+          btn.style.background = color;
+          btn.title = `${color.toUpperCase()} (Left: Primary, Right: Secondary)`;
+          btn.addEventListener("click", () => {
+            setForegroundColor(color);
+            syncHexBox(color);
+            setStatus(`Selected primary color ${color.toUpperCase()}`);
+          });
+          btn.addEventListener("contextmenu", e => {
+            e.preventDefault();
+            setBackgroundColor(color);
+            setStatus(`Selected secondary color ${color.toUpperCase()}`);
+          });
+          swatchesEl.appendChild(btn);
+        });
+
+        const customBtn = document.getElementById("customSwatchBtn");
+        if (!customBtn) return;
+
+        if (customColorValue) {
+          customBtn.dataset.hasColor = "true";
+          customBtn.style.background = customColorValue;
+          customBtn.title = `${customColorValue.toUpperCase()} Custom RGB (Left: Choose/Primary, Right: Secondary)`;
+        } else {
+          delete customBtn.dataset.hasColor;
+          customBtn.style.background = "";
+          customBtn.title = "Custom RGB (Left: Choose/Primary, Right: Secondary)";
+        }
+
+        customBtn.onclick = () => openRgbPopoverForButton(customBtn);
+
+        customBtn.oncontextmenu = e => {
+          e.preventDefault();
+          if (!customColorValue) {
+            setStatus("Left-click Custom first to pick an RGB color");
+            return;
+          }
+          setBackgroundColor(customColorValue);
+          setStatus(`Selected secondary custom color ${customColorValue.toUpperCase()}`);
+        };
+      }
+
+      function getActiveLayer() {
+        return layers[activeLayerIndex] || null;
+      }
+
+      function getActiveCtx() {
+        const layer = getActiveLayer();
+        return layer ? layer.ctx : ctx;
+      }
+
+      function renderCompositeCanvas(targetCanvas = canvas, includeWhiteBackdrop = false) {
+        const tCtx = targetCanvas.getContext("2d", { willReadFrequently: true });
+        tCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+        if (includeWhiteBackdrop) {
+          tCtx.save();
+          tCtx.fillStyle = "#ffffff";
+          tCtx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+          tCtx.restore();
+        }
+
+        for (let i = 0; i < layers.length; i++) {
+          const layer = layers[i];
+          if (!layer.visible || layer.opacity <= 0) continue;
+          tCtx.save();
+          tCtx.globalAlpha = Math.max(0, Math.min(1, layer.opacity));
+          tCtx.drawImage(layer.canvas, 0, 0);
+          tCtx.restore();
+        }
+      }
+
+      function syncLayersUI() {
+        layerCountLabel.textContent = String(layers.length);
+        layersListEl.innerHTML = "";
+
+        layers.forEach((layer, idx) => {
+          const item = document.createElement("div");
+          item.className = `layer-item${idx === activeLayerIndex ? " active" : ""}`;
+          item.addEventListener("click", () => {
+            commitTextInput(false);
+            if (floatingPaste) commitFloatingPaste();
+            activeLayerIndex = idx;
+            syncLayersUI();
+            setStatus(`Active layer: ${layer.name}`);
+          });
+
+          const visBox = document.createElement("input");
+          visBox.type = "checkbox";
+          visBox.checked = layer.visible;
+          visBox.title = "Toggle layer visibility";
+          visBox.addEventListener("click", e => e.stopPropagation());
+          visBox.addEventListener("change", () => {
+            layer.visible = visBox.checked;
+            renderCompositeCanvas();
+            pushHistory();
+          });
+
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "layer-name";
+          nameSpan.textContent = layer.name;
+
+          const alphaSpan = document.createElement("span");
+          alphaSpan.className = "layer-alpha-tag";
+          alphaSpan.textContent = `${Math.round(layer.opacity * 100)}%`;
+
+          item.appendChild(visBox);
+          item.appendChild(nameSpan);
+          item.appendChild(alphaSpan);
+          layersListEl.appendChild(item);
+        });
+
+        const active = getActiveLayer();
+        if (active) {
+          const pct = Math.round(active.opacity * 100);
+          layerOpacityRange.value = String(pct);
+          layerOpacityVal.textContent = `${pct}%`;
+        }
+        delLayerBtn.disabled = layers.length <= 1;
+        moveLayerUpBtn.disabled = activeLayerIndex >= layers.length - 1;
+        moveLayerDownBtn.disabled = activeLayerIndex <= 0;
+      }
+
+      function resetLayersToSingleWhite(w, h) {
+        layerCounter = 1;
+        const base = createLayer("Background", w, h, "#ffffff");
+        layers = [base];
+        activeLayerIndex = 0;
+        syncLayersUI();
+        renderCompositeCanvas();
+      }
+
+      function addNewLayer() {
+        commitTextInput(false);
+        if (floatingPaste) commitFloatingPaste();
+        const newLayer = createLayer(`Layer ${layers.length + 1}`, canvas.width, canvas.height, null);
+        const insertAt = Math.min(layers.length, activeLayerIndex + 1);
+        layers.splice(insertAt, 0, newLayer);
+        activeLayerIndex = insertAt;
+        syncLayersUI();
+        renderCompositeCanvas();
+        pushHistory();
+        setStatus(`Added ${newLayer.name} (transparent)`);
+      }
+
+      function duplicateActiveLayer() {
+        const src = getActiveLayer();
+        if (!src) return;
+        commitTextInput(false);
+        if (floatingPaste) commitFloatingPaste();
+        const copy = createLayer(`${src.name} Copy`, canvas.width, canvas.height, null);
+        copy.visible = src.visible;
+        copy.opacity = src.opacity;
+        copy.ctx.drawImage(src.canvas, 0, 0);
+        const insertAt = Math.min(layers.length, activeLayerIndex + 1);
+        layers.splice(insertAt, 0, copy);
+        activeLayerIndex = insertAt;
+        syncLayersUI();
+        renderCompositeCanvas();
+        pushHistory();
+        setStatus(`Duplicated ${src.name}`);
+      }
+
+      function deleteActiveLayer() {
+        if (layers.length <= 1) return;
+        commitTextInput(false);
+        clearSelectionState(false);
+        const removed = layers.splice(activeLayerIndex, 1)[0];
+        activeLayerIndex = Math.max(0, Math.min(layers.length - 1, activeLayerIndex));
+        syncLayersUI();
+        renderCompositeCanvas();
+        pushHistory();
+        setStatus(`Deleted ${removed.name}`);
+      }
+
+      function moveActiveLayer(delta) {
+        const nextIdx = activeLayerIndex + delta;
+        if (nextIdx < 0 || nextIdx >= layers.length) return;
+        commitTextInput(false);
+        const [moved] = layers.splice(activeLayerIndex, 1);
+        layers.splice(nextIdx, 0, moved);
+        activeLayerIndex = nextIdx;
+        syncLayersUI();
+        renderCompositeCanvas();
+        pushHistory();
+        setStatus(`Moved ${moved.name}`);
+      }
+
+      function getTolerance() {
+        if (!fillToleranceInput) return 32;
+        const val = parseInt(fillToleranceInput.value, 10);
+        if (Number.isNaN(val)) return 0;
+        return Math.max(0, Math.min(255, val));
+      }
+
+      function hasAnySelection() {
+        return Boolean(selectionRect || floatingPaste || maskSelection.active);
+      }
+
+      function markSelectionToolUsedInCanvas() {
+        if (!hasUsedSelectionToolInCanvas) {
+          hasUsedSelectionToolInCanvas = true;
+          updateSelectionButtons();
+        }
+      }
+
+      function isPointInCurrentSelection(x, y) {
+        if (floatingPaste) {
+          return (
+            x >= floatingPaste.x &&
+            x <= floatingPaste.x + floatingPaste.w &&
+            y >= floatingPaste.y &&
+            y <= floatingPaste.y + floatingPaste.h
+          );
+        }
+        if (maskSelection.active && maskSelection.mask && maskSelection.bounds) {
+          const { minX, minY, maxX, maxY } = maskSelection.bounds;
+          if (x < minX || x > maxX || y < minY || y > maxY) return false;
+          const px = Math.min(maskSelection.width - 1, Math.max(0, Math.floor(x)));
+          const py = Math.min(maskSelection.height - 1, Math.max(0, Math.floor(y)));
+          return maskSelection.mask[py * maskSelection.width + px] > 0;
+        }
+        if (selectionRect && selectionRect.w > 0 && selectionRect.h > 0) {
+          return (
+            x >= selectionRect.x &&
+            x <= selectionRect.x + selectionRect.w &&
+            y >= selectionRect.y &&
+            y <= selectionRect.y + selectionRect.h
+          );
+        }
+        return false;
+      }
+
+      function liftCurrentSelectionToFloating() {
+        if (floatingPaste) return true;
+        const activeLayer = getActiveLayer();
+        if (!activeLayer) return false;
+        const lCtx = activeLayer.ctx;
+
+        if (maskSelection.active && maskSelection.mask && maskSelection.bounds) {
+          const { minX, minY, maxX, maxY } = maskSelection.bounds;
+          const bw = maxX - minX + 1;
+          const bh = maxY - minY + 1;
+          if (bw <= 0 || bh <= 0) return false;
+
+          const floatCanvas = document.createElement("canvas");
+          floatCanvas.width = bw;
+          floatCanvas.height = bh;
+          const floatCtx = floatCanvas.getContext("2d");
+
+          const layerImg = lCtx.getImageData(minX, minY, bw, bh);
+          const floatImg = floatCtx.createImageData(bw, bh);
+
+          for (let y = 0; y < bh; y++) {
+            const maskRow = (minY + y) * maskSelection.width;
+            for (let x = 0; x < bw; x++) {
+              if (maskSelection.mask[maskRow + (minX + x)] > 0) {
+                const idx = (y * bw + x) * 4;
+                floatImg.data[idx] = layerImg.data[idx];
+                floatImg.data[idx + 1] = layerImg.data[idx + 1];
+                floatImg.data[idx + 2] = layerImg.data[idx + 2];
+                floatImg.data[idx + 3] = layerImg.data[idx + 3];
+
+                // Clear lifted pixels from active layer so moving leaves clean background
+                layerImg.data[idx] = 0;
+                layerImg.data[idx + 1] = 0;
+                layerImg.data[idx + 2] = 0;
+                layerImg.data[idx + 3] = 0;
+              }
+            }
+          }
+
+          floatCtx.putImageData(floatImg, 0, 0);
+          lCtx.putImageData(layerImg, minX, minY);
+
+          // Shift mask along with the lifted selection
+          const nextMask = createMask(maskSelection.width, maskSelection.height, 0);
+          for (let y = 0; y < bh; y++) {
+            const srcRow = (minY + y) * maskSelection.width;
+            for (let x = 0; x < bw; x++) {
+              if (maskSelection.mask[srcRow + (minX + x)] > 0) {
+                const nx = minX + x;
+                const ny = minY + y;
+                if (nx >= 0 && nx < maskSelection.width && ny >= 0 && ny < maskSelection.height) {
+                  nextMask[ny * maskSelection.width + nx] = 255;
+                }
+              }
+            }
+          }
+          maskSelection.mask = nextMask;
+
+          floatingPaste = {
+            canvas: floatCanvas,
+            x: minX,
+            y: minY,
+            w: bw,
+            h: bh,
+            fromMask: true
+          };
+          selectionRect = { x: minX, y: minY, w: bw, h: bh };
+          renderCompositeCanvas();
+          return true;
+        }
+
+        if (selectionRect && selectionRect.w > 0 && selectionRect.h > 0) {
+          const sx = Math.max(0, Math.floor(selectionRect.x));
+          const sy = Math.max(0, Math.floor(selectionRect.y));
+          const sw = Math.min(canvas.width - sx, Math.ceil(selectionRect.w));
+          const sh = Math.min(canvas.height - sy, Math.ceil(selectionRect.h));
+          if (sw <= 0 || sh <= 0) return false;
+
+          const floatCanvas = document.createElement("canvas");
+          floatCanvas.width = sw;
+          floatCanvas.height = sh;
+          floatCanvas.getContext("2d").drawImage(lCtx.canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+
+          lCtx.clearRect(sx, sy, sw, sh);
+          renderCompositeCanvas();
+
+          floatingPaste = {
+            canvas: floatCanvas,
+            x: sx,
+            y: sy,
+            w: sw,
+            h: sh,
+            fromMask: false
+          };
+          selectionRect = { x: sx, y: sy, w: sw, h: sh };
+          return true;
+        }
+
+        return false;
+      }
+
+      function shiftMaskBy(dx, dy) {
+        if (!maskSelection.mask || !maskSelection.active) return;
+        const { width, height, mask } = maskSelection;
+        const shifted = createMask(width, height, 0);
+        for (let y = 0; y < height; y++) {
+          const ny = y + dy;
+          if (ny < 0 || ny >= height) continue;
+          const srcRow = y * width;
+          const dstRow = ny * width;
+          for (let x = 0; x < width; x++) {
+            if (mask[srcRow + x] === 0) continue;
+            const nx = x + dx;
+            if (nx >= 0 && nx < width) {
+              shifted[dstRow + nx] = 255;
+            }
+          }
+        }
+        maskSelection.mask = shifted;
+        recomputeMaskBounds();
+      }
+
+      function nudgeSelection(dx, dy) {
+        if (currentTool !== "select" || !hasAnySelection()) return;
+
+        if (!floatingPaste) {
+          liftCurrentSelectionToFloating();
+        }
+        if (!floatingPaste) return;
+
+        const prevX = floatingPaste.x;
+        const prevY = floatingPaste.y;
+        floatingPaste.x += dx;
+        floatingPaste.y += dy;
+        selectionRect = {
+          x: floatingPaste.x,
+          y: floatingPaste.y,
+          w: floatingPaste.w,
+          h: floatingPaste.h
+        };
+
+        if (floatingPaste.fromMask && maskSelection.mask) {
+          shiftMaskBy(floatingPaste.x - prevX, floatingPaste.y - prevY);
+        }
+
+        renderSelectionOverlay();
+        updateSelectionButtons();
+        setStatus(`Moved selection to (${floatingPaste.x}, ${floatingPaste.y}) — press Enter or click outside to stamp`);
+      }
+
+      function deleteSelectedArea() {
+        // Only allowed when the Select Tool is equipped
+        if (currentTool !== "select") {
+          setStatus("Equip the Select Tool to delete a selected area");
+          return;
+        }
+        if (!hasAnySelection()) return;
+
+        if (floatingPaste) {
+          floatingPaste = null;
+          draggingFloating = false;
+          selectionRect = null;
+          clearMaskSelection();
+          pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          renderCompositeCanvas();
+          pushHistory();
+          updateSelectionButtons();
+          setStatus("Deleted selected area");
+          return;
+        }
+
+        const activeLayer = getActiveLayer();
+        if (!activeLayer) return;
+        const lCtx = activeLayer.ctx;
+
+        if (maskSelection.active && maskSelection.mask && maskSelection.bounds) {
+          const { minX, minY, maxX, maxY } = maskSelection.bounds;
+          const bw = maxX - minX + 1;
+          const bh = maxY - minY + 1;
+          const imgData = lCtx.getImageData(minX, minY, bw, bh);
+          const data = imgData.data;
+
+          for (let y = 0; y < bh; y++) {
+            const maskRow = (minY + y) * maskSelection.width;
+            for (let x = 0; x < bw; x++) {
+              if (maskSelection.mask[maskRow + (minX + x)] > 0) {
+                const idx = (y * bw + x) * 4;
+                data[idx] = 0;
+                data[idx + 1] = 0;
+                data[idx + 2] = 0;
+                data[idx + 3] = 0;
+              }
+            }
+          }
+
+          lCtx.putImageData(imgData, minX, minY);
+          clearSelectionState(false);
+          renderCompositeCanvas();
+          pushHistory();
+          setStatus(`Deleted selected pixels on ${activeLayer.name}`);
+          return;
+        }
+
+        if (selectionRect && selectionRect.w > 0 && selectionRect.h > 0) {
+          const sx = Math.max(0, Math.floor(selectionRect.x));
+          const sy = Math.max(0, Math.floor(selectionRect.y));
+          const sw = Math.min(canvas.width - sx, Math.ceil(selectionRect.w));
+          const sh = Math.min(canvas.height - sy, Math.ceil(selectionRect.h));
+          lCtx.clearRect(sx, sy, sw, sh);
+          clearSelectionState(false);
+          renderCompositeCanvas();
+          pushHistory();
+          setStatus(`Deleted ${sw} × ${sh}px selection on ${activeLayer.name}`);
+        }
+      }
+
+      function createMask(w, h, fillValue = 0) {
+        const m = new Uint8Array(w * h);
+        if (fillValue !== 0) m.fill(fillValue);
+        return m;
+      }
+
+      function recomputeMaskBounds() {
+        if (!maskSelection.mask) {
+          maskSelection.active = false;
+          maskSelection.bounds = null;
+          updateSelectionButtons();
+          return;
+        }
+
+        const { width, height, mask } = maskSelection;
+        let minX = width, minY = height, maxX = -1, maxY = -1;
+
+        for (let y = 0; y < height; y++) {
+          const row = y * width;
+          for (let x = 0; x < width; x++) {
+            if (mask[row + x] > 0) {
+              if (x < minX) minX = x;
+              if (y < minY) minY = y;
+              if (x > maxX) maxX = x;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+
+        if (maxX < minX || maxY < minY) {
+          maskSelection.active = false;
+          maskSelection.mask = null;
+          maskSelection.bounds = null;
+        } else {
+          maskSelection.active = true;
+          maskSelection.bounds = { minX, minY, maxX, maxY };
+        }
+        updateSelectionButtons();
+      }
+
+      function clearMaskSelection() {
+        maskSelection.active = false;
+        maskSelection.mask = null;
+        maskSelection.bounds = null;
+        updateSelectionButtons();
+      }
+
+      function updateSelectionButtons() {
+        const canManipulateSelection = currentTool === "select" && hasAnySelection();
+        copyBtn.disabled = !hasAnySelection();
+        pasteBtn.disabled = !clipboardCanvas;
+        deleteSelBtn.disabled = !canManipulateSelection;
+        invertSelectionBtn.disabled = false;
+        if (unselectAllBtn) {
+          unselectAllBtn.disabled = !hasUsedSelectionToolInCanvas;
+        }
+      }
+
+      function syncPanReadyCursor() {
+        const ready = currentTool === "handmovetool" || panState.spaceHeld;
+        viewport.classList.toggle("pan-ready", ready && !panState.isPanning);
+      }
+
+      function canViewportPan(e) {
+        return (
+          (currentTool === "handmovetool" && e.button === 0) ||
+          e.button === 1 ||
+          (panState.spaceHeld && e.button === 0)
+        );
+      }
+
+      function isImageLargerThanViewport() {
+        return (
+          viewport.scrollWidth > viewport.clientWidth + 1 ||
+          viewport.scrollHeight > viewport.clientHeight + 1
+        );
+      }
+
+      function startViewportPan(e) {
+        if (!canViewportPan(e)) return false;
+        if (activeTextInput) {
+          commitTextInput(false);
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        drawing = false;
+        draggingFloating = false;
+        panState.isPanning = true;
+        panState.lastClientX = e.clientX;
+        panState.lastClientY = e.clientY;
+
+        viewport.classList.remove("pan-ready");
+        viewport.classList.add("panning");
+        viewport.setPointerCapture?.(e.pointerId);
+
+        if (!isImageLargerThanViewport()) {
+          setStatus("Hand tool: image fits inside viewport (zoom in or resize canvas to pan)");
+        } else {
+          setStatus("Panning view — drag to move around image");
+        }
+        return true;
+      }
+
+      function moveViewportPan(e) {
+        if (!panState.isPanning) return false;
+        const dx = e.clientX - panState.lastClientX;
+        const dy = e.clientY - panState.lastClientY;
+
+        panState.lastClientX = e.clientX;
+        panState.lastClientY = e.clientY;
+
+        viewport.scrollLeft -= dx;
+        viewport.scrollTop -= dy;
+        return true;
+      }
+
+      function endViewportPan(e) {
+        if (!panState.isPanning) return false;
+        panState.isPanning = false;
+        viewport.classList.remove("panning");
+        if (e && viewport.hasPointerCapture?.(e.pointerId)) {
+          viewport.releasePointerCapture(e.pointerId);
+        }
+        syncPanReadyCursor();
+        return true;
+      }
+
+      function getTextFontSize() {
+        const val = parseInt(textSizeInput && textSizeInput.value, 10);
+        return Number.isFinite(val) ? Math.max(8, Math.min(160, val)) : textFontSize;
+      }
+
+      function syncActiveTextBoxStyle() {
+        if (!activeTextInput) return;
+        const pxSize = getTextFontSize();
+        activeTextInput.style.fontSize = `${Math.round(pxSize * zoom)}px`;
+        activeTextInput.style.color = fgColor;
+      }
+
+      function getWrappedLines(textareaEl, maxWidthPx) {
+        const rawText = textareaEl.value || "";
+        if (!rawText) return [];
+
+        const measureCtx = document.createElement("canvas").getContext("2d");
+        const pxSize = getTextFontSize();
+        measureCtx.font = `${pxSize}px ${getComputedStyle(document.body).fontFamily}`;
+
+        const padLeft = parseFloat(getComputedStyle(textareaEl).paddingLeft) || 5;
+        const padRight = parseFloat(getComputedStyle(textareaEl).paddingRight) || 5;
+        const borderLeft = parseFloat(getComputedStyle(textareaEl).borderLeftWidth) || 1;
+        const borderRight = parseFloat(getComputedStyle(textareaEl).borderRightWidth) || 1;
+
+        const boxWidthCanvas = Math.max(
+          20,
+          textareaEl.clientWidth / zoom - (padLeft + padRight + borderLeft + borderRight) / zoom
+        );
+        const limitWidth = maxWidthPx > 0 ? Math.min(boxWidthCanvas, maxWidthPx) : boxWidthCanvas;
+
+        const lines = [];
+        const paragraphs = rawText.split(/\r?\n/);
+
+        for (const para of paragraphs) {
+          if (para.length === 0) {
+            lines.push("");
+            continue;
+          }
+          let currentLine = "";
+          for (const ch of para) {
+            const candidate = currentLine + ch;
+            if (measureCtx.measureText(candidate).width <= limitWidth || currentLine.length === 0) {
+              currentLine = candidate;
+            } else {
+              lines.push(currentLine);
+              currentLine = ch;
+            }
+          }
+          lines.push(currentLine);
+        }
+
+        return lines;
+      }
+
+      function commitTextInput(cancel = false) {
+        if (!activeTextInput) return;
+        const inputEl = activeTextInput;
+        const pt = activeTextPt;
+        const lines = cancel ? [] : getWrappedLines(inputEl, canvas.width - (pt ? pt.x : 0));
+        const hasContent = !cancel && lines.some(line => line.length > 0);
+
+        activeTextInput = null;
+        activeTextPt = null;
+        inputEl.remove();
+
+        if (hasContent && pt) {
+          const targetCtx = getActiveCtx();
+          const activeLayer = getActiveLayer();
+          const pxSize = getTextFontSize();
+          const lineHeight = Math.round(pxSize * 1.25);
+          targetCtx.save();
+          targetCtx.fillStyle = fgColor;
+          targetCtx.font = `${pxSize}px ${getComputedStyle(document.body).fontFamily}`;
+          targetCtx.textBaseline = "top";
+
+          lines.forEach((line, idx) => {
+            if (line.length > 0) {
+              targetCtx.fillText(line, pt.x, pt.y + idx * lineHeight);
+            }
+          });
+
+          targetCtx.restore();
+          renderCompositeCanvas();
+          pushHistory();
+          setStatus(`Placed text (${pxSize}px) on ${activeLayer ? activeLayer.name : "canvas"}`);
+        }
+      }
+
+      function openTextInputAt(pt) {
+        commitTextInput(false);
+        const pxSize = getTextFontSize();
+        const inputEl = document.createElement("textarea");
+        inputEl.className = "text-entry-box";
+        inputEl.style.left = `${Math.round(pt.x * zoom)}px`;
+        inputEl.style.top = `${Math.round(pt.y * zoom)}px`;
+        inputEl.style.fontSize = `${Math.round(pxSize * zoom)}px`;
+        inputEl.style.color = fgColor;
+        inputEl.placeholder = "Type text (drag bottom-right corner to resize)...";
+
+        inputEl.addEventListener("keydown", e => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            commitTextInput(true);
+          } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault();
+            commitTextInput(false);
+          }
+        });
+
+        inputEl.addEventListener("blur", e => {
+          if (e.relatedTarget === textSizeInput) return;
+          commitTextInput(false);
+        });
+
+        canvasStage.appendChild(inputEl);
+        activeTextInput = inputEl;
+        activeTextPt = pt;
+        requestAnimationFrame(() => inputEl.focus());
+        setStatus("Type text (wraps & resizes from bottom-right corner); click outside or Ctrl+Enter to stamp");
+      }
+
+      function commitFloatingPaste() {
+        if (!floatingPaste) return;
+        const targetCtx = getActiveCtx();
+        targetCtx.drawImage(floatingPaste.canvas, floatingPaste.x, floatingPaste.y);
+        selectionRect = {
+          x: floatingPaste.x,
+          y: floatingPaste.y,
+          w: floatingPaste.w,
+          h: floatingPaste.h
+        };
+        floatingPaste = null;
+        clearMaskSelection();
+        renderCompositeCanvas();
+        renderSelectionOverlay();
+        pushHistory();
+        updateSelectionButtons();
+      }
+
+      function clearSelectionState(commitFirst = true) {
+        if (commitFirst && floatingPaste) {
+          commitFloatingPaste();
+          return;
+        }
+        selectionRect = null;
+        floatingPaste = null;
+        draggingFloating = false;
+        clearMaskSelection();
+        pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        updateSelectionButtons();
+      }
+
+      function traceMaskEdges(targetCtx, mask, w, h, minX, minY, maxX, maxY) {
+        const isSel = (x, y) => x >= 0 && x < w && y >= 0 && y < h && mask[y * w + x] > 0;
+
+        for (let y = minY; y <= maxY; y++) {
+          const row = y * w;
+          for (let x = minX; x <= maxX; x++) {
+            if (mask[row + x] === 0) continue;
+            if (!isSel(x, y - 1)) {
+              targetCtx.moveTo(x, y);
+              targetCtx.lineTo(x + 1, y);
+            }
+            if (!isSel(x + 1, y)) {
+              targetCtx.moveTo(x + 1, y);
+              targetCtx.lineTo(x + 1, y + 1);
+            }
+            if (!isSel(x, y + 1)) {
+              targetCtx.moveTo(x, y + 1);
+              targetCtx.lineTo(x + 1, y + 1);
+            }
+            if (!isSel(x - 1, y)) {
+              targetCtx.moveTo(x, y);
+              targetCtx.lineTo(x, y + 1);
+            }
+          }
+        }
+      }
+
+      function renderSelectionOverlay() {
+        pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+        if (floatingPaste) {
+          pCtx.drawImage(floatingPaste.canvas, floatingPaste.x, floatingPaste.y);
+          pCtx.save();
+          pCtx.strokeStyle = "#000080";
+          pCtx.lineWidth = 1;
+          pCtx.setLineDash([4, 3]);
+          pCtx.strokeRect(
+            floatingPaste.x + 0.5,
+            floatingPaste.y + 0.5,
+            Math.max(1, floatingPaste.w - 1),
+            Math.max(1, floatingPaste.h - 1)
+          );
+          pCtx.restore();
+          return;
+        }
+
+        if (maskSelection.active && maskSelection.mask && maskSelection.bounds) {
+          const { width, height, mask, bounds, dashOffset } = maskSelection;
+          const { minX, minY, maxX, maxY } = bounds;
+
+          pCtx.save();
+          pCtx.lineWidth = 1;
+          pCtx.setLineDash([4, 3]);
+
+          pCtx.strokeStyle = "#000000";
+          pCtx.lineDashOffset = -dashOffset;
+          pCtx.beginPath();
+          traceMaskEdges(pCtx, mask, width, height, minX, minY, maxX, maxY);
+          pCtx.stroke();
+
+          pCtx.strokeStyle = "#ffffff";
+          pCtx.lineDashOffset = -(dashOffset + 3.5);
+          pCtx.beginPath();
+          traceMaskEdges(pCtx, mask, width, height, minX, minY, maxX, maxY);
+          pCtx.stroke();
+
+          pCtx.restore();
+          return;
+        }
+
+        if (selectionRect && selectionRect.w > 0 && selectionRect.h > 0) {
+          pCtx.save();
+          pCtx.strokeStyle = "#000000";
+          pCtx.lineWidth = 1;
+          pCtx.setLineDash([4, 3]);
+          pCtx.strokeRect(
+            selectionRect.x + 0.5,
+            selectionRect.y + 0.5,
+            Math.max(1, selectionRect.w - 1),
+            Math.max(1, selectionRect.h - 1)
+          );
+          pCtx.strokeStyle = "#ffffff";
+          pCtx.lineDashOffset = 3.5;
+          pCtx.strokeRect(
+            selectionRect.x + 0.5,
+            selectionRect.y + 0.5,
+            Math.max(1, selectionRect.w - 1),
+            Math.max(1, selectionRect.h - 1)
+          );
+          pCtx.restore();
+        }
+      }
+
+      setInterval(() => {
+        if (maskSelection.active && !floatingPaste) {
+          maskSelection.dashOffset = (maskSelection.dashOffset + 1) % 7;
+          renderSelectionOverlay();
+        }
+      }, 140);
+
+      function colorDistanceFromSeed(data, seedIdx, pixelIdx) {
+        const dr = data[seedIdx] - data[pixelIdx];
+        const dg = data[seedIdx + 1] - data[pixelIdx + 1];
+        const db = data[seedIdx + 2] - data[pixelIdx + 2];
+        const da = data[seedIdx + 3] - data[pixelIdx + 3];
+
+        if (data[seedIdx + 3] < 8 && data[pixelIdx + 3] < 8) return 0;
+
+        const rgbDist = Math.sqrt(dr * dr + dg * dg + db * db) / Math.sqrt(3);
+        const alphaDiff = Math.abs(da);
+        return Math.max(rgbDist, alphaDiff);
+      }
+
+      function runMagicWand(startX, startY, additive = false) {
+        const w = canvas.width;
+        const h = canvas.height;
+        if (startX < 0 || startX >= w || startY < 0 || startY >= h) return;
+
+        if (!additive && selectionRect && !maskSelection.active) {
+          selectionRect = null;
+        }
+
+        const tolerance = getTolerance();
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        const seedIdx = (startY * w + startX) * 4;
+        const visited = new Uint8Array(w * h);
+
+        const nextMask =
+          additive && maskSelection.mask && maskSelection.width === w && maskSelection.height === h
+            ? new Uint8Array(maskSelection.mask)
+            : createMask(w, h, 0);
+
+        const stack = [startX, startY];
+
+        while (stack.length > 0) {
+          const cy = stack.pop();
+          const cx = stack.pop();
+          if (cx < 0 || cx >= w || cy < 0 || cy >= h) continue;
+
+          const pos = cy * w + cx;
+          if (visited[pos]) continue;
+          visited[pos] = 1;
+
+          const pixelIdx = pos * 4;
+          if (colorDistanceFromSeed(data, seedIdx, pixelIdx) <= tolerance) {
+            nextMask[pos] = 255;
+            stack.push(cx + 1, cy, cx - 1, cy, cx, cy + 1, cx, cy - 1);
+          }
+        }
+
+        maskSelection.width = w;
+        maskSelection.height = h;
+        maskSelection.mask = nextMask;
+        recomputeMaskBounds();
+        renderSelectionOverlay();
+
+        const selectedCount = maskSelection.active
+          ? maskSelection.mask.reduce((acc, v) => acc + (v > 0 ? 1 : 0), 0)
+          : 0;
+        setStatus(
+          `Magic Wand selected ${selectedCount} px at (${startX}, ${startY}) with Tolerance ${tolerance}${additive ? " (added)" : ""}`
+        );
+      }
+
+      function invertSelection() {
+        if (floatingPaste) {
+          commitFloatingPaste();
+        }
+
+        const w = canvas.width;
+        const h = canvas.height;
+
+        if (maskSelection.mask && maskSelection.width === w && maskSelection.height === h) {
+          const mask = maskSelection.mask;
+          for (let i = 0; i < mask.length; i++) {
+            mask[i] = mask[i] > 0 ? 0 : 255;
+          }
+          selectionRect = null;
+          recomputeMaskBounds();
+          renderSelectionOverlay();
+          setStatus(
+            maskSelection.active
+              ? "Inverted selection mask"
+              : "Selection inverted (0 pixels selected)"
+          );
+          return;
+        }
+
+        if (selectionRect && selectionRect.w > 0 && selectionRect.h > 0) {
+          const mask = createMask(w, h, 255);
+          const x0 = Math.max(0, Math.floor(selectionRect.x));
+          const y0 = Math.max(0, Math.floor(selectionRect.y));
+          const x1 = Math.min(w, Math.ceil(selectionRect.x + selectionRect.w));
+          const y1 = Math.min(h, Math.ceil(selectionRect.y + selectionRect.h));
+
+          for (let y = y0; y < y1; y++) {
+            const row = y * w;
+            for (let x = x0; x < x1; x++) {
+              mask[row + x] = 0;
+            }
+          }
+
+          selectionRect = null;
+          maskSelection.width = w;
+          maskSelection.height = h;
+          maskSelection.mask = mask;
+          recomputeMaskBounds();
+          renderSelectionOverlay();
+          setStatus("Inverted rectangular selection");
+          return;
+        }
+
+        selectionRect = null;
+        maskSelection.width = w;
+        maskSelection.height = h;
+        maskSelection.mask = createMask(w, h, 255);
+        recomputeMaskBounds();
+        renderSelectionOverlay();
+        setStatus(`Selected entire canvas (${w} × ${h}px)`);
+      }
+
+      function unselectAll() {
+        if (!hasAnySelection()) {
+          setStatus("No active selection to unselect");
+          return;
+        }
+        clearSelectionState(true);
+        setStatus("Unselected all");
+      }
+
+      function copySelection() {
+        if (floatingPaste) {
+          clipboardCanvas = document.createElement("canvas");
+          clipboardCanvas.width = floatingPaste.w;
+          clipboardCanvas.height = floatingPaste.h;
+          clipboardCanvas.getContext("2d").drawImage(floatingPaste.canvas, 0, 0);
+          updateSelectionButtons();
+          setStatus(`Copied ${clipboardCanvas.width} × ${clipboardCanvas.height}px selection`);
+          return;
+        }
+
+        const srcCtx = getActiveCtx();
+
+        if (maskSelection.active && maskSelection.mask && maskSelection.bounds) {
+          const { minX, minY, maxX, maxY } = maskSelection.bounds;
+          const bw = maxX - minX + 1;
+          const bh = maxY - minY + 1;
+
+          const outCanvas = document.createElement("canvas");
+          outCanvas.width = bw;
+          outCanvas.height = bh;
+          const outCtx = outCanvas.getContext("2d");
+          const srcImg = srcCtx.getImageData(minX, minY, bw, bh);
+          const dstImg = outCtx.createImageData(bw, bh);
+
+          for (let y = 0; y < bh; y++) {
+            const srcRow = (minY + y) * maskSelection.width;
+            for (let x = 0; x < bw; x++) {
+              if (maskSelection.mask[srcRow + (minX + x)] > 0) {
+                const idx = (y * bw + x) * 4;
+                dstImg.data[idx] = srcImg.data[idx];
+                dstImg.data[idx + 1] = srcImg.data[idx + 1];
+                dstImg.data[idx + 2] = srcImg.data[idx + 2];
+                dstImg.data[idx + 3] = srcImg.data[idx + 3];
+              }
+            }
+          }
+
+          outCtx.putImageData(dstImg, 0, 0);
+          clipboardCanvas = outCanvas;
+          updateSelectionButtons();
+          setStatus(`Copied ${bw} × ${bh}px selection`);
+          return;
+        }
+
+        if (selectionRect && selectionRect.w > 0 && selectionRect.h > 0) {
+          clipboardCanvas = document.createElement("canvas");
+          clipboardCanvas.width = selectionRect.w;
+          clipboardCanvas.height = selectionRect.h;
+          clipboardCanvas.getContext("2d").drawImage(
+            srcCtx.canvas,
+            selectionRect.x,
+            selectionRect.y,
+            selectionRect.w,
+            selectionRect.h,
+            0,
+            0,
+            selectionRect.w,
+            selectionRect.h
+          );
+          updateSelectionButtons();
+          setStatus(`Copied ${clipboardCanvas.width} × ${clipboardCanvas.height}px selection`);
+        }
+      }
+
+      function pasteSelection() {
+        if (!clipboardCanvas) return;
+        if (floatingPaste) {
+          commitFloatingPaste();
+        }
+
+        const anchor = maskSelection.active && maskSelection.bounds
+          ? { x: maskSelection.bounds.minX, y: maskSelection.bounds.minY }
+          : selectionRect;
+
+        const pasteX = anchor ? Math.min(canvas.width - 1, anchor.x + 8) : 16;
+        const pasteY = anchor ? Math.min(canvas.height - 1, anchor.y + 8) : 16;
+
+        const copyBuf = document.createElement("canvas");
+        copyBuf.width = clipboardCanvas.width;
+        copyBuf.height = clipboardCanvas.height;
+        copyBuf.getContext("2d").drawImage(clipboardCanvas, 0, 0);
+
+        clearMaskSelection();
+        floatingPaste = {
+          canvas: copyBuf,
+          x: pasteX,
+          y: pasteY,
+          w: copyBuf.width,
+          h: copyBuf.height,
+          fromMask: false
+        };
+        selectionRect = {
+          x: pasteX,
+          y: pasteY,
+          w: copyBuf.width,
+          h: copyBuf.height
+        };
+
+        selectTool("select");
+        renderSelectionOverlay();
+        updateSelectionButtons();
+        setStatus("Pasted selection onto active layer — drag to position, then click outside or press Enter to stamp");
+      }
+
+      function selectTool(toolKey) {
+        if (!TOOL_NAMES[toolKey]) return;
+        commitTextInput(false);
+        if (currentTool === "select" && toolKey !== "select") {
+          if (floatingPaste) {
+            commitFloatingPaste();
+          } else {
+            draggingFloating = false;
+            renderSelectionOverlay();
+          }
+        }
+        currentTool = toolKey;
+        activeToolNameEl.textContent = TOOL_NAMES[toolKey];
+        toolsGrid.querySelectorAll(".tool-btn").forEach(btn => {
+          btn.classList.toggle("active", btn.dataset.tool === toolKey);
+        });
+        syncPanReadyCursor();
+        updateSelectionButtons();
+
+        if (toolKey === "handmovetool") {
+          const scrollableHint = isImageLargerThanViewport()
+            ? "drag to pan around the image"
+            : "zoom in or resize canvas larger than viewport to pan";
+          setStatus(`Tool selected: Hand (${scrollableHint})`);
+        } else if (toolKey === "select") {
+          setStatus("Tool selected: Select — drag to select, right-click to unselect, or drag inside selection to move");
+        } else if (toolKey === "magicwand") {
+          setStatus("Tool selected: Magic Wand — click to select matching area, or right-click to unselect");
+        } else {
+          setStatus(`Tool selected: ${TOOL_NAMES[toolKey]}`);
+        }
+      }
+
+      function normalizeHex(raw) {
+        if (!raw) return null;
+        const cleaned = raw.trim().replace(/^#/, "");
+        if (/^[0-9a-fA-F]{3}$/.test(cleaned)) {
+          return "#" + cleaned.split("").map(ch => (ch + ch).toLowerCase()).join("");
+        }
+        if (/^[0-9a-fA-F]{6}$/.test(cleaned)) {
+          return "#" + cleaned.toLowerCase();
+        }
+        return null;
+      }
+
+      function hexToRgb(hex) {
+        const norm = normalizeHex(hex) || "#000000";
+        const num = parseInt(norm.slice(1), 16);
+        return {
+          r: (num >> 16) & 255,
+          g: (num >> 8) & 255,
+          b: num & 255,
+          a: 255
+        };
+      }
+
+      function syncColorUI(color = fgColor, updateInput = true) {
+        fgSwatch.style.background = fgColor;
+        bgSwatch.style.background = bgColor;
+        hexPreview.style.background = color;
+        syncActiveTextBoxStyle();
+        if (updateInput) {
+          hexInput.value = color.replace(/^#/, "");
+          hexInput.classList.remove("invalid");
+          hexStatus.textContent = `Active: ${color.toUpperCase()}`;
+        }
+      }
+
+      function setForegroundColor(hex) {
+        const norm = normalizeHex(hex);
+        if (!norm) return false;
+        fgColor = norm;
+        syncColorUI(fgColor, true);
+        return true;
+      }
+
+      function setBackgroundColor(hex) {
+        const norm = normalizeHex(hex);
+        if (!norm) return false;
+        bgColor = norm;
+        syncColorUI(fgColor, false);
+        return true;
+      }
+
+      function setStatus(msg) {
+        statusText.textContent = msg;
+      }
+
+      function updateDimensionsLabel() {
+        dimText.textContent = `${canvas.width} × ${canvas.height}px`;
+        canvasWInput.value = canvas.width;
+        canvasHInput.value = canvas.height;
+      }
+
+      function applyZoomAndGrid() {
+        const w = Math.round(canvas.width * zoom);
+        const h = Math.round(canvas.height * zoom);
+        canvasStage.style.width = `${w}px`;
+        canvasStage.style.height = `${h}px`;
+        canvas.style.width = `${w}px`;
+        canvas.style.height = `${h}px`;
+        previewCanvas.style.width = `${w}px`;
+        previewCanvas.style.height = `${h}px`;
+
+        const showGrid = gridEnabled && zoom >= 2;
+        gridOverlay.classList.toggle("visible", showGrid);
+        if (showGrid) {
+          gridOverlay.style.backgroundSize = `${zoom}px ${zoom}px`;
+        }
+        syncActiveTextBoxStyle();
+      }
+
+      function pushHistory() {
+        if (historyIndex < history.length - 1) {
+          history.splice(historyIndex + 1);
+        }
+        history.push({
+          width: canvas.width,
+          height: canvas.height,
+          activeLayerIndex,
+          layerCounter,
+          layers: layers.map(l => ({
+            id: l.id,
+            name: l.name,
+            visible: l.visible,
+            opacity: l.opacity,
+            dataUrl: l.canvas.toDataURL("image/png")
+          }))
+        });
+        if (history.length > MAX_HISTORY) {
+          history.shift();
+        }
+        historyIndex = history.length - 1;
+        updateUndoRedoButtons();
+      }
+
+      function restoreHistoryEntry(entry) {
+        if (!entry) return;
+        clearSelectionState(false);
+        canvas.width = entry.width;
+        canvas.height = entry.height;
+        previewCanvas.width = entry.width;
+        previewCanvas.height = entry.height;
+        layerCounter = entry.layerCounter || entry.layers.length + 1;
+
+        let loadedCount = 0;
+        const restoredLayers = new Array(entry.layers.length);
+
+        entry.layers.forEach((lData, idx) => {
+          const lCanvas = document.createElement("canvas");
+          lCanvas.width = entry.width;
+          lCanvas.height = entry.height;
+          const lCtx = lCanvas.getContext("2d", { willReadFrequently: true });
+
+          const layerObj = {
+            id: lData.id,
+            name: lData.name,
+            visible: lData.visible,
+            opacity: lData.opacity,
+            canvas: lCanvas,
+            ctx: lCtx
+          };
+          restoredLayers[idx] = layerObj;
+
+          const img = new Image();
+          img.onload = () => {
+            lCtx.drawImage(img, 0, 0);
+            loadedCount++;
+            if (loadedCount === entry.layers.length) {
+              layers = restoredLayers;
+              activeLayerIndex = Math.max(0, Math.min(layers.length - 1, entry.activeLayerIndex || 0));
+              syncLayersUI();
+              renderCompositeCanvas();
+              updateDimensionsLabel();
+              applyZoomAndGrid();
+            }
+          };
+          img.src = lData.dataUrl;
+        });
+      }
+
+      function undo() {
+        if (historyIndex <= 0) return;
+        historyIndex--;
+        restoreHistoryEntry(history[historyIndex]);
+        updateUndoRedoButtons();
+        setStatus("Undid last action");
+      }
+
+      function redo() {
+        if (historyIndex >= history.length - 1) return;
+        historyIndex++;
+        restoreHistoryEntry(history[historyIndex]);
+        updateUndoRedoButtons();
+        setStatus("Redid action");
+      }
+
+      function updateUndoRedoButtons() {
+        undoBtn.disabled = historyIndex <= 0;
+        redoBtn.disabled = historyIndex >= history.length - 1;
+      }
+
+      function importImageFile(file) {
+        if (!file) return;
+        clearSelectionState(false);
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = new Image();
+          img.onload = () => {
+            const targetW = Math.max(1, Math.min(2400, img.naturalWidth || img.width));
+            const targetH = Math.max(1, Math.min(2400, img.naturalHeight || img.height));
+
+            canvas.width = targetW;
+            canvas.height = targetH;
+            previewCanvas.width = targetW;
+            previewCanvas.height = targetH;
+
+            resetLayersToSingleWhite(targetW, targetH);
+            layers[0].ctx.drawImage(img, 0, 0, targetW, targetH);
+            pCtx.clearRect(0, 0, targetW, targetH);
+
+            renderCompositeCanvas();
+            windowTitle.textContent = `${file.name} - Paint`;
+            updateDimensionsLabel();
+            applyZoomAndGrid();
+            pushHistory();
+            setStatus(`Imported "${file.name}" (${targetW} × ${targetH}px)`);
+          };
+          img.onerror = () => {
+            setStatus(`Could not load "${file.name}" as an image`);
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function getCanvasPoint(e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.floor((e.clientX - rect.left) / zoom);
+        const y = Math.floor((e.clientY - rect.top) / zoom);
+        return {
+          x: Math.max(0, Math.min(canvas.width - 1, x)),
+          y: Math.max(0, Math.min(canvas.height - 1, y))
+        };
+      }
+
+      function drawSegment(targetCtx, from, to, color, size, round = true) {
+        targetCtx.save();
+        targetCtx.strokeStyle = color;
+        targetCtx.lineWidth = size;
+        targetCtx.lineCap = round ? "round" : "square";
+        targetCtx.lineJoin = round ? "round" : "miter";
+        targetCtx.beginPath();
+        targetCtx.moveTo(from.x + 0.5, from.y + 0.5);
+        targetCtx.lineTo(to.x + 0.5, to.y + 0.5);
+        targetCtx.stroke();
+        targetCtx.restore();
+      }
+
+      function drawDot(targetCtx, pt, color, size, round = true) {
+        targetCtx.save();
+        targetCtx.fillStyle = color;
+        if (round) {
+          targetCtx.beginPath();
+          targetCtx.arc(pt.x + 0.5, pt.y + 0.5, Math.max(0.5, size / 2), 0, Math.PI * 2);
+          targetCtx.fill();
+        } else {
+          const half = Math.floor(size / 2);
+          targetCtx.fillRect(pt.x - half, pt.y - half, Math.max(1, size), Math.max(1, size));
+        }
+        targetCtx.restore();
+      }
+
+      function drawShapePreview(targetCtx, a, b, color, size) {
+        targetCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        targetCtx.save();
+        targetCtx.strokeStyle = color;
+        targetCtx.lineWidth = size;
+        targetCtx.lineCap = "round";
+        targetCtx.lineJoin = "round";
+
+        if (currentTool === "line") {
+          targetCtx.beginPath();
+          targetCtx.moveTo(a.x + 0.5, a.y + 0.5);
+          targetCtx.lineTo(b.x + 0.5, b.y + 0.5);
+          targetCtx.stroke();
+        } else if (currentTool === "rect") {
+          const x = Math.min(a.x, b.x) + 0.5;
+          const y = Math.min(a.y, b.y) + 0.5;
+          const w = Math.abs(b.x - a.x);
+          const h = Math.abs(b.y - a.y);
+          targetCtx.strokeRect(x, y, w, h);
+        } else if (currentTool === "ellipse") {
+          const cx = (a.x + b.x) / 2 + 0.5;
+          const cy = (a.y + b.y) / 2 + 0.5;
+          const rx = Math.max(1, Math.abs(b.x - a.x) / 2);
+          const ry = Math.max(1, Math.abs(b.y - a.y) / 2);
+          targetCtx.beginPath();
+          targetCtx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+          targetCtx.stroke();
+        }
+        targetCtx.restore();
+      }
+
+      function floodFill(startX, startY, fillHex, tolerance = 32, antiAliasedEdges = true) {
+        const targetCtx = getActiveCtx();
+        const w = canvas.width;
+        const h = canvas.height;
+        const imgData = targetCtx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        const startIdx = (startY * w + startX) * 4;
+        const targetR = data[startIdx];
+        const targetG = data[startIdx + 1];
+        const targetB = data[startIdx + 2];
+        const targetA = data[startIdx + 3];
+
+        const fillRgb = hexToRgb(fillHex);
+        const maxDist = Math.max(0, Math.min(255, tolerance));
+
+        const visited = new Uint8Array(w * h);
+        const filled = new Uint8Array(w * h);
+        const stack = [startX, startY];
+
+        function pixelDiff(idx) {
+          const dr = Math.abs(data[idx] - targetR);
+          const dg = Math.abs(data[idx + 1] - targetG);
+          const db = Math.abs(data[idx + 2] - targetB);
+          const da = Math.abs(data[idx + 3] - targetA);
+          return Math.max(dr, dg, db, da);
+        }
+
+        function setPixel(idx, r, g, b, a = 255) {
+          data[idx] = r;
+          data[idx + 1] = g;
+          data[idx + 2] = b;
+          data[idx + 3] = a;
+        }
+
+        while (stack.length > 0) {
+          const y = stack.pop();
+          const x = stack.pop();
+          if (x < 0 || x >= w || y < 0 || y >= h) continue;
+
+          const pIndex = y * w + x;
+          if (visited[pIndex]) continue;
+          visited[pIndex] = 1;
+
+          const byteIdx = pIndex * 4;
+          if (pixelDiff(byteIdx) > maxDist) continue;
+
+          filled[pIndex] = 1;
+          setPixel(byteIdx, fillRgb.r, fillRgb.g, fillRgb.b, 255);
+          stack.push(x + 1, y, x - 1, y, x, y + 1, x, y - 1);
+        }
+
+        if (antiAliasedEdges) {
+          const fringeWindow = Math.max(maxDist * 2.2, 72);
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              const pIndex = y * w + x;
+              if (filled[pIndex]) continue;
+
+              const touchesFilled =
+                (x > 0 && filled[pIndex - 1]) ||
+                (x < w - 1 && filled[pIndex + 1]) ||
+                (y > 0 && filled[pIndex - w]) ||
+                (y < h - 1 && filled[pIndex + w]);
+
+              if (!touchesFilled) continue;
+
+              const byteIdx = pIndex * 4;
+              const diff = pixelDiff(byteIdx);
+              if (diff > maxDist && diff <= fringeWindow) {
+                const blend = Math.max(0, Math.min(0.65, 1 - (diff - maxDist) / (fringeWindow - maxDist)));
+                const inv = 1 - blend;
+                const nr = Math.round(data[byteIdx] * inv + fillRgb.r * blend);
+                const ng = Math.round(data[byteIdx + 1] * inv + fillRgb.g * blend);
+                const nb = Math.round(data[byteIdx + 2] * inv + fillRgb.b * blend);
+                const na = Math.max(data[byteIdx + 3], Math.round(255 * blend));
+                setPixel(byteIdx, nr, ng, nb, na);
+              }
+            }
+          }
+        }
+
+        targetCtx.putImageData(imgData, 0, 0);
+        renderCompositeCanvas();
+      }
+
+      function pickColorAt(x, y, isRightClick) {
+        const pixel = ctx.getImageData(x, y, 1, 1).data;
+        const picked = rgbToHex(pixel[0], pixel[1], pixel[2]);
+        if (isRightClick) {
+          setBackgroundColor(picked);
+        } else {
+          setForegroundColor(picked);
+        }
+        setStatus(`Sampled ${picked.toUpperCase()} at (${x}, ${y})`);
+      }
+
+      // Color & Tone Adjustments
+      function rgbToHsl(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h = 0, s = 0;
+        const l = (max + min) / 2;
+
+        if (max !== min) {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+          }
+          h /= 6;
+        }
+        return [h, s, l];
+      }
+
+      function hue2rgb(p, q, t) {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      }
+
+      function hslToRgb(h, s, l) {
+        let r, g, b;
+        if (s === 0) {
+          r = g = b = l;
+        } else {
+          const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+          const p = 2 * l - q;
+          r = hue2rgb(p, q, h + 1 / 3);
+          g = hue2rgb(p, q, h);
+          b = hue2rgb(p, q, h - 1 / 3);
+        }
+        return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+      }
+
+      function isPixelInSelection(x, y, w, h) {
+        if (maskSelection.active && maskSelection.mask && maskSelection.width === w && maskSelection.height === h) {
+          return maskSelection.mask[y * w + x] > 0;
+        }
+        if (selectionRect && selectionRect.w > 0 && selectionRect.h > 0) {
+          return (
+            x >= selectionRect.x &&
+            x < selectionRect.x + selectionRect.w &&
+            y >= selectionRect.y &&
+            y < selectionRect.y + selectionRect.h
+          );
+        }
+        return true;
+      }
+
+      function transformActiveLayerPixels(pixelFn, description) {
+        const active = getActiveLayer();
+        if (!active) return;
+        const w = active.canvas.width;
+        const h = active.canvas.height;
+        const imgData = active.ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (!isPixelInSelection(x, y, w, h)) continue;
+            const idx = (y * w + x) * 4;
+            const [nr, ng, nb] = pixelFn(data[idx], data[idx + 1], data[idx + 2]);
+            data[idx] = Math.max(0, Math.min(255, nr));
+            data[idx + 1] = Math.max(0, Math.min(255, ng));
+            data[idx + 2] = Math.max(0, Math.min(255, nb));
+          }
+        }
+
+        active.ctx.putImageData(imgData, 0, 0);
+        renderCompositeCanvas();
+        if (hasAnySelection()) renderSelectionOverlay();
+        pushHistory();
+        setStatus(`${description} on ${active.name}`);
+      }
+
+      function applySliderAdjustments() {
+        const bright = parseInt(adjBrightness.value, 10) || 0;
+        const contrast = parseInt(adjContrast.value, 10) || 0;
+        const hueShift = (parseInt(adjHue.value, 10) || 0) / 360;
+        const satDelta = (parseInt(adjSaturation.value, 10) || 0) / 100;
+
+        const contrastFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+        transformActiveLayerPixels((r, g, b) => {
+          let cr = contrastFactor * (r - 128) + 128 + bright * 2.55;
+          let cg = contrastFactor * (g - 128) + 128 + bright * 2.55;
+          let cb = contrastFactor * (b - 128) + 128 + bright * 2.55;
+
+          cr = Math.max(0, Math.min(255, cr));
+          cg = Math.max(0, Math.min(255, cg));
+          cb = Math.max(0, Math.min(255, cb));
+
+          if (hueShift !== 0 || satDelta !== 0) {
+            let [h, s, l] = rgbToHsl(cr, cg, cb);
+            h = (h + hueShift) % 1;
+            if (h < 0) h += 1;
+            s = Math.max(0, Math.min(1, s + satDelta));
+            return hslToRgb(h, s, l);
+          }
+          return [Math.round(cr), Math.round(cg), Math.round(cb)];
+        }, `Applied adjustments (B:${bright}, C:${contrast}, H:${adjHue.value}°, S:${adjSaturation.value}%)`);
+      }
+
+      function resetSliderAdjustments() {
+        adjBrightness.value = "0";
+        adjContrast.value = "0";
+        adjHue.value = "0";
+        adjSaturation.value = "0";
+        syncAdjustmentLabels();
+        setStatus("Reset adjustment sliders");
+      }
+
+      function syncAdjustmentLabels() {
+        adjBrightnessVal.textContent = adjBrightness.value;
+        adjContrastVal.textContent = adjContrast.value;
+        adjHueVal.textContent = `${adjHue.value}°`;
+        adjSaturationVal.textContent = `${adjSaturation.value}%`;
+      }
+
+      [adjBrightness, adjContrast, adjHue, adjSaturation].forEach(el => {
+        el.addEventListener("input", syncAdjustmentLabels);
+      });
+
+      applyAdjBtn.addEventListener("click", applySliderAdjustments);
+      resetAdjBtn.addEventListener("click", resetSliderAdjustments);
+      invertColorsBtn.addEventListener("click", () => {
+        transformActiveLayerPixels((r, g, b) => [255 - r, 255 - g, 255 - b], "Inverted colors");
+      });
+      grayscaleBtn.addEventListener("click", () => {
+        transformActiveLayerPixels((r, g, b) => {
+          const lum = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+          return [lum, lum, lum];
+        }, "Converted to grayscale");
+      });
+
+      // Layer controls
+      addLayerBtn.addEventListener("click", addNewLayer);
+      dupLayerBtn.addEventListener("click", duplicateActiveLayer);
+      delLayerBtn.addEventListener("click", deleteActiveLayer);
+      moveLayerUpBtn.addEventListener("click", () => moveActiveLayer(1));
+      moveLayerDownBtn.addEventListener("click", () => moveActiveLayer(-1));
+
+      layerOpacityRange.addEventListener("input", () => {
+        const active = getActiveLayer();
+        if (!active) return;
+        const pct = Math.max(0, Math.min(100, parseInt(layerOpacityRange.value, 10) || 0));
+        active.opacity = pct / 100;
+        layerOpacityVal.textContent = `${pct}%`;
+        syncLayersUI();
+        renderCompositeCanvas();
+      });
+
+      layerOpacityRange.addEventListener("change", () => {
+        pushHistory();
+        setStatus(`Set ${getActiveLayer()?.name || "layer"} opacity to ${layerOpacityRange.value}%`);
+      });
+
+      // Viewport panning handlers (Hand tool, Space+Drag, or Middle-Click Drag)
+      viewport.addEventListener("pointerdown", e => {
+        if (startViewportPan(e)) return;
+      });
+
+      viewport.addEventListener("pointermove", e => {
+        if (moveViewportPan(e)) return;
+      });
+
+      viewport.addEventListener("pointerup", e => {
+        if (endViewportPan(e)) return;
+      });
+
+      viewport.addEventListener("pointercancel", e => {
+        if (endViewportPan(e)) return;
+      });
+
+      viewport.addEventListener("auxclick", e => {
+        if (e.button === 1) e.preventDefault();
+      });
+
+      canvas.addEventListener("pointerdown", e => {
+        if (startViewportPan(e)) return;
+
+        if (activeTextInput) {
+          commitTextInput(false);
+          return;
+        }
+
+        e.preventDefault();
+        const pt = getCanvasPoint(e);
+        const isRightClick = e.button === 2;
+
+        if (isRightClick && (currentTool === "select" || currentTool === "magicwand")) {
+          drawing = false;
+          draggingFloating = false;
+          markSelectionToolUsedInCanvas();
+          if (hasAnySelection()) {
+            clearSelectionState(true);
+            setStatus(`Unselected area with right-click (${TOOL_NAMES[currentTool]})`);
+          } else {
+            setStatus("Nothing selected to unselect");
+          }
+          return;
+        }
+
+        canvas.setPointerCapture(e.pointerId);
+        activeButtonColor = isRightClick ? bgColor : fgColor;
+        startPt = pt;
+        lastPt = pt;
+        drawing = true;
+
+        if (currentTool === "text") {
+          drawing = false;
+          openTextInputAt(pt);
+          return;
+        }
+
+        if (currentTool === "magicwand") {
+          drawing = false;
+          markSelectionToolUsedInCanvas();
+          runMagicWand(pt.x, pt.y, e.shiftKey);
+          return;
+        }
+
+        if (currentTool === "select") {
+          markSelectionToolUsedInCanvas();
+          if (hasAnySelection() && isPointInCurrentSelection(pt.x, pt.y)) {
+            if (!floatingPaste) {
+              liftCurrentSelectionToFloating();
+            }
+            if (floatingPaste) {
+              draggingFloating = true;
+              dragOffset = { x: pt.x - floatingPaste.x, y: pt.y - floatingPaste.y };
+              updateSelectionButtons();
+              renderSelectionOverlay();
+              setStatus("Moving selection — drag to reposition");
+              return;
+            }
+          }
+
+          if (floatingPaste) {
+            commitFloatingPaste();
+          }
+
+          clearMaskSelection();
+          selectionRect = { x: pt.x, y: pt.y, w: 1, h: 1 };
+          updateSelectionButtons();
+          renderSelectionOverlay();
+          return;
+        }
+
+        if (currentTool === "eyedropper") {
+          pickColorAt(pt.x, pt.y, isRightClick);
+          drawing = false;
+          return;
+        }
+
+        if (currentTool === "fill") {
+          const tol = getTolerance();
+          const aa = aaSmoothingToggle ? aaSmoothingToggle.checked : true;
+          floodFill(pt.x, pt.y, activeButtonColor, tol, aa);
+          if (maskSelection.active) {
+            renderSelectionOverlay();
+          }
+          pushHistory();
+          drawing = false;
+          setStatus(
+            `Filled with ${activeButtonColor.toUpperCase()} (Tol: ${tol}, AA Smoothing: ${aa ? "On" : "Off"})`
+          );
+          return;
+        }
+
+        const activeCtx = getActiveCtx();
+        if (currentTool === "pencil") {
+          drawDot(activeCtx, pt, activeButtonColor, 1, false);
+          renderCompositeCanvas();
+        } else if (currentTool === "brush") {
+          drawDot(activeCtx, pt, activeButtonColor, strokeSize, true);
+          renderCompositeCanvas();
+        } else if (currentTool === "eraser") {
+          const eraseColor = isRightClick ? fgColor : bgColor;
+          drawDot(activeCtx, pt, eraseColor, Math.max(6, strokeSize * 1.5), false);
+          renderCompositeCanvas();
+        } else if (["line", "rect", "ellipse"].includes(currentTool)) {
+          drawShapePreview(pCtx, startPt, pt, activeButtonColor, strokeSize);
+        }
+      });
+
+      canvas.addEventListener("pointermove", e => {
+        if (panState.isPanning) return;
+
+        const pt = getCanvasPoint(e);
+        coordText.textContent = `${pt.x}, ${pt.y}`;
+
+        if (!drawing) return;
+
+        if (currentTool === "select") {
+          if (draggingFloating && floatingPaste) {
+            const prevX = floatingPaste.x;
+            const prevY = floatingPaste.y;
+            floatingPaste.x = pt.x - dragOffset.x;
+            floatingPaste.y = pt.y - dragOffset.y;
+            selectionRect = {
+              x: floatingPaste.x,
+              y: floatingPaste.y,
+              w: floatingPaste.w,
+              h: floatingPaste.h
+            };
+            if (floatingPaste.fromMask && maskSelection.mask) {
+              shiftMaskBy(floatingPaste.x - prevX, floatingPaste.y - prevY);
+            }
+            renderSelectionOverlay();
+            return;
+          }
+
+          const x = Math.min(startPt.x, pt.x);
+          const y = Math.min(startPt.y, pt.y);
+          const w = Math.max(1, Math.abs(pt.x - startPt.x) + 1);
+          const h = Math.max(1, Math.abs(pt.y - startPt.y) + 1);
+          selectionRect = { x, y, w, h };
+          updateSelectionButtons();
+          renderSelectionOverlay();
+          return;
+        }
+
+        const activeCtx = getActiveCtx();
+        if (currentTool === "pencil") {
+          drawSegment(activeCtx, lastPt, pt, activeButtonColor, 1, false);
+          lastPt = pt;
+          renderCompositeCanvas();
+        } else if (currentTool === "brush") {
+          drawSegment(activeCtx, lastPt, pt, activeButtonColor, strokeSize, true);
+          lastPt = pt;
+          renderCompositeCanvas();
+        } else if (currentTool === "eraser") {
+          const eraseColor = activeButtonColor === bgColor ? bgColor : activeButtonColor;
+          drawSegment(activeCtx, lastPt, pt, eraseColor, Math.max(6, strokeSize * 1.5), false);
+          lastPt = pt;
+          renderCompositeCanvas();
+        } else if (["line", "rect", "ellipse"].includes(currentTool)) {
+          drawShapePreview(pCtx, startPt, pt, activeButtonColor, strokeSize);
+        }
+      });
+
+      function finishStroke(e) {
+        if (panState.isPanning) return;
+        if (!drawing) return;
+        const pt = getCanvasPoint(e);
+        drawing = false;
+
+        if (currentTool === "select") {
+          if (draggingFloating) {
+            draggingFloating = false;
+            renderSelectionOverlay();
+            updateSelectionButtons();
+            setStatus("Selection moved — drag again, press Delete to remove, or click outside / press Enter to stamp");
+          } else if (selectionRect) {
+            const x = Math.min(startPt.x, pt.x);
+            const y = Math.min(startPt.y, pt.y);
+            const w = Math.max(1, Math.abs(pt.x - startPt.x) + 1);
+            const h = Math.max(1, Math.abs(pt.y - startPt.y) + 1);
+            selectionRect = { x, y, w, h };
+            updateSelectionButtons();
+            renderSelectionOverlay();
+            setStatus(`Selected ${w} × ${h}px — drag inside to move, press Delete to remove, or Ctrl+C to copy`);
+          }
+          return;
+        }
+
+        if (["line", "rect", "ellipse"].includes(currentTool)) {
+          const activeCtx = getActiveCtx();
+          drawShapePreview(pCtx, startPt, pt, activeButtonColor, strokeSize);
+          activeCtx.drawImage(previewCanvas, 0, 0);
+          pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          renderCompositeCanvas();
+          if (maskSelection.active) {
+            renderSelectionOverlay();
+          }
+        }
+        pushHistory();
+      }
+
+      canvas.addEventListener("pointerup", finishStroke);
+      canvas.addEventListener("pointercancel", finishStroke);
+      canvas.addEventListener("contextmenu", e => e.preventDefault());
+
+      // Hex input handling
+      hexInput.addEventListener("input", () => {
+        const normalized = normalizeHex(hexInput.value);
+        if (normalized) {
+          fgColor = normalized;
+          hexPreview.style.background = normalized;
+          fgSwatch.style.background = normalized;
+          syncActiveTextBoxStyle();
+          hexInput.classList.remove("invalid");
+          hexStatus.textContent = `Applied ${normalized.toUpperCase()}`;
+        } else {
+          hexInput.classList.add("invalid");
+          hexStatus.textContent = "Enter 3 or 6 hex chars (0-9, a-f)";
+        }
+      });
+
+      hexInput.addEventListener("blur", () => {
+        const normalized = normalizeHex(hexInput.value);
+        if (normalized) {
+          setForegroundColor(normalized);
+        } else {
+          syncColorUI(fgColor, true);
+        }
+      });
+
+      hexInput.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const normalized = normalizeHex(hexInput.value);
+          if (normalized) {
+            setForegroundColor(normalized);
+            setStatus(`Set color to ${normalized.toUpperCase()}`);
+          }
+          hexInput.blur();
+        }
+      });
+
+      swapColorsBtn.addEventListener("click", () => {
+        const temp = fgColor;
+        fgColor = bgColor;
+        bgColor = temp;
+        syncColorUI(fgColor, true);
+        setStatus("Swapped primary and secondary colors");
+      });
+
+      fgSwatch.addEventListener("click", () => {
+        hexInput.focus();
+        hexInput.select();
+      });
+
+      bgSwatch.addEventListener("click", () => {
+        const temp = fgColor;
+        fgColor = bgColor;
+        bgColor = temp;
+        syncColorUI(fgColor, true);
+        setStatus("Swapped primary and secondary colors");
+      });
+
+      // Tool & size selection
+      toolsGrid.addEventListener("click", e => {
+        const btn = e.target.closest(".tool-btn");
+        if (!btn) return;
+        selectTool(btn.dataset.tool);
+      });
+
+      sizeBox.addEventListener("click", e => {
+        const opt = e.target.closest(".size-option");
+        if (!opt) return;
+        strokeSize = Number(opt.dataset.size) || 2;
+        sizeBox.querySelectorAll(".size-option").forEach(o => o.classList.remove("active"));
+        opt.classList.add("active");
+        setStatus(`Brush/stroke size: ${strokeSize}px`);
+      });
+
+      textSizeInput.addEventListener("input", () => {
+        textFontSize = getTextFontSize();
+        syncActiveTextBoxStyle();
+        setStatus(`Text size set to ${textFontSize}px`);
+      });
+
+      textSizeInput.addEventListener("change", () => {
+        textFontSize = getTextFontSize();
+        textSizeInput.value = textFontSize;
+        syncActiveTextBoxStyle();
+      });
+
+      // QoL actions
+      copyBtn.addEventListener("click", copySelection);
+      pasteBtn.addEventListener("click", pasteSelection);
+      deleteSelBtn.addEventListener("click", deleteSelectedArea);
+      invertSelectionBtn.addEventListener("click", invertSelection);
+      unselectAllBtn.addEventListener("click", unselectAll);
+
+      importBtn.addEventListener("click", () => {
+        importFileInput.value = "";
+        importFileInput.click();
+      });
+
+      importFileInput.addEventListener("change", e => {
+        const file = e.target.files && e.target.files[0];
+        importImageFile(file);
+      });
+
+      undoBtn.addEventListener("click", undo);
+      redoBtn.addEventListener("click", redo);
+
+      newBtn.addEventListener("click", () => {
+        clearSelectionState(false);
+        resetLayersToSingleWhite(canvas.width, canvas.height);
+        windowTitle.textContent = "untitled - Painting";
+        pushHistory();
+        setStatus("Created new blank canvas");
+      });
+
+      saveBtn.addEventListener("click", () => {
+        commitTextInput(false);
+        clearSelectionState(true);
+        const keepTransparent = Boolean(transparentPngToggle && transparentPngToggle.checked);
+        const exportCanvas = document.createElement("canvas");
+        exportCanvas.width = canvas.width;
+        exportCanvas.height = canvas.height;
+        renderCompositeCanvas(exportCanvas, !keepTransparent);
+
+        const link = document.createElement("a");
+        link.download = `paint-${Date.now()}.png`;
+        link.href = exportCanvas.toDataURL("image/png");
+        link.click();
+        setStatus(
+          keepTransparent
+            ? "Exported PNG with transparent background"
+            : "Exported flattened PNG (white background)"
+        );
+      });
+
+      resizeBtn.addEventListener("click", () => {
+        commitTextInput(false);
+        clearSelectionState(true);
+        const nextW = Math.max(32, Math.min(2400, parseInt(canvasWInput.value, 10) || canvas.width));
+        const nextH = Math.max(32, Math.min(2400, parseInt(canvasHInput.value, 10) || canvas.height));
+
+        layers.forEach(layer => {
+          const tempCanvas = document.createElement("canvas");
+          tempCanvas.width = layer.canvas.width;
+          tempCanvas.height = layer.canvas.height;
+          tempCanvas.getContext("2d").drawImage(layer.canvas, 0, 0);
+
+          layer.canvas.width = nextW;
+          layer.canvas.height = nextH;
+          layer.ctx.clearRect(0, 0, nextW, nextH);
+          layer.ctx.drawImage(tempCanvas, 0, 0);
+        });
+
+        canvas.width = nextW;
+        canvas.height = nextH;
+        previewCanvas.width = nextW;
+        previewCanvas.height = nextH;
+
+        renderCompositeCanvas();
+        updateDimensionsLabel();
+        applyZoomAndGrid();
+        pushHistory();
+        setStatus(`Resized canvas to ${nextW} × ${nextH}px`);
+      });
+
+      zoomSelect.addEventListener("change", () => {
+        commitTextInput(false);
+        zoom = parseFloat(zoomSelect.value) || 1;
+        applyZoomAndGrid();
+        renderSelectionOverlay();
+        setStatus(`Zoom set to ${Math.round(zoom * 100)}%`);
+      });
+
+      gridBtn.addEventListener("click", () => {
+        gridEnabled = !gridEnabled;
+        gridBtn.classList.toggle("active", gridEnabled);
+        applyZoomAndGrid();
+        if (gridEnabled && zoom < 2) {
+          setStatus("Grid enabled (visible at 200% zoom or higher)");
+        } else {
+          setStatus(gridEnabled ? "Pixel grid enabled" : "Pixel grid hidden");
+        }
+      });
+
+      aaSmoothingToggle.addEventListener("change", () => {
+        setStatus(
+          aaSmoothingToggle.checked
+            ? "Anti-Aliased Edge Smoothing (Bucket Tool) enabled"
+            : "Anti-Aliased Edge Smoothing (Bucket Tool) disabled"
+        );
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", e => {
+        const tag = document.activeElement && document.activeElement.tagName;
+        if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+
+        if (e.code === "Space") {
+          e.preventDefault();
+          if (!panState.spaceHeld) {
+            panState.spaceHeld = true;
+            syncPanReadyCursor();
+          }
+          return;
+        }
+
+        if ((e.key === "Delete" || e.key === "Backspace") && currentTool === "select" && hasAnySelection()) {
+          e.preventDefault();
+          deleteSelectedArea();
+          return;
+        }
+
+        if (currentTool === "select" && hasAnySelection() && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+          e.preventDefault();
+          const step = e.shiftKey ? 10 : 1;
+          if (e.key === "ArrowLeft") nudgeSelection(-step, 0);
+          else if (e.key === "ArrowRight") nudgeSelection(step, 0);
+          else if (e.key === "ArrowUp") nudgeSelection(0, -step);
+          else if (e.key === "ArrowDown") nudgeSelection(0, step);
+          return;
+        }
+
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "i") {
+          e.preventDefault();
+          invertSelection();
+          return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") {
+          if (hasAnySelection()) {
+            e.preventDefault();
+            copySelection();
+          }
+          return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") {
+          if (clipboardCanvas) {
+            e.preventDefault();
+            pasteSelection();
+          }
+          return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+          e.preventDefault();
+          if (e.shiftKey) redo();
+          else undo();
+          return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+          e.preventDefault();
+          redo();
+          return;
+        }
+        if (e.key === "Escape" && hasAnySelection()) {
+          e.preventDefault();
+          clearSelectionState(false);
+          setStatus("Cleared selection");
+          return;
+        }
+        if (e.key === "Enter" && floatingPaste) {
+          e.preventDefault();
+          commitFloatingPaste();
+          setStatus("Stamped pasted selection");
+          return;
+        }
+
+        const keyMap = {
+          s: "select",
+          w: "magicwand",
+          h: "handmovetool",
+          t: "text",
+          p: "pencil",
+          b: "brush",
+          e: "eraser",
+          g: "fill",
+          i: "eyedropper",
+          l: "line",
+          r: "rect",
+          o: "ellipse"
+        };
+        const mappedTool = keyMap[e.key.toLowerCase()];
+        if (mappedTool) {
+          selectTool(mappedTool);
+        }
+      });
+
+      document.addEventListener("keyup", e => {
+        if (e.code === "Space") {
+          panState.spaceHeld = false;
+          if (!panState.isPanning) {
+            syncPanReadyCursor();
+          }
+        }
+      });
+
+      window.addEventListener("blur", () => {
+        panState.spaceHeld = false;
+        endViewportPan();
+      });
+
+      // Initialize
+      buildPalette();
+      resetLayersToSingleWhite(canvas.width, canvas.height);
+      syncAdjustmentLabels();
+      selectTool(currentTool);
+      syncColorUI(fgColor, true);
+      updateDimensionsLabel();
+      updateSelectionButtons();
+      applyZoomAndGrid();
+      pushHistory();
+    })();
+  </script>
+</body>
+</html>
