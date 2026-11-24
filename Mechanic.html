@@ -1,0 +1,3335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MECHANIC</title>
+<style>
+  :root {
+    --ink: #171a1d;
+    --panel: #20262b;
+    --panel2: #2b3339;
+    --cream: #eee8d7;
+    --muted: #9da8ad;
+    --yellow: #f1c75b;
+    --orange: #d97735;
+    --red: #e54141;
+    --green: #55bf72;
+    --blue: #4e91c9;
+    --floor1: #566169;
+    --floor2: #515b62;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: #0f1214;
+    color: var(--cream);
+    font-family: "Courier New", monospace;
+  }
+
+  button, input {
+    font: inherit;
+  }
+
+  button {
+    color: var(--cream);
+  }
+
+  #app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .pixel {
+    image-rendering: pixelated;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  header {
+    height: 54px;
+    flex: 0 0 54px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 14px;
+    background: #171b1e;
+    border-bottom: 4px solid #080a0b;
+    box-shadow: inset 0 -2px #343c42;
+    z-index: 20;
+  }
+
+  .brand {
+    color: var(--yellow);
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-shadow: 3px 3px #000;
+  }
+
+  .stats {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .stat strong {
+    color: var(--yellow);
+  }
+
+  #game {
+    position: relative;
+    flex: 1;
+    min-height: 520px;
+    background: #262d31;
+  }
+
+  #garage {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background:
+      linear-gradient(30deg, rgba(255,255,255,.025) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,.025) 87.5%),
+      linear-gradient(150deg, rgba(255,255,255,.025) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,.025) 87.5%),
+      linear-gradient(30deg, rgba(0,0,0,.05) 12%, transparent 12.5%, transparent 87%, rgba(0,0,0,.05) 87.5%),
+      var(--floor1);
+    background-size: 64px 36px;
+  }
+
+  .wall-north {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 70px;
+    background:
+      repeating-linear-gradient(90deg, #354047 0 42px, #3c484f 42px 44px);
+    border-bottom: 7px solid #161b1e;
+    box-shadow: 0 9px 0 rgba(0,0,0,.18);
+  }
+
+  .wall-west {
+    position: absolute;
+    left: 0;
+    top: 70px;
+    bottom: 0;
+    width: 34px;
+    background: #30393e;
+    border-right: 7px solid #15191b;
+  }
+
+  .sign {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 18px;
+    color: var(--yellow);
+    background: #161a1d;
+    border: 3px solid #727b7f;
+    box-shadow: 4px 4px #080909;
+    font-weight: bold;
+    letter-spacing: 3px;
+  }
+
+  .zone {
+    position: absolute;
+    border: 3px solid #20272b;
+    background: rgba(18,22,24,.18);
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,.035), 6px 7px rgba(0,0,0,.15);
+  }
+
+  .zone-label {
+    position: absolute;
+    left: 7px;
+    top: 6px;
+    color: #d1d7d8;
+    background: #171b1d;
+    padding: 3px 7px;
+    font-size: 11px;
+    border: 2px solid #434c51;
+  }
+
+  #office {
+    left: 5%;
+    top: 14%;
+    width: 25%;
+    height: 33%;
+    background:
+      linear-gradient(rgba(130,103,72,.12), rgba(130,103,72,.12)),
+      #434d52;
+  }
+
+  #bay {
+    left: 34%;
+    top: 14%;
+    width: 42%;
+    height: 68%;
+    background: rgba(68,75,79,.25);
+  }
+
+  #storage {
+    right: 3%;
+    top: 14%;
+    width: 18%;
+    height: 34%;
+    background: rgba(45,50,53,.35);
+  }
+
+  #breakArea {
+    left: 5%;
+    bottom: 5%;
+    width: 25%;
+    height: 33%;
+    background: rgba(79,66,51,.24);
+  }
+
+  .object {
+    position: absolute;
+    cursor: pointer;
+    user-select: none;
+    transition: filter .15s, transform .15s;
+  }
+
+  .object:hover {
+    filter: brightness(1.2);
+  }
+
+  .object:focus-visible {
+    outline: 3px solid var(--yellow);
+  }
+
+  .object-tag {
+    position: absolute;
+    white-space: nowrap;
+    font-size: 10px;
+    color: #fff;
+    background: #121516;
+    border: 2px solid #4f595e;
+    padding: 3px 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -22px;
+    opacity: .85;
+  }
+
+  #desk {
+    left: 10%;
+    top: 25%;
+    width: 125px;
+    height: 58px;
+    background: #75513b;
+    border: 5px solid #3f2b22;
+    box-shadow: 8px 8px rgba(0,0,0,.25);
+  }
+
+  #desk::after {
+    content: "";
+    position: absolute;
+    left: 7px;
+    right: 7px;
+    top: 8px;
+    height: 8px;
+    background: #b18256;
+  }
+
+  #computer {
+    left: 15%;
+    top: 18%;
+    width: 60px;
+    height: 47px;
+    background: #1c2023;
+    border: 5px solid #090b0c;
+    box-shadow: 5px 5px rgba(0,0,0,.3);
+  }
+
+  #computer::before {
+    content: "TSB";
+    position: absolute;
+    inset: 5px;
+    display: grid;
+    place-items: center;
+    background: #285162;
+    color: #8ee7ff;
+    font-size: 11px;
+  }
+
+  #computer.broken::before {
+    content: "ERROR";
+    color: #ff5e5e;
+    background: #260b0b;
+    animation: blink 1s steps(2) infinite;
+  }
+
+  #clipboard {
+    left: 24%;
+    top: 30%;
+    width: 40px;
+    height: 52px;
+    background: #ece3c8;
+    border: 4px solid #322b21;
+    transform: rotate(4deg);
+  }
+
+  #clipboard::before {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 7px;
+    left: 6px;
+    top: -7px;
+    background: #555;
+    border: 2px solid #222;
+  }
+
+  #clipboard::after {
+    content: "JOB\A====\A???";
+    white-space: pre;
+    position: absolute;
+    color: #333;
+    left: 5px;
+    top: 10px;
+    font-size: 8px;
+    line-height: 9px;
+  }
+
+   /* ==================================================
+     EARLY-1990s ARCADE CAR SPRITE
+     Original fictional vehicle drawn with hard-edged
+     polygonal pixel geometry. No rounded CSS car shapes.
+  ================================================== */
+
+  #car {
+    left: 41%;
+    top: 31%;
+    width: 270px;
+    height: 148px;
+    transform: rotate(-2deg);
+    transform-origin: 50% 75%;
+    overflow: visible;
+  }
+
+  #car:hover {
+    filter: brightness(1.12) saturate(1.08);
+  }
+
+  .arcade-car-art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    image-rendering: pixelated;
+    shape-rendering: crispEdges;
+    filter:
+      drop-shadow(4px 4px 0 rgba(0, 0, 0, .55))
+      drop-shadow(8px 9px 0 rgba(0, 0, 0, .18));
+  }
+
+  .arcade-car-art polygon,
+  .arcade-car-art rect,
+  .arcade-car-art path {
+    shape-rendering: crispEdges;
+  }
+
+  .car-floor-shadow {
+    fill: #17191b;
+    opacity: .48;
+  }
+
+  .car-lift-dark {
+    fill: #594514;
+  }
+
+  .car-lift-mid {
+    fill: #b58926;
+  }
+
+  .car-lift-light {
+    fill: #e0ba4d;
+  }
+
+  .car-tire-outline {
+    fill: #08090a;
+  }
+
+  .car-tire {
+    fill: #17191c;
+  }
+
+  .car-tire-light {
+    fill: #34383c;
+  }
+
+  .car-rim-dark {
+    fill: #555e65;
+  }
+
+  .car-rim {
+    fill: #a9b2b6;
+  }
+
+  .car-rim-light {
+    fill: #e0e5e5;
+  }
+
+  .car-body-outline {
+    fill: #351713;
+  }
+
+  .car-body-shadow {
+    fill: #702a25;
+  }
+
+  .car-body-mid {
+    fill: #a94033;
+  }
+
+  .car-body-main {
+    fill: #c9503b;
+  }
+
+  .car-body-light {
+    fill: #ec7655;
+  }
+
+  .car-body-shine {
+    fill: #f4a06e;
+  }
+
+  /* Blue Paint Theme (Sterling Civic LX) */
+  .car-theme-blue .car-body-outline { fill: #122238; }
+  .car-theme-blue .car-body-shadow  { fill: #23436b; }
+  .car-theme-blue .car-body-mid     { fill: #35659e; }
+  .car-theme-blue .car-body-main    { fill: #4882c7; }
+  .car-theme-blue .car-body-light   { fill: #6ea4e3; }
+  .car-theme-blue .car-body-shine   { fill: #9ec5f5; }
+  .car-theme-blue .car-door-line    { fill: #1b3454; }
+  .car-theme-blue .car-handle       { fill: #9ec5f5; }
+
+  /* Tan / Gold Paint Theme (Frontier Ranger XLT) */
+  .car-theme-tan .car-body-outline  { fill: #332714; }
+  .car-theme-tan .car-body-shadow   { fill: #634d28; }
+  .car-theme-tan .car-body-mid      { fill: #8f723e; }
+  .car-theme-tan .car-body-main     { fill: #b59456; }
+  .car-theme-tan .car-body-light    { fill: #d4b577; }
+  .car-theme-tan .car-body-shine    { fill: #ebd39f; }
+  .car-theme-tan .car-door-line     { fill: #4a391d; }
+  .car-theme-tan .car-handle        { fill: #ebd39f; }
+
+  /* Forest Green Paint Theme */
+  .car-theme-green .car-body-outline { fill: #12291c; }
+  .car-theme-green .car-body-shadow  { fill: #204a32; }
+  .car-theme-green .car-body-mid     { fill: #2f6e4b; }
+  .car-theme-green .car-body-main    { fill: #419466; }
+  .car-theme-green .car-body-light   { fill: #63b888; }
+  .car-theme-green .car-body-shine   { fill: #95dbb3; }
+  .car-theme-green .car-door-line    { fill: #183826; }
+  .car-theme-green .car-handle       { fill: #95dbb3; }
+
+  /* Silver / Frost Paint Theme */
+  .car-theme-silver .car-body-outline { fill: #272b30; }
+  .car-theme-silver .car-body-shadow  { fill: #535b63; }
+  .car-theme-silver .car-body-mid     { fill: #7c8691; }
+  .car-theme-silver .car-body-main    { fill: #a4b0bd; }
+  .car-theme-silver .car-body-light   { fill: #cad4de; }
+  .car-theme-silver .car-body-shine   { fill: #edf3f7; }
+  .car-theme-silver .car-door-line    { fill: #3c424a; }
+  .car-theme-silver .car-handle       { fill: #edf3f7; }
+
+
+
+  .car-glass-outline {
+    fill: #18252c;
+  }
+
+  .car-glass-dark {
+    fill: #315564;
+  }
+
+  .car-glass-mid {
+    fill: #4f8090;
+  }
+
+  .car-glass-light {
+    fill: #84b4bd;
+  }
+
+  .car-bumper-dark {
+    fill: #262b2f;
+  }
+
+  .car-bumper {
+    fill: #687177;
+  }
+
+  .car-bumper-light {
+    fill: #aeb7b9;
+  }
+
+  .car-light-outline {
+    fill: #4b3012;
+  }
+
+  .car-light {
+    fill: #e7b747;
+  }
+
+  .car-light-shine {
+    fill: #fff0a1;
+  }
+
+  .car-tail-dark {
+    fill: #641c21;
+  }
+
+  .car-tail {
+    fill: #d53d39;
+  }
+
+  .car-door-line {
+    fill: #56201b;
+  }
+
+  .car-handle {
+    fill: #f0a273;
+  }
+
+  .car-pixel-spark {
+    animation: carSpark 1.5s steps(2, end) infinite;
+  }
+
+  @keyframes carSpark {
+    50% {
+      opacity: .3;
+    }
+  }
+
+
+  #toolChest {
+    left: 37%;
+    top: 67%;
+    width: 75px;
+    height: 65px;
+    background:
+      repeating-linear-gradient(#b52e2e 0 10px, #5e1717 10px 13px);
+    border: 5px solid #341010;
+    box-shadow: 7px 7px rgba(0,0,0,.25);
+  }
+
+  #partsShelf {
+    right: 8%;
+    top: 24%;
+    width: 110px;
+    height: 105px;
+    border: 7px solid #252b2e;
+    background:
+      linear-gradient(#252b2e 0 7px, transparent 7px 31px, #252b2e 31px 38px, transparent 38px 64px, #252b2e 64px 71px, transparent 71px);
+  }
+
+  #partsShelf::after {
+    content: "▣ ▤ ▣\A▤ ▣ ▤\A▣ ▣ ▤";
+    white-space: pre;
+    color: #d48a43;
+    position: absolute;
+    left: 9px;
+    top: 4px;
+    font-size: 20px;
+    line-height: 33px;
+  }
+
+  #door {
+    right: 5%;
+    bottom: 6%;
+    width: 115px;
+    height: 35px;
+    background: #22282b;
+    border: 5px solid #111416;
+    display: grid;
+    place-items: center;
+    color: #aeb5b8;
+    letter-spacing: 2px;
+    box-shadow: 7px 7px rgba(0,0,0,.25);
+  }
+
+  #vending {
+    left: 9%;
+    bottom: 12%;
+    width: 52px;
+    height: 84px;
+    background: #276677;
+    border: 5px solid #12313a;
+    box-shadow: 6px 6px rgba(0,0,0,.25);
+  }
+
+  #vending::before {
+    content: "POP\A\A▦▦";
+    white-space: pre;
+    position: absolute;
+    inset: 7px;
+    text-align: center;
+    color: #d4fbff;
+    font-size: 11px;
+  }
+
+   /* ==================================================
+     EARLY-1990s ARCADE MECHANIC SPRITE
+     Maintains the original character's approximate
+     28 x 42 pixel on-screen size.
+  ================================================== */
+
+  #mechanic {
+    position: absolute;
+    width: 30px;
+    height: 44px;
+    left: 31%;
+    top: 67%;
+    z-index: 15;
+    pointer-events: none;
+    transition:
+      left .8s linear,
+      top .8s linear;
+    transform-origin: 50% 100%;
+    filter:
+      drop-shadow(2px 3px 0 rgba(0, 0, 0, .7))
+      drop-shadow(4px 5px 0 rgba(0, 0, 0, .22));
+  }
+
+  .arcade-mechanic-art {
+    position: absolute;
+    left: -7px;
+    top: -3px;
+    width: 44px;
+    height: 51px;
+    overflow: visible;
+    image-rendering: pixelated;
+    shape-rendering: crispEdges;
+  }
+
+  .arcade-mechanic-art polygon,
+  .arcade-mechanic-art rect,
+  .arcade-mechanic-art path {
+    shape-rendering: crispEdges;
+  }
+
+  .mechanic-outline {
+    fill: #111519;
+  }
+
+  .mechanic-hair {
+    fill: #35231b;
+  }
+
+  .mechanic-hair-light {
+    fill: #60402c;
+  }
+
+  .mechanic-skin-dark {
+    fill: #815033;
+  }
+
+  .mechanic-skin {
+    fill: #c48150;
+  }
+
+  .mechanic-skin-light {
+    fill: #eba875;
+  }
+
+.mechanic-cap-dark {
+  fill: #080a0b;
+}
+
+.mechanic-cap {
+  fill: #171a1d;
+}
+
+.mechanic-cap-light {
+  fill: #343a3e;
+}
+
+  .mechanic-shirt-dark {
+    fill: #173746;
+  }
+
+  .mechanic-shirt {
+    fill: #275b70;
+  }
+
+  .mechanic-shirt-light {
+    fill: #4b8293;
+  }
+
+  .mechanic-shirt-shine {
+    fill: #80a9b1;
+  }
+
+  .mechanic-pants-dark {
+    fill: #182126;
+  }
+
+  .mechanic-pants {
+    fill: #29373e;
+  }
+
+  .mechanic-pants-light {
+    fill: #46545a;
+  }
+
+  .mechanic-boot {
+    fill: #151517;
+  }
+
+  .mechanic-boot-light {
+    fill: #49372d;
+  }
+
+  .mechanic-rag-dark {
+    fill: #76342d;
+  }
+
+  .mechanic-rag {
+    fill: #c95744;
+  }
+
+  .mechanic-eye {
+    fill: #111315;
+  }
+
+  .mechanic-badge {
+    fill: #e5c45c;
+  }
+
+  #mechanic.walking {
+    animation: arcadeWalk .22s steps(2, end) infinite;
+  }
+
+  #mechanic.walking .mechanic-left-leg {
+    animation: leftLegWalk .22s steps(2, end) infinite;
+    transform-origin: 18px 36px;
+  }
+
+  #mechanic.walking .mechanic-right-leg {
+    animation: rightLegWalk .22s steps(2, end) infinite;
+    transform-origin: 27px 36px;
+  }
+
+  #mechanic.walking .mechanic-left-arm {
+    animation: rightLegWalk .22s steps(2, end) infinite;
+    transform-origin: 13px 23px;
+  }
+
+  #mechanic.walking .mechanic-right-arm {
+    animation: leftLegWalk .22s steps(2, end) infinite;
+    transform-origin: 32px 23px;
+  }
+
+  @keyframes arcadeWalk {
+    50% {
+      transform: translateY(-2px);
+    }
+  }
+
+  @keyframes leftLegWalk {
+    50% {
+      transform: translate(-2px, 1px);
+    }
+  }
+
+  @keyframes rightLegWalk {
+    50% {
+      transform: translate(2px, -1px);
+    }
+  }
+
+  #mechanic.walking {
+    animation: bob .18s steps(2) infinite;
+  }
+
+  #objective {
+    position: absolute;
+    left: 45px;
+    right: 45px;
+    bottom: 16px;
+    z-index: 18;
+    max-width: 800px;
+    padding: 8px 12px;
+    background: rgba(12,15,16,.9);
+    border: 3px solid #647079;
+    box-shadow: 5px 5px rgba(0,0,0,.35);
+    font-size: 12px;
+    pointer-events: none;
+  }
+
+  #objective strong {
+    color: var(--yellow);
+  }
+
+  #toast {
+    position: absolute;
+    z-index: 50;
+    left: 50%;
+    top: 18px;
+    transform: translateX(-50%) translateY(-20px);
+    max-width: 80%;
+    padding: 10px 16px;
+    background: #101416;
+    border: 3px solid var(--yellow);
+    box-shadow: 5px 5px #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: .25s;
+    text-align: center;
+    font-size: 12px;
+  }
+
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .modal-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(4,6,7,.76);
+  }
+
+  .modal {
+    width: min(760px, 95vw);
+    max-height: calc(100vh - 95px);
+    overflow: auto;
+    background: var(--panel);
+    border: 5px solid #0c0e0f;
+    box-shadow:
+      0 0 0 3px #626d73,
+      12px 14px rgba(0,0,0,.45);
+  }
+
+  .modal.wide {
+    width: min(980px, 96vw);
+  }
+
+  .modal-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px;
+    background: #14191c;
+    border-bottom: 4px solid #080a0b;
+  }
+
+  .modal-head h2 {
+    margin: 0;
+    color: var(--yellow);
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+
+  .close {
+    width: 34px;
+    height: 30px;
+    border: 3px solid #5d686e;
+    background: #8a3030;
+    cursor: pointer;
+  }
+
+  .modal-body {
+    padding: 18px;
+  }
+
+  .paper {
+    color: #28241e;
+    background:
+      repeating-linear-gradient(#f2eddc 0 27px, #d6d0bd 28px);
+    border: 4px solid #706653;
+    box-shadow: 7px 7px rgba(0,0,0,.27);
+    padding: 18px 20px;
+    min-height: 280px;
+    line-height: 28px;
+  }
+
+  .paper h3 {
+    margin: 0 0 12px;
+    text-align: center;
+    border-bottom: 3px double #444;
+  }
+
+  .complaint {
+    display: block;
+    margin: 15px 0;
+    padding: 10px;
+    color: #5c1b16;
+    font-weight: bold;
+    border: 2px dashed #9f7765;
+    background: rgba(255,255,255,.42);
+  }
+
+  .actions {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .action {
+    cursor: pointer;
+    padding: 9px 12px;
+    color: #f6f1df;
+    background: #38434a;
+    border: 3px solid #111517;
+    box-shadow: inset 0 0 0 2px #68747b, 4px 4px #0c0e0f;
+  }
+
+  .action:hover:not(:disabled) {
+    background: #4b5a63;
+    transform: translateY(-1px);
+  }
+
+  .action.primary {
+    color: #111;
+    background: var(--yellow);
+    box-shadow: inset 0 0 0 2px #ffe294, 4px 4px #0c0e0f;
+  }
+
+  .action.danger {
+    background: #8e3131;
+  }
+
+  .action.good {
+    background: #317145;
+  }
+
+  .action:disabled {
+    opacity: .38;
+    cursor: not-allowed;
+  }
+
+  .choice-list {
+    display: grid;
+    gap: 11px;
+    margin-top: 14px;
+  }
+
+  .choice {
+    text-align: left;
+    cursor: pointer;
+    padding: 13px;
+    background: #343e43;
+    border: 3px solid #121618;
+    box-shadow: inset 0 0 0 2px #5b676d;
+  }
+
+  .choice:hover {
+    background: #46535a;
+  }
+
+  .choice b {
+    display: block;
+    color: var(--yellow);
+    margin-bottom: 5px;
+  }
+
+  .screen {
+    color: #9fea9d;
+    background: #06100b;
+    border: 8px solid #111719;
+    box-shadow: inset 0 0 35px rgba(35,255,102,.08);
+    min-height: 300px;
+    padding: 18px;
+    line-height: 1.55;
+  }
+
+  .screen.error {
+    color: #ff6d6d;
+    background: #100606;
+  }
+
+  .terminal-line::before {
+    content: "> ";
+    color: #fff;
+  }
+
+  .search-result {
+    margin: 14px 0;
+    padding: 12px;
+    color: #bedcff;
+    background: #0c2330;
+    border-left: 5px solid var(--blue);
+  }
+
+  .search-result h4 {
+    color: #7dc6ff;
+    margin: 0 0 8px;
+  }
+
+  .tsb {
+    color: #1e2426;
+    background: #e5e0cc;
+    border: 5px double #353b3e;
+    padding: 18px;
+    line-height: 1.5;
+  }
+
+  .tsb h3 {
+    margin-top: 0;
+    text-align: center;
+  }
+
+  .warning {
+    color: #251c06;
+    background: var(--yellow);
+    border: 3px solid #7f5d12;
+    padding: 9px;
+    font-weight: bold;
+  }
+
+  .repair-scene {
+    position: relative;
+    overflow: hidden;
+    min-height: 430px;
+    background:
+      linear-gradient(rgba(255,255,255,.025), rgba(255,255,255,.025)),
+      #30383d;
+    border: 4px solid #111517;
+  }
+
+  .repair-title {
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    z-index: 3;
+    padding: 5px 8px;
+    background: #101416;
+    border: 2px solid #5d686e;
+    color: var(--yellow);
+  }
+
+  .engine {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    top: 56px;
+    bottom: 40px;
+    background: #2d3438;
+    border: 13px solid #161b1d;
+    border-radius: 55px 55px 20px 20px;
+    box-shadow: inset 0 0 0 6px #4e595f;
+  }
+
+  .part {
+    position: absolute;
+    cursor: pointer;
+    color: #e3e9e9;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-size: 11px;
+    background: #626d72;
+    border: 5px solid #242b2f;
+    box-shadow: inset 0 0 0 3px #899297;
+  }
+
+  .part:hover {
+    filter: brightness(1.2);
+  }
+
+  .intake {
+    width: 210px;
+    height: 62px;
+    left: 50%;
+    margin-left: -105px;
+    top: 55px;
+    border-radius: 18px;
+  }
+
+  .belt {
+    width: 120px;
+    height: 120px;
+    left: 14%;
+    bottom: 38px;
+    border-radius: 50%;
+    background: #202426;
+    border: 14px double #687075;
+  }
+
+  .turbo {
+    width: 100px;
+    height: 100px;
+    right: 13%;
+    bottom: 44px;
+    border-radius: 50%;
+    background: #7b8589;
+  }
+
+  .battery {
+    width: 115px;
+    height: 75px;
+    right: 9%;
+    top: 30px;
+    background: #252a2c;
+  }
+
+  .overlay-red {
+    animation: pulseRed .9s steps(2) infinite;
+    outline: 6px solid #ff4f4f;
+    background: rgba(224,35,35,.52) !important;
+    box-shadow: 0 0 20px #fa3434, inset 0 0 0 3px rgba(255,255,255,.3);
+  }
+
+  .pc-case {
+    position: absolute;
+    left: 13%;
+    right: 13%;
+    top: 60px;
+    bottom: 35px;
+    border: 14px solid #111719;
+    background: rgba(35,43,48,.75);
+    box-shadow: inset 0 0 0 5px #68747a;
+  }
+
+  .motherboard {
+    position: absolute;
+    left: 8%;
+    top: 9%;
+    width: 50%;
+    height: 72%;
+    background:
+      linear-gradient(90deg, transparent 48%, #62846d 49% 51%, transparent 52%),
+      linear-gradient(transparent 48%, #62846d 49% 51%, transparent 52%),
+      #335a43;
+    border: 7px solid #162a1e;
+  }
+
+  .pcpart {
+    position: absolute;
+    z-index: 2;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-size: 10px;
+    border: 4px solid #111517;
+    box-shadow: inset 0 0 0 2px #798389;
+  }
+
+  .ssd {
+    right: 8%;
+    bottom: 10%;
+    width: 110px;
+    height: 58px;
+    background: #4e565a;
+  }
+
+  .ram {
+    left: 42%;
+    top: 16%;
+    width: 25px;
+    height: 140px;
+    background: #337b4c;
+  }
+
+  .psu {
+    left: 6%;
+    bottom: 6%;
+    width: 120px;
+    height: 90px;
+    background: #252a2d;
+  }
+
+  .cable {
+    position: absolute;
+    right: 23%;
+    top: 27%;
+    width: 155px;
+    height: 80px;
+    border-right: 10px solid #b63636;
+    border-bottom: 10px solid #b63636;
+    border-radius: 0 0 38px 0;
+    cursor: pointer;
+  }
+
+  .cable span {
+    position: absolute;
+    right: -30px;
+    bottom: -27px;
+    padding: 3px;
+    background: #121516;
+  }
+
+  .diagnostic-bar {
+    margin-top: 15px;
+    padding: 10px;
+    background: #14191b;
+    border: 3px solid #515d63;
+  }
+
+  .diagnostic-bar b {
+    color: var(--yellow);
+  }
+
+  .fade-card {
+    position: absolute;
+    inset: 0;
+    z-index: 90;
+    display: grid;
+    place-items: center;
+    background: #080a0b;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .4s;
+  }
+
+  .fade-card.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .fade-text {
+    font-size: clamp(20px, 5vw, 52px);
+    letter-spacing: 4px;
+    color: var(--cream);
+    text-align: center;
+    text-shadow: 5px 5px #000;
+  }
+
+  .fade-text small {
+    display: block;
+    margin-top: 18px;
+    color: var(--yellow);
+    font-size: .42em;
+  }
+
+  #startScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(circle at center, #39434a, #111517 65%);
+  }
+
+  .title-card {
+    width: min(720px, 92vw);
+    padding: 35px;
+    text-align: center;
+    background: #1b2125;
+    border: 7px solid #0a0c0d;
+    box-shadow: 0 0 0 4px #606a70, 15px 18px rgba(0,0,0,.45);
+  }
+
+  .title-card h1 {
+    margin: 0;
+    color: var(--yellow);
+    font-size: clamp(42px, 10vw, 94px);
+    letter-spacing: 9px;
+    text-shadow: 7px 7px #050606;
+  }
+
+  .title-card h2 {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: normal;
+    letter-spacing: 3px;
+  }
+
+  .title-card p {
+    max-width: 580px;
+    margin: 22px auto;
+    line-height: 1.6;
+    color: #c9d0d2;
+  }
+
+  .version {
+    margin-top: 24px;
+    font-size: 10px;
+    color: #777f82;
+  }
+
+  @keyframes bob {
+    to { transform: translateY(-3px); }
+  }
+
+  @keyframes blink {
+    50% { opacity: .4; }
+  }
+
+  @keyframes pulseRed {
+    50% {
+      outline-color: #ff9b9b;
+      box-shadow: 0 0 32px #ff2929;
+    }
+  }
+
+  @media (max-width: 780px) {
+    .stats {
+      gap: 7px;
+      font-size: 10px;
+    }
+
+    .brand {
+      font-size: 16px;
+    }
+
+    #game {
+      min-height: 650px;
+    }
+
+    #office {
+      left: 7%;
+      width: 38%;
+      height: 28%;
+    }
+
+    #bay {
+      left: 31%;
+      top: 45%;
+      width: 65%;
+      height: 45%;
+    }
+
+    #storage {
+      right: 3%;
+      width: 43%;
+      height: 28%;
+    }
+
+    #breakArea {
+      left: 3%;
+      bottom: 9%;
+      width: 25%;
+      height: 35%;
+    }
+
+    #car {
+      left: 37%;
+      top: 54%;
+      transform: rotate(-2deg) scale(.72);
+      transform-origin: left top;
+    }
+
+    #toolChest {
+      left: 34%;
+      top: 78%;
+    }
+
+    #partsShelf {
+      right: 12%;
+      transform: scale(.8);
+    }
+
+    #door {
+      width: 85px;
+    }
+
+    #objective {
+      left: 10px;
+      right: 10px;
+      bottom: 8px;
+    }
+
+    .modal-body {
+      padding: 12px;
+    }
+
+    .repair-scene {
+      min-height: 500px;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="brand">MECHANIC</div>
+    <div class="stats">
+      <span class="stat">DAY <strong id="dayText">1</strong></span>
+      <span class="stat">TIME <strong id="timeText">8:05 AM</strong></span>
+      <span class="stat">CASH <strong id="cashText">$140</strong></span>
+      <span class="stat">REP <strong id="repText">0</strong></span>
+    </div>
+  </header>
+
+  <main id="game">
+    <div id="garage">
+      <div class="wall-north"></div>
+      <div class="wall-west"></div>
+      <div class="sign">AUTO &amp; DIAGNOSTIC</div>
+
+      <section id="office" class="zone">
+        <span class="zone-label">OFFICE</span>
+      </section>
+
+      <section id="bay" class="zone">
+        <span class="zone-label">SERVICE BAY 1</span>
+      </section>
+
+      <section id="storage" class="zone">
+        <span class="zone-label">PARTS</span>
+      </section>
+
+      <section id="breakArea" class="zone">
+        <span class="zone-label">BREAK AREA</span>
+      </section>
+
+      <div id="desk" class="object" data-action="computer" tabindex="0">
+        <span class="object-tag">SHOP COMPUTER</span>
+      </div>
+
+      <div id="computer" class="object" data-action="computer" tabindex="0"></div>
+
+      <div id="clipboard" class="object" data-action="clipboard" tabindex="0">
+        <span class="object-tag">CUSTOMER SHEET</span>
+      </div>
+
+      <div id="car" class="object" data-action="car" tabindex="0">
+  <svg
+    class="arcade-car-art"
+    viewBox="0 0 270 148"
+    role="img"
+    aria-label="Red fictional arcade-style customer vehicle on a lift">
+
+    <!-- Floor shadow -->
+    <polygon
+      class="car-floor-shadow"
+      points="23,119 61,105 223,105 260,122 232,139 63,139 14,127"/>
+
+    <!-- Lift -->
+    <polygon
+      class="car-lift-dark"
+      points="20,120 25,115 128,123 122,130"/>
+    <polygon
+      class="car-lift-mid"
+      points="25,115 130,122 126,126 23,121"/>
+    <polygon
+      class="car-lift-light"
+      points="31,116 113,121 110,123 29,119"/>
+
+    <polygon
+      class="car-lift-dark"
+      points="145,123 247,111 254,117 151,131"/>
+    <polygon
+      class="car-lift-mid"
+      points="145,120 247,109 251,113 149,126"/>
+    <polygon
+      class="car-lift-light"
+      points="161,119 238,111 241,113 161,123"/>
+
+    <!-- Rear wheel -->
+    <polygon
+      class="car-tire-outline"
+      points="38,84 47,76 62,74 75,79 82,91 79,108 69,119 52,121 39,113 34,99"/>
+    <polygon
+      class="car-tire"
+      points="43,86 51,80 63,80 73,85 77,95 74,107 66,115 54,116 44,110 40,99"/>
+    <polygon
+      class="car-tire-light"
+      points="43,89 48,84 51,84 47,91 44,104 48,110 44,107 40,98"/>
+    <polygon
+      class="car-rim-dark"
+      points="49,89 56,84 66,86 72,93 70,104 64,111 54,109 48,102"/>
+    <polygon
+      class="car-rim"
+      points="53,91 58,88 65,90 68,95 67,102 62,107 56,105 52,100"/>
+    <polygon
+      class="car-rim-light"
+      points="57,92 63,92 65,96 63,101 58,103 55,99"/>
+
+    <!-- Front wheel -->
+    <polygon
+      class="car-tire-outline"
+      points="191,85 200,77 216,76 229,82 235,94 232,109 222,120 206,121 193,113 188,99"/>
+    <polygon
+      class="car-tire"
+      points="196,87 203,82 215,81 225,86 230,96 227,107 219,115 207,116 198,110 193,100"/>
+    <polygon
+      class="car-tire-light"
+      points="196,90 201,85 204,85 200,92 197,104 201,110 197,108 193,99"/>
+    <polygon
+      class="car-rim-dark"
+      points="202,90 209,85 219,87 225,94 223,105 217,111 207,110 201,103"/>
+    <polygon
+      class="car-rim"
+      points="206,92 211,89 218,91 221,96 220,103 215,107 209,106 205,101"/>
+    <polygon
+      class="car-rim-light"
+      points="210,93 216,93 218,97 216,102 211,104 208,100"/>
+
+    <!-- Dark body silhouette -->
+    <polygon
+      class="car-body-outline"
+      points="18,72 31,60 69,52 86,29 105,15 165,13 194,25 213,48 244,57 259,71 257,96 238,106 234,90 224,79 208,75 194,80 187,94 83,94 78,80 65,73 50,74 38,83 32,99 18,94 10,82"/>
+
+    <!-- Lower body shadow -->
+    <polygon
+      class="car-body-shadow"
+      points="18,77 39,67 75,61 92,48 205,48 221,56 247,62 257,73 255,91 235,101 231,88 221,79 207,77 195,83 189,96 82,96 78,84 68,77 53,77 42,85 36,99 17,92 11,83"/>
+
+    <!-- Main body -->
+    <polygon
+      class="car-body-main"
+      points="19,69 37,61 77,53 92,34 111,20 163,18 190,29 207,51 239,58 253,70 251,84 232,91 227,80 215,72 204,71 190,77 184,87 84,87 79,76 68,68 52,68 40,75 34,88 18,84 12,77"/>
+
+    <!-- Upper body light plane -->
+    <polygon
+      class="car-body-light"
+      points="27,65 78,54 94,37 112,24 159,23 182,32 199,52 231,59 242,67 216,64 197,59 83,61 45,68"/>
+
+    <!-- Hood bright plane -->
+    <polygon
+      class="car-body-shine"
+      points="17,70 76,56 83,62 48,70 26,77 14,76"/>
+
+    <!-- Roof and pillars -->
+    <polygon
+      class="car-body-outline"
+      points="83,53 96,31 111,18 163,16 188,28 204,54 193,58 84,58"/>
+    <polygon
+      class="car-body-shadow"
+      points="91,51 101,34 114,22 160,20 181,30 196,52 187,55 94,55"/>
+
+    <!-- Rear side glass -->
+    <polygon
+      class="car-glass-outline"
+      points="94,49 104,33 115,25 134,24 134,51"/>
+    <polygon
+      class="car-glass-dark"
+      points="101,47 109,35 118,29 130,28 130,48"/>
+    <polygon
+      class="car-glass-mid"
+      points="106,44 112,35 125,30 129,30 129,34 113,42"/>
+    <polygon
+      class="car-glass-light"
+      points="113,32 126,28 130,29 130,32 116,36"/>
+
+    <!-- Front side glass -->
+    <polygon
+      class="car-glass-outline"
+      points="138,23 160,22 178,31 191,51 138,51"/>
+    <polygon
+      class="car-glass-dark"
+      points="142,27 159,26 174,34 184,47 142,47"/>
+    <polygon
+      class="car-glass-mid"
+      points="146,28 158,28 171,35 177,42 150,35"/>
+    <polygon
+      class="car-glass-light"
+      points="149,28 158,28 168,33 171,36 156,32"/>
+
+    <!-- Pillars -->
+    <polygon
+      class="car-body-outline"
+      points="132,21 140,21 140,54 132,54"/>
+    <polygon
+      class="car-body-shadow"
+      points="133,25 137,24 137,51 134,51"/>
+
+    <!-- Door and panel lines -->
+    <polygon
+      class="car-door-line"
+      points="137,57 141,57 141,84 137,88"/>
+    <polygon
+      class="car-door-line"
+      points="87,61 91,61 86,82 82,82"/>
+    <polygon
+      class="car-door-line"
+      points="142,82 185,82 183,86 142,86"/>
+    <polygon
+      class="car-door-line"
+      points="89,84 134,84 134,88 87,88"/>
+
+    <!-- Door highlight -->
+    <polygon
+      class="car-body-light"
+      points="94,61 134,61 134,65 92,66"/>
+    <polygon
+      class="car-body-light"
+      points="143,60 194,59 197,63 143,65"/>
+
+    <!-- Door handles -->
+    <rect class="car-handle" x="118" y="66" width="11" height="3"/>
+    <rect class="car-door-line" x="118" y="69" width="11" height="2"/>
+    <rect class="car-handle" x="170" y="65" width="11" height="3"/>
+    <rect class="car-door-line" x="170" y="68" width="11" height="2"/>
+
+    <!-- Front fender plane -->
+    <polygon
+      class="car-body-light"
+      points="190,64 230,62 247,70 249,78 235,82 229,74 217,68 203,68 192,73"/>
+    <polygon
+      class="car-body-shadow"
+      points="187,87 192,76 204,70 217,71 228,78 233,89 228,86 221,79 210,76 199,80 194,88"/>
+
+    <!-- Rear fender plane -->
+    <polygon
+      class="car-body-light"
+      points="27,68 51,62 70,63 82,71 85,81 79,79 69,71 55,68 42,72 34,80"/>
+    <polygon
+      class="car-body-shadow"
+      points="33,91 38,80 49,73 63,73 75,80 81,90 76,87 68,80 57,77 46,81 40,92"/>
+
+    <!-- Front bumper -->
+    <polygon
+      class="car-bumper-dark"
+      points="230,82 257,76 263,82 260,96 238,105 232,101"/>
+    <polygon
+      class="car-bumper"
+      points="238,87 258,82 258,91 240,98"/>
+    <polygon
+      class="car-bumper-light"
+      points="242,87 257,83 257,86 243,91"/>
+
+    <!-- Rear bumper -->
+    <polygon
+      class="car-bumper-dark"
+      points="10,77 22,80 36,91 35,101 15,95 6,87"/>
+    <polygon
+      class="car-bumper"
+      points="9,82 26,87 32,93 31,97 14,92"/>
+    <polygon
+      class="car-bumper-light"
+      points="11,82 25,86 27,89 13,87"/>
+
+    <!-- Headlight -->
+    <polygon
+      class="car-light-outline"
+      points="231,62 249,67 254,73 249,77 231,72"/>
+    <polygon
+      class="car-light"
+      points="235,65 247,68 251,72 247,74 235,70"/>
+    <polygon
+      class="car-light-shine car-pixel-spark"
+      points="239,66 247,69 247,71 239,69"/>
+
+    <!-- Tail light -->
+    <polygon
+      class="car-tail-dark"
+      points="19,66 35,62 38,68 23,74 17,72"/>
+    <polygon
+      class="car-tail"
+      points="22,67 33,64 35,67 24,71 20,70"/>
+
+    <!-- Mirrors -->
+    <polygon
+      class="car-body-outline"
+      points="187,46 199,44 205,48 198,53 188,52"/>
+    <polygon
+      class="car-body-main"
+      points="191,47 198,46 201,48 197,50 191,50"/>
+
+    <!-- Pixel highlights -->
+    <rect class="car-body-shine" x="46" y="58" width="27" height="3"/>
+    <rect class="car-body-shine" x="84" y="53" width="31" height="3"/>
+    <rect class="car-body-light" x="103" y="26" width="19" height="3"/>
+
+    <!-- Exhaust -->
+    <polygon
+      class="car-bumper-dark"
+      points="15,94 30,96 30,101 14,99"/>
+    <polygon
+      class="car-bumper-light"
+      points="14,95 24,97 24,99 14,98"/>
+
+    <!-- Small body pixels -->
+    <rect class="car-body-shine" x="151" y="57" width="5" height="3"/>
+    <rect class="car-body-shine" x="159" y="57" width="14" height="3"/>
+    <rect class="car-bumper-light" x="221" y="102" width="12" height="3"/>
+  </svg>
+
+  <span class="object-tag">CUSTOMER VEHICLE</span>
+</div>
+
+      <div id="toolChest" class="object" data-action="tools" tabindex="0">
+        <span class="object-tag">TOOLS</span>
+      </div>
+
+      <div id="partsShelf" class="object" data-action="parts" tabindex="0">
+        <span class="object-tag">PARTS SHELF</span>
+      </div>
+
+      <div id="vending" class="object" data-action="vending" tabindex="0">
+        <span class="object-tag">LUNCH</span>
+      </div>
+
+      <div id="door" class="object" data-action="door" tabindex="0">
+        STORE
+        <span class="object-tag">EXIT</span>
+      </div>
+
+<div id="mechanic" aria-hidden="true">
+  <svg
+    class="arcade-mechanic-art"
+    viewBox="0 0 44 51"
+    role="img"
+    aria-label="Arcade-style auto mechanic">
+
+    <!-- Ground shadow -->
+    <polygon
+      fill="#111519"
+      opacity=".48"
+      points="8,46 17,43 34,44 41,47 34,50 14,50"/>
+
+    <!-- Rear arm -->
+    <g class="mechanic-right-arm">
+      <polygon
+        class="mechanic-outline"
+        points="29,21 36,23 39,31 37,38 32,37 33,31 28,27"/>
+      <polygon
+        class="mechanic-shirt-dark"
+        points="30,23 34,25 36,31 34,34 31,30"/>
+      <polygon
+        class="mechanic-skin-dark"
+        points="33,33 38,34 38,39 34,40 31,37"/>
+      <polygon
+        class="mechanic-skin"
+        points="34,34 37,35 37,38 34,38"/>
+    </g>
+
+    <!-- Rear leg -->
+    <g class="mechanic-right-leg">
+      <polygon
+        class="mechanic-outline"
+        points="23,33 33,34 33,44 38,46 37,50 27,50 25,43 21,38"/>
+      <polygon
+        class="mechanic-pants-dark"
+        points="25,35 30,36 30,44 35,46 34,48 29,48 27,43 23,38"/>
+      <polygon
+        class="mechanic-pants"
+        points="26,35 29,36 29,42 26,43 23,38"/>
+      <polygon
+        class="mechanic-boot"
+        points="29,44 37,46 37,49 28,49 26,47"/>
+      <polygon
+        class="mechanic-boot-light"
+        points="31,46 36,47 34,48 29,48"/>
+    </g>
+
+    <!-- Front leg -->
+    <g class="mechanic-left-leg">
+      <polygon
+        class="mechanic-outline"
+        points="13,33 24,33 24,41 22,47 20,50 10,50 9,47 14,43"/>
+      <polygon
+        class="mechanic-pants"
+        points="15,35 22,35 21,41 19,46 13,47 12,46 16,42"/>
+      <polygon
+        class="mechanic-pants-light"
+        points="16,35 19,35 18,42 15,44"/>
+      <polygon
+        class="mechanic-boot"
+        points="12,44 20,45 20,49 10,49 9,47"/>
+      <polygon
+        class="mechanic-boot-light"
+        points="12,46 18,46 17,48 11,48"/>
+    </g>
+
+    <!-- Torso outline -->
+    <polygon
+      class="mechanic-outline"
+      points="12,19 18,16 29,17 34,22 32,35 25,39 14,36 9,29"/>
+
+    <!-- Work shirt -->
+    <polygon
+      class="mechanic-shirt-dark"
+      points="14,20 19,18 27,19 31,23 29,33 24,36 15,34 11,29"/>
+    <polygon
+      class="mechanic-shirt"
+      points="17,20 23,19 28,21 29,31 24,34 17,33 14,28"/>
+    <polygon
+      class="mechanic-shirt-light"
+      points="17,21 20,20 20,32 17,31 15,27"/>
+    <polygon
+      class="mechanic-shirt-shine"
+      points="18,21 20,21 20,26 18,26"/>
+
+    <!-- Shirt seam and pockets -->
+    <rect class="mechanic-outline" x="21" y="20" width="2" height="14"/>
+    <polygon
+      class="mechanic-shirt-dark"
+      points="14,24 19,24 19,28 15,28"/>
+    <polygon
+      class="mechanic-shirt-dark"
+      points="24,23 29,24 28,28 24,27"/>
+    <rect class="mechanic-badge" x="25" y="24" width="2" height="2"/>
+
+    <!-- Front arm -->
+    <g class="mechanic-left-arm">
+      <polygon
+        class="mechanic-outline"
+        points="11,21 6,24 4,34 8,40 13,38 10,33 14,26"/>
+      <polygon
+        class="mechanic-shirt"
+        points="11,23 8,25 6,33 9,36 11,32 13,26"/>
+      <polygon
+        class="mechanic-shirt-light"
+        points="10,24 8,26 7,31 9,31"/>
+      <polygon
+        class="mechanic-skin-dark"
+        points="7,34 12,34 14,39 11,43 6,40 4,36"/>
+      <polygon
+        class="mechanic-skin"
+        points="8,35 11,36 12,39 10,41 7,39 6,36"/>
+
+      <!-- Red shop rag -->
+      <polygon
+        class="mechanic-rag-dark"
+        points="4,37 9,38 10,46 6,44 3,47 2,41"/>
+      <polygon
+        class="mechanic-rag"
+        points="5,39 8,39 8,44 6,42 4,45 4,41"/>
+    </g>
+
+    <!-- Neck -->
+    <polygon
+      class="mechanic-outline"
+      points="17,13 27,13 29,20 16,20"/>
+    <polygon
+      class="mechanic-skin-dark"
+      points="19,14 26,14 26,19 18,18"/>
+    <polygon
+      class="mechanic-skin"
+      points="20,14 25,14 25,18 19,18"/>
+
+    <!-- Head outline -->
+    <polygon
+      class="mechanic-outline"
+      points="13,4 19,0 30,2 35,7 33,16 27,21 18,19 12,14 10,8"/>
+
+    <!-- Hair -->
+    <polygon
+      class="mechanic-hair"
+      points="14,5 19,2 29,3 33,7 31,11 28,8 17,8 14,12 11,9"/>
+    <polygon
+      class="mechanic-hair-light"
+      points="17,4 25,3 29,5 22,5 17,7"/>
+
+    <!-- Face -->
+    <polygon
+      class="mechanic-skin-dark"
+      points="15,7 29,6 32,9 30,15 26,19 19,18 14,14 13,9"/>
+    <polygon
+      class="mechanic-skin"
+      points="17,7 28,7 30,10 28,15 25,17 19,16 16,13 15,9"/>
+    <polygon
+      class="mechanic-skin-light"
+      points="18,8 23,7 21,13 18,13 16,11"/>
+
+    <!-- Ear -->
+    <polygon
+      class="mechanic-outline"
+      points="29,9 34,9 34,14 30,16"/>
+    <polygon
+      class="mechanic-skin"
+      points="30,10 33,10 32,13 30,14"/>
+
+<!-- Frustrated arcade face -->
+
+<!-- lowered / angled eyebrows -->
+<polygon
+  class="mechanic-hair"
+  points="16,8 21,9 21,11 17,10"/>
+<polygon
+  class="mechanic-hair"
+  points="24,9 29,7 29,9 25,11"/>
+
+<!-- narrowed eyes -->
+<rect class="mechanic-eye" x="18" y="11" width="2" height="1"/>
+<rect class="mechanic-eye" x="25" y="10" width="2" height="1"/>
+
+<!-- nose -->
+<polygon
+  class="mechanic-skin-dark"
+  points="22,11 24,12 22,14"/>
+
+<!-- unimpressed flat mouth -->
+<polygon
+  class="mechanic-hair"
+  points="20,15 27,15 27,16 20,16"/>
+
+<!-- little cheek / jaw shadow -->
+<rect
+  class="mechanic-skin-dark"
+  x="27"
+  y="12"
+  width="2"
+  height="3"/>
+
+    <!-- Cap outline -->
+    <polygon
+      class="mechanic-outline"
+      points="11,4 17,0 29,0 34,4 34,8 26,6 14,7 9,6"/>
+    <polygon
+      class="mechanic-cap-dark"
+      points="14,4 18,1 28,2 32,4 31,6 15,6"/>
+    <polygon
+      class="mechanic-cap"
+      points="17,2 27,2 30,4 28,5 16,5"/>
+    <polygon
+      class="mechanic-cap-light"
+      points="18,2 25,2 27,3 18,4"/>
+    <polygon
+      class="mechanic-cap-dark"
+      points="10,5 20,5 22,7 11,7 8,6"/>
+    <polygon
+      class="mechanic-cap"
+      points="11,5 19,5 20,6 10,6"/>
+
+    <!-- Tiny wrench emblem -->
+    <rect class="mechanic-badge" x="21" y="2" width="4" height="1"/>
+  </svg>
+</div>
+
+      <div id="objective">
+        <strong>OBJECTIVE:</strong>
+        <span id="objectiveText">Read the customer complaint sheet in the office.</span>
+      </div>
+
+      <div id="toast"></div>
+    </div>
+
+    <div id="modalRoot"></div>
+
+    <div id="fadeCard" class="fade-card">
+      <div id="fadeText" class="fade-text"></div>
+    </div>
+  </main>
+</div>
+
+<div id="startScreen">
+  <div class="title-card">
+    <h1>MECHANIC</h1>
+    <h2>EVERYTHING BREAKS. FIGURE OUT WHY.</h2>
+    <p>
+      Run a tiny repair shop, interpret strange customer complaints,
+      research service bulletins, diagnose faults, manage time,
+      and occasionally repair the equipment you depend on.
+    </p>
+    <div class="actions" style="justify-content:center">
+      <button id="newGameButton" class="action primary">START NEW DAY</button>
+      <button id="continueButton" class="action">CONTINUE</button>
+    </div>
+    <div class="version">SELF-CONTAINED HTML PROTOTYPE • BUILD 0.1</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const initialState = {
+    day: 1,
+    minutes: 8 * 60 + 5,
+    cash: 140,
+    reputation: 0,
+    stage: "read_sheet",
+    sheetRead: false,
+    inspectedCar: false,
+    reproducedNoise: false,
+    tsbRead: false,
+    computerBroken: false,
+    phoneResearchDone: false,
+    pcGuess: null,
+    purchasedPcPart: null,
+    pcFixed: false,
+    carDiagnosis: null,
+    carFixed: false,
+    introducedFault: false,
+    lunchTaken: false,
+    inventory: [],
+    log: []
+  };
+
+  let state = loadState() || structuredClone(initialState);
+
+  const positions = {
+    clipboard: [22, 27],
+    computer: [16, 22],
+    car: [46, 47],
+    tools: [38, 70],
+    parts: [82, 27],
+    vending: [12, 72],
+    door: [84, 79]
+  };
+
+  const mechanic = document.querySelector("#mechanic");
+  const modalRoot = document.querySelector("#modalRoot");
+  const fadeCard = document.querySelector("#fadeCard");
+  const fadeText = document.querySelector("#fadeText");
+
+  function saveState() {
+    localStorage.setItem("mechanicPrototypeSave", JSON.stringify(state));
+  }
+
+  function loadState() {
+    try {
+      return JSON.parse(localStorage.getItem("mechanicPrototypeSave"));
+    } catch {
+      return null;
+    }
+  }
+
+  function resetGame() {
+    state = structuredClone(initialState);
+    saveState();
+    updateUI();
+  }
+
+  function formatTime(total) {
+    const hours24 = Math.floor(total / 60) % 24;
+    const mins = total % 60;
+    const suffix = hours24 >= 12 ? "PM" : "AM";
+    const hour = hours24 % 12 || 12;
+    return `${hour}:${String(mins).padStart(2, "0")} ${suffix}`;
+  }
+
+  function addTime(minutes) {
+    state.minutes += minutes;
+    updateUI();
+  }
+
+  const CAR_COLORS = [
+    "",                 // Default Red
+    "car-theme-blue",   // Metallic Blue
+    "car-theme-tan",    // Desert Tan / Gold
+    "car-theme-green",  // Forest Green
+    "car-theme-silver"  // Classic Silver
+  ];
+
+  function getRandomCarColor() {
+    return CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
+  }
+
+   function renderCarSprite(type = "coupe", colorClass = "") {
+    const carEl = document.querySelector("#car");
+    if (!carEl) return;
+
+    const liftBase = `
+      <ellipse class="car-floor-shadow" cx="68" cy="68" rx="58" ry="5" />
+      <rect class="car-lift-dark" x="34" y="48" width="6" height="20" />
+      <rect class="car-lift-mid"  x="35" y="48" width="4" height="19" />
+      <rect class="car-lift-light" x="36" y="48" width="1" height="18" />
+      <rect class="car-lift-dark" x="94" y="48" width="6" height="20" />
+      <rect class="car-lift-mid"  x="95" y="48" width="4" height="19" />
+      <rect class="car-lift-light" x="96" y="48" width="1" height="18" />
+      <rect class="car-lift-dark" x="26" y="51" width="82" height="3" />
+      <rect class="car-lift-light" x="27" y="51" width="80" height="1" />
+    `;
+
+    const wheels = `
+      <rect class="car-tire-outline" x="22" y="43" width="18" height="18" />
+      <rect class="car-tire" x="24" y="45" width="14" height="14" />
+      <rect class="car-tire-light" x="25" y="46" width="12" height="3" />
+      <rect class="car-rim-dark" x="27" y="48" width="8" height="8" />
+      <rect class="car-rim" x="28" y="49" width="6" height="6" />
+      <rect class="car-rim-light" x="29" y="50" width="2" height="2" />
+      <rect class="car-tire-outline" x="92" y="43" width="18" height="18" />
+      <rect class="car-tire" x="94" y="45" width="14" height="14" />
+      <rect class="car-tire-light" x="95" y="46" width="12" height="3" />
+      <rect class="car-rim-dark" x="97" y="48" width="8" height="8" />
+      <rect class="car-rim" x="98" y="49" width="6" height="6" />
+      <rect class="car-rim-light" x="99" y="50" width="2" height="2" />
+    `;
+
+    let bodySvg = "";
+
+    if (type === "sedan") {
+      bodySvg = `
+        <polygon class="car-body-outline" points="12,35 16,28 34,27 46,15 84,15 98,27 121,30 124,38 122,50 12,50" />
+        <polygon class="car-body-main" points="14,35 18,29 35,28 47,17 83,17 97,28 119,31 122,38 120,48 14,48" />
+        <polygon class="car-body-light" points="18,29 35,28 47,17 83,17 97,28 118,31 118,33 17,33" />
+        <polygon class="car-body-shadow" points="14,43 121,43 120,48 14,48" />
+        <polygon class="car-glass-outline" points="38,27 48,18 82,18 93,27" />
+        <polygon class="car-glass-mid" points="40,26 49,19 64,19 64,26" />
+        <polygon class="car-glass-dark" points="67,19 81,19 90,26 67,26" />
+        <polygon class="car-glass-light" points="44,20 51,20 46,25 41,25" />
+        <rect class="car-door-line" x="65" y="18" width="1" height="26" />
+        <rect class="car-door-line" x="42" y="28" width="1" height="16" />
+        <rect class="car-door-line" x="88" y="28" width="1" height="16" />
+        <rect class="car-handle" x="56" y="32" width="4" height="1" />
+        <rect class="car-handle" x="79" y="32" width="4" height="1" />
+        <rect class="car-bumper-dark" x="10" y="42" width="10" height="7" />
+        <rect class="car-bumper" x="11" y="43" width="8" height="4" />
+        <rect class="car-bumper-dark" x="114" y="42" width="12" height="7" />
+        <rect class="car-bumper" x="115" y="43" width="10" height="4" />
+        <rect class="car-tail" x="13" y="32" width="4" height="6" />
+        <rect class="car-light" x="118" y="33" width="5" height="5" />
+        <rect class="car-light-shine" x="120" y="34" width="2" height="2" />
+      `;
+    } else if (type === "truck") {
+      bodySvg = `
+        <polygon class="car-body-outline" points="12,30 62,30 62,14 90,14 102,27 122,29 125,38 123,50 12,50" />
+        <polygon class="car-body-main" points="14,31 64,31 64,16 89,16 101,28 120,30 123,38 121,48 14,48" />
+        <polygon class="car-body-light" points="14,31 64,31 64,16 89,16 101,28 119,30 119,33 14,33" />
+        <polygon class="car-body-shadow" points="14,43 122,43 121,48 14,48" />
+        <rect class="car-bumper-dark" x="13" y="29" width="49" height="2" />
+        <polygon class="car-glass-outline" points="67,18 88,18 98,27 67,27" />
+        <polygon class="car-glass-mid" points="69,19 87,19 95,26 69,26" />
+        <polygon class="car-glass-light" points="73,20 79,20 74,25 70,25" />
+        <rect class="car-door-line" x="65" y="17" width="1" height="27" />
+        <rect class="car-door-line" x="94" y="28" width="1" height="16" />
+        <rect class="car-handle" x="72" y="33" width="4" height="1" />
+        <rect class="car-bumper-dark" x="10" y="42" width="10" height="7" />
+        <rect class="car-bumper-light" x="11" y="43" width="8" height="4" />
+        <rect class="car-bumper-dark" x="115" y="42" width="12" height="7" />
+        <rect class="car-bumper-light" x="116" y="43" width="10" height="4" />
+        <rect class="car-tail" x="13" y="33" width="3" height="7" />
+        <rect class="car-light" x="119" y="32" width="5" height="6" />
+        <rect class="car-light-shine" x="121" y="33" width="2" height="2" />
+      `;
+    } else {
+      bodySvg = `
+        <polygon class="car-body-outline" points="11,33 22,27 48,16 80,16 98,27 122,31 125,39 122,50 11,50" />
+        <polygon class="car-body-main" points="13,34 23,28 49,18 79,18 97,28 120,32 123,39 120,48 13,48" />
+        <polygon class="car-body-light" points="23,28 49,18 79,18 97,28 119,32 119,34 21,34" />
+        <polygon class="car-body-shine" points="51,19 77,19 77,20 51,20" />
+        <polygon class="car-body-shadow" points="13,43 121,43 120,48 13,48" />
+        <polygon class="car-body-outline" points="10,27 19,27 19,32 12,32" />
+        <rect class="car-body-light" x="11" y="28" width="7" height="2" />
+        <polygon class="car-glass-outline" points="32,27 50,19 78,19 93,27" />
+        <polygon class="car-glass-mid" points="35,26 51,20 65,20 65,26" />
+        <polygon class="car-glass-dark" points="68,20 77,20 90,26 68,26" />
+        <polygon class="car-glass-light" points="45,21 52,21 47,25 41,25" />
+        <rect class="car-door-line" x="66" y="19" width="1" height="25" />
+        <rect class="car-door-line" x="88" y="28" width="1" height="16" />
+        <rect class="car-handle" x="69" y="32" width="4" height="1" />
+        <rect class="car-bumper-dark" x="9" y="42" width="11" height="7" />
+        <rect class="car-bumper" x="10" y="43" width="9" height="4" />
+        <rect class="car-bumper-dark" x="114" y="42" width="12" height="7" />
+        <rect class="car-bumper" x="115" y="43" width="10" height="4" />
+        <rect class="car-tail" x="12" y="34" width="5" height="5" />
+        <rect class="car-light" x="118" y="34" width="6" height="4" />
+        <rect class="car-light-shine" x="121" y="35" width="2" height="2" />
+      `;
+    }
+
+    carEl.innerHTML = `
+      <svg class="arcade-car-art ${colorClass}" viewBox="0 0 135 74" aria-hidden="true">
+        ${liftBase}
+        ${bodySvg}
+        ${wheels}
+      </svg>
+    `;
+  }
+
+
+
+
+  function updateUI() {
+    // 1. Safely resolve the active repair order without crashing if missing
+    if (!state.currentRO && typeof REPAIR_ORDERS !== "undefined" && REPAIR_ORDERS.length) {
+      state.currentRO = REPAIR_ORDERS[Math.floor(Math.random() * REPAIR_ORDERS.length)];
+    }
+
+    // 2. Safely pick a paint color if not already set
+    if (state.carColor === undefined) {
+      const palette = ["", "car-theme-blue", "car-theme-tan", "car-theme-green", "car-theme-silver"];
+      state.carColor = palette[Math.floor(Math.random() * palette.length)];
+    }
+
+    // 3. Render the car sprite only if renderCarSprite is defined
+    if (typeof renderCarSprite === "function") {
+      const spriteType = state.currentRO && state.currentRO.spriteType ? state.currentRO.spriteType : "coupe";
+      renderCarSprite(spriteType, state.carColor);
+    }
+
+    // 4. Update HUD elements
+    document.querySelector("#dayText").textContent = state.day;
+    document.querySelector("#timeText").textContent = formatTime(state.minutes);
+    document.querySelector("#cashText").textContent = `$${state.cash}`;
+    document.querySelector("#repText").textContent = state.reputation;
+    document.querySelector("#computer").classList.toggle("broken", state.computerBroken && !state.pcFixed);
+    document.querySelector("#continueButton").disabled = !localStorage.getItem("mechanicPrototypeSave");
+    updateObjective();
+    saveState();
+  }
+
+
+  function updateObjective() {
+    let text = "";
+
+    if (!state.sheetRead) {
+      text = "Check the office clipboard for today's work order.";
+    } else if (!state.carFixed) {
+      const order = state.currentRO;
+      const carLabel = order ? order.vehicle : "customer vehicle";
+      const due = order ? order.promised : "end of shift";
+
+      if (state.computerBroken && !state.pcFixed) {
+        text = `Diagnose and repair the ${carLabel} by ${due}. (Shop terminal offline)`;
+      } else {
+        text = `Diagnose and repair the ${carLabel} by ${due}.`;
+      }
+    } else {
+      text = "Repair order complete. Wrap up in the shop or start a new shift.";
+    }
+
+    document.querySelector("#objectiveText").textContent = text;
+  }
+
+
+  function toast(message) {
+    const el = document.querySelector("#toast");
+    el.textContent = message;
+    el.classList.add("show");
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => el.classList.remove("show"), 2600);
+  }
+
+  function walkTo(key, callback) {
+    const pos = positions[key];
+    if (!pos) return callback?.();
+
+    mechanic.classList.add("walking");
+    mechanic.style.left = `${pos[0]}%`;
+    mechanic.style.top = `${pos[1]}%`;
+
+    setTimeout(() => {
+      mechanic.classList.remove("walking");
+      callback?.();
+    }, 800);
+  }
+
+  function transition(title, subtitle, minutes, callback) {
+    fadeText.innerHTML = `${title}<small>${subtitle || ""}</small>`;
+    fadeCard.classList.add("show");
+
+    setTimeout(() => {
+      if (minutes) addTime(minutes);
+      callback?.();
+      setTimeout(() => fadeCard.classList.remove("show"), 500);
+    }, 1200);
+  }
+
+  function openModal(title, html, wide = false) {
+    modalRoot.innerHTML = `
+      <div class="modal-wrap">
+        <section class="modal ${wide ? "wide" : ""}">
+          <div class="modal-head">
+            <h2>${title}</h2>
+            <button class="close" data-close aria-label="Close">X</button>
+          </div>
+          <div class="modal-body">${html}</div>
+        </section>
+      </div>
+    `;
+  }
+
+  function closeModal() {
+    modalRoot.innerHTML = "";
+  }
+
+  modalRoot.addEventListener("click", event => {
+    if (event.target.matches("[data-close]") || event.target.classList.contains("modal-wrap")) {
+      closeModal();
+    }
+  });
+
+  const REPAIR_ORDERS = [
+    {
+      ro: "000184",
+      vehicle: "2012 Halcyon Comet 2.0T",
+      mileage: "142,118",
+      promised: "4:30 PM",
+spriteType: "coupe",
+      customer: "Jamie R.",
+      complaint: `"Car sounds like a dolphin when I press the gas. It still drives, but the check-engine light comes and goes."`,
+      note: "Customer reports the sound began three days ago after a long highway trip. No recent repair history is listed.",
+      knownSummary: "Noise occurs while parked and follows engine RPM. It is not caused by wheel rotation.",
+      observations: [
+        "Engine starts normally.",
+        "At 2,000 RPM, a high-pitched squeal/whistle is heard.",
+        "The sound occurs while the car is stationary.",
+        "Pitch rises with engine speed.",
+        "Light oil residue is visible near one charge-air coupling."
+      ],
+      scanData: [
+        "Stored code: P0299",
+        "Description: Turbo/Supercharger Underboost Condition",
+        "Requested boost: 14.2 psi | Measured boost: 5.8 psi",
+        "Long-term fuel trim: +17%"
+      ],
+      tsb: {
+        manufacturer: "HALCYON MOTOR COMPANY",
+        bulletin: "18-04",
+        models: "2011–2013 Comet 2.0T",
+        condition: "High-pitched whistle, squeal, or unusual animal-like sound during acceleration. Reduced boost and intermittent P0299 may be present.",
+        cause: "The lower charge-air hose coupling may loosen or split. Escaping compressed air can produce a whistle or squeal.",
+        procedure: [
+          "Confirm the sound follows engine speed or boost demand.",
+          "Inspect all charge-air couplings for oil residue and separation.",
+          "Perform a low-pressure smoke test if the leak is not visible.",
+          "Replace only the damaged hose, seal, or clamp.",
+          "Do not replace the turbocharger unless separate testing confirms failure."
+        ]
+      },
+      correctFix: "hose",
+      choices: [
+        { id: "hose", title: "CHARGE-AIR HOSE OR COUPLING LEAK", desc: "Air escapes under boost, producing a whistle and underboost condition.", cost: 0 },
+        { id: "turbo", title: "FAILED TURBOCHARGER", desc: "Replace the entire turbo assembly.", cost: 80 },
+        { id: "bearing", title: "LEFT-FRONT WHEEL BEARING", desc: "Assume the sound comes from wheel rotation.", cost: 35 }
+      ],
+      successSummary: [
+        "Diagnosis: Split lower charge-air hose.",
+        "Evidence: Noise follows RPM, P0299 underboost, and oil residue at coupling.",
+        "Recommended repair: Replace damaged hose and clamp, then verify boost."
+      ],
+      failMessage: "Dolphin-like noise remains. P0299 returns during boost test.",
+      repairTitle: "REPLACING CHARGE-AIR HOSE",
+      correctTools: "Socket set, hose-clamp pliers, inspection light, torque driver, scan tool.",
+      wrongTools: "Heavy impact wrench and long pry bar.",
+      verification: {
+        steps: [
+          "New charge-air hose and clamp installed.",
+          "Coupling seated and secured.",
+          "Smoke test: No leaks detected.",
+          "Stored code P0299 cleared."
+        ],
+        cleanCheck: "Requested and measured boost now agree.",
+        faultWarning: "WARNING: Intake-pressure sensor connector is not fully seated.",
+        faultFixToast: "Intake-pressure connector reseated and locking tab secured.",
+        roadTestFail: [
+          "Original whistle is gone.",
+          "New check-engine light appears under acceleration.",
+          "Intake-pressure sensor signal is intermittent."
+        ],
+        invoiceComplaint: "Dolphin-like sound under acceleration",
+        invoiceCause: "Split lower charge-air hose",
+        invoiceCorrection: "Replaced charge-air hose and clamp",
+        invoiceTest: "Passed smoke test and road test",
+        payout: 220,
+        closingSummary: "The vehicle accelerates normally. The sound is gone, boost pressure is restored, and no codes return."
+      }
+    },
+    {
+      ro: "000185",
+      vehicle: "2014 Sterling Civic LX",
+      mileage: "164,890",
+      promised: "3:45 PM",
+spriteType: "sedan",
+      customer: "Brenda K.",
+      complaint: `"Brakes started squealing last month, then grinding last week, and yesterday the noise stopped—now the pedal goes almost to the floor."`,
+      note: "Customer declines tire rotation and states they only need 'a quick pad slap' before a weekend road trip.",
+      knownSummary: "Brake fluid reservoir is near MIN. Front right rotor is heavily scored and blued from heat.",
+      observations: [
+        "Brake pedal feels spongy and travels nearly to the carpet.",
+        "Front right inner brake pad backing plate is worn down to bare steel.",
+        "Caliper piston is over-extended and weeping brake fluid past the dust boot.",
+        "No abnormal engine noises at idle or 2,000 RPM."
+      ],
+      scanData: [
+        "Stored code: NONE (OBD-II)",
+        "ABS Module: C0034 - Right Front Wheel Speed Sensor Signal Erratic",
+        "Brake Fluid Level Switch: LOW WARNING ACTIVE"
+      ],
+      tsb: {
+        manufacturer: "STERLING AUTOMOTIVE GROUP",
+        bulletin: "21-19",
+        models: "2012–2015 Civic LX / EX",
+        condition: "Low or spongy brake pedal following prolonged brake pad wear past minimum thickness.",
+        cause: "When friction material wears completely off, the caliper piston can over-extend and cock sideways, damaging the square-cut piston seal and leaking hydraulic fluid.",
+        procedure: [
+          "Inspect caliper dust boot and piston bore for brake fluid seepage.",
+          "Measure rotor thickness against minimum discard specification.",
+          "Replace the compromised caliper assembly and pads; never compress a leaking piston.",
+          "Bleed the hydraulic brake system and verify firm pedal feel."
+        ]
+      },
+      correctFix: "caliper",
+      choices: [
+        { id: "pads", title: "FRONT BRAKE PAD SLAP ONLY", desc: "Compress the piston and install new pads as the customer requested.", cost: 30 },
+        { id: "caliper", title: "OVER-EXTENDED CALIPER, ROTOR & PADS", desc: "Replace leaking caliper assembly, scored rotor, pads, and bleed system.", cost: 0 },
+        { id: "master", title: "REPLACE BRAKE MASTER CYLINDER", desc: "Assume internal bypass inside the master cylinder caused the low pedal.", cost: 65 }
+      ],
+      successSummary: [
+        "Diagnosis: Over-extended front right caliper piston with fluid leak.",
+        "Evidence: Fluid weeping past dust boot, scored rotor, and low reservoir.",
+        "Recommended repair: Replace caliper, rotor, and pads, then bleed brakes."
+      ],
+      failMessage: "Brake fluid still leaks at the right front wheel. Pedal sinks during test stop.",
+      repairTitle: "REPLACING CALIPER & BLEEDING BRAKES",
+      correctTools: "Line wrench, socket set, torque wrench, brake bleeder kit, jack stands.",
+      wrongTools: "Channel-lock pliers and cordless impact gun on bleeder screw.",
+      verification: {
+        steps: [
+          "New front right caliper, rotor, and brake pads installed.",
+          "Hydraulic system bled and reservoir topped off with DOT 3 fluid.",
+          "ABS wheel speed sensor wiring routed and clipped."
+        ],
+        cleanCheck: "Brake pedal feels firm and holds steady pressure.",
+        faultWarning: "WARNING: ABS wheel speed sensor harness is rubbing against the inner wheel barrel.",
+        faultFixToast: "ABS sensor harness secured into factory bracket.",
+        roadTestFail: [
+          "Brake pedal feels firm and stops straight.",
+          "ABS warning light illuminates above 15 mph.",
+          "Right front wheel speed signal drops out over bumps."
+        ],
+        invoiceComplaint: "Grinding noise followed by low brake pedal",
+        invoiceCause: "Over-extended caliper piston leaking brake fluid",
+        invoiceCorrection: "Replaced right front caliper, rotor, pads, and bled hydraulic system",
+        invoiceTest: "Passed pressure hold check and road test",
+        payout: 310,
+        closingSummary: "Braking is smooth, straight, and firm. Fluid level is steady and no warning lights remain."
+      }
+    },
+    {
+      ro: "000186",
+      vehicle: "2009 Frontier Ranger XLT",
+      mileage: "203,115",
+spriteType: "truck",
+      promised: "4:30 PM",
+      customer: "Greg H.",
+      complaint: `"Car clicks rapidly when I turn the key after it sits overnight, even though I just bought a new battery two months ago."`,
+      note: "Customer keeps a portable jump pack on the passenger seat and uses it daily.",
+      knownSummary: "Battery resting voltage is 11.4V. Starts immediately with a jump pack attached.",
+      observations: [
+        "Rapid starter solenoid clicking when key is turned without jump pack.",
+        "Once jump-started, engine idles smoothly.",
+        "Battery terminals are clean and tight, but mild corrosion is visible on the main chassis ground strap."
+      ],
+      scanData: [
+        "Stored code: P0562 - System Voltage Low",
+        "Battery Voltage (Engine Off): 11.4V",
+        "Charging System Voltage (Engine Running): 12.1V (Spec: 13.8V - 14.4V)",
+        "Alternator Field Duty Cycle: 99%"
+      ],
+      tsb: {
+        manufacturer: "FRONTIER TRUCK DIVISION",
+        bulletin: "09-41",
+        models: "2007–2011 Ranger 2.3L / 4.0L",
+        condition: "Repeated no-start / discharged battery condition despite recent battery replacement.",
+        cause: "Worn alternator brushes or failed internal voltage regulator prevents charging output above battery resting voltage.",
+        procedure: [
+          "Verify battery state of charge and clean primary ground connections.",
+          "Measure charging voltage across battery posts at 1,500 RPM with headlights on.",
+          "If voltage remains below 13.5V with full field command, replace the alternator.",
+          "Do not replace a healthy battery without resolving the underlying charging deficit."
+        ]
+      },
+      correctFix: "alternator",
+      choices: [
+{ id: "battery", title: "WARRANTY / REPLACE BATTERY AGAIN", desc: "Assume the 2-month-old battery is defective.", cost: 45 },
+{ id: "starter", title: "REPLACE STARTER MOTOR", desc: "Rapid clicking means the starter solenoid is failing.", cost: 60 },
+{ id: "alternator", title: "FAILED ALTERNATOR & CLEAN GROUNDS", desc: "Charging voltage is only 12.1V running; alternator is not recharging battery.", cost: 0 }
+],
+successSummary: [
+"Diagnosis: Failing alternator regulator / low charging output.",
+"Evidence: Running voltage at 12.1V despite 99% field command.",
+"Recommended repair: Clean ground strap, replace alternator, and verify 14.2V charge."
+],
+failMessage: "Truck starts once off the shop charger, but voltage stays at 12.1V running.",
+repairTitle: "REPLACING ALTERNATOR & CLEANING GROUNDS",
+correctTools: "Digital multimeter, serpentine belt tool, socket set, wire brush.",
+wrongTools: "Pry bar to tension belt and impact driver on alternator housing bolts.",
+verification: {
+steps: [
+"Replacement alternator installed and serpentine belt tension verified.",
+"Main chassis ground strap cleaned to bare metal and torqued.",
+"Battery charged and load tested."
+],
+cleanCheck: "Charging voltage measures 14.2V at idle with headlights on.",
+faultWarning: "WARNING: Small vacuum line near the airbox was knocked loose during belt service.",
+faultFixToast: "Vacuum line reconnected to intake manifold port.",
+roadTestFail: [
+"Charging voltage holds steady at 14.2V.",
+"Engine idles rough and high at stoplights.",
+"Audible hissing sound from engine bay."
+],
+invoiceComplaint: "Rapid clicking no-start after sitting overnight",
+invoiceCause: "Failed alternator voltage regulator (12.1V output) and corroded ground",
+invoiceCorrection: "Replaced alternator and cleaned primary ground connections",
+invoiceTest: "Passed load test (14.2V output) and road test",
+payout: 285,
+closingSummary: "Truck starts crisply on its own power. Charging system holds 14.2V under load with no warning lights."
+}
+}
+];
+
+
+  function showClipboard() {
+    if (!state.sheetRead) {
+      state.sheetRead = true;
+      addTime(4);
+    }
+
+    if (!state.currentRO) {
+      state.currentRO = REPAIR_ORDERS[Math.floor(Math.random() * REPAIR_ORDERS.length)];
+    }
+
+    const order = state.currentRO;
+
+    openModal("CUSTOMER REPAIR ORDER", `
+      <div class="paper">
+        <h3>AUTO &amp; DIAGNOSTIC</h3>
+        <b>RO:</b> ${order.ro}<br>
+        <b>VEHICLE:</b> ${order.vehicle}<br>
+        <b>MILEAGE:</b> ${order.mileage}<br>
+        <b>PROMISED:</b> ${order.promised}<br>
+        <b>CUSTOMER:</b> ${order.customer}<br>
+
+        <span class="complaint">
+          ${order.complaint}
+        </span>
+
+        <b>ADDITIONAL NOTE:</b><br>
+        ${order.note}
+      </div>
+
+      <div class="actions">
+        <button class="action primary" data-go-car>INSPECT VEHICLE</button>
+        <button class="action" data-close>CLOSE</button>
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-go-car]").onclick = () => {
+      closeModal();
+      walkTo("car", showCarInspection);
+    };
+
+    updateUI();
+  }
+
+
+   function getActiveOrder() {
+    if (!state.currentRO) {
+      state.currentRO = REPAIR_ORDERS[Math.floor(Math.random() * REPAIR_ORDERS.length)];
+    }
+    return state.currentRO;
+  }
+
+  function showCarInspection() {
+    state.inspectedCar = true;
+    const order = getActiveOrder();
+
+    const evidence = state.reproducedNoise
+      ? `<div class="diagnostic-bar"><b>KNOWN:</b> ${order.knownSummary}</div>`
+      : "";
+
+    openModal("VEHICLE INSPECTION", `
+      <div class="repair-scene">
+        <div class="repair-title">${order.vehicle.toUpperCase()} • BAY 1</div>
+        <div class="engine">
+          <div class="part intake">INTAKE &amp;<br>DUCTING</div>
+          <div class="part belt">BELT &amp;<br>CHARGING</div>
+          <div class="part turbo">BRAKES &amp;<br>CHASSIS</div>
+          <div class="part battery">BATTERY &amp;<br>GROUNDS</div>
+        </div>
+      </div>
+
+      ${evidence}
+
+      <div class="actions">
+        <button class="action primary" data-rev>
+          ${state.reproducedNoise ? "RE-CHECK VEHICLE" : "START &amp; PHYSICAL CHECK"}
+        </button>
+        <button class="action" data-scan>CONNECT SCAN TOOL</button>
+        <button class="action" data-guess>MAKE DIAGNOSIS</button>
+      </div>
+    `, true);
+
+    modalRoot.querySelector("[data-rev]").onclick = reproduceNoise;
+    modalRoot.querySelector("[data-scan]").onclick = scanVehicle;
+    modalRoot.querySelector("[data-guess]").onclick = showCarChoices;
+  }
+
+  function reproduceNoise() {
+    addTime(5);
+    state.reproducedNoise = true;
+
+    openModal("OBSERVATION", `
+      <div class="screen">
+        <p class="terminal-line">Engine starts normally.</p>
+        <p class="terminal-line">At 2,000 RPM, a high-pitched squeal/whistle is heard.</p>
+        <p class="terminal-line">The sound occurs while the car is stationary.</p>
+        <p class="terminal-line">Pitch rises with engine speed.</p>
+        <p class="terminal-line">Light oil residue is visible near one charge-air coupling.</p>
+      </div>
+
+      <div class="warning">
+        This evidence points toward an engine-speed or airflow-related fault,
+        not a wheel-speed-related fault.
+      </div>
+
+      <div class="actions">
+        <button class="action primary" data-computer>RESEARCH ON SHOP COMPUTER</button>
+        <button class="action" data-guess>MAKE A DIAGNOSIS NOW</button>
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-computer]").onclick = () => {
+      closeModal();
+      walkTo("computer", useComputer);
+    };
+
+    modalRoot.querySelector("[data-guess]").onclick = showCarChoices;
+    updateUI();
+  }
+
+  function reproduceNoise() {
+    if (!state.reproducedNoise) {
+      addTime(5);
+      state.reproducedNoise = true;
+    }
+    const order = getActiveOrder();
+
+    const lines = order.observations
+      .map(line => `<p class="terminal-line">${line}</p>`)
+      .join("");
+
+    openModal("PHYSICAL OBSERVATION", `
+      <div class="screen">
+        ${lines}
+      </div>
+
+      <div class="actions">
+        <button class="action primary" data-computer>USE SHOP COMPUTER</button>
+        <button class="action" data-guess>MAKE DIAGNOSIS</button>
+        <button class="action" data-close>CLOSE</button>
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-computer]").onclick = () => {
+      closeModal();
+      walkTo("computer", useComputer);
+    };
+
+    modalRoot.querySelector("[data-guess]").onclick = showCarChoices;
+    updateUI();
+  }
+
+  function scanVehicle() {
+    addTime(6);
+    const order = getActiveOrder();
+
+    const lines = order.scanData
+      .map(line => `<p class="terminal-line">${line}</p>`)
+      .join("");
+
+    openModal("SCAN TOOL", `
+      <div class="screen">
+        ${lines}
+        <br>
+        <p>CAUTION: A fault code or sensor reading identifies a system condition. It does not automatically identify a failed part.</p>
+      </div>
+      <div class="actions">
+        <button class="action" data-close>CLOSE</button>
+      </div>
+    `);
+  }
+
+  function useComputer() {
+    // 1. Optional: Random or delayed PC failure (e.g., 50% chance on any visit)
+    if (!state.computerBroken && !state.pcFixed && Math.random() < 0.5) {
+      state.computerBroken = true;
+      updateUI();
+      showComputerError();
+      return;
+    }
+
+    // 2. If the PC is currently broken, show the error screen
+    if (state.computerBroken && !state.pcFixed) {
+      showComputerError();
+      return;
+    }
+
+    // 3. If the player hasn't read the clipboard OR inspected the car yet,
+    // don't auto-complete the clipboard—show an idle service terminal instead.
+    if (!state.sheetRead && !state.inspectedCar) {
+      openModal("SHOP COMPUTER", `
+        <div class="screen">
+          <p>ALLDATA / SERVICE INFORMATION TERMINAL</p>
+          <p class="terminal-line">Status: ONLINE</p>
+          <br>
+          <p>No active Repair Order or VIN entered.</p>
+          <p>Check the office clipboard or inspect a vehicle in Bay 1 to look up service bulletins.</p>
+        </div>
+        <div class="actions">
+          <button class="action" data-close>STEP AWAY</button>
+        </div>
+      `);
+      return;
+    }
+
+    // 4. Normal TSB lookup once the player actually knows what car they are working on
+    if (!state.tsbRead) {
+      researchTSB();
+    } else {
+      showTSB();
+    }
+  }
+
+  function showComputerError() {
+    openModal("SHOP COMPUTER", `
+      <div class="screen error">
+        <p>ERROR: NO BOOT DEVICE FOUND</p>
+        <p>The system cannot locate a bootable operating-system drive.</p>
+      </div>
+
+      <div class="actions">
+        <button class="action primary" data-phone>USE PHONE</button>
+        <button class="action good" data-open-pc>OPEN COMPUTER CASE</button>
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-phone]").onclick = showPhoneResearch;
+    modalRoot.querySelector("[data-open-pc]").onclick = showPcRepair;
+  }
+
+
+  function showPhoneResearch() {
+    state.phoneResearchDone = true;
+    addTime(5);
+
+    openModal("PHONE SEARCH", `
+      <div class="screen">
+        <p class="terminal-line">Search: computer says no boot device found</p>
+
+        <div class="search-result">
+          <h4>Possible cause: Failed SSD</h4>
+          A failed storage drive may no longer appear in BIOS/UEFI.
+          Test detection and connections before replacing it.
+        </div>
+
+        <div class="search-result">
+          <h4>Possible cause: Loose SATA or power cable</h4>
+          Movement, vibration, or a poorly seated cable can disconnect the drive.
+        </div>
+
+        <div class="search-result">
+          <h4>Possible cause: Damaged boot configuration</h4>
+          The drive can be detected but still fail to start the operating system.
+        </div>
+
+        <p>The search suggests likely causes. It does not know which one is actually wrong.</p>
+      </div>
+
+      <div class="choice-list">
+        <button class="choice" data-pc-choice="ssd">
+          <b>BUY A REPLACEMENT SSD • $60</b>
+          Assume the existing drive failed.
+        </button>
+
+        <button class="choice" data-pc-choice="cable">
+          <b>BUY A SATA CABLE • $12</b>
+          Assume the data cable is loose or unreliable.
+        </button>
+
+        <button class="choice" data-pc-choice="boot">
+          <b>BUY A USB RECOVERY DRIVE • $18</b>
+          Assume the operating system needs boot repair.
+        </button>
+      </div>
+    `);
+
+    modalRoot.querySelectorAll("[data-pc-choice]").forEach(button => {
+      button.onclick = () => choosePcPart(button.dataset.pcChoice);
+    });
+
+    updateUI();
+  }
+
+  function choosePcPart(choice) {
+    const costs = { ssd: 60, cable: 12, boot: 18 };
+    const labels = {
+      ssd: "replacement SSD",
+      cable: "SATA cable",
+      boot: "USB recovery drive"
+    };
+
+    if (state.cash < costs[choice]) {
+      toast("Not enough cash.");
+      return;
+    }
+
+    state.pcGuess = choice;
+    state.cash -= costs[choice];
+    state.purchasedPcPart = choice;
+    state.inventory.push(labels[choice]);
+    closeModal();
+
+    transition("LUNCH BREAK", "20 MINUTES LATER...", 20, () => {
+      toast(`Returned with a ${labels[choice]}.`);
+      walkTo("computer", showPcRepair);
+    });
+
+    updateUI();
+  }
+
+  function showPcRepair() {
+    const hasPart = Boolean(state.purchasedPcPart);
+    const highlightClass = state.purchasedPcPart === "cable" ? "overlay-red" : "";
+
+    openModal("COMPUTER REPAIR", `
+      <div class="repair-scene">
+        <div class="repair-title">SHOP PC • SIDE PANEL REMOVED</div>
+        <div class="pc-case">
+          <div class="motherboard"></div>
+          <div class="pcpart ram">RAM</div>
+          <div class="pcpart psu">POWER<br>SUPPLY</div>
+          <div class="pcpart ssd ${state.purchasedPcPart === "ssd" ? "overlay-red" : ""}">SSD</div>
+          <div class="cable ${highlightClass}" data-cable><span>SATA CABLE</span></div>
+        </div>
+      </div>
+
+      <div class="diagnostic-bar">
+        <b>PART ON HAND:</b> ${hasPart ? state.purchasedPcPart.toUpperCase() : "NONE (INSPECTION ONLY)"}<br>
+        ${hasPart
+          ? "The suspicious part is highlighted, but a highlight is not proof."
+          : "Physical inspection costs time, not money. Check the hardware before buying parts."}
+      </div>
+
+      <div class="actions">
+        ${hasPart ? `<button class="action primary" data-install>INSTALL / APPLY SELECTED FIX</button>` : ""}
+        <button class="action ${!hasPart ? "primary" : ""}" data-inspect-cable>INSPECT CONNECTIONS FIRST</button>
+        ${!hasPart ? `<button class="action" data-phone>SEARCH ERROR ON PHONE</button>` : ""}
+      </div>
+    `, true);
+
+    if (hasPart) {
+      modalRoot.querySelector("[data-install]").onclick = applyPcFix;
+    } else {
+      modalRoot.querySelector("[data-phone]").onclick = showPhoneResearch;
+    }
+    modalRoot.querySelector("[data-inspect-cable]").onclick = inspectPcCable;
+  }
+
+
+  function inspectPcCable() {
+    addTime(4);
+
+    openModal("CONNECTION INSPECTION", `
+      <div class="screen">
+        <p class="terminal-line">Power cable is firmly seated.</p>
+        <p class="terminal-line">SATA data connector is partially backed out of the SSD.</p>
+        <p class="terminal-line">No burn marks or visible drive damage found.</p>
+        <br>
+        <p>Finding: Loose SATA data connection.</p>
+      </div>
+
+      <div class="actions">
+        <button class="action primary" data-reseat>RESEAT CABLE AND TEST</button>
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-reseat]").onclick = fixPc;
+  }
+
+  function applyPcFix() {
+    addTime(12);
+
+    if (state.purchasedPcPart === "cable") {
+      fixPc();
+      return;
+    }
+
+    const wrongDescription = state.purchasedPcPart === "ssd"
+      ? "The replacement SSD is installed, but it contains no operating system and the original loose cable was not corrected."
+      : "Boot recovery cannot access the drive because the physical data connection remains loose.";
+
+    openModal("TEST RESULT", `
+      <div class="screen error">
+        <p>POWER ON SELF TEST...</p>
+        <p>ERROR: NO BOOT DEVICE FOUND</p>
+        <br>
+        <p>${wrongDescription}</p>
+      </div>
+
+      <div class="warning">
+        The selected fix was incorrect. Failed SSD and boot configuration are now less likely.
+        Inspect the remaining physical connection.
+      </div>
+
+      <div class="actions">
+        <button class="action primary" data-return-pc>RETURN TO OPEN CASE</button>
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-return-pc]").onclick = showPcRepair;
+  }
+
+  function fixPc() {
+    state.pcFixed = true;
+    addTime(6);
+    state.reputation += 1;
+
+    const knowsVehicle = state.sheetRead || state.inspectedCar;
+
+    openModal("COMPUTER TEST", `
+      <div class="screen">
+        <p>POWER ON SELF TEST...</p>
+        <p>SSD DETECTED: HALCYON 256 GB</p>
+        <p>STARTING OPERATING SYSTEM...</p>
+        <br>
+        <p class="terminal-line">Shop desktop loaded successfully.</p>
+        <p class="terminal-line">Service-information database is available.</p>
+      </div>
+
+      <div class="warning">
+        VERIFIED: The original problem was a loose SATA data cable.
+        Symptoms suggested several possibilities, but inspection confirmed the fault.
+      </div>
+
+      <div class="actions">
+        ${knowsVehicle ? `<button class="action primary" data-tsb>SEARCH VEHICLE DATABASE</button>` : ""}
+        <button class="action" data-close>CLOSE</button>
+      </div>
+    `);
+
+    if (knowsVehicle) {
+      modalRoot.querySelector("[data-tsb]").onclick = researchTSB;
+    }
+    updateUI();
+  }
+
+  function researchTSB() {
+    const order = getActiveOrder();
+    transition("SEARCHING SERVICE INFORMATION", "5 MINUTES LATER...", 5, () => {
+      state.tsbRead = true;
+      showTSB();
+      updateUI();
+    });
+  }
+
+  function showTSB() {
+    const order = getActiveOrder();
+    const tsb = order.tsb;
+    const stepsHtml = tsb.procedure.map(step => `<li>${step}</li>`).join("");
+
+    openModal("TECHNICAL SERVICE BULLETIN", `
+      <article class="tsb">
+        <h3>${tsb.manufacturer}</h3>
+        <p><b>Bulletin:</b> ${tsb.bulletin}</p>
+        <p><b>Models:</b> ${tsb.models}</p>
+        <p><b>Condition:</b> ${tsb.condition}</p>
+
+        <p><b>Cause:</b> ${tsb.cause}</p>
+
+        <p><b>Procedure:</b></p>
+        <ol>${stepsHtml}</ol>
+
+        <p><b>Important:</b> This bulletin narrows the inspection area. It does not replace testing.</p>
+      </article>
+
+      <div class="actions">
+        <button class="action primary" data-go-bay>RETURN TO VEHICLE BAY</button>
+        <button class="action" data-close>CLOSE</button>
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-go-bay]").onclick = () => {
+      closeModal();
+      walkTo("car", showCarInspection);
+    };
+  }
+
+
+  function showHighlightedCar() {
+    openModal("TARGETED INSPECTION", `
+      <div class="repair-scene">
+        <div class="repair-title">CHARGE-AIR SYSTEM INSPECTION</div>
+        <div class="engine">
+          <div class="part intake overlay-red">CHARGE-AIR<br>DUCTING</div>
+          <div class="part belt">BELT &amp;<br>PULLEYS</div>
+          <div class="part turbo">TURBO</div>
+          <div class="part battery">BATTERY</div>
+        </div>
+      </div>
+
+      <div class="diagnostic-bar">
+        <b>TSB RECOMMENDATION:</b> Inspect the charge-air hose coupling before replacing the turbocharger.
+      </div>
+
+      <div class="actions">
+        <button class="action primary" data-smoke>PERFORM SMOKE TEST • 10 MIN</button>
+        <button class="action" data-choices>CHOOSE DIAGNOSIS</button>
+      </div>
+    `, true);
+
+    modalRoot.querySelector("[data-smoke]").onclick = smokeTest;
+    modalRoot.querySelector("[data-choices]").onclick = showCarChoices;
+  }
+
+  function smokeTest() {
+    addTime(10);
+
+    openModal("SMOKE TEST RESULT", `
+      <div class="screen">
+        <p class="terminal-line">Intake system sealed and supplied with low-pressure test smoke.</p>
+        <p class="terminal-line">Smoke escapes from the lower charge-air hose coupling.</p>
+        <p class="terminal-line">Hose has a 22 mm split near the clamp.</p>
+        <p class="terminal-line">Turbo shaft inspection is normal.</p>
+      </div>
+
+      <div class="warning">
+        The failed component has now been confirmed by testing.
+      </div>
+
+      <div class="actions">
+        <button class="action primary" data-confirm>DIAGNOSE SPLIT CHARGE-AIR HOSE</button>
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-confirm]").onclick = () => chooseCarDiagnosis("hose");
+  }
+
+  function showCarChoices() {
+    const order = getActiveOrder();
+    const educated = state.tsbRead;
+
+    const choicesHtml = order.choices.map(c => `
+      <button class="choice" data-car-choice="${c.id}">
+        <b>${c.title}</b>
+        ${c.desc}
+      </button>
+    `).join("");
+
+    openModal("DIAGNOSTIC DECISION", `
+      <p>
+        ${educated
+          ? "Service information and inspection narrow the likely causes."
+          : "Without service research, multiple explanations appear plausible. A guess may waste time, money, or create another fault."}
+      </p>
+
+      <div class="choice-list">
+        ${choicesHtml}
+      </div>
+    `);
+
+    modalRoot.querySelectorAll("[data-car-choice]").forEach(button => {
+      button.onclick = () => chooseCarDiagnosis(button.dataset.carChoice);
+    });
+  }
+
+  function chooseCarDiagnosis(choiceId) {
+    const order = getActiveOrder();
+    const chosen = order.choices.find(c => c.id === choiceId);
+    state.carDiagnosis = choiceId;
+    addTime(7);
+
+    if (choiceId === order.correctFix) {
+      const summaryHtml = order.successSummary
+        .map(line => `<p class="terminal-line">${line}</p>`)
+        .join("");
+
+      openModal("DIAGNOSIS RECORDED", `
+        <div class="screen">
+          ${summaryHtml}
+        </div>
+
+        <div class="actions">
+          <button class="action primary" data-tools>GET TOOLS AND REPAIR</button>
+        </div>
+      `);
+
+      modalRoot.querySelector("[data-tools]").onclick = () => {
+        closeModal();
+        walkTo("tools", showTools);
+      };
+    } else {
+      state.cash -= chosen ? chosen.cost : 40;
+
+      if (!state.tsbRead) {
+        state.introducedFault = true;
+      }
+
+      openModal("REPAIR ATTEMPT FAILED", `
+        <div class="screen error">
+          <p class="terminal-line">Selected repair performed.</p>
+          <p class="terminal-line">Vehicle tested for verification.</p>
+          <p class="terminal-line">${order.failMessage}</p>
+          ${state.introducedFault
+            ? `<p class="terminal-line">New issue: A nearby connector or fastener disturbed during the rushed repair is now compromised.</p>`
+            : ""}
+        </div>
+
+        <div class="warning">
+          The symptom was not the diagnosis. You spent time and money without confirming the failed component.
+        </div>
+
+        <div class="actions">
+          <button class="action primary" data-back-bay>RETURN TO BAY</button>
+        </div>
+      `);
+
+      modalRoot.querySelector("[data-back-bay]").onclick = () => {
+        state.carDiagnosis = null;
+        closeModal();
+        showCarInspection();
+      };
+    }
+
+    updateUI();
+  }
+
+  function showTools() {
+    const order = getActiveOrder();
+
+    if (state.carDiagnosis !== order.correctFix) {
+      toast("Confirm a valid diagnosis before selecting repair tools.");
+      return;
+    }
+
+    openModal("TOOL CHEST", `
+      <p>Select the tools needed to perform and verify this repair properly.</p>
+
+      <div class="choice-list">
+        <button class="choice" data-toolset>
+          <b>PROPER SERVICE TOOL SET</b>
+          ${order.correctTools}
+        </button>
+
+        <button class="choice" data-wrong-tools>
+          <b>HEAVY IMPACT &amp; PRY BAR</b>
+          ${order.wrongTools} Fast, loud, and risky.
+        </button>
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-toolset]").onclick = repairCar;
+    modalRoot.querySelector("[data-wrong-tools]").onclick = () => {
+      state.introducedFault = true;
+      addTime(8);
+      toast("Rushed tool use damaged a nearby clip. A secondary fault has been introduced.");
+      repairCar();
+    };
+  }
+
+  function repairCar() {
+    const order = getActiveOrder();
+    transition(order.repairTitle, "35 MINUTES LATER...", 35, () => {
+      showVerification();
+    });
+  }
+
+  function showVerification() {
+    const order = getActiveOrder();
+    const v = order.verification;
+    const stepsHtml = v.steps.map(s => `<p class="terminal-line">${s}</p>`).join("");
+
+    openModal("REPAIR VERIFICATION", `
+      <div class="screen">
+        ${stepsHtml}
+        ${state.introducedFault
+          ? `<p class="terminal-line">${v.faultWarning}</p>`
+          : `<p class="terminal-line">${v.cleanCheck}</p>`}
+      </div>
+
+      <div class="actions">
+        <button class="action primary" data-road-test>PERFORM ROAD TEST • 15 MIN</button>
+        ${state.introducedFault
+          ? `<button class="action danger" data-fix-secondary>CORRECT SECONDARY ISSUE • 8 MIN</button>`
+          : ""}
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-road-test]").onclick = roadTest;
+
+    const fixButton = modalRoot.querySelector("[data-fix-secondary]");
+    if (fixButton) {
+      fixButton.onclick = () => {
+        state.introducedFault = false;
+        addTime(8);
+        toast(v.faultFixToast);
+        showVerification();
+      };
+    }
+  }
+
+  function roadTest() {
+    const order = getActiveOrder();
+    const v = order.verification;
+    addTime(15);
+
+    if (state.introducedFault) {
+      const failLines = v.roadTestFail.map(line => `<p class="terminal-line">${line}</p>`).join("");
+
+      openModal("ROAD TEST FAILED", `
+        <div class="screen error">
+          ${failLines}
+        </div>
+
+        <div class="warning">
+          The original repair succeeded, but a secondary fault introduced during service must be corrected.
+        </div>
+
+        <div class="actions">
+          <button class="action primary" data-return>RETURN TO SHOP</button>
+        </div>
+      `);
+
+      modalRoot.querySelector("[data-return]").onclick = showVerification;
+      return;
+    }
+
+    state.carFixed = true;
+    state.cash += v.payout;
+    state.reputation += state.tsbRead ? 5 : 3;
+
+    openModal("JOB COMPLETE", `
+      <div class="paper">
+        <h3>FINAL REPAIR ORDER • RO ${order.ro}</h3>
+        <b>Vehicle:</b> ${order.vehicle}<br>
+        <b>Customer complaint:</b> ${v.invoiceComplaint}<br>
+        <b>Cause:</b> ${v.invoiceCause}<br>
+        <b>Correction:</b> ${v.invoiceCorrection}<br>
+        <b>Verification:</b> ${v.invoiceTest}<br>
+        <b>Warning lights:</b> None<br>
+        <b>Final total:</b> $${v.payout}
+        <br><br>
+        ${v.closingSummary}
+      </div>
+
+      <div class="warning">
+        LESSON: Research identifies possibilities. Testing confirms faults.
+        Repairs are not finished until they are verified.
+      </div>
+
+      <div class="actions">
+        <button class="action primary" data-finish>RETURN TO GARAGE</button>
+        <button class="action" data-restart>START NEW SHIFT</button>
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-finish]").onclick = closeModal;
+    modalRoot.querySelector("[data-restart]").onclick = () => {
+      closeModal();
+      resetGame();
+      document.querySelector("#startScreen").classList.remove("hidden");
+    };
+
+    updateUI();
+  }
+
+  function showParts() {
+    openModal("PARTS SHELF", `
+      <div class="screen">
+        <p>SHOP INVENTORY</p>
+        <p class="terminal-line">Universal hose clamps: 4</p>
+        <p class="terminal-line">Brake cleaner: 2</p>
+        <p class="terminal-line">Shop towels: 18</p>
+        <p class="terminal-line">Charge-air hose, Comet 2.0T: 1</p>
+        <p class="terminal-line">Mystery bolts in coffee can: 37</p>
+        <p class="terminal-line">Customer's old air filter from 2023: Still here for some reason</p>
+      </div>
+      <div class="actions">
+        <button class="action" data-close>CLOSE</button>
+      </div>
+    `);
+  }
+
+  function showVending() {
+    if (state.lunchTaken) {
+      toast("You already ate something of questionable nutritional value.");
+      return;
+    }
+
+    openModal("VENDING MACHINE", `
+      <p>The machine hums louder than the customer's car.</p>
+      <div class="choice-list">
+        <button class="choice" data-snack>
+          <b>TRIANGLE SANDWICH • $5</b>
+          Gain lunch. Lose faith.
+        </button>
+        <button class="choice" data-soda>
+          <b>MYSTERY ORANGE SODA • $2</b>
+          Label faded beyond recognition.
+        </button>
+      </div>
+    `);
+
+    modalRoot.querySelector("[data-snack]").onclick = () => buyLunch(5, 15);
+    modalRoot.querySelector("[data-soda]").onclick = () => buyLunch(2, 5);
+  }
+
+  function buyLunch(cost, minutes) {
+    if (state.cash < cost) return toast("Not enough cash.");
+
+    state.cash -= cost;
+    state.lunchTaken = true;
+    addTime(minutes);
+    closeModal();
+    toast("Lunch completed. Technically.");
+    updateUI();
+  }
+
+  function showDoor() {
+    if (state.computerBroken && state.phoneResearchDone && !state.purchasedPcPart) {
+      showPhoneResearch();
+      return;
+    }
+
+    openModal("SHOP EXIT", `
+      <p>The local computer and auto-parts stores are nearby.</p>
+      <p>There is no reason to leave right now, unless you need a part for an active repair.</p>
+      <div class="actions">
+        <button class="action" data-close>RETURN TO SHOP</button>
+      </div>
+    `);
+  }
+
+  function handleObject(action) {
+    const map = {
+      clipboard: () => showClipboard(),
+      computer: () => useComputer(),
+      car: () => showCarInspection(),
+      tools: () => showTools(),
+      parts: () => showParts(),
+      vending: () => showVending(),
+      door: () => showDoor()
+    };
+
+    walkTo(action, map[action]);
+  }
+
+  document.querySelectorAll("[data-action]").forEach(object => {
+    object.addEventListener("click", () => handleObject(object.dataset.action));
+    object.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        handleObject(object.dataset.action);
+      }
+    });
+  });
+
+   document.querySelector("#newGameButton").onclick = () => {
+    resetGame();
+    const randomDays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+    const randomColors = ["", "car-theme-blue", "car-theme-tan", "car-theme-green", "car-theme-silver"];
+    state.day = randomDays[Math.floor(Math.random() * randomDays.length)];
+    state.carColor = randomColors[Math.floor(Math.random() * randomColors.length)];
+    updateUI();
+    document.querySelector("#startScreen").classList.add("hidden");
+    transition(state.day, "8:05 AM • FIRST JOB OF THE DAY", 0);
+  };
+
+  document.querySelector("#continueButton").onclick = () => {
+    const saved = loadState();
+    if (saved) state = saved;
+    updateUI();
+    document.querySelector("#startScreen").classList.add("hidden");
+  };
+
+  updateUI();
+
+})();
+</script>
+</body>
+</html>
