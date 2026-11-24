@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vector Paint to SVG Code Pipeline by Matt</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #1e1e1e; color: #fff; margin: 0; padding: 20px; }
+        .toolbar { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; background: #252526; padding: 10px 20px; border-radius: 8px; border: 1px solid #444; flex-wrap: wrap; }
+        .toolbar button { background: #333; color: white; border: 1px solid #555; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .toolbar button.active { background: #0e639c; border-color: #1177bb; }
+        .color-picker-wrapper { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        .color-picker-wrapper input { cursor: pointer; width: 35px; height: 30px; border: none; background: none; }
+        .container { display: flex; gap: 20px; }
+        .pane { background: #252526; padding: 20px; border-radius: 8px; display: flex; flex-direction: column; gap: 15px; width: 450px; box-sizing: border-box; }
+        
+        /* Custom SVG Pencil Cursor applied globally to the drawing canvas */
+        svg { 
+            background: #111; 
+            border: 2px solid #444; 
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>') 0 20, crosshair;
+            width: 400px; 
+            height: 400px; 
+        }
+
+        textarea { width: 100%; height: 200px; background: #1e1e1e; color: #4ade80; border: 1px solid #444; padding: 10px; font-family: monospace; border-radius: 4px; font-size: 13px; resize: vertical; box-sizing: border-box; }
+        .btn-action { background: #0e639c; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .btn-action:hover { background: #1177bb; }
+        .btn-danger { background: #a93226; }
+        .btn-danger:hover { background: #c0392b; }
+        .instructions { font-size: 13px; color: #aaa; margin-bottom: 10px; text-align: center; }
+        input[type="number"] {
+            background: #1e1e1e;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 5px;
+            border-radius: 4px;
+            width: 55px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Vector Paint to SVG Code Pipeline by Matt</h1>
+    <div class="instructions">Draw on the left for pure code, or paste shape snippets on the right!</div>
+
+    <div class="toolbar" style="flex-direction: column; align-items: stretch; gap: 10px;">
+        <!-- Top Row: Tool Buttons -->
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <span style="font-weight: bold; color: #fff;">Tools:</span>
+            <button id="btn-line" class="active" onclick="setTool('line')">Line Tool</button>
+            <button id="btn-polygon" onclick="setTool('polygon')">Polygon Tool</button>
+            <button id="btn-circle" onclick="setTool('circle')">Circle Tool</button>
+            <button id="btn-pencil" onclick="setTool('pencil')">Pencil Tool</button>
+        </div>
+        
+        <!-- Bottom Row: Tooltip & Controls (Always below, never jumps) -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; padding-top: 8px; flex-wrap: wrap; gap: 10px;">
+            <span id="toolTip" style="font-size: 13px; color: #aaa;">Line Tool: Click and drag to draw a line</span>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 14px;">
+                    <label for="strokeWidth">Width:</label>
+                    <input type="number" id="strokeWidth" value="4" min="1" max="20">
+                </div>
+                <div class="color-picker-wrapper">
+                    <label for="colorPicker">Color:</label>
+                    <input type="color" id="colorPicker" value="#4ade80">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+
+    <div class="container" style="display: flex; gap: 20px; width: 100%; box-sizing: border-box;">
+        
+        <!-- Left Pane: Drawing Canvas -->
+        <div class="pane" style="flex: 1; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; min-width: 0;">
+            <h3>Drawing Canvas</h3>
+            <svg id="drawCanvas" viewBox="0 0 200 200" style="width: 100%; max-width: 400px; height: auto; aspect-ratio: 1/1;">
+                <g id="shapeLayer"></g>
+                <g id="tempLayer"></g>
+            </svg>
+            <div style="display: flex; gap: 10px; width: 100%; margin-top: 15px;">
+                <button class="btn-action btn-danger" onclick="clearCanvas()" style="flex: 1;">Clear All</button>
+                <button class="btn-action" onclick="undoLast()" style="flex: 1;">Undo Last</button>
+            </div>
+        </div>
+
+        <!-- Right Pane: Code Output & Input -->
+        <div class="pane" style="flex: 1; display: flex; flex-direction: column; box-sizing: border-box; min-width: 0;">
+            <h3>Pure SVG Code</h3>
+            <textarea id="codeOutput" style="width: 100%; box-sizing: border-box;" placeholder="Draw shapes or paste your SVG code here..." oninput="syncFromCode()"></textarea>
+            <button class="btn-action" onclick="copyCode()" style="margin-top: 15px;">Copy Wrapped SVG Code</button>
+        </div>
+
+    </div>
+    
+
+
+    <!-- ========================================== -->
+    <!-- Green-Screen Chroma Key Bottom Pane        -->
+    <!-- ========================================== -->
+    <div class="pane" style="margin-top: 20px; width: 100%; box-sizing: border-box;">
+        
+        <h3>Green-Screen Sprite Converter (#00FF00)</h3>
+        <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">Drop a JPG/PNG with a pure green background (#00FF00) to auto-generate transparent vector sprite code into your project.</p>
+        
+        <!-- Row Container: Drop Zone (Left) & Example Image (Right) -->
+        <div style="display: flex; gap: 20px; align-items: flex-end; width: 100%; box-sizing: border-box;">
+            
+            <!-- Compact Left-Aligned Drop Zone -->
+            <div id="drop-zone" style="border: 2px dashed #00FF00; height: 200px; padding: 20px; text-align: center; cursor: pointer; background: #151515; border-radius: 6px; transition: 0.2s; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;">
+                <span style="font-size: 12px; color: #ccc;">Drag & Drop your sprite here or </span>
+                <span style="font-size: 12px; color: #00FF00; text-decoration: underline; font-weight: bold; margin-top: 4px;">Browse File</span>
+                <input type="file" id="chroma-file-input" accept="image/*" style="display:none;" />
+            </div>
+
+            <!-- Right Column: Label + Example Rally Car Box -->
+            <div style="display: flex; flex-direction: column; flex-shrink: 0;">
+                <span style="font-size: 12px; color: #ccc; margin-bottom: 6px; text-align: center;">Example: Rally Car with Green-Screen</span>
+                <div style="width: 200px; height: 200px; border: 1px solid #333; border-radius: 6px; overflow: hidden; background: #111; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                    <img src="ExampleRallyCar.jpg" alt="Example Rally Car" style="width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated;" />
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Size Preset & Format Row (Shrinks Base64 Output Size!) -->
+        <div style="display: flex; gap: 10px; margin-top: 15px; align-items: center; flex-wrap: wrap; background: #151515; padding: 10px 15px; border-radius: 6px; border: 1px solid #333; width: 100%; box-sizing: border-box;">
+            <span style="font-size: 12px; color: #00FF00; font-weight: bold;">Output Size:</span>
+            <button type="button" onclick="applySpritePreset(64, 128)" style="background:#222; color:#fff; border:1px solid #555; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;">2D Bot (64×128)</button>
+            <button type="button" onclick="applySpritePreset(96, 192)" style="background:#222; color:#fff; border:1px solid #555; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;">Bot HD (96×192)</button>
+            <button type="button" onclick="applySpritePreset(200, 200)" style="background:#222; color:#fff; border:1px solid #555; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;">Poster (200×200)</button>
+            <button type="button" onclick="applySpritePreset(48, 48)" style="background:#222; color:#fff; border:1px solid #555; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;">Icon (48×48)</button>
+
+            <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                <label style="font-size: 12px; color: #aaa;">W:</label>
+                <input type="number" id="sprite-out-w" value="64" min="8" max="512" onchange="reprocessLastSprite()" style="width: 55px; background: #222; color: #fff; border: 1px solid #444; padding: 4px 6px; border-radius: 4px; font-family: monospace; font-size: 12px;" />
+                <label style="font-size: 12px; color: #aaa;">H:</label>
+                <input type="number" id="sprite-out-h" value="128" min="8" max="512" onchange="reprocessLastSprite()" style="width: 55px; background: #222; color: #fff; border: 1px solid #444; padding: 4px 6px; border-radius: 4px; font-family: monospace; font-size: 12px;" />
+                <select id="sprite-out-format" onchange="reprocessLastSprite()" style="background: #222; color: #4ade80; border: 1px solid #444; padding: 4px 6px; border-radius: 4px; font-family: monospace; font-size: 12px;">
+                    <option value="image/webp" selected>WebP (Smallest)</option>
+                    <option value="image/png">PNG</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Controls & Tolerance Input Row -->
+        <div style="display: flex; gap: 20px; margin-top: 10px; align-items: center; flex-wrap: wrap; background: #151515; padding: 12px 15px; border-radius: 6px; border: 1px solid #333; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label for="chroma-tolerance" style="font-size: 12px; color: #aaa; white-space: nowrap;">Tolerance (0–100):</label>
+                <input type="number" id="chroma-tolerance" min="0" max="100" value="50" onchange="reprocessLastSprite()" style="width: 60px; background: #222; color: #00FF00; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 13px;" />
+            </div>
+            <div id="base64-size-badge" style="font-size: 12px; color: #4ade80; font-family: monospace;">
+                Size: Ready (Drop an image)
+            </div>
+            <div style="font-size: 11px; color: #777; border-left: 1px solid #444; padding-left: 15px; line-height: 1.4;">
+                <strong style="color: #999;">Guide:</strong> 0-15 (Strict) | 25-50 (Standard) | 60-100 (Aggressive)
+            </div>
+        </div>
+
+
+    
+    
+    
+
+    <script>
+        const svg = document.getElementById('drawCanvas');
+        const shapeLayer = document.getElementById('shapeLayer');
+        const tempLayer = document.getElementById('tempLayer');
+        const codeOutput = document.getElementById('codeOutput');
+        const colorPicker = document.getElementById('colorPicker');
+        const strokeWidthInput = document.getElementById('strokeWidth');
+
+        let currentTool = 'line';
+        let shapes = [];
+        let isSyncing = false;
+        
+        let isDrawing = false;
+        let startPoint = null;
+        let polyPoints = [];
+
+        function getValidWidth() {
+            let val = parseInt(strokeWidthInput.value, 10);
+            if (isNaN(val)) val = 4;
+            if (val < 1) val = 1;
+            if (val > 20) val = 20;
+            strokeWidthInput.value = val;
+            return val;
+        }
+
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.toolbar button').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${tool}`).classList.add('active');
+            
+            // Dynamic tooltips
+            const toolTips = {
+                'line': 'Line Tool: Click and drag to draw a line',
+                'polygon': 'Polygon Tool: Left-click to add points, Right-click to finish',
+                'circle': 'Circle Tool: Click and drag to draw a circle',
+                'pencil': 'Pencil Tool: Click and drag to paint pixel/square drawing blocks'
+            };
+            document.getElementById('toolTip').innerText = toolTips[tool];
+
+            resetInteraction();
+        }
+        
+
+        function resetInteraction() {
+            isDrawing = false;
+            startPoint = null;
+            polyPoints = [];
+            tempLayer.innerHTML = '';
+        }
+
+        svg.addEventListener('mousedown', (e) => {
+            // Prevent right-click from interfering with drawing
+            if (e.button === 2) return; 
+
+            const coords = getSVGCoords(e);
+            const currentColor = colorPicker.value;
+            const strokeWidth = getValidWidth();
+
+            if (currentTool === 'line' || currentTool === 'circle') {
+                isDrawing = true;
+                startPoint = coords;
+            } else if (currentTool === 'polygon') {
+                polyPoints.push(coords);
+                isDrawing = true;
+            } else if (currentTool === 'pencil') {
+                isDrawing = true;
+                drawPixel(coords.x, coords.y, currentColor, strokeWidth);
+            }
+        });
+
+        // Use Right-Click to finish and lock in your polygon!
+        svg.addEventListener('contextmenu', (e) => {
+            e.preventDefault(); // Stops the default browser right-click menu
+            if (currentTool === 'polygon' && polyPoints.length >= 3) {
+                const pointsStr = polyPoints.map(p => `${p.x},${p.y}`).join(' ');
+                const currentColor = colorPicker.value;
+                const strokeWidth = getValidWidth();
+                
+                shapes.push(`<polygon points="${pointsStr}" fill="${currentColor}" stroke="#111" stroke-width="${strokeWidth}"/>`);
+                finishShape();
+            }
+        });
+        
+
+        svg.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            const coords = getSVGCoords(e);
+            const currentColor = colorPicker.value;
+            const strokeWidth = getValidWidth();
+
+            tempLayer.innerHTML = '';
+            if (currentTool === 'line') {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', startPoint.x);
+                line.setAttribute('y1', startPoint.y);
+                line.setAttribute('x2', coords.x);
+                line.setAttribute('y2', coords.y);
+                line.setAttribute('stroke', currentColor);
+                line.setAttribute('stroke-width', strokeWidth);
+                tempLayer.appendChild(line);
+            } else if (currentTool === 'circle') {
+                const dx = coords.x - startPoint.x;
+                const dy = coords.y - startPoint.y;
+                const r = Math.round(Math.sqrt(dx*dx + dy*dy));
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', startPoint.x);
+                circle.setAttribute('cy', startPoint.y);
+                circle.setAttribute('r', r);
+                circle.setAttribute('fill', 'none');
+                circle.setAttribute('stroke', currentColor);
+                circle.setAttribute('stroke-width', strokeWidth);
+                tempLayer.appendChild(circle);
+            } else if (currentTool === 'pencil') {
+                drawPixel(coords.x, coords.y, currentColor, strokeWidth);
+            } else if (currentTool === 'polygon' && polyPoints.length > 0) {
+                const allPoints = [...polyPoints, coords];
+                const pointsStr = allPoints.map(p => `${p.x},${p.y}`).join(' ');
+                const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+                poly.setAttribute('points', pointsStr);
+                poly.setAttribute('fill', 'none');
+                poly.setAttribute('stroke', currentColor);
+                poly.setAttribute('stroke-width', strokeWidth);
+                tempLayer.appendChild(poly);
+            }
+        });
+
+        svg.addEventListener('mouseup', (e) => {
+            if (!isDrawing) return;
+            const coords = getSVGCoords(e);
+            const currentColor = colorPicker.value;
+            const strokeWidth = getValidWidth();
+
+            if (currentTool === 'line') {
+                shapes.push(`<line x1="${startPoint.x}" y1="${startPoint.y}" x2="${coords.x}" y2="${coords.y}" stroke="${currentColor}" stroke-width="${strokeWidth}"/>`);
+                finishShape();
+            } else if (currentTool === 'circle') {
+                const dx = coords.x - startPoint.x;
+                const dy = coords.y - startPoint.y;
+                const r = Math.round(Math.sqrt(dx*dx + dy*dy));
+                shapes.push(`<circle cx="${startPoint.x}" cy="${startPoint.y}" r="${r}" fill="none" stroke="${currentColor}" stroke-width="${strokeWidth}"/>`);
+                finishShape();
+            } else if (currentTool === 'pencil') {
+                isDrawing = false;
+            }
+        });
+
+        svg.addEventListener('dblclick', (e) => {
+            if (currentTool === 'polygon' && polyPoints.length >= 2) {
+                const pointsStr = polyPoints.map(p => `${p.x},${p.y}`).join(' ');
+                const currentColor = colorPicker.value;
+                const strokeWidth = getValidWidth();
+                shapes.push(`<polygon points="${pointsStr}" fill="${currentColor}" stroke="#111" stroke-width="${strokeWidth}"/>`);
+                finishShape();
+            }
+        });
+
+        function drawPixel(x, y, color, size) {
+            const rectSnippet = `<rect x="${x - size / 2}" y="${y - size / 2}" width="${size}" height="${size}" fill="${color}" />`;
+            shapes.push(rectSnippet);
+            redrawShapes();
+            updateCodeOutput();
+        }
+
+        function finishShape() {
+            resetInteraction();
+            redrawShapes();
+            updateCodeOutput();
+        }
+
+        function getSVGCoords(e) {
+            const rect = svg.getBoundingClientRect();
+            const scaleX = 200 / rect.width;
+            const scaleY = 200 / rect.height;
+            return {
+                x: Math.round((e.clientX - rect.left) * scaleX),
+                y: Math.round((e.clientY - rect.top) * scaleY)
+            };
+        }
+
+        function redrawShapes() {
+            shapeLayer.innerHTML = '';
+            shapes.forEach(shapeCode => {
+                const tempGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                tempGroup.innerHTML = shapeCode;
+                shapeLayer.appendChild(tempGroup);
+            });
+        }
+
+        function updateCodeOutput() {
+            isSyncing = true;
+            let code = '';
+            shapes.forEach(s => {
+                code += `${s}\n`;
+            });
+            codeOutput.value = code.trim();
+            isSyncing = false;
+        }
+
+        function syncFromCode() {
+            if (isSyncing) return;
+            const text = codeOutput.value;
+            try {
+                const parser = new DOMParser();
+                const wrappedText = text.includes('<svg') ? text : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><g>${text}</g></svg>`;
+                const doc = parser.parseFromString(wrappedText, 'image/svg+xml');
+                const svgElement = doc.querySelector('svg');
+                if (svgElement) {
+                    shapeLayer.innerHTML = '';
+                    const innerGroup = svgElement.querySelector('g') || svgElement;
+                    shapeLayer.innerHTML = innerGroup.innerHTML;
+                }
+            } catch (err) {}
+        }
+
+        function clearCanvas() {
+            shapes = [];
+            resetInteraction();
+            redrawShapes();
+            codeOutput.value = '';
+            syncFromCode();
+        }
+
+        function undoLast() {
+            shapes.pop();
+            resetInteraction();
+            redrawShapes();
+            updateCodeOutput();
+        }
+
+        function copyCode() {
+            const userContent = codeOutput.value;
+            const fullSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" shape-rendering="crispEdges">
+  <g transform="translate(0, 0)">
+  
+${userContent}
+
+  </g>
+</svg>`;
+
+            navigator.clipboard.writeText(fullSVG).then(() => {
+                alert('Wrapped SVG code copied to clipboard!');
+            });
+        }
+
+         // --- GREEN-SCREEN CHROMA KEY PIPELINE (WITH SIZE & WEBP PRESETS) ---
+        let lastUploadedSpriteFile = null;
+
+        function applySpritePreset(w, h) {
+            const wInput = document.getElementById('sprite-out-w');
+            const hInput = document.getElementById('sprite-out-h');
+            if (wInput) wInput.value = w;
+            if (hInput) hInput.value = h;
+            reprocessLastSprite();
+        }
+
+        function reprocessLastSprite() {
+            if (!lastUploadedSpriteFile) return;
+            const tolInput = document.getElementById('chroma-tolerance');
+            const tol = tolInput ? Math.min(100, Math.max(0, parseInt(tolInput.value, 10) || 50)) : 50;
+            // Replace the previous auto-generated <image> layer if re-tuning presets
+            if (shapes.length > 0 && shapes[shapes.length - 1].startsWith('<image ')) {
+                shapes.pop();
+            }
+            handleChromaKeyUpload(lastUploadedSpriteFile, tol);
+        }
+
+        function handleChromaKeyUpload(file, tolerance = 50) {
+            lastUploadedSpriteFile = file;
+
+            const wInput = document.getElementById('sprite-out-w');
+            const hInput = document.getElementById('sprite-out-h');
+            const fmtSelect = document.getElementById('sprite-out-format');
+
+            const targetW = wInput ? Math.min(512, Math.max(8, parseInt(wInput.value, 10) || 64)) : 64;
+            const targetH = hInput ? Math.min(512, Math.max(8, parseInt(hInput.value, 10) || 128)) : 128;
+            const mimeType = fmtSelect ? fmtSelect.value : 'image/webp';
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = targetW;
+                    canvas.height = targetH;
+                    const ctx = canvas.getContext('2d');
+
+                    // Fit image cleanly inside targetW x targetH while preserving aspect ratio
+                    const scale = Math.min(targetW / img.width, targetH / img.height);
+                    const w = img.width * scale;
+                    const h = img.height * scale;
+                    const x = (targetW - w) / 2;
+                    const y = (targetH - h) / 2;
+
+                    ctx.drawImage(img, x, y, w, h);
+
+                    const imgData = ctx.getImageData(0, 0, targetW, targetH);
+                    const data = imgData.data;
+
+                    const scaledTolerance = tolerance * 3.2;
+
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+
+                        const distance = Math.sqrt(
+                            (r * r) +
+                            ((g - 255) * (g - 255)) +
+                            (b * b)
+                        );
+
+                        const isGreenDominant = (g > r + 15) && (g > b + 15);
+
+                        if (distance <= scaledTolerance || (isGreenDominant && g > 100 && tolerance > 20)) {
+                            data[i + 3] = 0; // Transparent
+                        }
+                    }
+
+                    ctx.putImageData(imgData, 0, 0);
+
+                    // Export at preset resolution (WebP cuts Base64 length by ~50-70%)
+                    const transparentDataUrl = canvas.toDataURL(mimeType, 0.85);
+
+                    // Center inside the 200x200 SVG preview stage
+                    const dispScale = Math.min(200 / targetW, 200 / targetH);
+                    const dispW = Math.round(targetW * dispScale);
+                    const dispH = Math.round(targetH * dispScale);
+                    const dispX = Math.round((200 - dispW) / 2);
+                    const dispY = Math.round((200 - dispH) / 2);
+
+                    const spriteSvgSnippet = `<image x="${dispX}" y="${dispY}" width="${dispW}" height="${dispH}" href="${transparentDataUrl}" />`;
+                    shapes.push(spriteSvgSnippet);
+
+                    // Show exact KB weight in the UI so you can verify how light the code is
+                    const sizeBadge = document.getElementById('base64-size-badge');
+                    if (sizeBadge) {
+                        const kb = (transparentDataUrl.length / 1024).toFixed(1);
+                        sizeBadge.textContent = `Output: ${targetW}×${targetH} | ${kb} KB (${transparentDataUrl.length} chars)`;
+                    }
+
+                    resetInteraction();
+                    redrawShapes();
+                    updateCodeOutput();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const chromaFileInput = document.getElementById('chroma-file-input');
+            const chromaDropZone = document.getElementById('drop-zone');
+            const chromaToleranceInput = document.getElementById('chroma-tolerance');
+
+            function getValidTolerance() {
+                if (!chromaToleranceInput) return 50;
+                let val = parseInt(chromaToleranceInput.value, 10);
+                if (isNaN(val)) val = 50;
+                if (val < 0) val = 0;
+                if (val > 100) val = 100;
+                chromaToleranceInput.value = val; 
+                return val;
+            }
+
+            if (chromaDropZone && chromaFileInput) {
+                chromaDropZone.addEventListener('click', () => chromaFileInput.click());
+                
+                chromaDropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    chromaDropZone.style.borderColor = '#ffffff';
+                });
+                
+                chromaDropZone.addEventListener('dragleave', () => {
+                    chromaDropZone.style.borderColor = '#00FF00';
+                });
+                
+                chromaDropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    chromaDropZone.style.borderColor = '#00FF00';
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        const tolerance = getValidTolerance();
+                        handleChromaKeyUpload(e.dataTransfer.files[0], tolerance);
+                    }
+                });
+
+                chromaFileInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        const tolerance = getValidTolerance();
+                        handleChromaKeyUpload(e.target.files[0], tolerance);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
