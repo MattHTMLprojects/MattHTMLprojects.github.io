@@ -153,6 +153,14 @@
       opacity: 0.9;
     }
 
+/* Makes all highlighted text & Find matches neon green across the editor */
+::selection,
+::highlight(find-match) {
+  background-color: #00FF65;
+  color: #000000;
+}
+
+
     .editor-container {
       position: relative;
       flex: 1;
@@ -343,16 +351,25 @@
 
 
 
-  <!-- Collapsible Find & Replace Bar -->
-  <div class="find-bar" id="find-bar">
-    <input type="text" id="find-input" placeholder="Find text or tag..." onkeydown="if(event.key==='Enter') findNextMatch()">
-    <input type="text" id="replace-input" placeholder="Replace with..." onkeydown="if(event.key==='Enter') replaceCurrentMatch()">
-    <button type="button" onclick="findNextMatch()">Find Next</button>
-    <button type="button" onclick="replaceCurrentMatch()">Replace</button>
-    <button type="button" onclick="replaceAllMatches()">Replace All</button>
-    <button type="button" onclick="toggleFindBar()" title="Close Search">✖</button>
-    <span id="find-status"></span>
-  </div>
+<!-- Collapsible Find & Replace Bar -->
+<div class="find-bar" id="find-bar">
+  <select id="find-mode" onchange="updateFindMode()" title="Select search mode">
+    <option value="find" selected>Find Next</option>
+    <option value="replace">Find and Replace</option>
+    <option value="replaceAll">Find and Replace All</option>
+  </select>
+
+  <input type="text" id="find-input" placeholder="Find text or tag..." onkeydown="handleFindKeydown(event)">
+  <input type="text" id="replace-input" placeholder="Replace with..." style="display: none;" onkeydown="handleFindKeydown(event)">
+
+  <button type="button" id="find-action-btn" onclick="executeFindAction()">Find Next</button>
+  <button type="button" onclick="findNextMatch(-1)" title="Find Previous (Shift+Enter)">▲</button>
+  <button type="button" onclick="findNextMatch(1)" title="Find Next (Enter)">▼</button>
+  <button type="button" onclick="toggleFindBar()" title="Close Search">✖</button>
+  <span id="find-status"></span>
+</div>
+
+
 
 
   <div class="editor-container">
@@ -748,152 +765,236 @@ lineNumbers.scrollTop = editor.scrollTop;
       lineNumbers.scrollTop = targetScrollTop;
     }
 
-    // 2. FIND & REPLACE HELPERS
-    var lastFindIndex = 0;
 
-    function toggleFindBar() {
-      var bar = document.getElementById("find-bar");
-      bar.classList.toggle("open");
-      if (bar.classList.contains("open")) {
-        var findInput = document.getElementById("find-input");
-        findInput.focus();
-        findInput.select();
-        document.getElementById("find-status").textContent = "";
-      } else {
-        editor.focus();
+// 2. FIND & REPLACE HELPERS
+var lastFindIndex = 0;
+var currentMatchStart = -1;
+
+function updateFindMode() {
+  var mode = document.getElementById("find-mode").value;
+  var replaceInput = document.getElementById("replace-input");
+  var actionBtn = document.getElementById("find-action-btn");
+
+  if (mode === "find") {
+    replaceInput.style.display = "none";
+    actionBtn.textContent = "Find Next";
+  } else if (mode === "replace") {
+    replaceInput.style.display = "inline-block";
+    actionBtn.textContent = "Find & Replace";
+  } else if (mode === "replaceAll") {
+    replaceInput.style.display = "inline-block";
+    actionBtn.textContent = "Replace All";
+  }
+}
+
+function handleFindKeydown(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    if (event.shiftKey) {
+      findNextMatch(-1); // Shift+Enter searches upwards
+    } else {
+      executeFindAction();
+    }
+  } else if (event.key === "Escape") {
+    toggleFindBar();
+  }
+}
+
+function executeFindAction() {
+  var mode = document.getElementById("find-mode").value;
+  if (mode === "find") {
+    findNextMatch(1);
+  } else if (mode === "replace") {
+    replaceCurrentMatch();
+  } else if (mode === "replaceAll") {
+    replaceAllMatches();
+  }
+}
+
+function toggleFindBar() {
+  var bar = document.getElementById("find-bar");
+  bar.classList.toggle("open");
+  if (bar.classList.contains("open")) {
+    var findInput = document.getElementById("find-input");
+    findInput.focus();
+    findInput.select();
+    document.getElementById("find-status").textContent = "";
+  } else {
+    if (typeof CSS !== "undefined" && CSS.highlights) {
+      CSS.highlights.delete("find-match");
+    }
+    editor.focus();
+  }
+}
+
+
+function selectRangeByOffsets(start, end) {
+  var sel = window.getSelection();
+  if (!sel) return;
+  var range = document.createRange();
+  var currentOffset = 0;
+  var startSet = false;
+  var endSet = false;
+
+  function walk(node) {
+    if (endSet) return;
+    if (node.nodeType === 3) {
+      var nextOffset = currentOffset + node.length;
+      if (!startSet && start <= nextOffset) {
+        range.setStart(node, Math.max(0, start - currentOffset));
+        startSet = true;
+      }
+      if (startSet && end <= nextOffset) {
+        range.setEnd(node, Math.max(0, end - currentOffset));
+        endSet = true;
+      }
+      currentOffset = nextOffset;
+    } else {
+      for (var i = 0; i < node.childNodes.length; i++) {
+        walk(node.childNodes.item(i));
       }
     }
+  }
 
-    function selectRangeByOffsets(start, end) {
-      var sel = window.getSelection();
-      if (!sel) return;
-      var range = document.createRange();
-      var currentOffset = 0;
-      var startSet = false;
-      var endSet = false;
+  walk(editor);
+  if (startSet && endSet) {
+    sel.removeAllRanges();
+    sel.addRange(range);
 
-      function walk(node) {
-        if (endSet) return;
-        if (node.nodeType === 3) {
-          var nextOffset = currentOffset + node.length;
-          if (!startSet && start <= nextOffset) {
-            range.setStart(node, Math.max(0, start - currentOffset));
-            startSet = true;
-          }
-          if (startSet && end <= nextOffset) {
-            range.setEnd(node, Math.max(0, end - currentOffset));
-            endSet = true;
-          }
-          currentOffset = nextOffset;
-        } else {
-          for (var i = 0; i < node.childNodes.length; i++) {
-            walk(node.childNodes.item(i));
-          }
-        }
-      }
-
-      walk(editor);
-      if (startSet && endSet) {
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
+    // ADD THESE 3 LINES: Keeps the #00FF65 highlight visible while #find-input has focus
+    if (typeof CSS !== "undefined" && CSS.highlights) {
+      CSS.highlights.set("find-match", new Highlight(range));
     }
+  }
+}
 
-    function findNextMatch() {
-      var query = document.getElementById("find-input").value;
-      var status = document.getElementById("find-status");
-      if (!query) {
-        status.textContent = "Type something to find.";
-        return false;
-      }
 
-      var text = getEditorText();
-      var lowerText = text.toLowerCase();
-      var lowerQuery = query.toLowerCase();
+// direction: 1 = downwards (default), -1 = upwards
+function findNextMatch(direction) {
+  if (typeof direction === "undefined") direction = 1;
 
-      // Count total matches
-      var totalMatches = 0;
-      var scanPos = 0;
-      while ((scanPos = lowerText.indexOf(lowerQuery, scanPos)) !== -1) {
-        totalMatches++;
-        scanPos += lowerQuery.length;
-      }
+  var query = document.getElementById("find-input").value;
+  var status = document.getElementById("find-status");
+  if (!query) {
+    status.textContent = "Type something to find.";
+    return false;
+  }
 
-      if (totalMatches === 0) {
-        status.textContent = "No matches found.";
-        return false;
-      }
+  var text = getEditorText();
+  var lowerText = text.toLowerCase();
+  var lowerQuery = query.toLowerCase();
 
-      var foundIdx = lowerText.indexOf(lowerQuery, lastFindIndex);
-      if (foundIdx === -1) {
-        foundIdx = lowerText.indexOf(lowerQuery, 0); // Wrap around to top
-      }
+  // Gather all match positions so we know exact Match X of Y
+  var matches = [];
+  var scanPos = 0;
+  while ((scanPos = lowerText.indexOf(lowerQuery, scanPos)) !== -1) {
+    matches.push(scanPos);
+    scanPos += lowerQuery.length;
+  }
 
-      lastFindIndex = foundIdx + query.length;
-      editor.focus();
-      selectRangeByOffsets(foundIdx, foundIdx + query.length);
-      updateCursorStatus();
+  if (matches.length === 0) {
+    currentMatchStart = -1;
+    status.textContent = "No matches found.";
+    return false;
+  }
 
-      // Scroll matched line into view
-      var matchLine = text.substring(0, foundIdx).split("\n").length;
-      var scrollTarget = Math.max(0, (matchLine - 1) * 22 - (editor.clientHeight / 2));
-      editor.scrollTop = scrollTarget;
-      lineNumbers.scrollTop = scrollTarget;
+  var foundIdx = -1;
 
-      status.textContent = "Match found on Line " + matchLine + " (" + totalMatches + " total)";
-      return true;
+  if (direction === 1) {
+    // Search downwards
+    foundIdx = lowerText.indexOf(lowerQuery, lastFindIndex);
+    if (foundIdx === -1) {
+      foundIdx = matches[0]; // Wrap around to top
     }
-
-    function replaceCurrentMatch() {
-      var query = document.getElementById("find-input").value;
-      var replacement = document.getElementById("replace-input").value;
-      var status = document.getElementById("find-status");
-      if (!query) return;
-
-      var sel = window.getSelection();
-      var selectedText = sel ? sel.toString() : "";
-
-      // If current selection doesn't match query yet, jump to first match first
-      if (selectedText.toLowerCase() !== query.toLowerCase()) {
-        findNextMatch();
-        return;
-      }
-
-      var range = sel.getRangeAt(0);
-      var preRange = range.cloneRange();
-      preRange.selectNodeContents(editor);
-      preRange.setEnd(range.startContainer, range.startOffset);
-      var startOffset = preRange.toString().length;
-
-      var text = getEditorText();
-      var updated = text.slice(0, startOffset) + replacement + text.slice(startOffset + query.length);
-      editor.textContent = updated;
-      lastFindIndex = startOffset + replacement.length;
-      rehighlightNow(lastFindIndex);
-      status.textContent = "Replaced 1 occurrence.";
-      findNextMatch();
+  } else {
+    // Search upwards from just before the current match
+    var searchBackFrom = currentMatchStart > 0 ? currentMatchStart - 1 : -1;
+    foundIdx = searchBackFrom >= 0 ? lowerText.lastIndexOf(lowerQuery, searchBackFrom) : -1;
+    if (foundIdx === -1) {
+      foundIdx = matches[matches.length - 1]; // Wrap around to bottom
     }
+  }
 
-    function replaceAllMatches() {
-      var query = document.getElementById("find-input").value;
-      var replacement = document.getElementById("replace-input").value;
-      var status = document.getElementById("find-status");
-      if (!query) return;
+  currentMatchStart = foundIdx;
+  lastFindIndex = foundIdx + query.length;
 
-      var text = getEditorText();
-      var parts = text.split(query);
-      var count = parts.length - 1;
+  // editor.focus();
+  selectRangeByOffsets(foundIdx, foundIdx + query.length);
+  updateCursorStatus();
 
-      if (count === 0) {
-        status.textContent = "No exact matches to replace.";
-        return;
-      }
+  // Scroll matched line into view
+  var matchLine = text.substring(0, foundIdx).split("\n").length;
+  var scrollTarget = Math.max(0, (matchLine - 1) * 22 - (editor.clientHeight / 2));
+  editor.scrollTop = scrollTarget;
+  lineNumbers.scrollTop = scrollTarget;
 
-      editor.textContent = parts.join(replacement);
-      lastFindIndex = 0;
-      rehighlightNow(0);
-      status.textContent = "Replaced " + count + " occurrence(s).";
-    }
+  var matchNumber = matches.indexOf(foundIdx) + 1;
+  status.textContent = "Match " + matchNumber + " of " + matches.length + " (Line " + matchLine + ")";
+
+  // Re-focus the search input so Enter keeps cycling instead of editing
+  var keepFocusOn = (document.activeElement && document.activeElement.id === "replace-input")
+    ? document.getElementById("replace-input")
+    : document.getElementById("find-input");
+  keepFocusOn.focus();
+
+  return true;
+}
+
+
+function replaceCurrentMatch() {
+  var query = document.getElementById("find-input").value;
+  var replacement = document.getElementById("replace-input").value;
+  var status = document.getElementById("find-status");
+  if (!query) return;
+
+  var sel = window.getSelection();
+  var selectedText = sel ? sel.toString() : "";
+
+  // If current selection doesn't match query yet, jump to first match first
+  if (selectedText.toLowerCase() !== query.toLowerCase()) {
+    findNextMatch(1);
+    return;
+  }
+
+  var range = sel.getRangeAt(0);
+  var preRange = range.cloneRange();
+  preRange.selectNodeContents(editor);
+  preRange.setEnd(range.startContainer, range.startOffset);
+  var startOffset = preRange.toString().length;
+
+  var text = getEditorText();
+  var updated = text.slice(0, startOffset) + replacement + text.slice(startOffset + query.length);
+  editor.textContent = updated;
+  lastFindIndex = startOffset + replacement.length;
+  currentMatchStart = startOffset;
+  rehighlightNow(lastFindIndex);
+  status.textContent = "Replaced 1 occurrence.";
+  findNextMatch(1);
+}
+
+function replaceAllMatches() {
+  var query = document.getElementById("find-input").value;
+  var replacement = document.getElementById("replace-input").value;
+  var status = document.getElementById("find-status");
+  if (!query) return;
+
+  var text = getEditorText();
+  var parts = text.split(query);
+  var count = parts.length - 1;
+
+  if (count === 0) {
+    status.textContent = "No exact matches to replace.";
+    return;
+  }
+
+  editor.textContent = parts.join(replacement);
+  lastFindIndex = 0;
+  currentMatchStart = -1;
+  rehighlightNow(0);
+  status.textContent = "Replaced " + count + " occurrence(s).";
+}
+
+
 
 
 function cutText() {
