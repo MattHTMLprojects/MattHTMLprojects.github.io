@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matt's Text Editor (with syntaxhighlights)</title>
+  <style>
+    :root {
+      --bg-main: #1e1e1e;
+      --bg-toolbar: #252526;
+      --bg-gutter: #1e1e1e;
+      --bg-status: #007acc;
+      --border-color: #3c3c3c;
+      --text-main: #d4d4d4;
+      --text-gutter: #858585;
+      --text-status: #ffffff;
+      --caret-color: #ffffff;
+      --btn-bg: #333333;
+      --btn-hover: #454545;
+      --btn-primary: #0e639c;
+      --btn-primary-hover: #1177bb;
+
+      /* Rich Syntax Colors (VS Code Dark+ / Notepad++ Obsidian) */
+      --syn-header: #569cd6;
+      --syn-bold: #ce9178;
+      --syn-italic: #c586c0;
+      --syn-code: #d7ba7d;
+      --syn-link: #4ec9b0;
+      --syn-list: #569cd6;
+      --syn-quote: #6a9955;
+      --syn-tag: #569cd6;
+      --syn-attr: #9cdcfe;
+      --syn-string: #ce9178;
+      --syn-comment: #6a9955;
+      --syn-keyword: #c586c0;
+      --syn-type: #4ec9b0;
+      --syn-func: #dcdcaa;
+      --syn-number: #b5cea8;
+      --syn-prop: #9cdcfe;
+      --syn-operator: #d4d4d4;
+      --syn-callout: #ffcc00;
+    }
+
+    body.light-theme {
+      --bg-main: #ffffff;
+      --bg-toolbar: #f0f0f0;
+      --bg-gutter: #e4e4e4;
+      --bg-status: #e0e0e0;
+      --border-color: #cccccc;
+      --text-main: #000000;
+      --text-gutter: #666666;
+      --text-status: #333333;
+      --caret-color: #000000;
+      --btn-bg: #ffffff;
+      --btn-hover: #e5f1fb;
+      --btn-primary: #0066cc;
+      --btn-primary-hover: #0052a3;
+
+      /* Rich Syntax Colors (Classic Notepad++ Light) */
+      --syn-header: #0000ff;
+      --syn-bold: #800000;
+      --syn-italic: #800080;
+      --syn-code: #a31515;
+      --syn-link: #008080;
+      --syn-list: #0000ff;
+      --syn-quote: #008000;
+      --syn-tag: #0000ff;
+      --syn-attr: #ff0000;
+      --syn-string: #800080;
+      --syn-comment: #008000;
+      --syn-keyword: #0000ff;
+      --syn-type: #2b91af;
+      --syn-func: #795e26;
+      --syn-number: #098658;
+      --syn-prop: #001080;
+      --syn-operator: #000000;
+      --syn-callout: #d9534f;
+    }
+
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .toolbar {
+      background-color: var(--bg-toolbar);
+      border-bottom: 1px solid var(--border-color);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      user-select: none;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+
+    .divider {
+      width: 1px;
+      height: 20px;
+      background-color: var(--border-color);
+      margin: 0 4px;
+    }
+
+    button, select {
+      background-color: var(--btn-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 5px 10px;
+      border-radius: 3px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    button:hover, select:hover {
+      background-color: var(--btn-hover);
+    }
+
+    button.primary {
+      background-color: var(--btn-primary);
+      color: #ffffff;
+      border-color: var(--btn-primary);
+      font-weight: 500;
+    }
+
+    button.primary:hover {
+      background-color: var(--btn-primary-hover);
+    }
+
+    #filename-display {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      padding-left: 6px;
+      opacity: 0.9;
+    }
+
+    .editor-container {
+      position: relative;
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      background-color: var(--bg-main);
+    }
+
+    .gutter {
+      width: 56px;
+      background-color: var(--bg-gutter);
+      border-right: 1px solid var(--border-color);
+      color: var(--text-gutter);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 15px;
+      line-height: 22px;
+      padding: 12px 10px 12px 4px;
+      text-align: right;
+      user-select: none;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .gutter div {
+      height: 22px;
+      line-height: 22px;
+    }
+
+    #code-editor {
+      flex: 1;
+      height: 100%;
+      padding: 12px 16px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 15px;
+      line-height: 22px;
+      color: var(--text-main);
+      caret-color: var(--caret-color);
+      white-space: pre;
+      overflow: auto;
+      outline: none;
+      tab-size: 2;
+    }
+
+    #code-editor:empty::before {
+      content: "Start typing or paste text here... (Try # Header, **bold**, *italic*, `code`, > quote, or HTML tags)";
+      color: var(--text-gutter);
+      pointer-events: none;
+    }
+
+    .tok-header { color: var(--syn-header); font-weight: bold; }
+    .tok-bold { color: var(--syn-bold); font-weight: bold; }
+    .tok-italic { color: var(--syn-italic); font-style: italic; }
+    .tok-code { color: var(--syn-code); }
+    .tok-link { color: var(--syn-link); text-decoration: underline; }
+    .tok-list { color: var(--syn-list); font-weight: bold; }
+    .tok-quote { color: var(--syn-quote); font-style: italic; }
+    .tok-tag { color: var(--syn-tag); }
+    .tok-attr { color: var(--syn-attr); }
+    .tok-string { color: var(--syn-string); }
+    .tok-comment { color: var(--syn-comment); font-style: italic; }
+    .tok-keyword { color: var(--syn-keyword); font-weight: bold; }
+    .tok-type { color: var(--syn-type); }
+    .tok-func { color: var(--syn-func); }
+    .tok-number { color: var(--syn-number); }
+    .tok-prop { color: var(--syn-prop); }
+    .tok-callout { color: var(--syn-callout); font-weight: bold; text-decoration: underline; }
+
+
+    .status-bar {
+      background-color: var(--bg-status);
+      color: var(--text-status);
+      font-size: 12px;
+      padding: 3px 14px;
+      display: flex;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .status-group {
+      display: flex;
+      gap: 18px;
+    }
+
+    /* Find & Replace Bar */
+    .find-bar {
+      background-color: var(--bg-toolbar);
+      border-bottom: 1px solid var(--border-color);
+      padding: 6px 12px;
+      display: none;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      user-select: none;
+    }
+
+    .find-bar.open {
+      display: flex;
+    }
+
+    .find-bar input {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 13px;
+      font-family: Consolas, "Courier New", monospace;
+      width: 190px;
+      outline: none;
+    }
+
+    .find-bar input:focus {
+      border-color: var(--btn-primary);
+    }
+
+    #find-status {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-left: 6px;
+    }
+
+    .toolbar-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <input type="file" id="file-input" style="display:none" accept=".txt,.md,.markdown,.html,.htm,.xml,.css,.js,.json,.py,.csv,.log,.ini,.yaml,.yml">
+
+      <!-- Column 1: New & Open on top, Save & Save As below -->
+      <div class="toolbar-stack">
+        <div class="toolbar-row">
+          <button type="button" onclick="newFile()">📄 New</button>
+          <button type="button" onclick="openLocalFile()">📂 Open</button>
+        </div>
+        <div class="toolbar-row">
+          <button type="button" class="primary" onclick="saveFile()">💾 Save</button>
+          <button type="button" onclick="saveFileAs()">📥 Save As</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Column 2: Copy & Paste on top, Go To & Find & Replace below -->
+      <div class="toolbar-stack">
+        <div class="toolbar-row">
+          <button type="button" onclick="copyText()">📋 Copy</button>
+          <button type="button" onclick="pasteText()">📌 Paste</button>
+        </div>
+        <div class="toolbar-row">
+          <button type="button" onclick="goToLinePrompt()" title="Jump to Line Number">🖱️ Go To</button>
+          <button type="button" onclick="toggleFindBar()" title="Open Find & Replace">🔍 Find & Replace</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Column 3: untitled.txt & Current Theme on top, Rich Text dropdown below -->
+      <div class="toolbar-stack">
+        <div class="toolbar-row">
+          <span id="filename-display">untitled.txt</span>
+          <button type="button" onclick="toggleTheme()" id="theme-btn">Current: Dark Theme</button>
+        </div>
+        <div class="toolbar-row">
+          <select id="syntax-mode" onchange="rehighlightNow()">
+            <option value="txt-markdown" selected>Rich Text / Markdown (.txt)</option>
+            <option value="html">HTML / XML (.html)</option>
+            <option value="code">Code: JS / Python / CSS / JSON / SQL</option>
+            <option value="uncolored">Uncolored Plain Text</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Collapsible Find & Replace Bar -->
+  <div class="find-bar" id="find-bar">
+    <input type="text" id="find-input" placeholder="Find text or tag..." onkeydown="if(event.key==='Enter') findNextMatch()">
+    <input type="text" id="replace-input" placeholder="Replace with..." onkeydown="if(event.key==='Enter') replaceCurrentMatch()">
+    <button type="button" onclick="findNextMatch()">Find Next</button>
+    <button type="button" onclick="replaceCurrentMatch()">Replace</button>
+    <button type="button" onclick="replaceAllMatches()">Replace All</button>
+    <button type="button" onclick="toggleFindBar()" title="Close Search">✖</button>
+    <span id="find-status"></span>
+  </div>
+
+
+  <div class="editor-container">
+    <div class="gutter" id="line-numbers"><div>1</div></div>
+    <div id="code-editor" contenteditable="true" spellcheck="false"></div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-group">
+      <span id="status-mode">Colored Text / Markdown (.txt)</span>
+      <span id="status-encoding">UTF-8</span>
+    </div>
+    <div class="status-group">
+      <span id="status-cursor">Ln 1, Col 1</span>
+      <span id="status-counts">Lines: 1 | Words: 0 | Chars: 0</span>
+    </div>
+  </div>
+
+  <script>
+    var editor = document.getElementById("code-editor");
+    var lineNumbers = document.getElementById("line-numbers");
+    var syntaxMode = document.getElementById("syntax-mode");
+    var filenameDisplay = document.getElementById("filename-display");
+
+    var currentFileName = "untitled.txt";
+ var currentFileHandle = null;
+
+    function escapeHTML(str) {
+      return str
+        .split("&").join("&amp;")
+        .split("<").join("&lt;")
+        .split(">").join("&gt;");
+    }
+
+    function wrapSpan(cls, content) {
+      return "\u003Cspan class=\"" + cls + "\"\u003E" + content + "\u003C/span\u003E";
+    }
+
+   function getEditorText() {
+      var text = editor.textContent || "";
+      return text.split("\r\n").join("\n");
+    }
+
+    function getCaretOffset(element) {
+      var sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return 0;
+      var range = sel.getRangeAt(0);
+      var preRange = range.cloneRange();
+      preRange.selectNodeContents(element);
+      preRange.setEnd(range.endContainer, range.endOffset);
+      return preRange.toString().length;
+    }
+
+    function setCaretOffset(element, offset) {
+      var sel = window.getSelection();
+      if (!sel) return;
+      var range = document.createRange();
+      var currentOffset = 0;
+      var found = false;
+
+      function traverse(node) {
+        if (found) return;
+        if (node.nodeType === 3) {
+          var nextOffset = currentOffset + node.length;
+          if (offset <= nextOffset) {
+            range.setStart(node, Math.max(0, offset - currentOffset));
+            range.collapse(true);
+            found = true;
+          }
+          currentOffset = nextOffset;
+        } else {
+          for (var i = 0; i < node.childNodes.length; i++) {
+            traverse(node.childNodes.item(i));
+          }
+        }
+      }
+
+      traverse(element);
+      if (!found) {
+        range.selectNodeContents(element);
+        range.collapse(false);
+      }
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+  
+
+
+    function highlightSyntax(text, mode) {
+      if (mode === "uncolored" || !text) {
+        return escapeHTML(text);
+      }
+
+      var BS = String.fromCharCode(92);   // \
+      var STAR = String.fromCharCode(42); // *
+      var LT = String.fromCharCode(60);   // <
+      var GT = String.fromCharCode(62);   // >
+
+      var tokens = [];
+      function stash(htmlStr) {
+        var id = "\u0000UTOK" + tokens.length + "\u0000";
+        tokens.push(htmlStr);
+        return id;
+      }
+
+      // Helper: Highlight HTML comments & tags (<tag attr="val">)
+      function stashHtmlTags(raw) {
+        var rxComment = new RegExp("(" + LT + "!--[" + BS + "s" + BS + "S]" + STAR + "?--" + GT + ")", "g");
+        raw = raw.replace(rxComment, function(m) {
+          return stash(wrapSpan("tok-comment", escapeHTML(m)));
+        });
+
+        var rxFullTag = new RegExp("(" + LT + "/?)([a-zA-Z0-9:-]+)([" + BS + "s" + BS + "S]" + STAR + "?)(/?" + GT + ")", "g");
+        raw = raw.replace(rxFullTag, function(_, open, tagName, attrs, close) {
+          var rxAttr = new RegExp("([a-zA-Z0-9:-]+)(=)(\"[^\"]" + STAR + "\"|'[^']" + STAR + "')", "g");
+          var styledAttrs = attrs.replace(rxAttr, function(__, aName, eq, aVal) {
+            return wrapSpan("tok-attr", escapeHTML(aName)) + escapeHTML(eq) + wrapSpan("tok-string", escapeHTML(aVal));
+          });
+          return stash(
+            wrapSpan("tok-tag", escapeHTML(open + tagName)) +
+            styledAttrs +
+            wrapSpan("tok-tag", escapeHTML(close))
+          );
+        });
+        return raw;
+      }
+
+      // Helper: Universal Code Lexer (JS, Python, CSS, JSON, SQL)
+      function highlightCodeChunk(chunk) {
+        var kwList = "function|var|let|const|if|else|for|while|do|switch|case|break|continue|return|try|catch|finally|throw|new|typeof|instanceof|void|delete|in|of|async|await|yield|def|elif|except|raise|with|as|pass|lambda|from|import|global|nonlocal|assert|del|SELECT|FROM|WHERE|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|DROP|ALTER|JOIN|LEFT|RIGHT|INNER|OUTER|ON|GROUP|BY|ORDER|HAVING|LIMIT|DISTINCT|AND|OR|NOT|IS|NULL|AS";
+        var typeList = "class|interface|enum|extends|implements|export|default|true|false|null|undefined|NaN|Infinity|True|False|None|self|this|super|String|Number|Boolean|Array|Object|Promise|RegExp|Date|Math|JSON|console|window|document|int|float|str|list|dict|set|tuple|bool";
+
+        var masterPattern =
+          "(" + BS + "/" + BS + "/[^" + BS + "n]" + STAR + "|" + BS + "/" + BS + STAR + "[" + BS + "s" + BS + "S]" + STAR + "?" + BS + STAR + BS + "/)|" +
+          "(\"(?:" + BS + BS + ".|[^\"" + BS + BS + "])" + STAR + "\"|'(?:" + BS + BS + ".|[^'" + BS + BS + "])" + STAR + "'|`(?:" + BS + BS + ".|[^`" + BS + BS + "])" + STAR + "`)|" +
+          "(#[0-9a-fA-F]{3,8}" + BS + "b)|" +
+          "(" + BS + "b" + BS + "d+(?:" + BS + "." + BS + "d+)?" + BS + "b)|" +
+          "(" + BS + "b(?:" + kwList + ")" + BS + "b)|" +
+          "(" + BS + "b(?:" + typeList + ")" + BS + "b)|" +
+          "(" + BS + "b[a-zA-Z_$][a-zA-Z0-9_$]" + STAR + ")(?=" + BS + "s" + STAR + BS + "()|" +
+          "([a-zA-Z-]+)(?=" + BS + "s" + STAR + ":)";
+
+        var masterRx = new RegExp(masterPattern, "g");
+        var out = "";
+        var lastIdx = 0;
+        var m;
+
+        while ((m = masterRx.exec(chunk)) !== null) {
+          if (m.index > lastIdx) {
+            out += escapeHTML(chunk.slice(lastIdx, m.index));
+          }
+          var tok = escapeHTML(m.at(0));
+          if (m.at(1)) out += wrapSpan("tok-comment", tok);
+          else if (m.at(2)) out += wrapSpan("tok-string", tok);
+          else if (m.at(3) || m.at(4)) out += wrapSpan("tok-number", tok);
+          else if (m.at(5)) out += wrapSpan("tok-keyword", tok);
+          else if (m.at(6)) out += wrapSpan("tok-type", tok);
+          else if (m.at(7)) out += wrapSpan("tok-func", tok);
+          else if (m.at(8)) out += wrapSpan("tok-prop", tok);
+          else out += tok;
+
+          lastIdx = masterRx.lastIndex;
+        }
+        if (lastIdx < chunk.length) {
+          out += escapeHTML(chunk.slice(lastIdx));
+        }
+        return out;
+      }
+
+      // If Pure Code mode is chosen explicitly, highlight the whole document as code
+      if (mode === "code") {
+        return highlightCodeChunk(text);
+      }
+
+      // UNIFIED SMART MODE (Default for .txt AND .html):
+      // 1. Stash fenced markdown code blocks (``` ... ```) and highlight their inner code
+      var rxCodeBlock = new RegExp("(```[a-zA-Z0-9_-]" + STAR + "[" + BS + "s" + BS + "S]" + STAR + "?```)", "g");
+      text = text.replace(rxCodeBlock, function(m) {
+        return stash(highlightCodeChunk(m));
+      });
+
+      // 2. Stash inline code (`...`)
+      var rxInlineCode = new RegExp("(`[^`" + BS + "n]+`)", "g");
+      text = text.replace(rxInlineCode, function(m) {
+        return stash(wrapSpan("tok-code", escapeHTML(m)));
+      });
+
+      // 3. Stash HTML comments & HTML tags (<div class="...">, <script>, etc.)
+      text = stashHtmlTags(text);
+
+      // 4. Stash URLs before underscores/asterisks touch them
+      var rxUrl = new RegExp("(https?://" + BS + "S+)", "g");
+      text = text.replace(rxUrl, function(m) {
+        return stash(wrapSpan("tok-link", escapeHTML(m)));
+      });
+
+      // 5. Run Universal Code Lexer on remaining text so JS/CSS/Python/SQL keywords & strings light up anywhere in .txt or .html!
+      var styled = highlightCodeChunk(text);
+
+      // 6. Apply Markdown & Rich Text rules on top (Headers, Quotes, Bold, Italic, Lists, Callouts)
+      var rxHeader = new RegExp("^(#{1,6}" + BS + "s." + STAR + ")$", "gm");
+      styled = styled.replace(rxHeader, function(m) { return wrapSpan("tok-header", m); });
+
+      var rxQuote = new RegExp("^(&gt;" + BS + "s." + STAR + ")$", "gm");
+      styled = styled.replace(rxQuote, function(m) { return wrapSpan("tok-quote", m); });
+
+      var rxBold = new RegExp("(" + BS + STAR + BS + STAR + "[^" + BS + "n" + STAR + "]+" + BS + STAR + BS + STAR + "|__[^" + BS + "n_]+__)", "g");
+      styled = styled.replace(rxBold, function(m) { return wrapSpan("tok-bold", m); });
+
+      var rxItalic = new RegExp("(" + BS + STAR + "[^" + BS + "n" + STAR + "]+" + BS + STAR + "|_[^" + BS + "n_]+_)", "g");
+      styled = styled.replace(rxItalic, function(m) { return wrapSpan("tok-italic", m); });
+
+      var rxList = new RegExp("^(" + BS + "s" + STAR + "(?:-|" + BS + STAR + "|" + BS + "+|" + BS + "d+" + BS + ".)" + BS + "s)", "gm");
+      styled = styled.replace(rxList, function(m) { return wrapSpan("tok-list", m); });
+
+      var rxCallout = new RegExp("(" + BS + "b(?:TODO|NOTE|FIXME|WARNING|IMPORTANT):?)", "g");
+      styled = styled.replace(rxCallout, function(m) { return wrapSpan("tok-callout", m); });
+
+      // 7. Restore all stashed HTML tags, links, and code blocks
+      return styled.replace(/\u0000UTOK(\d+)\u0000/g, function(_, idx) {
+        return tokens.at(Number(idx));
+      });
+    }
+
+
+
+
+
+function updateStatsAndGutter(text) {
+var lines = text.split("\n");
+var lineCount = lines.length;
+var gutterFrag = document.createDocumentFragment();
+for (var i = 1; i <= lineCount; i++) {
+var div = document.createElement("div");
+div.textContent = i;
+gutterFrag.appendChild(div);
+}
+lineNumbers.innerHTML = "";
+lineNumbers.appendChild(gutterFrag);
+lineNumbers.scrollTop = editor.scrollTop;
+var trimmed = text.trim();
+var words = trimmed ? trimmed.split(/\s+/).length : 0;
+document.getElementById("status-counts").textContent =
+"Lines: " + lineCount + " | Words: " + words + " | Chars: " + text.length;
+var modeLabels = {
+  "txt-markdown": "Colored Text / Markdown (.txt)",
+  "html": "HTML / XML (.html)",
+  "code": "Code (JS / Python / CSS / JSON / SQL)",
+  "uncolored": "Uncolored Plain Text"
+};
+
+document.getElementById("status-mode").textContent = modeLabels[syntaxMode.value];
+}
+
+function updateCursorStatus() {
+var offset = getCaretOffset(editor);
+var text = getEditorText();
+var upToCursor = text.substring(0, offset);
+var lines = upToCursor.split("\n");
+var currentLine = lines.length;
+var lastLineText = lines.slice(-1).pop() || "";
+var currentCol = lastLineText.length + 1;
+document.getElementById("status-cursor").textContent = "Ln " + currentLine + ", Col " + currentCol;
+}
+
+    function getEditorText() {
+      var text = editor.textContent || "";
+      return text.split("\r\n").join("\n");
+    }
+
+    function rehighlightNow(forcedCaret) {
+      var isFocused = (document.activeElement === editor);
+      var caret = (typeof forcedCaret === "number") ? forcedCaret : (isFocused ? getCaretOffset(editor) : 0);
+      var text = getEditorText();
+      var mode = syntaxMode.value;
+
+      if (text === "") {
+        editor.innerHTML = "";
+      } else {
+        var html = highlightSyntax(text, mode);
+        // A trailing <br> has zero textContent so it NEVER adds phantom newlines to getEditorText()!
+        if (text.endsWith("\n")) {
+          html += "\u003Cbr\u003E";
+        }
+        editor.innerHTML = html;
+      }
+
+      if (isFocused) {
+        setCaretOffset(editor, caret);
+      }
+      updateStatsAndGutter(text);
+      updateCursorStatus();
+    }
+
+
+    // Helper to insert multi-line text cleanly at cursor/selection
+    function insertCleanTextAtCursor(rawText) {
+      var clean = rawText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      var sel = window.getSelection();
+      var start = 0;
+      var end = 0;
+
+      if (sel && sel.rangeCount > 0) {
+        var range = sel.getRangeAt(0);
+        var preStart = range.cloneRange();
+        preStart.selectNodeContents(editor);
+        preStart.setEnd(range.startContainer, range.startOffset);
+        start = preStart.toString().length;
+
+        var preEnd = range.cloneRange();
+        preEnd.selectNodeContents(editor);
+        preEnd.setEnd(range.endContainer, range.endOffset);
+        end = preEnd.toString().length;
+      }
+
+      var currentText = getEditorText();
+      var updatedText = currentText.slice(0, start) + clean + currentText.slice(end);
+      editor.textContent = updatedText;
+      rehighlightNow(start + clean.length);
+    }
+
+    // Intercept Ctrl+V and Right-Click Paste so line breaks are never squished
+    editor.addEventListener("paste", function(e) {
+      e.preventDefault();
+      var pasteData = (e.clipboardData || window.clipboardData).getData("text/plain");
+      insertCleanTextAtCursor(pasteData);
+    });
+
+
+    editor.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        var caret = getCaretOffset(editor);
+        var text = getEditorText();
+        var updated = text.slice(0, caret) + "\n" + text.slice(caret);
+        editor.textContent = updated;
+        rehighlightNow(caret + 1);
+      } else if (e.key === "Tab") {
+        e.preventDefault();
+        var caretTab = getCaretOffset(editor);
+        var textTab = getEditorText();
+        var updatedTab = textTab.slice(0, caretTab) + "  " + textTab.slice(caretTab);
+        editor.textContent = updatedTab;
+        rehighlightNow(caretTab + 2);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        saveFile();
+      }
+    });
+
+
+
+
+editor.addEventListener("input", rehighlightNow);
+editor.addEventListener("click", updateCursorStatus);
+editor.addEventListener("keyup", updateCursorStatus);
+editor.addEventListener("scroll", function() {
+lineNumbers.scrollTop = editor.scrollTop;
+});
+
+    // 1. GO TO LINE / CURSOR HELPER
+    function goToLinePrompt() {
+      var text = getEditorText();
+      var lines = text.split("\n");
+      var totalLines = lines.length;
+
+      // Detect current cursor line to pre-fill the prompt
+      var currentOffset = getCaretOffset(editor);
+      var currentLine = text.substring(0, currentOffset).split("\n").length;
+
+      var input = prompt("Go to line (1 - " + totalLines + "):", currentLine);
+      if (input === null) return;
+
+      var targetLine = parseInt(input, 10);
+      if (isNaN(targetLine) || targetLine < 1) targetLine = 1;
+      if (targetLine > totalLines) targetLine = totalLines;
+
+      // Calculate exact character offset for the start of targetLine
+      var charIndex = 0;
+      for (var i = 0; i < targetLine - 1; i++) {
+        charIndex += lines.at(i).length + 1;
+      }
+
+      editor.focus();
+      setCaretOffset(editor, charIndex);
+      updateCursorStatus();
+
+      // Scroll editor smoothly so targetLine is centered in view
+      var lineHeight = 22;
+      var targetScrollTop = Math.max(0, (targetLine - 1) * lineHeight - (editor.clientHeight / 2));
+      editor.scrollTop = targetScrollTop;
+      lineNumbers.scrollTop = targetScrollTop;
+    }
+
+    // 2. FIND & REPLACE HELPERS
+    var lastFindIndex = 0;
+
+    function toggleFindBar() {
+      var bar = document.getElementById("find-bar");
+      bar.classList.toggle("open");
+      if (bar.classList.contains("open")) {
+        var findInput = document.getElementById("find-input");
+        findInput.focus();
+        findInput.select();
+        document.getElementById("find-status").textContent = "";
+      } else {
+        editor.focus();
+      }
+    }
+
+    function selectRangeByOffsets(start, end) {
+      var sel = window.getSelection();
+      if (!sel) return;
+      var range = document.createRange();
+      var currentOffset = 0;
+      var startSet = false;
+      var endSet = false;
+
+      function walk(node) {
+        if (endSet) return;
+        if (node.nodeType === 3) {
+          var nextOffset = currentOffset + node.length;
+          if (!startSet && start <= nextOffset) {
+            range.setStart(node, Math.max(0, start - currentOffset));
+            startSet = true;
+          }
+          if (startSet && end <= nextOffset) {
+            range.setEnd(node, Math.max(0, end - currentOffset));
+            endSet = true;
+          }
+          currentOffset = nextOffset;
+        } else {
+          for (var i = 0; i < node.childNodes.length; i++) {
+            walk(node.childNodes.item(i));
+          }
+        }
+      }
+
+      walk(editor);
+      if (startSet && endSet) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+
+    function findNextMatch() {
+      var query = document.getElementById("find-input").value;
+      var status = document.getElementById("find-status");
+      if (!query) {
+        status.textContent = "Type something to find.";
+        return false;
+      }
+
+      var text = getEditorText();
+      var lowerText = text.toLowerCase();
+      var lowerQuery = query.toLowerCase();
+
+      // Count total matches
+      var totalMatches = 0;
+      var scanPos = 0;
+      while ((scanPos = lowerText.indexOf(lowerQuery, scanPos)) !== -1) {
+        totalMatches++;
+        scanPos += lowerQuery.length;
+      }
+
+      if (totalMatches === 0) {
+        status.textContent = "No matches found.";
+        return false;
+      }
+
+      var foundIdx = lowerText.indexOf(lowerQuery, lastFindIndex);
+      if (foundIdx === -1) {
+        foundIdx = lowerText.indexOf(lowerQuery, 0); // Wrap around to top
+      }
+
+      lastFindIndex = foundIdx + query.length;
+      editor.focus();
+      selectRangeByOffsets(foundIdx, foundIdx + query.length);
+      updateCursorStatus();
+
+      // Scroll matched line into view
+      var matchLine = text.substring(0, foundIdx).split("\n").length;
+      var scrollTarget = Math.max(0, (matchLine - 1) * 22 - (editor.clientHeight / 2));
+      editor.scrollTop = scrollTarget;
+      lineNumbers.scrollTop = scrollTarget;
+
+      status.textContent = "Match found on Line " + matchLine + " (" + totalMatches + " total)";
+      return true;
+    }
+
+    function replaceCurrentMatch() {
+      var query = document.getElementById("find-input").value;
+      var replacement = document.getElementById("replace-input").value;
+      var status = document.getElementById("find-status");
+      if (!query) return;
+
+      var sel = window.getSelection();
+      var selectedText = sel ? sel.toString() : "";
+
+      // If current selection doesn't match query yet, jump to first match first
+      if (selectedText.toLowerCase() !== query.toLowerCase()) {
+        findNextMatch();
+        return;
+      }
+
+      var range = sel.getRangeAt(0);
+      var preRange = range.cloneRange();
+      preRange.selectNodeContents(editor);
+      preRange.setEnd(range.startContainer, range.startOffset);
+      var startOffset = preRange.toString().length;
+
+      var text = getEditorText();
+      var updated = text.slice(0, startOffset) + replacement + text.slice(startOffset + query.length);
+      editor.textContent = updated;
+      lastFindIndex = startOffset + replacement.length;
+      rehighlightNow(lastFindIndex);
+      status.textContent = "Replaced 1 occurrence.";
+      findNextMatch();
+    }
+
+    function replaceAllMatches() {
+      var query = document.getElementById("find-input").value;
+      var replacement = document.getElementById("replace-input").value;
+      var status = document.getElementById("find-status");
+      if (!query) return;
+
+      var text = getEditorText();
+      var parts = text.split(query);
+      var count = parts.length - 1;
+
+      if (count === 0) {
+        status.textContent = "No exact matches to replace.";
+        return;
+      }
+
+      editor.textContent = parts.join(replacement);
+      lastFindIndex = 0;
+      rehighlightNow(0);
+      status.textContent = "Replaced " + count + " occurrence(s).";
+    }
+
+
+function cutText() {
+editor.focus();
+document.execCommand("cut");
+rehighlightNow();
+}
+
+function copyText() {
+editor.focus();
+document.execCommand("copy");
+}
+
+    async function pasteText() {
+      editor.focus();
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          var clipText = await navigator.clipboard.readText();
+          insertCleanTextAtCursor(clipText);
+          return;
+        }
+      } catch (err) {}
+      alert("Your browser blocked the Paste button on a local file. Please press Ctrl+V (or Cmd+V) or right-click and choose Paste.");
+    }
+
+
+
+    // 1. NEW BLANK FILE
+    function newFile() {
+      if (getEditorText().trim() !== "" && !confirm("Clear current text and start a new file?")) {
+        return;
+      }
+      editor.innerHTML = "";
+      currentFileName = "untitled.txt";
+      currentFileHandle = null;
+      filenameDisplay.textContent = currentFileName;
+      syntaxMode.value = "txt-markdown";
+      updateStatsAndGutter("");
+      editor.focus();
+    }
+
+    // 2. OPEN FILE DIRECTLY ON DISK (With Fallback for Firefox/Safari)
+    async function openLocalFile() {
+      if (window.showOpenFilePicker) {
+        try {
+          var handles = await window.showOpenFilePicker({
+            types: [{
+              description: "Text & HTML Files",
+              accept: {
+                "text/plain": [".txt", ".md", ".log", ".csv", ".ini", ".yaml", ".yml"],
+                "text/html": [".html", ".htm", ".xml"],
+                "text/javascript": [".js", ".json"],
+                "text/css": [".css"]
+              }
+            }]
+          });
+          var handle = handles.at(0);
+          if (!handle) return;
+
+          currentFileHandle = handle;
+          var file = await handle.getFile();
+          currentFileName = file.name;
+          filenameDisplay.textContent = currentFileName;
+
+          var ext = currentFileName.split(".").pop().toLowerCase();
+          syntaxMode.value = (ext === "html" || ext === "htm" || ext === "xml") ? "html" : "txt-markdown";
+
+          editor.textContent = await file.text();
+          rehighlightNow(0);
+          return;
+        } catch (err) {
+          if (err.name === "AbortError") return; // User closed picker
+        }
+      }
+      // Fallback to hidden <input type="file">
+      document.getElementById("file-input").click();
+    }
+
+    // Keep fallback file-input working too
+    document.getElementById("file-input").addEventListener("change", function(e) {
+      var file = e.target.files.item(0);
+      if (!file) return;
+
+      currentFileHandle = null;
+      currentFileName = file.name;
+      filenameDisplay.textContent = currentFileName;
+
+      var ext = currentFileName.split(".").pop().toLowerCase();
+      syntaxMode.value = (ext === "html" || ext === "htm" || ext === "xml") ? "html" : "txt-markdown";
+
+      var reader = new FileReader();
+      reader.onload = function(event) {
+        editor.textContent = event.target.result;
+        rehighlightNow(0);
+      };
+      reader.readAsText(file);
+      this.value = "";
+    });
+
+    // 3. SAVE DIRECTLY OVER OPEN FILE (Ctrl+S)
+    async function saveFile() {
+      var content = getEditorText();
+
+      // If we already have a direct handle to the file on disk, overwrite it immediately!
+      if (currentFileHandle && currentFileHandle.createWritable) {
+        try {
+          var writable = await currentFileHandle.createWritable();
+          await writable.write(content);
+          await writable.close();
+
+          // Brief visual confirmation in filename display
+          filenameDisplay.textContent = currentFileName + " ✓ Saved";
+          setTimeout(function() {
+            filenameDisplay.textContent = currentFileName;
+          }, 1500);
+          return;
+        } catch (err) {
+          if (err.name === "AbortError") return;
+        }
+      }
+
+      // If it's a brand-new unsaved file, trigger Save As
+      await saveFileAs();
+    }
+
+    // 4. SAVE AS NEW FILE ON DISK
+    async function saveFileAs() {
+      var content = getEditorText();
+
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: currentFileName,
+            types: [
+              { description: "Text Document (.txt)", accept: { "text/plain": [".txt"] } },
+              { description: "HTML Webpage (.html)", accept: { "text/html": [".html"] } }
+            ]
+          });
+          currentFileHandle = handle;
+          currentFileName = handle.name;
+          filenameDisplay.textContent = currentFileName;
+
+          var ext = currentFileName.split(".").pop().toLowerCase();
+          syntaxMode.value = (ext === "html" || ext === "htm" || ext === "xml") ? "html" : "txt-markdown";
+          rehighlightNow();
+
+          var writable = await handle.createWritable();
+          await writable.write(content);
+          await writable.close();
+
+          filenameDisplay.textContent = currentFileName + " ✓ Saved";
+          setTimeout(function() {
+            filenameDisplay.textContent = currentFileName;
+          }, 1500);
+          return;
+        } catch (err) {
+          if (err.name === "AbortError") return;
+        }
+      }
+
+      // Fallback download method for browsers without File System Access API
+      var fileName = prompt("Save file as (.txt, .html, etc.):", currentFileName);
+      if (!fileName) return;
+
+      currentFileName = fileName;
+      filenameDisplay.textContent = currentFileName;
+
+      var extFallback = currentFileName.split(".").pop().toLowerCase();
+      syntaxMode.value = (extFallback === "html" || extFallback === "htm" || extFallback === "xml") ? "html" : "txt-markdown";
+      rehighlightNow();
+
+      var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      var link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = currentFileName;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+
+function toggleTheme() {
+document.body.classList.toggle("light-theme");
+var isLight = document.body.classList.contains("light-theme");
+document.getElementById("theme-btn").textContent = isLight ? "Current: Light Theme" : "Current: Dark Theme";
+}
+updateStatsAndGutter("");
+editor.focus();
+
+
+
+</script>
+</body>
+</html>
