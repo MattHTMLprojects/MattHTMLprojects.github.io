@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LocalCart — Multi-Store Budget Basket Planner</title>
+<style>
+  :root {
+    --primary: #ff6b35;
+    --primary-light: #fff0eb;
+    --secondary: #0284c7;
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --success: #10b981;
+    --danger: #ef4444;
+    --shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background: var(--bg); color: var(--text); padding-bottom: 85px; -webkit-tap-highlight-color: transparent; }
+
+  header {
+    background: var(--card); position: sticky; top: 0; z-index: 40;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    max-width: 540px; margin: 0 auto; padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .logo { font-size: 1.25rem; font-weight: 800; color: var(--primary); }
+  .zip-badge {
+    background: var(--primary-light); color: var(--primary); border: none; padding: 6px 12px;
+    border-radius: 20px; font-weight: 700; font-size: 0.82rem; cursor: pointer;
+  }
+
+
+
+  .card {
+    background: var(--card); border-radius: 16px; padding: 15px; box-shadow: var(--shadow);
+    border: 1px solid var(--border); margin-bottom: 14px;
+  }
+  .step-label { font-size: 0.74rem; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px; margin-bottom: 6px; }
+  .row { display: flex; gap: 8px; }
+  input {
+    width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border);
+    font-size: 1rem; background: #fff; outline: none;
+  }
+  input:focus { border-color: var(--primary); }
+  .btn-primary {
+    background: var(--primary); color: white; border: none; padding: 12px 16px;
+    border-radius: 12px; font-weight: 700; font-size: 0.92rem; cursor: pointer; white-space: nowrap;
+  }
+  .btn-primary:disabled { opacity: 0.5; }
+
+  .store-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .store-chip {
+    font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+    background: #f3f4f6; color: var(--text); border: 1px solid var(--border);
+  }
+  .store-status { font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
+
+  /* Multi-Store Comparison Item Card */
+  .item-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow);
+  }
+  .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .item-title { font-size: 1.05rem; font-weight: 800; text-transform: capitalize; }
+  .del-btn { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; padding: 2px 6px; }
+
+  .store-compare-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .store-cell {
+    border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; background: #f9fafb;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
+  }
+  .store-cell.best-price { border-color: var(--success); background: #ecfdf5; }
+  .cell-top { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+  .cell-store-name { font-size: 0.78rem; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .check-link { font-size: 0.72rem; font-weight: 700; color: var(--secondary); text-decoration: none; white-space: nowrap; }
+  .price-input-btn {
+    width: 100%; text-align: left; padding: 6px 8px; border-radius: 8px; border: 1px dashed #cbd5e1;
+    background: white; font-size: 0.85rem; font-weight: 700; color: var(--muted); cursor: pointer;
+  }
+  .price-input-btn.has-price { border-style: solid; border-color: var(--success); color: var(--text); }
+
+  /* Store Totals Leaderboard */
+  .totals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 10px; }
+  .total-box {
+    border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: #f9fafb;
+  }
+  .total-box.winner { border-color: var(--success); background: #ecfdf5; }
+  .total-store { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+  .total-amt { font-size: 1.15rem; font-weight: 800; color: var(--text); margin-top: 2px; }
+  .total-sub { font-size: 0.68rem; color: var(--muted); }
+
+  .progress-bg { width: 100%; height: 10px; background: #e5e7eb; border-radius: 10px; overflow: hidden; margin: 8px 0; }
+  .progress-fill { height: 100%; background: var(--success); transition: width 0.3s; }
+
+  nav.bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--card);
+    border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0 14px; z-index: 40;
+  }
+  .nav-btn {
+    background: none; border: none; display: flex; flex-direction: column; align-items: center;
+    gap: 3px; color: var(--muted); font-size: 0.75rem; font-weight: 700; cursor: pointer; position: relative;
+  }
+  .nav-btn.active { color: var(--primary); }
+  .badge {
+    position: absolute; top: -4px; right: -10px; background: var(--primary); color: white;
+    font-size: 0.7rem; padding: 2px 6px; border-radius: 10px;
+  }
+
+  body { background: var(--bg); color: var(--text); padding-bottom: 24px; -webkit-tap-highlight-color: transparent; }
+  .container { max-width: 540px; margin: 0 auto; padding: 14px; }
+  .view { display: block; }
+
+
+  .view.active { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">🛒 LocalCart</div>
+    <button class="zip-badge" id="headerZipBtn" onclick="document.getElementById('zipInput').focus()">📍 Address / ZIP</button>
+  </div>
+</header>
+
+
+<div class="container">
+  <!-- VIEW 1: MULTI-STORE MEAL & ITEM COMPARISON -->
+  <div id="view-compare" class="view active">
+    <div class="card">
+      <div class="step-label">1. Find Stores by Street Address or ZIP Code</div>
+      <div class="row">
+<input type="text" id="zipInput" placeholder="Enter street address or 5-digit ZIP (e.g. Flint Hill, VA or 22627)" onkeydown="if(event.key==='Enter') findRealLocalStores()">
+<button class="btn-primary" id="findStoresBtn" onclick="findRealLocalStores()">Find Stores</button>
+
+      </div>
+      <div class="store-chips" id="activeStoreChips"></div>
+<div class="store-status" id="storeStatusText">Enter any street address or ZIP code to find nearby grocery stores.</div>
+<br>
+    <div class="card">
+      <div class="step-label">2. Add Meal Items or Brands to Compare</div>
+      <div class="row">
+        <input type="text" id="mealQuery" placeholder="e.g. Butterball Turkey, Stuffing, Potatoes" onkeydown="if(event.key==='Enter') addItemsFromInput()">
+        <button class="btn-primary" onclick="addItemsFromInput()">+ Add</button>
+      </div>
+      <div style="font-size:0.75rem; color:var(--muted); margin-top:6px;">
+        Separate multiple items with commas or "and". Nothing is guessed—tap <b>Check ↗</b> on each store to view real local stock &amp; log prices.
+      </div>
+    </div>
+
+    <div id="compareListContainer"></div>
+  </div>
+
+  <!-- VIEW 2: STORE BASKET TOTALS & BUDGET -->
+  <div id="view-totals" class="view">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="step-label">Best Single-Store Basket</div>
+          <div style="font-size:1.4rem; font-weight:800;"><span id="bestBasketTotal">$0.00</span> <span style="font-size:0.9rem;color:var(--muted);font-weight:500;">/ $<span id="budgetVal">120</span> budget</span></div>
+        </div>
+        <button onclick="editBudget()" style="background:none;border:none;color:var(--primary);font-weight:700;cursor:pointer;">Edit Budget</button>
+      </div>
+      <div class="progress-bg"><div class="progress-fill" id="budgetFill" style="width:0%"></div></div>
+      <div style="font-size:0.78rem; color:var(--muted);" id="winnerSummaryText">Log prices on the Compare tab to see which store wins.</div>
+
+      <div class="totals-grid" id="storeTotalsGrid"></div>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <button onclick="copyShoppingPlan()" class="btn-primary" style="flex:1;">📋 Copy Shopping Plan to Text</button>
+      <button onclick="clearAllItems()" style="background:#fee2e2;color:var(--danger);border:none;padding:0 16px;border-radius:12px;font-weight:700;cursor:pointer;">Clear All</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  let savedZip = localStorage.getItem('mc_zip') || '';
+  let localStores = JSON.parse(localStorage.getItem('mc_stores')) || [];
+  let basketItems = JSON.parse(localStorage.getItem('mc_items')) || [];
+  // Real user-logged price memory: { "butterball turkey": { "Food Lion": 14.99, "Walmart": 12.88 } }
+  let realPriceBook = JSON.parse(localStorage.getItem('mc_pricebook')) || {};
+  let budget = parseFloat(localStorage.getItem('mc_budget')) || 120;
+
+  function saveAll() {
+    localStorage.setItem('mc_zip', savedZip);
+    localStorage.setItem('mc_stores', JSON.stringify(localStores));
+    localStorage.setItem('mc_items', JSON.stringify(basketItems));
+    localStorage.setItem('mc_pricebook', JSON.stringify(realPriceBook));
+    localStorage.setItem('mc_budget', budget.toString());
+    const badge = document.getElementById('itemBadge');
+    if (badge) badge.textContent = basketItems.length;
+  }
+
+
+  function addItemsFromInput() {
+    const input = document.getElementById('mealQuery');
+    const raw = input.value.trim();
+    if (!raw) return;
+
+    if (localStores.length === 0) {
+      localStores = [
+        { name: 'Food Lion', miles: '' },
+        { name: 'Walmart', miles: '' },
+        { name: 'Aldi', miles: '' },
+        { name: 'Giant Food', miles: '' }
+      ];
+      renderStoreChips();
+    }
+
+    const parts = raw.split(/\band\b|,|[+]|&/i).map(s => s.trim()).filter(s => s.length > 1);
+    parts.forEach(term => {
+      const key = term.toLowerCase();
+      const remembered = realPriceBook[key] ? { ...realPriceBook[key] } : {};
+      basketItems.push({
+        id: Date.now() + Math.random(),
+        name: term,
+        prices: remembered
+      });
+    });
+
+    input.value = '';
+    saveAll();
+    renderCompareList();
+  }
+
+
+  function calcMiles(lat1, lon1, lat2, lon2) {
+const R = 3958.8;
+const dLat = (lat2 - lat1) * Math.PI / 180;
+const dLon = (lon2 - lon1) * Math.PI / 180;
+const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+Math.sin(dLon / 2) * Math.sin(dLon / 2);
+return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+async function fetchWithTimeout(url, options = {}, ms = 6000) {
+const controller = new AbortController();
+const id = setTimeout(() => controller.abort(), ms);
+try {
+const res = await fetch(url, { ...options, signal: controller.signal });
+clearTimeout(id);
+return res;
+} catch (err) {
+clearTimeout(id);
+throw err;
+}
+}
+
+  function buildLiveStoreCheckUrl(storeName, query) {
+    const q = encodeURIComponent(query);
+    const s = (storeName || '').toLowerCase();
+    const h = (parts) => 'https://' + parts.join('.');
+
+    if (s.includes('walmart')) return h(['www', 'walmart', 'com']) + '/search?q=' + q;
+    if (s.includes('giant')) return h(['giantfood', 'com']) + '/product-search/' + q;
+    if (s.includes('food lion')) return h(['www', 'foodlion', 'com']) + '/search?q=' + q;
+    if (s.includes('aldi')) return h(['new', 'aldi', 'us']) + '/results?q=' + q;
+    if (s.includes('weis')) return h(['www', 'weismarkets', 'com']) + '/shop/search?q=' + q;
+    if (s.includes('safeway')) return h(['www', 'safeway', 'com']) + '/shop/search-results.html?q=' + q;
+    if (s.includes('target')) return h(['www', 'target', 'com']) + '/s?searchTerm=' + q;
+    if (s.includes('wegmans')) return h(['shop', 'wegmans', 'com']) + '/search?search_term=' + q;
+    if (s.includes('martin')) return h(['martinsfoods', 'com']) + '/product-search/' + q;
+    if (s.includes('harris teeter')) return h(['www', 'harristeeter', 'com']) + '/search?query=' + q;
+    if (s.includes('kroger')) return h(['www', 'kroger', 'com']) + '/search?query=' + q;
+    if (s.includes('lidl')) return h(['www', 'lidl', 'com']) + '/search?query=' + q;
+    return h(['www', 'instacart', 'com']) + '/store/s?k=' + q;
+  }
+
+
+
+  async function findRealLocalStores() {
+    const rawLocation = document.getElementById('zipInput').value.trim();
+    if (!rawLocation) {
+      alert('Please enter a 5-digit ZIP code or a street address.');
+      return;
+    }
+
+    const btn = document.getElementById('findStoresBtn');
+    const status = document.getElementById('storeStatusText');
+    btn.disabled = true;
+    btn.textContent = 'Locating...';
+    status.textContent = 'Finding closest grocery chains near ' + rawLocation + '...';
+
+    let lat = null;
+    let lon = null;
+    let shortLabel = rawLocation;
+    let foundChains = [];
+
+    const nomHost = 'https://' + ['nominatim', 'openstreetmap', 'org'].join('.');
+
+    try {
+      // 1A. Fast path if user entered a 5-digit US ZIP code
+      if (/^\d{5}$/.test(rawLocation)) {
+        const zipHost = 'https://' + ['api', 'zippopotam', 'us'].join('.');
+        const zipUrl = new URL('/us/' + rawLocation, zipHost).href;
+        const zipRes = await fetchWithTimeout(zipUrl, {}, 5000);
+        if (zipRes.ok) {
+          const zipData = await zipRes.json();
+          const place = zipData.places.at(0);
+          lat = parseFloat(place.latitude);
+          lon = parseFloat(place.longitude);
+          shortLabel = place['place name'] + ', ' + place['state abbreviation'];
+        }
+      }
+
+      // 1B. Geocode full street address or city/state via Nominatim
+      if (lat === null || lon === null) {
+        const geoUrl = new URL(
+          '/search?format=json&addressdetails=1&limit=1&countrycodes=us&q=' + encodeURIComponent(rawLocation),
+          nomHost
+        ).href;
+        const geoRes = await fetchWithTimeout(geoUrl, {}, 6000);
+        if (geoRes.ok) {
+          const geoData = await geoRes.json();
+          const match = geoData.at(0);
+          if (match) {
+            lat = parseFloat(match.lat);
+            lon = parseFloat(match.lon);
+            const a = match.address || {};
+            const town = a.city || a.town || a.village || a.county || '';
+            shortLabel = town ? (town + (a.state ? ', ' + a.state : '')) : rawLocation;
+          }
+        }
+      }
+
+      if (lat === null || lon === null) {
+        throw new Error('Could not locate that address or ZIP');
+      }
+
+      document.getElementById('headerZipBtn').textContent = '📍 ' + shortLabel;
+
+      // 2. Search within ~12 miles of the exact address/ZIP coordinates
+      const minLon = (lon - 0.20).toFixed(4);
+      const maxLon = (lon + 0.20).toFixed(4);
+      const minLat = (lat - 0.16).toFixed(4);
+      const maxLat = (lat + 0.16).toFixed(4);
+      const viewbox = minLon + ',' + maxLat + ',' + maxLon + ',' + minLat;
+
+      const categories = ['supermarket', 'grocery', 'walmart'];
+      const results = await Promise.all(categories.map(async (qTerm) => {
+        try {
+          const url = new URL(
+            '/search?format=json&addressdetails=1&limit=25&q=' + encodeURIComponent(qTerm) + '&viewbox=' + viewbox + '&bounded=1',
+            nomHost
+          ).href;
+          const r = await fetchWithTimeout(url, {}, 6000);
+          return r.ok ? await r.json() : [];
+        } catch (err) {
+          return [];
+        }
+      }));
+
+      const allPlaces = results.flat();
+      const rawStores = [];
+
+      allPlaces.forEach(p => {
+        const addr = p.address || {};
+        const storeName = p.name || addr.shop || addr.supermarket || addr.grocery;
+        if (!storeName) return;
+        const lower = storeName.toLowerCase();
+        if (lower.includes('7-eleven') || lower.includes('royal farms') || lower.includes('wawa') || lower.includes('sheetz') || lower.includes('pharmacy') || lower.includes('auto')) return;
+
+        const miles = calcMiles(lat, lon, parseFloat(p.lat), parseFloat(p.lon));
+        rawStores.push({ name: storeName, miles: miles });
+      });
+
+      rawStores.sort((a, b) => a.miles - b.miles);
+
+      const seenChains = new Set();
+      rawStores.forEach(st => {
+        const key = st.name.toLowerCase().trim();
+        if (!seenChains.has(key) && foundChains.length < 5) {
+          seenChains.add(key);
+          foundChains.push({ name: st.name, miles: st.miles.toFixed(1) });
+        }
+      });
+    } catch (e) {
+      console.warn('Location lookup fallback:', e);
+    }
+
+    if (foundChains.length === 0) {
+      foundChains = [
+        { name: 'Food Lion', miles: '' },
+        { name: 'Walmart', miles: '' },
+        { name: 'Aldi', miles: '' },
+        { name: "Martin's", miles: '' },
+        { name: 'Giant Food', miles: '' }
+      ];
+    }
+
+    savedZip = rawLocation;
+    localStores = foundChains;
+    saveAll();
+    renderStoreChips();
+    renderCompareList();
+
+    status.textContent = '';
+    const infoSpan = document.createElement('span');
+    infoSpan.textContent = 'Comparing ' + localStores.length + ' stores near ' + shortLabel + ' • ';
+
+    const mapLink = document.createElement('a');
+    mapLink.className = 'check-link';
+    mapLink.href = 'https://google.com+' + encodeURIComponent(rawLocation);
+    mapLink.target = '_blank';
+    mapLink.textContent = 'Google Maps ↗';
+
+    status.appendChild(infoSpan);
+    status.appendChild(mapLink);
+
+    btn.disabled = false;
+    btn.textContent = 'Find Stores';
+  }
+
+
+
+
+  let disabledStores = JSON.parse(localStorage.getItem('mc_disabled_stores')) || [];
+
+  function renderStoreChips() {
+    const wrap = document.getElementById('activeStoreChips');
+    wrap.innerHTML = '';
+    if (!localStores.length) return;
+
+    localStores.forEach(s => {
+      const isOff = disabledStores.includes(s.name);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'store-chip';
+      btn.style.cursor = 'pointer';
+      btn.style.opacity = isOff ? '0.45' : '1';
+      btn.style.textDecoration = isOff ? 'line-through' : 'none';
+      btn.textContent = (isOff ? '✕ ' : '✓ ') + s.name + (s.miles ? ' (' + s.miles + ' mi)' : '');
+      btn.title = 'Tap to show/hide ' + s.name;
+
+      btn.onclick = () => {
+        if (disabledStores.includes(s.name)) {
+          disabledStores = disabledStores.filter(x => x !== s.name);
+        } else {
+          disabledStores.push(s.name);
+        }
+        localStorage.setItem('mc_disabled_stores', JSON.stringify(disabledStores));
+        renderStoreChips();
+        renderCompareList();
+      };
+
+      wrap.appendChild(btn);
+    });
+  }
+
+
+
+
+function logRealStorePrice(itemId, storeName) {
+const item = basketItems.find(i => i.id === itemId);
+if (!item) return;
+const current = item.prices[storeName] !== undefined ? item.prices[storeName].toFixed(2) : '';
+const val = prompt('Enter actual price seen at ' + storeName + ' for "' + item.name + '" ($) — or leave blank to clear:', current);
+if (val === null) return;
+const key = item.name.toLowerCase().trim();
+if (!realPriceBook[key]) realPriceBook[key] = {};
+if (val.trim() === '' || isNaN(val)) {
+delete item.prices[storeName];
+delete realPriceBook[key][storeName];
+} else {
+const num = parseFloat(val);
+item.prices[storeName] = num;
+realPriceBook[key][storeName] = num;
+}
+saveAll();
+renderCompareList();
+}
+function removeItem(id) {
+basketItems = basketItems.filter(i => i.id !== id);
+saveAll();
+renderCompareList();
+}
+
+  function clearAllItems() {
+    if (!confirm('Reset everything (location, stores, items, and saved prices)?')) return;
+
+    savedZip = '';
+    localStores = [];
+    disabledStores = [];
+    basketItems = [];
+    realPriceBook = {};
+
+    localStorage.removeItem('mc_zip');
+    localStorage.removeItem('mc_stores');
+    localStorage.removeItem('mc_disabled_stores');
+    localStorage.removeItem('mc_items');
+    localStorage.removeItem('mc_pricebook');
+
+    document.getElementById('zipInput').value = '';
+    document.getElementById('mealQuery').value = '';
+    document.getElementById('headerZipBtn').textContent = '📍 Address / ZIP';
+    document.getElementById('storeStatusText').textContent = 'Enter any street address or ZIP code to find nearby grocery stores.';
+
+    renderStoreChips();
+    renderCompareList();
+    renderTotalsView();
+  }
+
+
+
+  function renderCompareList() {
+    const container = document.getElementById('compareListContainer');
+    container.innerHTML = '';
+
+    if (basketItems.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'card';
+      empty.style.cssText = 'text-align:center; color:var(--muted); font-size:0.9rem;';
+      empty.textContent = 'No items added yet. Type what you want to buy above (e.g. Butterball Turkey, Stuffing, Fries) to compare across your local stores.';
+      container.appendChild(empty);
+      renderTotalsView();
+      return;
+    }
+
+
+    basketItems.forEach(item => {
+      const loggedVals = Object.values(item.prices).filter(v => typeof v === 'number' && v > 0);
+      const minPrice = loggedVals.length ? Math.min(...loggedVals) : null;
+
+      const card = document.createElement('div');
+      card.className = 'item-card';
+
+      const header = document.createElement('div');
+      header.className = 'item-header';
+
+      const title = document.createElement('span');
+      title.className = 'item-title';
+      title.textContent = item.name;
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'del-btn';
+      delBtn.textContent = '✕';
+      delBtn.onclick = () => removeItem(item.id);
+
+      header.appendChild(title);
+      header.appendChild(delBtn);
+      card.appendChild(header);
+
+      const grid = document.createElement('div');
+      grid.className = 'store-compare-grid';
+
+      localStores.forEach(st => {
+        const url = buildLiveStoreCheckUrl(st.name, item.name);
+        const p = item.prices[st.name];
+        const hasP = typeof p === 'number';
+        const isBest = hasP && minPrice !== null && p === minPrice && loggedVals.length > 1;
+
+        const cell = document.createElement('div');
+        cell.className = 'store-cell' + (isBest ? ' best-price' : '');
+
+        const cellTop = document.createElement('div');
+        cellTop.className = 'cell-top';
+
+        const stName = document.createElement('span');
+        stName.className = 'cell-store-name';
+        stName.textContent = st.name;
+
+        const link = document.createElement('a');
+        link.className = 'check-link';
+        link.href = url;
+        link.target = '_blank';
+        link.textContent = 'Check ↗';
+
+        cellTop.appendChild(stName);
+        cellTop.appendChild(link);
+
+        const priceBtn = document.createElement('button');
+        priceBtn.className = 'price-input-btn' + (hasP ? ' has-price' : '');
+        priceBtn.textContent = hasP ? ('$' + p.toFixed(2) + (isBest ? ' 🏆' : '')) : '+ Log price';
+        priceBtn.onclick = () => logRealStorePrice(item.id, st.name);
+
+        cell.appendChild(cellTop);
+        cell.appendChild(priceBtn);
+        grid.appendChild(cell);
+      });
+
+      card.appendChild(grid);
+      container.appendChild(card);
+    });
+  renderTotalsView();
+  }
+
+  function editBudget() {
+    const val = prompt('Set weekly grocery budget ($):', budget);
+    if (val && !isNaN(val) && parseFloat(val) > 0) {
+      budget = parseFloat(val);
+      saveAll();
+      renderTotalsView();
+    }
+  }
+
+  function renderTotalsView() {
+    document.getElementById('budgetVal').textContent = budget.toFixed(0);
+    const grid = document.getElementById('storeTotalsGrid');
+    grid.innerHTML = '';
+
+    if (!localStores.length || !basketItems.length) {
+      document.getElementById('bestBasketTotal').textContent = '$0.00';
+      document.getElementById('budgetFill').style.width = '0%';
+      document.getElementById('winnerSummaryText').textContent = 'Add items and log prices on the Compare tab to see store totals.';
+      return;
+    }
+
+    const summaries = localStores.map(st => {
+      let sum = 0;
+      let pricedCount = 0;
+      basketItems.forEach(item => {
+        if (typeof item.prices[st.name] === 'number') {
+          sum += item.prices[st.name];
+          pricedCount++;
+        }
+      });
+      return { name: st.name, total: sum, pricedCount: pricedCount };
+    });
+
+    const withPrices = summaries.filter(s => s.pricedCount > 0);
+    withPrices.sort((a, b) => a.total - b.total);
+    const best = withPrices.at(0);
+
+    const bestAmt = best ? best.total : 0;
+    document.getElementById('bestBasketTotal').textContent = '$' + bestAmt.toFixed(2);
+    const pct = Math.min((bestAmt / budget) * 100, 100);
+    const fill = document.getElementById('budgetFill');
+    fill.style.width = pct + '%';
+    fill.style.background = bestAmt > budget ? 'var(--danger)' : 'var(--success)';
+
+    if (best) {
+      document.getElementById('winnerSummaryText').textContent =
+        'Lowest logged basket: ' + best.name + ' ($' + best.total.toFixed(2) + ' across ' + best.pricedCount + ' of ' + basketItems.length + ' items)';
+    } else {
+      document.getElementById('winnerSummaryText').textContent = 'Tap "+ Log price" on any store card to calculate basket totals.';
+    }
+
+    summaries.forEach(s => {
+      const isWinner = best && s.name === best.name && s.pricedCount > 0;
+      const box = document.createElement('div');
+      box.className = 'total-box' + (isWinner ? ' winner' : '');
+
+      const tStore = document.createElement('div');
+      tStore.className = 'total-store';
+      tStore.textContent = s.name + (isWinner ? ' 🏆' : '');
+
+      const tAmt = document.createElement('div');
+      tAmt.className = 'total-amt';
+      tAmt.textContent = '$' + s.total.toFixed(2);
+
+      const tSub = document.createElement('div');
+      tSub.className = 'total-sub';
+      tSub.textContent = s.pricedCount + ' of ' + basketItems.length + ' priced';
+
+      box.appendChild(tStore);
+      box.appendChild(tAmt);
+      box.appendChild(tSub);
+      grid.appendChild(box);
+    });
+  }
+
+  function copyShoppingPlan() {
+    if (!basketItems.length) return;
+    const nl = String.fromCharCode(10);
+    const lines = basketItems.map(item => {
+      const entries = Object.entries(item.prices).map(([st, pr]) => st + ': $' + pr.toFixed(2));
+      return '• ' + item.name + (entries.length ? ' (' + entries.join(' | ') + ')' : ' (unpriced)');
+    }).join(nl);
+
+    const zipStr = savedZip ? ' (' + savedZip + ')' : '';
+    navigator.clipboard.writeText('🛒 Multi-Store Price Check' + zipStr + nl + nl + lines);
+    alert('Copied shopping comparison list to clipboard!');
+  }
+
+function switchView(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  
+  const targetView = document.getElementById('view-' + name);
+  if (targetView) targetView.classList.add('active');
+  if (btn) btn.classList.add('active');
+  
+  if (name === 'totals') renderTotalsView();
+}
+
+if (typeof savedZip !== 'undefined' && savedZip) {
+  const zipInput = document.getElementById('zipInput');
+  const headerZipBtn = document.getElementById('headerZipBtn');
+  
+  if (zipInput) zipInput.value = savedZip;
+  if (headerZipBtn) headerZipBtn.textContent = '📍 ZIP: ' + savedZip;
+}
+
+renderStoreChips();
+renderCompareList();
+
+const initBadge = document.getElementById('itemBadge');
+if (initBadge && typeof basketItems !== 'undefined') {
+  initBadge.textContent = basketItems.length;
+}
+
+
+</script>
+</body>
+</html>
