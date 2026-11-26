@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Matt's Text Editor (with syntaxhighlights)</title>
+  <title>Matt's Text Editor</title>
   <style>
     :root {
       --bg-main: #1e1e1e;
@@ -182,6 +182,7 @@
       user-select: none;
       overflow: hidden;
       flex-shrink: 0;
+      contain: layout style;
     }
 
     .gutter div {
@@ -202,7 +203,9 @@
       overflow: auto;
       outline: none;
       tab-size: 2;
+      contain: layout style;
     }
+
 
     #code-editor:empty::before {
       content: "Start typing or paste text here... (Try # Header, **bold**, *italic*, `code`, > quote, or HTML tags)";
@@ -317,17 +320,19 @@
 
       <div class="divider"></div>
 
-      <!-- Column 2: Copy & Paste on top, Go To & Find & Replace below -->
+      <!-- Column 2: Copy, Paste & Undo on top, Go To & Find & Replace below -->
       <div class="toolbar-stack">
         <div class="toolbar-row">
           <button type="button" onclick="copyText()">📋 Copy</button>
           <button type="button" onclick="pasteText()">📌 Paste</button>
+          <button type="button" id="undo-btn" onclick="undoEdit()" title="Undo (Ctrl+Z)">↩️ Undo</button>
         </div>
         <div class="toolbar-row">
           <button type="button" onclick="goToLinePrompt()" title="Jump to Line Number">🖱️ Go To</button>
           <button type="button" onclick="toggleFindBar()" title="Open Find & Replace">🔍 Find & Replace</button>
         </div>
       </div>
+
 
       <div class="divider"></div>
 
@@ -359,7 +364,7 @@
     <option value="replaceAll">Find and Replace All</option>
   </select>
 
-  <input type="text" id="find-input" placeholder="Find text or tag..." onkeydown="handleFindKeydown(event)">
+  <input type="text" id="find-input" placeholder="Find text or tag..." enterkeyhint="search" onkeydown="handleFindKeydown(event)">
   <input type="text" id="replace-input" placeholder="Replace with..." style="display: none;" onkeydown="handleFindKeydown(event)">
 
   <button type="button" id="find-action-btn" onclick="executeFindAction()">Find Next</button>
@@ -408,10 +413,11 @@
       return "\u003Cspan class=\"" + cls + "\"\u003E" + content + "\u003C/span\u003E";
     }
 
-   function getEditorText() {
-      var text = editor.textContent || "";
-      return text.split("\r\n").join("\n");
-    }
+function getEditorText() {
+  var text = editor.textContent || "";
+  return text.replace(/\u00A0/g, " ").split("\r\n").join("\n");
+}
+
 
     function getCaretOffset(element) {
       var sel = window.getSelection();
@@ -457,6 +463,73 @@
     }
 
   
+// UNDO HISTORY SYSTEM (Shared by Undo Button & Ctrl+Z)
+var undoStack = [];
+var maxUndoSteps = 25;
+var lastRecordedText = getEditorText(); // Start with whatever is already in the editor!
+var typingUndoTimer = null;
+var isApplyingUndo = false;
+
+// Call this BEFORE any programmatic change (Paste, Replace, Replace All)
+function recordUndoBeforeChange() {
+  if (isApplyingUndo) return;
+  var current = getEditorText();
+  if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== current) {
+    undoStack.push(current);
+    if (undoStack.length > maxUndoSteps) undoStack.shift();
+  }
+  lastRecordedText = current;
+}
+
+// Capture the state BEFORE typing modifies the editor (grouped by 500ms pauses)
+editor.addEventListener("beforeinput", function() {
+  if (isApplyingUndo) return;
+  if (!typingUndoTimer) {
+    recordUndoBeforeChange();
+  }
+  clearTimeout(typingUndoTimer);
+  typingUndoTimer = setTimeout(function() {
+    typingUndoTimer = null;
+    lastRecordedText = getEditorText();
+  }, 500);
+});
+
+// Shared Undo function for both the Undo button and Ctrl+Z
+function undoEdit() {
+  clearTimeout(typingUndoTimer);
+  typingUndoTimer = null;
+
+  if (undoStack.length === 0) return;
+
+  var current = getEditorText();
+  var previousText = undoStack.pop();
+
+  // Skip duplicate snapshots if the top of the stack matches current text
+  while (previousText === current && undoStack.length > 0) {
+    previousText = undoStack.pop();
+  }
+  if (previousText === current) return;
+
+  isApplyingUndo = true;
+  lastRecordedText = previousText;
+  editor.textContent = previousText;
+  if (typeof rehighlightNow === "function") rehighlightNow(0);
+  updateStatsAndGutter(previousText);
+  editor.focus();
+  isApplyingUndo = false;
+}
+
+// Wire Ctrl+Z / Cmd+Z to call the exact same undoEdit() function
+document.addEventListener("keydown", function(e) {
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === "z" || e.key === "Z" || e.keyCode === 90)) {
+    if (document.activeElement && (document.activeElement.id === "find-input" || document.activeElement.id === "replace-input")) {
+      return;
+    }
+    e.preventDefault();
+    undoEdit();
+  }
+});
+
 
 
     function highlightSyntax(text, mode) {
@@ -476,19 +549,35 @@
         return id;
       }
 
-      // Helper: Highlight HTML comments & tags (<tag attr="val">)
+
+
+      // Helper: Highlight HTML comments & tags (<tag attr="val">) without ever dropping characters
       function stashHtmlTags(raw) {
         var rxComment = new RegExp("(" + LT + "!--[" + BS + "s" + BS + "S]" + STAR + "?--" + GT + ")", "g");
         raw = raw.replace(rxComment, function(m) {
           return stash(wrapSpan("tok-comment", escapeHTML(m)));
         });
 
-        var rxFullTag = new RegExp("(" + LT + "/?)([a-zA-Z0-9:-]+)([" + BS + "s" + BS + "S]" + STAR + "?)(/?" + GT + ")", "g");
+        // Use [^<>]* so a tag NEVER bridges across '<' in JS (i < len) or '>' in CSS!
+        var rxFullTag = new RegExp("(" + LT + "/?)([a-zA-Z][a-zA-Z0-9:-]*)([^" + LT + GT + "]" + STAR + ")(/?" + GT + ")", "g");
         raw = raw.replace(rxFullTag, function(_, open, tagName, attrs, close) {
           var rxAttr = new RegExp("([a-zA-Z0-9:-]+)(=)(\"[^\"]" + STAR + "\"|'[^']" + STAR + "')", "g");
-          var styledAttrs = attrs.replace(rxAttr, function(__, aName, eq, aVal) {
-            return wrapSpan("tok-attr", escapeHTML(aName)) + escapeHTML(eq) + wrapSpan("tok-string", escapeHTML(aVal));
-          });
+          var styledAttrs = "";
+          var lastIdx = 0;
+          var m;
+          while ((m = rxAttr.exec(attrs)) !== null) {
+            if (m.index > lastIdx) {
+              styledAttrs += escapeHTML(attrs.slice(lastIdx, m.index));
+            }
+            styledAttrs +=
+              wrapSpan("tok-attr", escapeHTML(m[1])) +
+              escapeHTML(m[2]) +
+              wrapSpan("tok-string", escapeHTML(m[3]));
+            lastIdx = rxAttr.lastIndex;
+          }
+          if (lastIdx < attrs.length) {
+            styledAttrs += escapeHTML(attrs.slice(lastIdx));
+          }
           return stash(
             wrapSpan("tok-tag", escapeHTML(open + tagName)) +
             styledAttrs +
@@ -497,6 +586,8 @@
         });
         return raw;
       }
+
+
 
       // Helper: Universal Code Lexer (JS, Python, CSS, JSON, SQL)
       function highlightCodeChunk(chunk) {
@@ -724,12 +815,19 @@ document.getElementById("status-cursor").textContent = "Ln " + currentLine + ", 
 
 
 
-editor.addEventListener("input", rehighlightNow);
+var highlightTimer = null;
+editor.addEventListener("input", function() {
+  clearTimeout(highlightTimer);
+  highlightTimer = setTimeout(function() {
+    rehighlightNow();
+  }, 120); // Waits 120ms after typing/deleting stops before re-coloring
+});
 editor.addEventListener("click", updateCursorStatus);
 editor.addEventListener("keyup", updateCursorStatus);
 editor.addEventListener("scroll", function() {
 lineNumbers.scrollTop = editor.scrollTop;
 });
+
 
     // 1. GO TO LINE / CURSOR HELPER
     function goToLinePrompt() {
@@ -788,14 +886,26 @@ function updateFindMode() {
 }
 
 function handleFindKeydown(event) {
-  if (event.key === "Enter") {
+  // Check both event.key and keyCode 13 for Android/DeX hardware keyboards
+  if (event.key === "Enter" || event.keyCode === 13 || event.which === 13) {
     event.preventDefault();
+    event.stopPropagation();
+
+    var activeField = event.target;
+
     if (event.shiftKey) {
       findNextMatch(-1); // Shift+Enter searches upwards
     } else {
       executeFindAction();
     }
+
+    // Re-focus after Android/DeX finishes its selection-focus cycle
+    activeField.focus();
+    setTimeout(function() {
+      activeField.focus();
+    }, 20);
   } else if (event.key === "Escape") {
+    event.preventDefault();
     toggleFindBar();
   }
 }
@@ -858,12 +968,16 @@ function selectRangeByOffsets(start, end) {
 
   walk(editor);
   if (startSet && endSet) {
-    sel.removeAllRanges();
-    sel.addRange(range);
-
-    // ADD THESE 3 LINES: Keeps the #00FF65 highlight visible while #find-input has focus
+    // Keep the #00FF65 highlight visible while #find-input has focus
     if (typeof CSS !== "undefined" && CSS.highlights) {
       CSS.highlights.set("find-match", new Highlight(range));
+    }
+
+    // Only modify DOM selection if CSS Custom Highlights isn't supported,
+    // because sel.addRange() forces mobile/DeX browsers to focus the editor!
+    if (typeof CSS === "undefined" || !CSS.highlights) {
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
   }
 }
@@ -880,11 +994,15 @@ function findNextMatch(direction) {
     return false;
   }
 
+  // Capture which input had focus BEFORE selectRangeByOffsets runs
+  var keepFocusOn = (document.activeElement && document.activeElement.id === "replace-input")
+    ? document.getElementById("replace-input")
+    : document.getElementById("find-input");
+
   var text = getEditorText();
   var lowerText = text.toLowerCase();
   var lowerQuery = query.toLowerCase();
 
-  // Gather all match positions so we know exact Match X of Y
   var matches = [];
   var scanPos = 0;
   while ((scanPos = lowerText.indexOf(lowerQuery, scanPos)) !== -1) {
@@ -901,28 +1019,24 @@ function findNextMatch(direction) {
   var foundIdx = -1;
 
   if (direction === 1) {
-    // Search downwards
     foundIdx = lowerText.indexOf(lowerQuery, lastFindIndex);
     if (foundIdx === -1) {
-      foundIdx = matches[0]; // Wrap around to top
+      foundIdx = matches[0];
     }
   } else {
-    // Search upwards from just before the current match
     var searchBackFrom = currentMatchStart > 0 ? currentMatchStart - 1 : -1;
     foundIdx = searchBackFrom >= 0 ? lowerText.lastIndexOf(lowerQuery, searchBackFrom) : -1;
     if (foundIdx === -1) {
-      foundIdx = matches[matches.length - 1]; // Wrap around to bottom
+      foundIdx = matches[matches.length - 1];
     }
   }
 
   currentMatchStart = foundIdx;
   lastFindIndex = foundIdx + query.length;
 
-  // editor.focus();
   selectRangeByOffsets(foundIdx, foundIdx + query.length);
   updateCursorStatus();
 
-  // Scroll matched line into view
   var matchLine = text.substring(0, foundIdx).split("\n").length;
   var scrollTarget = Math.max(0, (matchLine - 1) * 22 - (editor.clientHeight / 2));
   editor.scrollTop = scrollTarget;
@@ -931,11 +1045,10 @@ function findNextMatch(direction) {
   var matchNumber = matches.indexOf(foundIdx) + 1;
   status.textContent = "Match " + matchNumber + " of " + matches.length + " (Line " + matchLine + ")";
 
-  // Re-focus the search input so Enter keeps cycling instead of editing
-  var keepFocusOn = (document.activeElement && document.activeElement.id === "replace-input")
-    ? document.getElementById("replace-input")
-    : document.getElementById("find-input");
   keepFocusOn.focus();
+  setTimeout(function() {
+    keepFocusOn.focus();
+  }, 20);
 
   return true;
 }
@@ -945,29 +1058,30 @@ function replaceCurrentMatch() {
   var query = document.getElementById("find-input").value;
   var replacement = document.getElementById("replace-input").value;
   var status = document.getElementById("find-status");
-  if (!query) return;
+  if (!query) {
+    status.textContent = "Type something to find.";
+    return;
+  }
 
-  var sel = window.getSelection();
-  var selectedText = sel ? sel.toString() : "";
+  var text = getEditorText();
 
-  // If current selection doesn't match query yet, jump to first match first
-  if (selectedText.toLowerCase() !== query.toLowerCase()) {
+  // Check if currentMatchStart points to a valid match (no window.getSelection needed!)
+  if (
+    currentMatchStart < 0 ||
+    text.slice(currentMatchStart, currentMatchStart + query.length).toLowerCase() !== query.toLowerCase()
+  ) {
     findNextMatch(1);
     return;
   }
 
-  var range = sel.getRangeAt(0);
-  var preRange = range.cloneRange();
-  preRange.selectNodeContents(editor);
-  preRange.setEnd(range.startContainer, range.startOffset);
-  var startOffset = preRange.toString().length;
+  recordUndoBeforeChange(); // Save state for Undo BEFORE replacing
 
-  var text = getEditorText();
-  var updated = text.slice(0, startOffset) + replacement + text.slice(startOffset + query.length);
+  var updated = text.slice(0, currentMatchStart) + replacement + text.slice(currentMatchStart + query.length);
   editor.textContent = updated;
-  lastFindIndex = startOffset + replacement.length;
-  currentMatchStart = startOffset;
+  lastFindIndex = currentMatchStart + replacement.length;
+  currentMatchStart = -1;
   rehighlightNow(lastFindIndex);
+  updateStatsAndGutter(updated);
   status.textContent = "Replaced 1 occurrence.";
   findNextMatch(1);
 }
@@ -976,7 +1090,10 @@ function replaceAllMatches() {
   var query = document.getElementById("find-input").value;
   var replacement = document.getElementById("replace-input").value;
   var status = document.getElementById("find-status");
-  if (!query) return;
+  if (!query) {
+    status.textContent = "Type something to find.";
+    return;
+  }
 
   var text = getEditorText();
   var parts = text.split(query);
@@ -987,38 +1104,42 @@ function replaceAllMatches() {
     return;
   }
 
-  editor.textContent = parts.join(replacement);
+  recordUndoBeforeChange(); // Save state for Undo BEFORE replacing all
+
+  var updated = parts.join(replacement);
+  editor.textContent = updated;
   lastFindIndex = 0;
   currentMatchStart = -1;
   rehighlightNow(0);
+  updateStatsAndGutter(updated);
   status.textContent = "Replaced " + count + " occurrence(s).";
 }
 
-
-
-
 function cutText() {
-editor.focus();
-document.execCommand("cut");
-rehighlightNow();
+  recordUndoBeforeChange(); // Save state for Undo BEFORE cutting
+  editor.focus();
+  document.execCommand("cut");
+  rehighlightNow();
 }
 
 function copyText() {
-editor.focus();
-document.execCommand("copy");
+  editor.focus();
+  document.execCommand("copy");
 }
 
-    async function pasteText() {
-      editor.focus();
-      try {
-        if (navigator.clipboard && navigator.clipboard.readText) {
-          var clipText = await navigator.clipboard.readText();
-          insertCleanTextAtCursor(clipText);
-          return;
-        }
-      } catch (err) {}
-      alert("Your browser blocked the Paste button on a local file. Please press Ctrl+V (or Cmd+V) or right-click and choose Paste.");
+async function pasteText() {
+  editor.focus();
+  try {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      var clipText = await navigator.clipboard.readText();
+      recordUndoBeforeChange(); // Save state for Undo BEFORE pasting
+      insertCleanTextAtCursor(clipText);
+      return;
     }
+  } catch (err) {}
+  alert("Your browser blocked the Paste button on a local file. Please press Ctrl+V (or Cmd+V) or right-click and choose Paste.");
+}
+
 
 
 
@@ -1063,6 +1184,9 @@ document.execCommand("copy");
           syntaxMode.value = (ext === "html" || ext === "htm" || ext === "xml") ? "html" : "txt-markdown";
 
           editor.textContent = await file.text();
+undoStack = [];
+lastRecordedText = getEditorText();
+
           rehighlightNow(0);
           return;
         } catch (err) {
@@ -1088,9 +1212,12 @@ document.execCommand("copy");
       var reader = new FileReader();
       reader.onload = function(event) {
         editor.textContent = event.target.result;
+        undoStack = [];
+        lastRecordedText = getEditorText();
         rehighlightNow(0);
       };
       reader.readAsText(file);
+
       this.value = "";
     });
 
@@ -1120,7 +1247,7 @@ document.execCommand("copy");
       await saveFileAs();
     }
 
-    // 4. SAVE AS NEW FILE ON DISK
+    // 4. SAVE AS NEW FILE ON DISK (Works like Notepad: type blah.html or blah.txt directly)
     async function saveFileAs() {
       var content = getEditorText();
 
@@ -1128,9 +1255,14 @@ document.execCommand("copy");
         try {
           var handle = await window.showSaveFilePicker({
             suggestedName: currentFileName,
+            excludeAcceptAllOption: false,
             types: [
-              { description: "Text Document (.txt)", accept: { "text/plain": [".txt"] } },
-              { description: "HTML Webpage (.html)", accept: { "text/html": [".html"] } }
+              {
+                description: "Text & HTML Files (*.txt, *.html)",
+                accept: {
+                  "text/plain": [".txt", ".html", ".htm"]
+                }
+              }
             ]
           });
           currentFileHandle = handle;
@@ -1138,7 +1270,9 @@ document.execCommand("copy");
           filenameDisplay.textContent = currentFileName;
 
           var ext = currentFileName.split(".").pop().toLowerCase();
-          syntaxMode.value = (ext === "html" || ext === "htm" || ext === "xml") ? "html" : "txt-markdown";
+          if (typeof syntaxMode !== "undefined" && syntaxMode) {
+            syntaxMode.value = (ext === "html" || ext === "htm" || ext === "xml") ? "html" : "txt-markdown";
+          }
           rehighlightNow();
 
           var writable = await handle.createWritable();
@@ -1155,15 +1289,17 @@ document.execCommand("copy");
         }
       }
 
-      // Fallback download method for browsers without File System Access API
-      var fileName = prompt("Save file as (.txt, .html, etc.):", currentFileName);
+      // Fallback download method (S20 / DeX / Firefox / Safari)
+      var fileName = prompt("Save file as (e.g., notes.txt or page.html):", currentFileName);
       if (!fileName) return;
 
       currentFileName = fileName;
       filenameDisplay.textContent = currentFileName;
 
       var extFallback = currentFileName.split(".").pop().toLowerCase();
-      syntaxMode.value = (extFallback === "html" || extFallback === "htm" || extFallback === "xml") ? "html" : "txt-markdown";
+      if (typeof syntaxMode !== "undefined" && syntaxMode) {
+        syntaxMode.value = (extFallback === "html" || extFallback === "htm" || extFallback === "xml") ? "html" : "txt-markdown";
+      }
       rehighlightNow();
 
       var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -1173,6 +1309,7 @@ document.execCommand("copy");
       link.click();
       URL.revokeObjectURL(link.href);
     }
+
 
 
 function toggleTheme() {
