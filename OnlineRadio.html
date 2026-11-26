@@ -405,9 +405,13 @@
     function syncArtistInfo() {
       widget.getCurrentSound((sound) => {
         if (sound && sound.user) {
-          artistLink.textContent = sound.user.username.toUpperCase();
-          artistLink.href = sound.user.permalink_url || 'https://soundcloud.com';
-          statusIndicator.textContent = 'STEREO • LOCKED';
+          if (artistLink) {
+            artistLink.textContent = sound.user.username.toUpperCase();
+            artistLink.href = sound.user.permalink_url || 'https://soundcloud.com';
+          }
+          if (statusIndicator) {
+            statusIndicator.textContent = 'STEREO • LOCKED';
+          }
         }
       });
     }
@@ -418,74 +422,101 @@
     });
 
     widget.bind(SC.Widget.Events.PLAY, () => {
-      statusIndicator.textContent = 'STEREO • PLAYING';
+      if (statusIndicator) statusIndicator.textContent = 'STEREO • PLAYING';
       syncArtistInfo();
     });
 
     widget.bind(SC.Widget.Events.PAUSE, () => {
-      statusIndicator.textContent = 'STEREO • PAUSED';
+      if (statusIndicator) statusIndicator.textContent = 'STEREO • PAUSED';
     });
 
     // Play / Pause Button
-    document.getElementById('btn-play').addEventListener('click', () => {
-      widget.toggle();
-    });
+    const btnPlay = document.getElementById('btn-play');
+    if (btnPlay) {
+      btnPlay.addEventListener('click', () => widget.toggle());
+    }
 
     // Previous Track
-    document.getElementById('btn-prev').addEventListener('click', () => {
-      widget.prev();
-      setTimeout(syncArtistInfo, 500);
-    });
+    const btnPrev = document.getElementById('btn-prev');
+    if (btnPrev) {
+      btnPrev.addEventListener('click', () => {
+        widget.prev();
+        setTimeout(syncArtistInfo, 500);
+      });
+    }
 
     // Next Track
-    document.getElementById('btn-next').addEventListener('click', () => {
-      widget.next();
-      setTimeout(syncArtistInfo, 500);
-    });
+    const btnNext = document.getElementById('btn-next');
+    if (btnNext) {
+      btnNext.addEventListener('click', () => {
+        widget.next();
+        setTimeout(syncArtistInfo, 500);
+      });
+    }
 
     // Search Artist or Load URL
     function handleSearchOrLoad() {
+      if (!searchInput) return;
       const query = searchInput.value.trim();
       if (!query) return;
 
-      if (query.includes('://soundcloud.com')) {
-        statusIndicator.textContent = 'LOADING ARTIST...';
-        const embedUrl = `https://w.://soundcloud.complayer/?url=${encodeURIComponent(query)}&color=%2339ff14&auto_play=true&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false`;
-        iframeElement.src = embedUrl;
-      } else {
-        const artistSearchUrl = `https://://soundcloud.comsearch/people?q=${encodeURIComponent(query)}`;
-        artistLink.textContent = `SEARCH: ${query.toUpperCase()}`;
-        artistLink.href = artistSearchUrl;
-        statusIndicator.textContent = 'ARTIST SEARCH OPENED';
-        window.open(artistSearchUrl, '_blank');
+      if (statusIndicator) statusIndicator.textContent = 'TUNING SIGNAL...';
+
+      let targetUrl = query;
+      if (!query.includes('soundcloud.com')) {
+        const slug = query.toLowerCase().replace(/\s+/g, '');
+        targetUrl = 'https://soundcloud.com' + slug;
+      } else if (!query.startsWith('http')) {
+        targetUrl = 'https://' + query;
       }
+
+      widget.load(targetUrl, {
+        color: '#39ff14',
+        auto_play: true,
+        hide_related: true,
+        show_comments: false,
+        show_user: true,
+        show_reposts: false,
+        show_teaser: false,
+        callback: () => {
+          widget.setVolume(currentVolume);
+          syncArtistInfo();
+        }
+      });
     }
 
-    tuneBtn.addEventListener('click', handleSearchOrLoad);
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleSearchOrLoad();
-    });
+    if (tuneBtn) tuneBtn.addEventListener('click', handleSearchOrLoad);
+    if (searchInput) {
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleSearchOrLoad();
+      });
+    }
 
     // Volume Knob
     const volKnob = document.getElementById('vol-knob');
     const volLabel = document.getElementById('vol-label');
-    volKnob.addEventListener('click', () => {
-      currentVolume = currentVolume >= 100 ? 20 : currentVolume + 20;
-      volAngle += 45;
-      volKnob.style.transform = `rotate(${volAngle}deg)`;
-      volLabel.textContent = `VOL ${currentVolume}%`;
-      widget.setVolume(currentVolume);
-    });
+    if (volKnob) {
+      volKnob.addEventListener('click', () => {
+        currentVolume = currentVolume >= 100 ? 20 : currentVolume + 20;
+        volAngle += 45;
+        volKnob.style.transform = `rotate(${volAngle}deg)`;
+        if (volLabel) volLabel.textContent = `VOL ${currentVolume}%`;
+        widget.setVolume(currentVolume);
+      });
+    }
 
     // Seek +15s Knob
     const seekKnob = document.getElementById('seek-knob');
-    seekKnob.addEventListener('click', () => {
-      seekAngle += 30;
-      seekKnob.style.transform = `rotate(${seekAngle}deg)`;
-      widget.getPosition((pos) => {
-        widget.seekTo(pos + 15000);
+    if (seekKnob) {
+      seekKnob.addEventListener('click', () => {
+        seekAngle += 30;
+        seekKnob.style.transform = `rotate(${seekAngle}deg)`;
+        widget.getPosition((pos) => {
+          widget.seekTo(pos + 15000);
+        });
       });
-    });
+    }
   </script>
+
 </body>
 </html>
