@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NightDrive Online Radio</title>
+  <script src="https://soundcloud.com"></script>
+  <style>
+    :root {
+      --vfd-green: #39ff14;
+      --vfd-amber: #ffaa00;
+      --vfd-bg: #071309;
+      --btn-face: #2c303a;
+      --btn-shadow: #0d0e11;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #090a0f;
+      color: #e2e8f0;
+      font-family: 'Courier New', Courier, monospace;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* --- WINDSHIELD VIEW --- */
+    .windshield {
+      position: relative;
+      flex: 1;
+      background: linear-gradient(180deg, #070514 0%, #1b0d38 55%, #00f7c4 88%, #00f7c4 100%);
+      overflow: hidden;
+      border-bottom: 14px solid #0e0f12;
+      box-shadow: inset 0 -20px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    .sun {
+      position: absolute;
+      bottom: 18%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #ffe600 0%, #00f7c4 100%);
+      box-shadow: 0 0 50px #00CCC4;
+    }
+
+    .road-grid {
+      position: absolute;
+      bottom: 0;
+      width: 200%;
+      height: 28%;
+      left: -50%;
+      background-color: #0b0719;
+      background-image:
+        linear-gradient(90deg, rgba(0, 207, 255, 0.4) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(0, 207, 173, 0.4) 1px, transparent 1px);
+      background-size: 60px 25px;
+      transform: perspective(200px) rotateX(60deg);
+      animation: drive 1.5s linear infinite;
+    }
+
+    @keyframes drive {
+      from { background-position: 0 0; }
+      to { background-position: 0 25px; }
+    }
+
+    .rearview-mirror {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 180px;
+      height: 40px;
+      background: linear-gradient(135deg, #1d222b 0%, #101318 100%);
+      border: 4px solid #0a0b0d;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #64748b;
+      letter-spacing: 2px;
+    }
+
+    /* --- CAR DASHBOARD --- */
+    .dashboard {
+      background: linear-gradient(180deg, #1d2026 0%, #111317 100%);
+      padding: 18px 24px 24px;
+      border-top: 3px solid #333842;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .air-vent {
+      width: 85px;
+      height: 170px;
+      background: #0d0e11;
+      border-radius: 8px;
+      border: 2px solid #282c34;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      padding: 10px;
+    }
+
+    .vent-slat {
+      height: 6px;
+      background: #22252c;
+      border-radius: 2px;
+      box-shadow: 0 2px 2px #000;
+    }
+
+    /* --- CAR STEREO HEAD UNIT --- */
+    .head-unit {
+      width: 100%;
+      max-width: 740px;
+      background: #181a1f;
+      border: 4px solid #0b0c0e;
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 10px 25px rgba(0, 0, 0, 0.9);
+      display: grid;
+      grid-template-columns: 84px 1fr 84px;
+      gap: 16px;
+      align-items: center;
+    }
+
+    /* --- ROTARY KNOBS --- */
+    .knob-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .knob {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #3c414d, #15171c);
+      border: 3px solid #0b0c0e;
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.8), inset 0 2px 3px rgba(255, 255, 255, 0.2);
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .knob::after {
+      content: '';
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 14px;
+      background: var(--vfd-amber);
+      border-radius: 2px;
+    }
+
+    .knob-label {
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      text-align: center;
+    }
+
+    /* --- CENTER SMALL LCD SCREEN --- */
+    .stereo-center {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .lcd-bezel {
+      background: #0a0c0e;
+      border: 3px solid #050607;
+      border-radius: 6px;
+      padding: 10px;
+      box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.95);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .lcd-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--vfd-amber);
+      text-shadow: 0 0 6px rgba(255, 170, 0, 0.6);
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 5px;
+    }
+
+    /* Clickable Artist Link on LCD */
+    .artist-link {
+      color: var(--vfd-green);
+      text-decoration: none;
+      font-weight: bold;
+      text-shadow: 0 0 6px rgba(57, 255, 20, 0.6);
+      cursor: pointer;
+    }
+
+    .artist-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Compact Embedded SoundCloud LCD Mini-Player */
+    .lcd-player-frame {
+      width: 100%;
+      height: 82px;
+      border: 1px solid #1f4d27;
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--vfd-bg);
+    }
+
+    #sc-widget {
+      width: 100%;
+      height: 82px;
+      border: none;
+      filter: hue-rotate(85deg) saturate(1.4) contrast(1.05);
+    }
+
+    /* --- SEARCH / ARTIST TUNER BAR --- */
+    .tuner-bar {
+      display: flex;
+      gap: 6px;
+    }
+
+    .tuner-input {
+      flex: 1;
+      background: #0b190e;
+      border: 1px solid #1f4d27;
+      color: var(--vfd-green);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 7px 9px;
+      border-radius: 4px;
+      outline: none;
+      user-select: text;
+    }
+
+    .tuner-input::placeholder {
+      color: #2e7a3b;
+    }
+
+    .tune-btn {
+      background: #173b1e;
+      color: var(--vfd-green);
+      border: 1px solid var(--vfd-green);
+      padding: 0 12px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .tune-btn:hover {
+      background: var(--vfd-green);
+      color: #051107;
+    }
+
+    /* --- TRANSPORT BUTTONS ONLY --- */
+    .controls-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .deck-btn {
+      background: var(--btn-face);
+      color: #cbd5e1;
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      border-bottom: 3px solid var(--btn-shadow);
+      border-radius: 4px;
+      padding: 9px 6px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.08s ease;
+    }
+
+    .deck-btn:active {
+      transform: translateY(2px);
+      border-bottom-width: 1px;
+      color: var(--vfd-amber);
+      text-shadow: 0 0 6px var(--vfd-amber);
+    }
+
+    @media (max-width: 768px) {
+      .air-vent { display: none; }
+      .head-unit { grid-template-columns: 1fr; }
+      .knob-group { flex-direction: row; justify-content: space-around; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- WINDSHIELD VIEW -->
+  <div class="windshield">
+    <div class="rearview-mirror"></div>
+    <div class="sun"></div>
+    <div class="road-grid"></div>
+  </div>
+
+  <!-- CAR DASHBOARD -->
+  <div class="dashboard">
+    <div class="air-vent">
+      <div class="vent-slat"></div><div class="vent-slat"></div>
+      <div class="vent-slat"></div><div class="vent-slat"></div>
+      <div class="vent-slat"></div>
+    </div>
+
+    <div class="head-unit">
+      <!-- LEFT KNOB: VOLUME -->
+      <div class="knob-group">
+        <div class="knob" id="vol-knob" title="Click to adjust Volume"></div>
+        <span class="knob-label" id="vol-label">VOL 80%</span>
+      </div>
+
+      <!-- CENTER SMALL LCD SCREEN -->
+      <div class="stereo-center">
+        <div class="lcd-bezel">
+          <div class="lcd-header">
+            <span id="status-indicator">LCD READY</span>
+            <span>ARTIST: <a id="artist-link" class="artist-link" href="https://soundcloud.com" target="_blank" rel="noopener">CLICK TO OPEN</a></span>
+          </div>
+
+          <!-- Compact LCD SoundCloud Player -->
+          <div class="lcd-player-frame">
+            <iframe
+              id="sc-widget"
+              scrolling="no"
+              frameborder="no"
+              allow="autoplay"
+              src="https://soundcloud.com">
+            </iframe>
+          </div>
+
+          <!-- Search Artist or Paste Link -->
+          <div class="tuner-bar">
+            <input
+              type="text"
+              id="search-input"
+              class="tuner-input"
+              placeholder="Search artist name OR paste SoundCloud artist/track URL..."
+            />
+            <button class="tune-btn" id="tune-btn">SEARCH / LOAD</button>
+          </div>
+        </div>
+
+        <!-- CLEAN TRANSPORT BUTTONS -->
+        <div class="controls-row">
+          <button class="deck-btn" id="btn-prev">◀◀ PREV</button>
+          <button class="deck-btn" id="btn-play">▶ / ❚❚ PLAY</button>
+          <button class="deck-btn" id="btn-next">NEXT ▶▶</button>
+        </div>
+      </div>
+
+          <!-- RIGHT KNOB: SKIP +15S -->
+      <div class="knob-group">
+        <div class="knob" id="seek-knob" title="Click to skip +15s"></div>
+        <span class="knob-label">SEEK +15S</span>
+      </div>
+    </div>
+
+    <div class="air-vent">
+      <div class="vent-slat"></div><div class="vent-slat"></div>
+      <div class="vent-slat"></div><div class="vent-slat"></div>
+      <div class="vent-slat"></div>
+    </div>
+  </div>
+
+  <script>
+    const iframeElement = document.getElementById('sc-widget');
+    const widget = SC.Widget(iframeElement);
+
+    const statusIndicator = document.getElementById('status-indicator');
+    const artistLink = document.getElementById('artist-link');
+    const searchInput = document.getElementById('search-input');
+    const tuneBtn = document.getElementById('tune-btn');
+
+    let currentVolume = 80;
+    let volAngle = 45;
+    let seekAngle = 0;
+
+    function syncArtistInfo() {
+      widget.getCurrentSound((sound) => {
+        if (sound && sound.user) {
+          artistLink.textContent = sound.user.username.toUpperCase();
+          artistLink.href = sound.user.permalink_url || 'https://soundcloud.com';
+          statusIndicator.textContent = 'STEREO • LOCKED';
+        }
+      });
+    }
+
+    widget.bind(SC.Widget.Events.READY, () => {
+      widget.setVolume(currentVolume);
+      syncArtistInfo();
+    });
+
+    widget.bind(SC.Widget.Events.PLAY, () => {
+      statusIndicator.textContent = 'STEREO • PLAYING';
+      syncArtistInfo();
+    });
+
+    widget.bind(SC.Widget.Events.PAUSE, () => {
+      statusIndicator.textContent = 'STEREO • PAUSED';
+    });
+
+    // Play / Pause Button
+    document.getElementById('btn-play').addEventListener('click', () => {
+      widget.toggle();
+    });
+
+    // Previous Track
+    document.getElementById('btn-prev').addEventListener('click', () => {
+      widget.prev();
+      setTimeout(syncArtistInfo, 500);
+    });
+
+    // Next Track
+    document.getElementById('btn-next').addEventListener('click', () => {
+      widget.next();
+      setTimeout(syncArtistInfo, 500);
+    });
+
+    // Search Artist or Load URL
+    function handleSearchOrLoad() {
+      const query = searchInput.value.trim();
+      if (!query) return;
+
+      if (query.includes('://soundcloud.com')) {
+        statusIndicator.textContent = 'LOADING ARTIST...';
+        const embedUrl = `https://w.://soundcloud.complayer/?url=${encodeURIComponent(query)}&color=%2339ff14&auto_play=true&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false`;
+        iframeElement.src = embedUrl;
+      } else {
+        const artistSearchUrl = `https://://soundcloud.comsearch/people?q=${encodeURIComponent(query)}`;
+        artistLink.textContent = `SEARCH: ${query.toUpperCase()}`;
+        artistLink.href = artistSearchUrl;
+        statusIndicator.textContent = 'ARTIST SEARCH OPENED';
+        window.open(artistSearchUrl, '_blank');
+      }
+    }
+
+    tuneBtn.addEventListener('click', handleSearchOrLoad);
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleSearchOrLoad();
+    });
+
+    // Volume Knob
+    const volKnob = document.getElementById('vol-knob');
+    const volLabel = document.getElementById('vol-label');
+    volKnob.addEventListener('click', () => {
+      currentVolume = currentVolume >= 100 ? 20 : currentVolume + 20;
+      volAngle += 45;
+      volKnob.style.transform = `rotate(${volAngle}deg)`;
+      volLabel.textContent = `VOL ${currentVolume}%`;
+      widget.setVolume(currentVolume);
+    });
+
+    // Seek +15s Knob
+    const seekKnob = document.getElementById('seek-knob');
+    seekKnob.addEventListener('click', () => {
+      seekAngle += 30;
+      seekKnob.style.transform = `rotate(${seekAngle}deg)`;
+      widget.getPosition((pos) => {
+        widget.seekTo(pos + 15000);
+      });
+    });
+  </script>
+</body>
+</html>
