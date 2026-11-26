@@ -221,7 +221,8 @@
 
     /* Left Tool Strip */
     .tool-column {
-      width: 68px;
+      width: 65px;
+      box-sizing: border-box;
       padding: 4px 3px;
       background: var(--bg-face);
       border-right: 1px solid var(--bg-dark);
@@ -231,7 +232,9 @@
       gap: 6px;
       flex-shrink: 0;
       overflow-y: auto;
+      overflow-x: hidden;
     }
+
 
     .tools-grid {
       display: grid;
@@ -451,9 +454,10 @@
       -webkit-user-select: text;
     }
 
-    /* Right Dock: Stackable Layers & Color/Tone Adjustments */
+     /* Right Dock: Stackable Layers & Color/Tone Adjustments */
     .side-dock {
-      width: 230px;
+      width: 215px;
+      box-sizing: border-box;
       background: var(--bg-face);
       border-left: 1px solid var(--bg-light);
       display: flex;
@@ -462,7 +466,41 @@
       padding: 4px;
       flex-shrink: 0;
       overflow-y: auto;
+      overflow-x: hidden;
+      transition: width 0.15s ease;
     }
+
+    .side-dock.collapsed {
+      width: 34px;
+      padding: 4px 3px;
+      overflow-y: hidden;
+    }
+
+    .side-dock.collapsed > *:not(#toggleSideDockBtn) {
+      display: none;
+    }
+
+    .side-dock.collapsed #toggleSideDockBtn {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      height: 115px;
+      width: 26px;
+      padding: 4px 0;
+      margin: 0 auto;
+    }
+
+#toggleSideDockBtn {
+  font-weight: bold;
+}
+
+    .adj-row {
+      display: grid;
+      grid-template-columns: 56px 1fr 32px;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+    }
+
 
     .dock-panel {
       background: var(--bg-face);
@@ -507,7 +545,10 @@
 
     .layer-opacity-row input[type="range"] {
       flex: 1;
+      min-width: 0;
+      width: 100%;
       height: 14px;
+      margin: 0;
       cursor: pointer;
     }
 
@@ -557,15 +598,8 @@
       opacity: 0.85;
     }
 
-    .adj-row {
-      display: grid;
-      grid-template-columns: 62px 1fr 34px;
-      align-items: center;
-      gap: 4px;
-      font-size: 10px;
-    }
-
     .adj-row input[type="range"] {
+      min-width: 0;
       width: 100%;
       height: 14px;
       margin: 0;
@@ -693,25 +727,27 @@
       display: flex;
     }
 
-    .rgb-picker-row {
-      display: grid;
-      grid-template-columns: 16px 1fr 34px;
-      align-items: center;
-      gap: 5px;
-    }
+.rgb-picker-row {
+  display: grid;
+  grid-template-columns: 16px 1fr 48px;
+  align-items: center;
+  gap: 5px;
+}
 
-    .rgb-picker-row input[type="range"] {
-      width: 100%;
-      margin: 0;
-      cursor: pointer;
-    }
+.rgb-picker-row input[type="range"] {
+  width: 100%;
+  margin: 0;
+  cursor: pointer;
+}
 
-    .rgb-picker-row input[type="number"] {
-      width: 34px;
-      padding: 1px 2px;
-      font-size: 11px;
-      font-family: var(--font-mono, monospace);
-    }
+.rgb-picker-row input[type="number"] {
+  width: 48px;
+  box-sizing: border-box;
+  padding: 1px 2px;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+}
+
 
     .rgb-picker-footer {
       display: flex;
@@ -763,8 +799,8 @@
 
     .custom-swatch:not([data-has-color="true"]) {
       background:
-        linear-gradient(45deg, transparent 46%, #808080 47%, #808080 53%, transparent 54%),
-        #e4e4e4;
+        linear-gradient(45deg, transparent 46%, #FFFFFF 47%, #FFFFFF 53%, transparent 54%),
+        #FFFFFF;
     }
 
     /* Bottom Hex Bar */
@@ -868,8 +904,8 @@
     }
 
     @media (max-width: 860px) {
-      .side-dock {
-        width: 190px;
+      .side-dock:not(.collapsed) {
+        width: 195px;
       }
     }
 
@@ -885,10 +921,8 @@
         width: 15px;
         height: 14px;
       }
-      .hex-hint {
-        display: none;
-      }
     }
+
   </style>
 </head>
 <body>
@@ -991,19 +1025,41 @@
         </div>
 
         <div class="size-box" id="sizeBox" title="Stroke / Brush Size">
+          <div class="size-option" data-size="1">
+            <div class="size-line" style="height: 1px;"></div>
+          </div>
           <div class="size-option active" data-size="2">
             <div class="size-line" style="height: 2px;"></div>
           </div>
-          <div class="size-option" data-size="5">
-            <div class="size-line" style="height: 4px;"></div>
+          <div class="size-option" data-size="4">
+            <div class="size-line" style="height: 3px;"></div>
+          </div>
+          <div class="size-option" data-size="6">
+            <div class="size-line" style="height: 5px;"></div>
           </div>
           <div class="size-option" data-size="10">
             <div class="size-line" style="height: 7px;"></div>
           </div>
           <div class="size-option" data-size="18">
-            <div class="size-line" style="height: 11px;"></div>
+            <div class="size-line" style="height: 10px;"></div>
+          </div>
+          <div class="size-option" data-size="25">
+            <div class="size-line" style="height: 14px;"></div>
+          </div>
+          <div class="size-option" data-size="35">
+            <div class="size-line" style="height: 14px;"></div>
+          </div>
+          <div class="size-option" data-size="45">
+            <div class="size-line" style="height: 14px;"></div>
+          </div>
+          <div class="size-option" data-size="55">
+            <div class="size-line" style="height: 14px;"></div>
+          </div>
+          <div class="size-option" data-size="200">
+            <div class="size-line" style="height: 14px;"></div>
           </div>
         </div>
+
 
         <!-- Selected Tool Name Readout in Left Strip -->
         <div class="tool-readout" aria-live="polite" title="Currently Selected Tool">
@@ -1021,8 +1077,18 @@
         </div>
       </main>
 
-      <!-- Right Dock: Layers + Color & Tone Adjustments -->
-      <aside class="side-dock" aria-label="Layers and Adjustments">
+       <!-- Right Dock: Layers + Color & Tone Adjustments -->
+      <aside class="side-dock" id="sideDock" aria-label="Layers and Adjustments">
+        <button
+          type="button"
+          id="toggleSideDockBtn"
+          class="qol-btn"
+          title="Collapse / Expand Right Dock"
+          style="width: 100%; font-size: 10px; padding: 2px 4px; font-weight: bold;"
+        >
+          Hide Dock ▸
+        </button>
+
         <!-- Layers Panel -->
         <section class="dock-panel">
           <div class="dock-header">
@@ -1077,7 +1143,7 @@
           </div>
         </section>
       </aside>
-    </div>
+</div>
 
     <!-- Bottom Color Palette + Hex Input -->
     <section class="color-panel" aria-label="Color Palette and Hex Input">
@@ -1099,28 +1165,6 @@
             aria-label="Custom RGB color"
           ></button>
         </div>
-      </div>
-
-      <div class="hex-bar">
-        <label class="hex-label" for="hexInput">
-          <span class="hex-preview" id="hexPreview" aria-hidden="true"></span>
-          <span>Hex Color:</span>
-        </label>
-    
-        <div class="hex-input-wrap">
-          <span class="hex-prefix">#</span>
-          <input
-            type="text"
-            id="hexInput"
-            value="000000"
-            maxlength="7"
-            spellcheck="false"
-            autocomplete="off"
-            aria-label="Hex color code"
-          />
-        </div>
-        <button type="button" class="qol-btn" id="swapColorsBtn" title="Swap Primary and Secondary Colors">Swap</button>
-        <span class="hex-hint" id="hexStatus">Supports 3-digit (f0a) or 6-digit (ff00aa) hex</span>
       </div>
     </section>
 
@@ -1167,10 +1211,11 @@
       const fgSwatch = document.getElementById("fgSwatch");
       const bgSwatch = document.getElementById("bgSwatch");
       const activeToolNameEl = document.getElementById("activeToolName");
-      const hexInput = document.getElementById("hexInput");
-      const hexPreview = document.getElementById("hexPreview");
-      const hexStatus = document.getElementById("hexStatus");
-      const swapColorsBtn = document.getElementById("swapColorsBtn");
+      const hexInput = document.getElementById("hexInput") || document.createElement("input");
+      const hexPreview = document.getElementById("hexPreview") || document.createElement("span");
+      const hexStatus = document.getElementById("hexStatus") || document.createElement("span");
+      const swapColorsBtn = document.getElementById("swapColorsBtn") || document.createElement("button");
+
 
       const toolsGrid = document.getElementById("toolsGrid");
       const sizeBox = document.getElementById("sizeBox");
@@ -1207,6 +1252,17 @@
       const moveLayerDownBtn = document.getElementById("moveLayerDownBtn");
       const layerOpacityRange = document.getElementById("layerOpacityRange");
       const layerOpacityVal = document.getElementById("layerOpacityVal");
+      const sideDock = document.getElementById("sideDock");
+      const toggleSideDockBtn = document.getElementById("toggleSideDockBtn");
+
+      if (sideDock && toggleSideDockBtn) {
+        toggleSideDockBtn.addEventListener("click", () => {
+          const isCollapsed = sideDock.classList.toggle("collapsed");
+          toggleSideDockBtn.textContent = isCollapsed ? "▴ Layers / Adj" : "Hide Dock ▸";
+        });
+      }
+
+
 
       // Adjustments UI
       const adjBrightness = document.getElementById("adjBrightness");
@@ -1342,11 +1398,19 @@
             <input type="range" id="rgbBRange" min="0" max="255" value="0" />
             <input type="number" id="rgbBNum" min="0" max="255" value="0" />
           </div>
-          <div class="rgb-picker-footer">
-            <span class="rgb-picker-preview" id="rgbPopPreview"></span>
-            <span id="rgbPopHex" style="font-family:var(--font-mono,monospace);">#000000</span>
-            <button type="button" id="rgbPopClose">Done</button>
-          </div>
+<div class="rgb-picker-footer">
+  <span class="rgb-picker-preview" id="rgbPopPreview"></span>
+  <input
+    type="text"
+    id="rgbPopHex"
+    maxlength="7"
+    value="#000000"
+    aria-label="Hex color code"
+    style="width: 68px; font-family: var(--font-mono, monospace); font-size: 11px; padding: 2px 4px; box-sizing: border-box;"
+  />
+  <button type="button" id="rgbPopClose">Done</button>
+</div>
+
         `;
         document.body.appendChild(pop);
 
@@ -1359,6 +1423,30 @@
 
         return pop;
       })();
+
+      function syncCustomPopover(hex) {
+        if (typeof rgbPopover === "undefined" || !hex) return;
+        const fullHex = hex.startsWith("#") ? hex.toLowerCase() : `#${hex.toLowerCase()}`;
+        const { r, g, b } = hexToRgbParts(fullHex);
+
+        rgbPopover.querySelector("#rgbRRange").value = r;
+        rgbPopover.querySelector("#rgbRNum").value = r;
+        rgbPopover.querySelector("#rgbGRange").value = g;
+        rgbPopover.querySelector("#rgbGNum").value = g;
+        rgbPopover.querySelector("#rgbBRange").value = b;
+        rgbPopover.querySelector("#rgbBNum").value = b;
+        rgbPopover.querySelector("#rgbPopPreview").style.backgroundColor = fullHex;
+        rgbPopover.querySelector("#rgbPopHex").value = fullHex.toUpperCase();
+
+        customColorValue = fullHex;
+        const customBtn = document.getElementById("customSwatchBtn");
+        if (customBtn) {
+          customBtn.dataset.hasColor = "true";
+          customBtn.style.setProperty("background", fullHex, "important");
+          customBtn.title = `${fullHex.toUpperCase()} Custom RGB (Left: Choose/Primary, Right: Secondary)`;
+        }
+      }
+
 
       function openRgbPopoverForButton(customBtn) {
         const rawHex = (hexInput?.value || "").trim().replace(/^#/, "");
@@ -1385,20 +1473,38 @@
         gRange.value = gNum.value = g;
         bRange.value = bNum.value = b;
 
-        const applyCurrentRgb = () => {
-          const chosen = rgbToHex(rRange.value, gRange.value, bRange.value);
-          customColorValue = chosen;
-          customBtn.dataset.hasColor = "true";
-          customBtn.style.background = chosen;
-          customBtn.title = `${chosen.toUpperCase()} Custom RGB (Left: Choose/Primary, Right: Secondary)`;
+const applyCurrentRgb = (skipPopHex = false) => {
+  const chosen = rgbToHex(rRange.value, gRange.value, bRange.value);
+  customColorValue = chosen;
+  customBtn.dataset.hasColor = "true";
+customBtn.style.setProperty("background", chosen, "important");
+  customBtn.title = `${chosen.toUpperCase()} Custom RGB (Left: Choose/Primary, Right: Secondary)`;
 
-          popPreview.style.background = chosen;
-          popHex.textContent = chosen.toUpperCase();
+  popPreview.style.background = chosen;
+  if (!skipPopHex) {
+    popHex.value = chosen.toUpperCase();
+  }
 
-          setForegroundColor(chosen);
-          syncHexBox(chosen);
-          setStatus(`Selected custom RGB ${chosen.toUpperCase()}`);
-        };
+  setForegroundColor(chosen);
+  syncHexBox(chosen);
+  setStatus(`Selected custom RGB ${chosen.toUpperCase()}`);
+};
+
+popHex.oninput = () => {
+  const cleaned = popHex.value.trim().replace(/^#/, "");
+  if (!/^[0-9a-f]{3}$|^[0-9a-f]{6}$/i.test(cleaned)) return;
+
+  const { r, g, b } = hexToRgbParts(cleaned);
+  rRange.value = rNum.value = r;
+  gRange.value = gNum.value = g;
+  bRange.value = bNum.value = b;
+  applyCurrentRgb(true);
+};
+
+popHex.onblur = () => {
+  popHex.value = (customColorValue || "#000000").toUpperCase();
+};
+
 
         const bindPair = (rangeEl, numEl) => {
           rangeEl.oninput = () => {
@@ -1429,17 +1535,22 @@
         rgbPopover.style.top = `${top}px`;
       }
 
-      function syncHexBox(hexWithHash) {
-        if (!hexInput) return;
-        const cleanHex = hexWithHash.replace(/^#/, "").toLowerCase();
-        hexInput.value = cleanHex;
-        if (hexPreview) {
-          hexPreview.style.background = `#${cleanHex}`;
-        }
-        hexInput.dispatchEvent(new Event("input", { bubbles: true }));
-      }
+let isSyncingFromPopover = false;
 
-      function buildPalette() {
+function syncHexBox(hexWithHash) {
+  if (!hexInput) return;
+  const cleanHex = hexWithHash.replace(/^#/, "").toLowerCase();
+  hexInput.value = cleanHex;
+  if (hexPreview) {
+    hexPreview.style.background = `#${cleanHex}`;
+  }
+  isSyncingFromPopover = true;
+  hexInput.dispatchEvent(new Event("input", { bubbles: true }));
+  isSyncingFromPopover = false;
+}
+
+
+function buildPalette() {
         swatchesEl.innerHTML = "";
         CLASSIC_PALETTE.forEach(color => {
           const btn = document.createElement("button");
@@ -1449,7 +1560,7 @@
           btn.title = `${color.toUpperCase()} (Left: Primary, Right: Secondary)`;
           btn.addEventListener("click", () => {
             setForegroundColor(color);
-            syncHexBox(color);
+            syncCustomPopover(color);
             setStatus(`Selected primary color ${color.toUpperCase()}`);
           });
           btn.addEventListener("contextmenu", e => {
@@ -3319,11 +3430,32 @@
           syncActiveTextBoxStyle();
           hexInput.classList.remove("invalid");
           hexStatus.textContent = `Applied ${normalized.toUpperCase()}`;
+
+          if (!isSyncingFromPopover && typeof rgbPopover !== "undefined") {
+            const { r, g, b } = hexToRgbParts(normalized);
+            rgbPopover.querySelector("#rgbRRange").value = r;
+            rgbPopover.querySelector("#rgbRNum").value = r;
+            rgbPopover.querySelector("#rgbGRange").value = g;
+            rgbPopover.querySelector("#rgbGNum").value = g;
+            rgbPopover.querySelector("#rgbBRange").value = b;
+            rgbPopover.querySelector("#rgbBNum").value = b;
+            rgbPopover.querySelector("#rgbPopPreview").style.background = normalized;
+            rgbPopover.querySelector("#rgbPopHex").value = normalized.toUpperCase();
+
+            customColorValue = normalized;
+            const customBtn = document.getElementById("customSwatchBtn");
+            if (customBtn) {
+              customBtn.dataset.hasColor = "true";
+              customBtn.style.background = normalized;
+              customBtn.title = `${normalized.toUpperCase()} Custom RGB (Left: Choose/Primary, Right: Secondary)`;
+            }
+          }
         } else {
           hexInput.classList.add("invalid");
           hexStatus.textContent = "Enter 3 or 6 hex chars (0-9, a-f)";
         }
       });
+
 
       hexInput.addEventListener("blur", () => {
         const normalized = normalizeHex(hexInput.value);
