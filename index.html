@@ -1248,85 +1248,6 @@ a {
   user-select: none;
 }
 
-.speechMouth {
-  position: absolute;
-
-  left: 55%;
-  top: 62%;
-
-  width: 65px;
-  height: 30px;
-
-  border-radius: 50%;
-
-  background: #1C1C1C;
-
-  transform:
-    translate(-50%, -50%)
-    scaleX(0.65)
-    scaleY(0.85);
-
-  transform-origin: center;
-
-  opacity: 0;
-
-  pointer-events: none;
-}
-
-.speechFace.talking
-.speechMouth {
-  opacity: 1;
-}
-
-.speechMouth.syllable {
-  animation:
-    talkingMouth 0.10s
-    steps(2, end);
-}
-
-@keyframes talkingMouth {
-  0% {
-    transform:
-      translate(-50%, -50%)
-      scaleX(0.55)
-      scaleY(0.40);
-  }
-
-  20% {
-    transform:
-      translate(-50%, -50%)
-      scaleX(1.75)
-      scaleY(1.05);
-  }
-
-  45% {
-    transform:
-      translate(-50%, -50%)
-      scaleX(0.85)
-      scaleY(0.65);
-  }
-
-  65% {
-    transform:
-      translate(-50%, -50%)
-      scaleX(1.65)
-      scaleY(1.10);
-  }
-
-  82% {
-    transform:
-      translate(-50%, -50%)
-      scaleX(0.95)
-      scaleY(0.70);
-  }
-
-  100% {
-    transform:
-      translate(-50%, -50%)
-      scaleX(0.55)
-      scaleY(0.40);
-  }
-}
 
 /* ================================================
    SPEECH CONTROLS
@@ -2047,18 +1968,16 @@ const DEFAULT_ICON_POSITIONS = {
   recycleIcon:       { col: 0, row: 0 },
   fpsIcon:           { col: 0, row: 1 },
   pianoIcon:         { col: 0, row: 2 },
-  djIcon:            { col: 0, row: 3 },
-  paintsvgIcon:      { col: 0, row: 4 },
-  audioconvertIcon:      { col: 0, row: 5 },
+  paintsvgIcon:      { col: 0, row: 3 },
+  audioconvertIcon:  { col: 0, row: 4 },
 
   tvIcon:            { col: 1, row: 0 },
   nerfIcon:          { col: 1, row: 1 },
   tinyDinoIcon:      { col: 1, row: 2 },
-  foodshopIcon:      { col: 1, row: 3 },
-  classicpaintingIcon:      { col: 1, row: 4 },
-  texteditorIcon:      { col: 1, row: 5 },
+  classicpaintingIcon:      { col: 1, row: 3 },
+  texteditorIcon:      { col: 1, row: 4 },
 
-  recipeDeskIcon:    { col: 2, row: 0 },
+  onlineradioIcon:   { col: 2, row: 0 },
   zombieFearIcon:    { col: 2, row: 1 },
   grayscaleBlocksIcon: { col: 2, row: 2 },
   partsBookIcon: 	{ col: 2, row: 3 }
@@ -2095,11 +2014,11 @@ const projects = [
   },
 
   {
-    id: "djIcon",
-    label: "DJ Studio",
-    icon: "🎧",
+    id: "onlineradioIcon",
+    label: "Online Radio",
+    icon: "📻",
     url:
-      "https://matthtmlprojects.github.io/DJ.html"
+      "https://matthtmlprojects.github.io/OnlineRadio.html"
   },
 
   {
@@ -2116,14 +2035,6 @@ const projects = [
     icon: "🎶",
     url:
       "https://matthtmlprojects.github.io/AudioConvert.html"
-  },
-
-  {
-    id: "foodshopIcon",
-    label: "Food Shopping",
-    icon: "🛒",
-    url:
-      "https://matthtmlprojects.github.io/FoodShopping.html"
   },
 
   {
@@ -2177,13 +2088,6 @@ const projects = [
   },
 */
 
-  {
-    id: "recipeDeskIcon",
-    label: "Recipe Desk",
-    icon: "🍽️",
-    url:
-      "https://matthtmlprojects.github.io/RecipeDesk.html"
-  },
 
   {
     id: "zombieFearIcon",
