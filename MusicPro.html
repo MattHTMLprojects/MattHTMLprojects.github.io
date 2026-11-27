@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML Music Pro - Green Music Edition</title>
+<style>
+  :root {
+    --bg-shell: #b8bec4;
+    --bg-panel: #cfd4d9;
+    --bg-dark: #6b737b;
+    --bg-darker: #34393e;
+    --bg-timeline: #e2e6ea;
+    --acid-green: #58b828;
+    --acid-green-bright: #7ce83b;
+    --acid-green-dark: #286410;
+    --bevel-light: #f4f6f8;
+    --bevel-shadow: #5c636a;
+    --lcd-bg: #0c170b;
+    --lcd-text: #6eff3d;
+  }
+
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    font-family: "Tahoma", "Segoe UI", Arial, sans-serif;
+    font-size: 11px;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg-shell);
+    color: #111;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .bevel-in {
+    border-top: 1px solid var(--bevel-shadow);
+    border-left: 1px solid var(--bevel-shadow);
+    border-right: 1px solid var(--bevel-light);
+    border-bottom: 1px solid var(--bevel-light);
+    background: #fff;
+  }
+
+  .btn {
+    border-top: 1px solid var(--bevel-light);
+    border-left: 1px solid var(--bevel-light);
+    border-right: 1px solid var(--bevel-shadow);
+    border-bottom: 1px solid var(--bevel-shadow);
+    background: linear-gradient(180deg, #e5e8eb 0%, #c4c9ce 100%);
+    padding: 3px 8px;
+    border-radius: 2px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: #111;
+  }
+
+  .btn:hover {
+    background: linear-gradient(180deg, #eef2f5 0%, #cdd3d9 100%);
+  }
+
+  .btn:active, .btn.active {
+    border-top: 1px solid var(--bevel-shadow);
+    border-left: 1px solid var(--bevel-shadow);
+    border-right: 1px solid var(--bevel-light);
+    border-bottom: 1px solid var(--bevel-light);
+    background: linear-gradient(180deg, #98d868 0%, #63b530 100%);
+    color: #091d03;
+    font-weight: bold;
+  }
+
+  .title-bar {
+    background: linear-gradient(90deg, #1b2226 0%, #2a353b 55%, #2b6814 100%);
+    color: #fff;
+    font-weight: bold;
+    padding: 4px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--acid-green);
+  }
+
+  .brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .acid-pill {
+    background: var(--acid-green);
+    color: #081a02;
+    font-weight: 900;
+    padding: 1px 6px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+    font-size: 10px;
+  }
+
+  .menu-bar {
+    display: flex;
+    gap: 6px;
+    padding: 2px 8px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--bg-dark);
+    position: relative;
+    z-index: 50;
+  }
+
+  .menu-wrapper {
+    position: relative;
+  }
+
+  .menu-item {
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+  .menu-item:hover, .menu-item.open {
+    background: var(--acid-green);
+    color: #081a02;
+    font-weight: bold;
+  }
+
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 205px;
+    background: #e8ecf0;
+    border-top: 1px solid var(--bevel-light);
+    border-left: 1px solid var(--bevel-light);
+    border-right: 2px solid var(--bevel-shadow);
+    border-bottom: 2px solid var(--bevel-shadow);
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.35);
+    padding: 2px;
+  }
+
+  .dropdown-menu.show {
+    display: block;
+  }
+
+  .dropdown-entry {
+    padding: 5px 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #111;
+  }
+
+  .dropdown-entry:hover {
+    background: var(--acid-green);
+    color: #081a02;
+    font-weight: bold;
+  }
+
+  .dropdown-sep {
+    height: 1px;
+    background: #b0b6bc;
+    margin: 2px 4px;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: linear-gradient(180deg, #d8dde2 0%, #bec4ca 100%);
+    border-bottom: 1px solid var(--bg-dark);
+    flex-wrap: wrap;
+  }
+
+  .sep {
+    width: 2px;
+    height: 20px;
+    border-left: 1px solid var(--bg-dark);
+    border-right: 1px solid var(--bevel-light);
+    margin: 0 2px;
+  }
+
+  .workspace {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .left-pane {
+    width: 320px;
+    min-width: 280px;
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid var(--bg-dark);
+    background: var(--bg-panel);
+  }
+
+  .left-ruler-spacer {
+    height: 28px;
+    background: linear-gradient(180deg, #cfd4d9 0%, #b6bcc2 100%);
+    border-bottom: 1px solid var(--bg-darker);
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: bold;
+    color: #262c31;
+  }
+
+  .track-headers-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #8f969e;
+  }
+
+  .track-header {
+    height: 74px;
+    border-bottom: 1px solid var(--bg-darker);
+    border-top: 1px solid rgba(255,255,255,0.65);
+    background: linear-gradient(180deg, #d7dce0 0%, #c1c7cd 100%);
+    padding: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-left: 5px solid transparent;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -1px 0 rgba(0,0,0,0.18);
+  }
+
+  .track-header.selected {
+    border-left: 5px solid var(--acid-green);
+    box-shadow: inset 0 0 0 1px rgba(88, 184, 40, 0.65), inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+
+  .track-header.pending-import {
+    background: linear-gradient(180deg, #e7f3df 0%, #cbe0bd 100%);
+    border-left: 5px solid var(--acid-green-dark);
+    padding: 4px 6px;
+  }
+
+  .pending-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+
+  .pending-inputs {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .pending-inputs input {
+    padding: 2px 4px;
+    font-size: 10px;
+    border: 1px solid var(--bg-dark);
+    user-select: text;
+    background: #fff;
+  }
+
+  .track-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+
+  .track-num {
+    background: #2b3136;
+    color: var(--acid-green-bright);
+    padding: 1px 6px;
+    font-weight: bold;
+    border-radius: 2px;
+    min-width: 22px;
+    text-align: center;
+  }
+
+  .track-name {
+    font-weight: bold;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #111518;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.55);
+  }
+
+  .track-ms {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .track-ms button {
+    width: 20px;
+    height: 18px;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 0;
+  }
+
+  .hex-picker {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 1px solid #444;
+    border-radius: 2px;
+    cursor: pointer;
+    background: transparent;
+  }
+
+  .btn-mute.active { background: #d63636 !important; color: #fff !important; }
+  .btn-solo.active { background: #63c728 !important; color: #081a02 !important; }
+
+  .track-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+  }
+
+  .slider-row span.lbl {
+    width: 24px;
+    color: #181d22;
+    font-weight: bold;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .slider-row input[type="range"] { flex: 1; height: 12px; margin: 0; accent-color: var(--acid-green-dark); }
+  .slider-row span.val {
+    width: 34px;
+    text-align: right;
+    font-family: monospace;
+    font-weight: bold;
+    color: #111518;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+  }
+
+  .right-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ruler-bar {
+    height: 28px;
+    background: #c5cbd1;
+    border-bottom: 1px solid var(--bg-darker);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  #rulerCanvas {
+    display: block;
+  }
+
+  .timeline-scroll {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    background: var(--bg-timeline);
+  }
+
+  #timelineCanvas {
+    display: block;
+    cursor: crosshair;
+  }
+
+  .bottom-dock {
+    height: 156px;
+    display: flex;
+    border-top: 2px solid var(--acid-green-dark);
+    background: var(--bg-panel);
+  }
+
+  .transport-panel {
+    width: 320px;
+    padding: 6px;
+    border-right: 2px solid var(--bg-dark);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: linear-gradient(180deg, #cfd4d9 0%, #b8bec4 100%);
+  }
+
+  .lcd-display {
+    background: var(--lcd-bg);
+    color: var(--lcd-text);
+    font-family: "Courier New", monospace;
+    padding: 6px 8px;
+    border: 2px inset #4a544a;
+    border-radius: 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: inset 0 0 8px rgba(88, 184, 40, 0.25);
+  }
+
+  .lcd-main {
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-shadow: 0 0 4px rgba(110, 255, 61, 0.5);
+  }
+
+  .lcd-sub {
+    font-size: 10px;
+    text-align: right;
+    color: #98f576;
+  }
+
+  .transport-buttons {
+    display: flex;
+    gap: 3px;
+  }
+
+  .transport-buttons .btn {
+    flex: 1;
+    height: 26px;
+    font-weight: bold;
+  }
+
+  .tempo-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tempo-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--acid-green-dark);
+  }
+
+  .clip-inspector {
+    flex: 1;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .inspector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    font-weight: bold;
+    color: #1c241b;
+    gap: 8px;
+  }
+
+  #previewCanvas {
+    flex: 1;
+    width: 100%;
+    background: #0d160c;
+    border: 1px inset #4d594c;
+    cursor: col-resize;
+  }
+</style>
+</head>
+
+
+
+<body>
+
+  <div class="title-bar">
+    <div class="brand-badge">
+      <span class="acid-pill">GREEN</span>
+      <span id="projectTitleText">HTML Music Pro - [Untitled.musicproj.json]</span>
+    </div>
+    <span id="engineStatusText" style="color:#98f576; font-size:10px;">● 44.1kHz / 16-Bit Loop Engine</span>
+  </div>
+
+  <div class="menu-bar">
+    <div class="menu-wrapper">
+      <div class="menu-item" id="fileMenuBtn" onclick="toggleFileMenu(event)">File ▾</div>
+      <div class="dropdown-menu" id="fileDropdown">
+        <div class="dropdown-entry" onclick="menuAction('demo')">⚡ Load Demo Tracks</div>
+        <div class="dropdown-entry" onclick="menuAction('base64')">📥 Import Base64 Track</div>
+        <div class="dropdown-sep"></div>
+        <div class="dropdown-entry" onclick="menuAction('save')">💾 Save .musicproj.json</div>
+        <div class="dropdown-entry" onclick="menuAction('open')">📂 Open .musicproj.json</div>
+        <div class="dropdown-sep"></div>
+        <div class="dropdown-entry" onclick="menuAction('exportWav')">🎧 Export as .wav</div>
+      </div>
+    </div>
+    <div class="menu-item" onclick="clearAllClips()">Edit (Clear Timeline)</div>
+    <div class="menu-item" onclick="resetTrim()">Chopper (Full Slice)</div>
+    <input type="file" id="projectFileInput" style="display:none;" onchange="handleProjectFileUpload(event)">
+  </div>
+
+  <div class="toolbar">
+    <button class="btn active" id="toolDraw" onclick="setTool('draw')" title="Left-Click Paint / Right-Click Erase">✏️ Paint</button>
+    <button class="btn" id="toolErase" onclick="setTool('erase')" title="Erase Tool">🧹 Erase</button>
+    <div class="sep"></div>
+    <label>Snap:</label>
+    <select id="snapSelect" class="bevel-in" style="padding:2px;">
+      <option value="1">1 Bar</option>
+      <option value="0.5">1/2 Note</option>
+      <option value="0.25" selected>1/4 Beat</option>
+      <option value="0.125">1/8 Note</option>
+      <option value="0.0625">1/16 Note</option>
+      <option value="0.03125">1/32 Stutter</option>
+      <option value="0.015625">1/64 Roll</option>
+    </select>
+    <div class="sep"></div>
+    <label>Time Sig:</label>
+    <select id="timeSigSelect" class="bevel-in" style="padding:2px;" onchange="updateTimeSignature(this.value)">
+      <option value="4/4" selected>4/4</option>
+      <option value="3/4">3/4</option>
+      <option value="6/8">6/8</option>
+      <option value="5/4">5/4</option>
+      <option value="7/8">7/8</option>
+    </select>
+    <div class="sep"></div>
+    <label>Zoom:</label>
+    <button class="btn" onclick="changeZoom(-20)">-</button>
+    <button class="btn" onclick="changeZoom(20)">+</button>
+    <div class="sep"></div>
+    <label>Song Bars:</label>
+    <input type="number" id="songBarsInput" value="64" min="8" max="2000" style="width:50px;" onchange="updateSongLength(this.value)">
+    <label>Loop End:</label>
+    <input type="number" id="loopBars" value="8" min="1" max="2000" style="width:45px;" onchange="drawAll()">
+  </div>
+
+  <div class="workspace">
+    <div class="left-pane">
+      <div class="left-ruler-spacer">
+        <span>TRACK LIST</span>
+        <button class="btn" style="padding:1px 6px; font-size:10px;" onclick="addPendingBase64Slot()">+ Base64 Track</button>
+      </div>
+      <div class="track-headers-scroll" id="trackHeaders"></div>
+    </div>
+
+    <div class="right-pane">
+      <div class="ruler-bar" id="rulerBar">
+        <canvas id="rulerCanvas" height="28"></canvas>
+      </div>
+      <div class="timeline-scroll" id="timelineScroll">
+        <canvas id="timelineCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-dock">
+    <div class="transport-panel">
+      <div class="lcd-display">
+        <div class="lcd-main" id="lcdTime">001.01.000</div>
+        <div class="lcd-sub">
+          <div id="lcdSec">00:00.0</div>
+          <div id="lcdTimeSig">4/4 BEAT</div>
+        </div>
+      </div>
+
+      <div class="transport-buttons">
+        <button class="btn" onclick="stopPlayback()">⏹ Stop</button>
+        <button class="btn" id="btnPlay" onclick="togglePlay()">▶ Play</button>
+        <button class="btn active" id="btnLoop" onclick="toggleLoop()">🔁 Loop</button>
+        <button class="btn" onclick="rewind()">⏮</button>
+      </div>
+
+      <div class="tempo-row">
+        <span style="font-weight:bold;">Tempo:</span>
+        <input type="range" id="bpmSlider" min="60" max="180" value="120" oninput="updateBPM(this.value)">
+        <span id="bpmVal" style="font-family:monospace; font-weight:bold; width:32px; color:#1c4d09;">120</span>
+      </div>
+    </div>
+
+    <div class="clip-inspector">
+      <div class="inspector-header">
+        <span id="inspectorTitle">Chopper / Waveform Trim: [Select a Track & Drag Below to Slice ms]</span>
+        <div>
+          <span id="inspectorMeta" style="font-family:monospace; color:#1f4f0c; margin-right:8px;">0ms - 0ms</span>
+          <button class="btn" onclick="resetTrim()">Full Length</button>
+        </div>
+      </div>
+      <canvas id="previewCanvas"></canvas>
+    </div>
+  </div>
+
+<script>
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const TRACK_HEIGHT = 74;
+  const TRACK_COLORS = ['#74c947', '#5cb874', '#9cd656', '#56b4a8', '#88c96b', '#b5d65c', '#68b85c'];
+
+  let currentProjectName = 'Untitled.musicproj.json';
+  let tracks = [];
+  let selectedTrackId = null;
+  let currentTool = 'draw';
+  let pixelsPerBar = 120;
+  let totalBars = 64;
+  let bpm = 120;
+  let beatsPerBar = 4;
+  let beatUnit = 4;
+  let isPlaying = false;
+  let isLooping = true;
+  let playheadBar = 0;
+  let lastFrameTime = 0;
+  let activeSources = [];
+  let scheduledUpToBar = -0.01;
+
+  let isPainting = false;
+  let isRightErasing = false;
+  let paintTrackIndex = -1;
+  let paintStartBar = 0;
+  let activeClip = null;
+
+  let isTrimming = false;
+  let trimDragStartRatio = 0;
+
+  const timelineCanvas = document.getElementById('timelineCanvas');
+  const tCtx = timelineCanvas.getContext('2d');
+  const rulerCanvas = document.getElementById('rulerCanvas');
+  const rCtx = rulerCanvas.getContext('2d');
+  const previewCanvas = document.getElementById('previewCanvas');
+  const pCtx = previewCanvas.getContext('2d');
+  const timelineScroll = document.getElementById('timelineScroll');
+  const trackHeadersScroll = document.getElementById('trackHeaders');
+
+  timelineScroll.addEventListener('scroll', () => {
+    trackHeadersScroll.scrollTop = timelineScroll.scrollTop;
+    drawRuler();
+  });
+
+
+trackHeadersScroll.addEventListener('scroll', () => {
+timelineScroll.scrollTop = trackHeadersScroll.scrollTop;
+});
+function updateProjectTitle(fileName) {
+currentProjectName = fileName;
+document.getElementById('projectTitleText').textContent = 'HTML Music Pro - [' + fileName + ']';
+}
+function toggleFileMenu(e) {
+e.stopPropagation();
+const dd = document.getElementById('fileDropdown');
+const btn = document.getElementById('fileMenuBtn');
+const open = dd.classList.toggle('show');
+btn.classList.toggle('open', open);
+}
+window.addEventListener('click', () => {
+document.getElementById('fileDropdown').classList.remove('show');
+document.getElementById('fileMenuBtn').classList.remove('open');
+});
+function menuAction(type) {
+document.getElementById('fileDropdown').classList.remove('show');
+document.getElementById('fileMenuBtn').classList.remove('open');
+if (type === 'demo') {
+loadDemoLoops();
+} else if (type === 'base64') {
+addPendingBase64Slot();
+} else if (type === 'save') {
+saveMusicProj();
+} else if (type === 'open') {
+document.getElementById('projectFileInput').click();
+} else if (type === 'exportWav') {
+exportAsWav();
+}
+}
+function audioBufferToWavArrayBuffer(buffer) {
+const numChannels = buffer.numberOfChannels;
+const sampleRate = buffer.sampleRate;
+const numFrames = buffer.length;
+const bytesPerSample = 2;
+const blockAlign = numChannels * bytesPerSample;
+const dataSize = numFrames * blockAlign;
+const arrayBuffer = new ArrayBuffer(44 + dataSize);
+const view = new DataView(arrayBuffer);
+function writeStr(offset, str) {
+for (let i = 0; i < str.length; i++) {
+view.setUint8(offset + i, str.charCodeAt(i));
+}
+}
+writeStr(0, 'RIFF');
+view.setUint32(4, 36 + dataSize, true);
+writeStr(8, 'WAVE');
+writeStr(12, 'fmt ');
+view.setUint32(16, 16, true);
+view.setUint16(20, 1, true);
+view.setUint16(22, numChannels, true);
+view.setUint32(24, sampleRate, true);
+view.setUint32(28, sampleRate * blockAlign, true);
+view.setUint16(32, blockAlign, true);
+view.setUint16(34, 16, true);
+writeStr(36, 'data');
+view.setUint32(40, dataSize, true);
+let offset = 44;
+for (let i = 0; i < numFrames; i++) {
+for (let ch = 0; ch < numChannels; ch++) {
+let sample = buffer.getChannelData(ch)[i];
+sample = Math.max(-1, Math.min(1, sample));
+view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+offset += 2;
+}
+}
+return arrayBuffer;
+}
+function audioBufferToWavBase64(buffer) {
+const arrayBuffer = audioBufferToWavArrayBuffer(buffer);
+const bytes = new Uint8Array(arrayBuffer);
+let binary = '';
+for (let i = 0; i < bytes.byteLength; i++) {
+binary += String.fromCharCode(bytes[i]);
+}
+return btoa(binary);
+}
+async function exportAsWav() {
+const activeTracks = tracks.filter(t => !t.isPending && t.clips.length > 0);
+if (activeTracks.length === 0) {
+alert('Paint at least one loop clip onto the timeline before exporting as .wav.');
+return;
+}
+const defaultBase = currentProjectName.replace(/.musicproj.json$/i, '').replace(/.json$/i, '');
+const userInput = prompt('Export WAV filename:', defaultBase);
+if (!userInput) return;
+const cleanWavName = userInput.trim().replace(/.wav$/i, '') + '.wav';
+const statusEl = document.getElementById('engineStatusText');
+const prevStatus = statusEl.textContent;
+statusEl.textContent = '⏳ Rendering WAV...';
+try {
+let maxBar = 0;
+const anySolo = tracks.some(t => !t.isPending && t.solo);
+tracks.forEach(tr => {
+if (tr.isPending || tr.mute) return;
+if (anySolo && !tr.solo) return;
+tr.clips.forEach(c => {
+const end = c.startBar + c.durationBars;
+if (end > maxBar) maxBar = end;
+});
+});
+if (maxBar <= 0) {
+alert('All tracks with clips are muted. Unmute at least one track to export.');
+statusEl.textContent = prevStatus;
+return;
+}
+const secPerBar = getSecPerBar();
+const totalDurationSec = maxBar * secPerBar + 0.15;
+const sampleRate = 44100;
+const totalFrames = Math.ceil(totalDurationSec * sampleRate);
+const offlineCtx = new OfflineAudioContext(2, totalFrames, sampleRate);
+tracks.forEach(tr => {
+if (tr.isPending || tr.mute) return;
+if (anySolo && !tr.solo) return;
+const sourceBpm = tr.sourceBpm || bpm;
+const stretchRatio = bpm / sourceBpm;
+tr.clips.forEach(clip => {
+const clipEnd = clip.startBar + clip.durationBars;
+const trimStart = clip.trimStartRatio !== undefined ? clip.trimStartRatio : 0;
+const trimEnd = clip.trimEndRatio !== undefined ? clip.trimEndRatio : 1;
+const offsetSec = trimStart * tr.buffer.duration;
+const rawSliceSec = Math.max(0.015, (trimEnd - trimStart) * tr.buffer.duration);
+const stretchedSliceSec = rawSliceSec / stretchRatio;
+const sliceDurBars = stretchedSliceSec / secPerBar;
+let iterBar = clip.startBar;
+while (iterBar < clipEnd) {
+const iterEnd = Math.min(clipEnd, iterBar + sliceDurBars);
+const whenSec = iterBar * secPerBar;
+const playDurSec = (iterEnd - iterBar) * secPerBar;
+const src = offlineCtx.createBufferSource();
+src.buffer = tr.buffer;
+src.playbackRate.value = stretchRatio;
+const gainNode = offlineCtx.createGain();
+gainNode.gain.value = tr.volume;
+const panNode = offlineCtx.createStereoPanner();
+panNode.pan.value = tr.pan;
+src.connect(gainNode);
+gainNode.connect(panNode);
+panNode.connect(offlineCtx.destination);
+src.start(whenSec, offsetSec, playDurSec * stretchRatio);
+iterBar += sliceDurBars;
+}
+});
+});
+const renderedBuffer = await offlineCtx.startRendering();
+const wavArrayBuffer = audioBufferToWavArrayBuffer(renderedBuffer);
+const blob = new Blob([wavArrayBuffer], { type: 'audio/wav' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = cleanWavName;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+} catch (err) {
+alert('Failed to export WAV.\n\nError: ' + err.message);
+} finally {
+statusEl.textContent = prevStatus;
+}
+}
+function saveMusicProj() {
+const defaultBase = currentProjectName.replace(/.musicproj.json$/i, '').replace(/.json$/i, '');
+const userInput = prompt('Enter project name:', defaultBase);
+if (!userInput) return;
+const cleanName = userInput.trim().replace(/.musicproj.json$/i, '').replace(/.json$/i, '') + '.musicproj.json';
+const projectData = {
+format: 'HTML_Music_Pro_Project',
+version: 1,
+bpm: bpm,
+timeSig: beatsPerBar + '/' + beatUnit,
+totalBars: totalBars,
+loopEndBar: parseInt(document.getElementById('loopBars').value) || 8,
+tracks: tracks.filter(t => !t.isPending).map(tr => ({
+name: tr.name,
+sourceBpm: tr.sourceBpm || bpm,
+color: tr.color,
+customColor: tr.customColor || null,
+volume: tr.volume,
+pan: tr.pan,
+mute: tr.mute,
+solo: tr.solo,
+trimStartRatio: tr.trimStartRatio,
+trimEndRatio: tr.trimEndRatio,
+clips: tr.clips,
+wavBase64: audioBufferToWavBase64(tr.buffer)
+}))
+};
+const blob = new Blob([JSON.stringify(projectData)], { type: 'application/json' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = cleanName;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+updateProjectTitle(cleanName);
+}
+async function handleProjectFileUpload(event) {
+const file = event.target.files[0];
+if (!file) return;
+try {
+const text = await file.text();
+const data = JSON.parse(text);
+if (!data.tracks || !Array.isArray(data.tracks)) {
+alert('Invalid .musicproj.json file.');
+return;
+}
+stopPlayback();
+tracks = [];
+if (data.bpm) {
+bpm = data.bpm;
+document.getElementById('bpmSlider').value = bpm;
+document.getElementById('bpmVal').textContent = bpm;
+}
+if (data.timeSig) {
+document.getElementById('timeSigSelect').value = data.timeSig;
+updateTimeSignature(data.timeSig);
+}
+if (data.totalBars) {
+totalBars = data.totalBars;
+document.getElementById('songBarsInput').value = totalBars;
+}
+if (data.loopEndBar) {
+document.getElementById('loopBars').value = data.loopEndBar;
+}
+for (let i = 0; i < data.tracks.length; i++) {
+const item = data.tracks[i];
+const binaryString = atob(item.wavBase64);
+const bytes = new Uint8Array(binaryString.length);
+for (let b = 0; b < binaryString.length; b++) {
+bytes[b] = binaryString.charCodeAt(b);
+}
+const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer);
+const peaks = extractPeaks(audioBuffer, 600);
+const id = Date.now() + Math.random();
+tracks.push({
+id: id,
+isPending: false,
+name: item.name,
+buffer: audioBuffer,
+peaks: peaks,
+sourceBpm: item.sourceBpm || bpm,
+color: item.color || TRACK_COLORS[i % TRACK_COLORS.length],
+customColor: item.customColor || null,
+volume: item.volume !== undefined ? item.volume : 0.85,
+pan: item.pan || 0,
+mute: !!item.mute,
+solo: !!item.solo,
+trimStartRatio: item.trimStartRatio !== undefined ? item.trimStartRatio : 0,
+trimEndRatio: item.trimEndRatio !== undefined ? item.trimEndRatio : 1,
+clips: item.clips || []
+});
+}
+selectedTrackId = tracks.length > 0 ? tracks[0].id : null;
+updateProjectTitle(file.name);
+renderTrackHeaders();
+resizeCanvases();
+drawAll();
+} catch (err) {
+alert('Failed to open .musicproj.json file.\n\nError: ' + err.message);
+} finally {
+event.target.value = '';
+}
+}
+function addPendingBase64Slot() {
+const id = Date.now() + Math.random();
+tracks.push({
+id,
+isPending: true,
+color: TRACK_COLORS[tracks.length % TRACK_COLORS.length],
+clips: []
+});
+renderTrackHeaders();
+resizeCanvases();
+drawAll();
+trackHeadersScroll.scrollTop = trackHeadersScroll.scrollHeight;
+}
+function cancelPendingSlot(idx, event) {
+if (event) event.stopPropagation();
+tracks.splice(idx, 1);
+renderTrackHeaders();
+resizeCanvases();
+drawAll();
+}
+async function decodePendingSlot(idx, rawString, customName) {
+const raw = (rawString || '').trim();
+if (!raw) {
+alert('Please paste a Base64 WAV string first.');
+return;
+}
+try {
+const base64Clean = raw.includes(',') ? raw.split(',')[1] : raw;
+const binaryString = atob(base64Clean);
+const bytes = new Uint8Array(binaryString.length);
+for (let i = 0; i < binaryString.length; i++) {
+bytes[i] = binaryString.charCodeAt(i);
+}
+const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer);
+const existing = tracks[idx];
+const trackName = (customName || '').trim() || ('Track_' + (idx + 1) + '.wav');
+const peaks = extractPeaks(audioBuffer, 600);
+tracks[idx] = {
+id: existing.id,
+isPending: false,
+name: trackName,
+buffer: audioBuffer,
+peaks: peaks,
+sourceBpm: bpm,
+color: existing.color,
+customColor: null,
+volume: 0.85,
+pan: 0,
+mute: false,
+solo: false,
+trimStartRatio: 0,
+trimEndRatio: 1,
+clips: []
+};
+selectTrack(existing.id);
+renderTrackHeaders();
+resizeCanvases();
+drawAll();
+} catch (err) {
+alert('Failed to decode Base64 audio. Ensure it is a valid WAV Base64 string.\n\nError: ' + err.message);
+}
+}
+function addTrackFromBuffer(name, audioBuffer, sourceBpmOverride) {
+const peaks = extractPeaks(audioBuffer, 600);
+const id = Date.now() + Math.random();
+const track = {
+id,
+isPending: false,
+name,
+buffer: audioBuffer,
+peaks,
+sourceBpm: sourceBpmOverride || bpm,
+color: TRACK_COLORS[tracks.length % TRACK_COLORS.length],
+customColor: null,
+volume: 0.85,
+pan: 0,
+mute: false,
+solo: false,
+trimStartRatio: 0,
+trimEndRatio: 1,
+clips: []
+};
+tracks.push(track);
+selectTrack(id);
+renderTrackHeaders();
+resizeCanvases();
+drawAll();
+}
+
+function deleteTrack(idx, event) {
+if (event) event.stopPropagation();
+const removed = tracks.splice(idx, 1)[0];
+if (removed && removed.id === selectedTrackId) {
+const nextLoaded = tracks.find(t => !t.isPending);
+selectedTrackId = nextLoaded ? nextLoaded.id : null;
+}
+if (isPlaying) {
+stopAudioNodes();
+scheduledUpToBar = playheadBar - 0.001;
+}
+renderTrackHeaders();
+resizeCanvases();
+drawAll();
+}
+
+  function setTrackCustomColor(idx, hex) {
+    tracks[idx].customColor = hex;
+    tracks[idx].color = hex;
+
+    // Update the track header background directly without destroying the open color picker
+    const headers = document.getElementById('trackHeaders').children;
+    if (headers[idx]) {
+      headers[idx].style.background = buildBeveledGradient(hex);
+      headers[idx].style.borderLeftColor = tracks[idx].id === selectedTrackId ? '#58b828' : hex;
+    }
+
+    drawTimeline();
+  }
+
+
+function buildBeveledGradient(hex) {
+const clean = hex.replace('#', '');
+const num = parseInt(clean, 16);
+const r = (num >> 16) & 255;
+const g = (num >> 8) & 255;
+const b = num & 255;
+const lighten = (c) => Math.min(255, Math.round(c + (255 - c) * 0.45));
+const darken = (c) => Math.max(0, Math.round(c * 0.78));
+const topCol = 'rgb(' + lighten(r) + ',' + lighten(g) + ',' + lighten(b) + ')';
+const midCol = 'rgb(' + r + ',' + g + ',' + b + ')';
+const botCol = 'rgb(' + darken(r) + ',' + darken(g) + ',' + darken(b) + ')';
+return 'linear-gradient(180deg, ' + topCol + ' 0%, ' + midCol + ' 52%, ' + botCol + ' 100%)';
+}
+
+function extractPeaks(buffer, bucketCount) {
+const data = buffer.getChannelData(0);
+const step = Math.max(1, Math.floor(data.length / bucketCount));
+const peaks = [];
+for (let i = 0; i < bucketCount; i++) {
+let max = 0;
+const start = i * step;
+for (let j = 0; j < step && start + j < data.length; j++) {
+const val = Math.abs(data[start + j]);
+if (val > max) max = val;
+}
+peaks.push(max);
+}
+return peaks;
+}
+
+function selectTrack(id) {
+selectedTrackId = id;
+renderTrackHeaders();
+drawPreviewWaveform();
+}
+function renderTrackHeaders() {
+const container = document.getElementById('trackHeaders');
+container.innerHTML = '';
+tracks.forEach((tr, idx) => {
+const div = document.createElement('div');
+if (tr.isPending) {
+div.className = 'track-header pending-import';
+const topRow = document.createElement('div');
+topRow.className = 'pending-top';
+const badge = document.createElement('span');
+badge.className = 'track-num';
+badge.textContent = idx + 1;
+const titleLbl = document.createElement('span');
+titleLbl.style.fontWeight = 'bold';
+titleLbl.style.flex = '1';
+titleLbl.style.color = '#18380c';
+titleLbl.textContent = 'Paste Base64 WAV:';
+const cancelBtn = document.createElement('button');
+cancelBtn.className = 'btn';
+cancelBtn.style.padding = '1px 6px';
+cancelBtn.style.fontSize = '10px';
+cancelBtn.textContent = 'Cancel';
+cancelBtn.onclick = (e) => cancelPendingSlot(idx, e);
+topRow.appendChild(badge);
+topRow.appendChild(titleLbl);
+topRow.appendChild(cancelBtn);
+const inputRow = document.createElement('div');
+inputRow.className = 'pending-inputs';
+const b64Field = document.createElement('input');
+b64Field.type = 'text';
+b64Field.placeholder = 'Paste Base64 string...';
+b64Field.style.flex = '2';
+const nameField = document.createElement('input');
+nameField.type = 'text';
+nameField.placeholder = 'Name';
+nameField.style.width = '68px';
+const loadBtn = document.createElement('button');
+loadBtn.className = 'btn';
+loadBtn.style.padding = '2px 6px';
+loadBtn.style.fontWeight = 'bold';
+loadBtn.textContent = 'Load';
+loadBtn.onclick = () => decodePendingSlot(idx, b64Field.value, nameField.value);
+inputRow.appendChild(b64Field);
+inputRow.appendChild(nameField);
+inputRow.appendChild(loadBtn);
+div.appendChild(topRow);
+div.appendChild(inputRow);
+container.appendChild(div);
+return;
+}
+div.className = 'track-header' + (tr.id === selectedTrackId ? ' selected' : '');
+if (tr.customColor) {
+div.style.background = buildBeveledGradient(tr.customColor);
+div.style.borderLeftColor = tr.id === selectedTrackId ? '#58b828' : tr.customColor;
+} else if (tr.id === selectedTrackId) {
+div.style.background = 'linear-gradient(180deg, #e1f2d8 0%, #c6e3b6 100%)';
+}
+div.onclick = (e) => {
+if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
+selectTrack(tr.id);
+}
+};
+const topRow = document.createElement('div');
+topRow.className = 'track-top';
+const numSpan = document.createElement('span');
+numSpan.className = 'track-num';
+numSpan.textContent = idx + 1;
+const nameSpan = document.createElement('span');
+nameSpan.className = 'track-name';
+nameSpan.title = tr.name;
+nameSpan.textContent = tr.name;
+const msDiv = document.createElement('div');
+msDiv.className = 'track-ms';
+const colorInput = document.createElement('input');
+colorInput.type = 'color';
+colorInput.className = 'hex-picker';
+colorInput.title = 'Assign Track Hex Color';
+colorInput.value = tr.customColor || tr.color;
+colorInput.oninput = (e) => setTrackCustomColor(idx, e.target.value);
+const muteBtn = document.createElement('button');
+muteBtn.className = 'btn btn-mute' + (tr.mute ? ' active' : '');
+muteBtn.title = 'Mute Track';
+muteBtn.textContent = 'M';
+muteBtn.onclick = () => toggleMute(idx);
+const soloBtn = document.createElement('button');
+soloBtn.className = 'btn btn-solo' + (tr.solo ? ' active' : '');
+soloBtn.title = 'Solo Track';
+soloBtn.textContent = 'S';
+soloBtn.onclick = () => toggleSolo(idx);
+const delBtn = document.createElement('button');
+delBtn.className = 'btn';
+delBtn.title = 'Delete Track & Loops';
+delBtn.style.padding = '0 4px';
+delBtn.textContent = '🗑️';
+delBtn.onclick = (e) => deleteTrack(idx, e);
+msDiv.appendChild(colorInput);
+msDiv.appendChild(muteBtn);
+msDiv.appendChild(soloBtn);
+msDiv.appendChild(delBtn);
+topRow.appendChild(numSpan);
+topRow.appendChild(nameSpan);
+topRow.appendChild(msDiv);
+const slidersDiv = document.createElement('div');
+slidersDiv.className = 'track-sliders';
+const volRow = document.createElement('div');
+volRow.className = 'slider-row';
+const volLbl = document.createElement('span');
+volLbl.className = 'lbl';
+volLbl.textContent = 'Vol:';
+const volInput = document.createElement('input');
+volInput.type = 'range';
+volInput.min = '0';
+volInput.max = '1';
+volInput.step = '0.01';
+volInput.value = tr.volume;
+volInput.oninput = (e) => setTrackVol(idx, e.target.value);
+const volVal = document.createElement('span');
+volVal.className = 'val';
+volVal.id = 'volVal_' + idx;
+volVal.textContent = Math.round(tr.volume * 100) + '%';
+volRow.appendChild(volLbl);
+volRow.appendChild(volInput);
+volRow.appendChild(volVal);
+const panRow = document.createElement('div');
+panRow.className = 'slider-row';
+const panLbl = document.createElement('span');
+panLbl.className = 'lbl';
+panLbl.textContent = 'Pan:';
+const panInput = document.createElement('input');
+panInput.type = 'range';
+panInput.min = '-1';
+panInput.max = '1';
+panInput.step = '0.05';
+panInput.value = tr.pan;
+panInput.oninput = (e) => setTrackPan(idx, e.target.value);
+const panVal = document.createElement('span');
+panVal.className = 'val';
+panVal.id = 'panVal_' + idx;
+panVal.textContent = tr.pan === 0 ? 'C' : (tr.pan < 0 ? 'L' + Math.abs(Math.round(tr.pan * 100)) : 'R' + Math.round(tr.pan * 100));
+panRow.appendChild(panLbl);
+panRow.appendChild(panInput);
+panRow.appendChild(panVal);
+slidersDiv.appendChild(volRow);
+slidersDiv.appendChild(panRow);
+div.appendChild(topRow);
+div.appendChild(slidersDiv);
+container.appendChild(div);
+});
+}
+function toggleMute(idx) {
+tracks[idx].mute = !tracks[idx].mute;
+renderTrackHeaders();
+}
+function toggleSolo(idx) {
+tracks[idx].solo = !tracks[idx].solo;
+renderTrackHeaders();
+}
+function setTrackVol(idx, val) {
+tracks[idx].volume = parseFloat(val);
+document.getElementById('volVal_' + idx).textContent = Math.round(val * 100) + '%';
+}
+function setTrackPan(idx, val) {
+const p = parseFloat(val);
+tracks[idx].pan = p;
+document.getElementById('panVal_' + idx).textContent = p === 0 ? 'C' : (p < 0 ? 'L' + Math.abs(Math.round(p * 100)) : 'R' + Math.round(p * 100));
+}
+function updateTimeSignature(sig) {
+const parts = sig.split('/');
+beatsPerBar = parseInt(parts[0]) || 4;
+beatUnit = parseInt(parts[1]) || 4;
+document.getElementById('lcdTimeSig').textContent = sig + ' BEAT';
+updateLCD();
+drawAll();
+}
+function getSecPerBar() {
+const beatSec = (60 / bpm) * (4 / beatUnit);
+return beatSec * beatsPerBar;
+}
+function updateSongLength(val) {
+totalBars = Math.max(8, Math.min(2000, parseInt(val) || 64));
+resizeCanvases();
+drawAll();
+}
+function resizeCanvases() {
+const width = Math.min(32000, totalBars * pixelsPerBar);
+const height = Math.max(timelineScroll.clientHeight, tracks.length * TRACK_HEIGHT);
+timelineCanvas.width = width;
+timelineCanvas.height = height;
+rulerCanvas.width = document.getElementById('rulerBar').clientWidth;
+previewCanvas.width = previewCanvas.clientWidth;
+previewCanvas.height = previewCanvas.clientHeight;
+}
+window.addEventListener('resize', () => {
+resizeCanvases();
+drawAll();
+});
+function drawAll() {
+drawRuler();
+drawTimeline();
+drawPreviewWaveform();
+}
+function drawRuler() {
+const w = rulerCanvas.width;
+const h = rulerCanvas.height;
+const scrollX = timelineScroll.scrollLeft;
+const loopEndBar = parseInt(document.getElementById('loopBars').value) || 8;
+rCtx.clearRect(0, 0, w, h);
+const loopX1 = 0 - scrollX;
+const loopX2 = loopEndBar * pixelsPerBar - scrollX;
+rCtx.fillStyle = '#4aa820';
+rCtx.fillRect(loopX1, 0, loopX2 - loopX1, 8);
+rCtx.strokeStyle = '#384047';
+rCtx.fillStyle = '#14181c';
+rCtx.font = '10px Tahoma';
+for (let bar = 0; bar <= totalBars; bar++) {
+const x = bar * pixelsPerBar - scrollX;
+if (x < -pixelsPerBar || x > w + pixelsPerBar) continue;
+rCtx.beginPath();
+rCtx.moveTo(x, 8);
+rCtx.lineTo(x, h);
+rCtx.stroke();
+rCtx.fillText((bar + 1) + '.1', x + 3, 22);
+for (let b = 1; b < beatsPerBar; b++) {
+const bx = x + (b * pixelsPerBar / beatsPerBar);
+rCtx.beginPath();
+rCtx.moveTo(bx, 18);
+rCtx.lineTo(bx, h);
+rCtx.stroke();
+}
+}
+const phX = playheadBar * pixelsPerBar - scrollX;
+rCtx.fillStyle = '#2d8a0e';
+rCtx.beginPath();
+rCtx.moveTo(phX - 5, 8);
+rCtx.lineTo(phX + 5, 8);
+rCtx.lineTo(phX, 18);
+rCtx.closePath();
+rCtx.fill();
+}
+function drawTimeline() {
+const w = timelineCanvas.width;
+const h = timelineCanvas.height;
+tCtx.clearRect(0, 0, w, h);
+for (let i = 0; i <= Math.max(tracks.length, 10); i++) {
+const y = i * TRACK_HEIGHT;
+tCtx.fillStyle = i % 2 === 0 ? '#e4e8ec' : '#d9dfe4';
+tCtx.fillRect(0, y, w, TRACK_HEIGHT);
+tCtx.strokeStyle = '#a4acb4';
+tCtx.beginPath();
+tCtx.moveTo(0, y);
+tCtx.lineTo(w, y);
+tCtx.stroke();
+}
+for (let bar = 0; bar <= totalBars; bar++) {
+const x = bar * pixelsPerBar;
+tCtx.strokeStyle = '#6e7780';
+tCtx.lineWidth = 1;
+tCtx.beginPath();
+tCtx.moveTo(x, 0);
+tCtx.lineTo(x, h);
+tCtx.stroke();
+tCtx.strokeStyle = '#bcc3ca';
+for (let b = 1; b < beatsPerBar; b++) {
+const bx = x + (b * pixelsPerBar / beatsPerBar);
+tCtx.beginPath();
+tCtx.moveTo(bx, 0);
+tCtx.lineTo(bx, h);
+tCtx.stroke();
+}
+}
+const secPerBar = getSecPerBar();
+tracks.forEach((tr, idx) => {
+if (tr.isPending) return;
+const y = idx * TRACK_HEIGHT + 3;
+const clipH = TRACK_HEIGHT - 6;
+const stretchRatio = bpm / (tr.sourceBpm || bpm);
+tr.clips.forEach(clip => {
+const x = clip.startBar * pixelsPerBar;
+const clipW = clip.durationBars * pixelsPerBar;
+const trimStart = clip.trimStartRatio !== undefined ? clip.trimStartRatio : tr.trimStartRatio;
+const trimEnd = clip.trimEndRatio !== undefined ? clip.trimEndRatio : tr.trimEndRatio;
+const rawSliceSec = Math.max(0.015, (trimEnd - trimStart) * tr.buffer.duration);
+const stretchedSliceSec = rawSliceSec / stretchRatio;
+const barDurationOfSlice = stretchedSliceSec / secPerBar;
+tCtx.fillStyle = tr.color;
+tCtx.fillRect(x, y, clipW, clipH);
+tCtx.strokeStyle = '#eef8e8';
+tCtx.strokeRect(x + 0.5, y + 0.5, clipW - 1, clipH - 1);
+tCtx.strokeStyle = '#1e3a12';
+tCtx.strokeRect(x, y, clipW, clipH);
+tCtx.fillStyle = 'rgba(18, 42, 10, 0.25)';
+tCtx.fillRect(x + 1, y + 1, clipW - 2, 14);
+tCtx.fillStyle = '#0c1f06';
+tCtx.font = 'bold 9px Tahoma';
+const maxLabelW = Math.max(0, clipW - 20);
+if (maxLabelW > 14) {
+tCtx.save();
+tCtx.beginPath();
+tCtx.rect(x + 3, y + 1, maxLabelW, 14);
+tCtx.clip();
+tCtx.fillText(tr.name + ' (' + Math.round(stretchedSliceSec * 1000) + 'ms)', x + 4, y + 11);
+tCtx.restore();
+}
+if (clipW >= 16) {
+const trashX = x + clipW - 15;
+const trashY = y + 2;
+tCtx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+tCtx.fillRect(trashX, trashY, 13, 12);
+tCtx.font = '9px Segoe UI Emoji, Arial';
+tCtx.fillText('🗑️', trashX + 1, trashY + 10);
+}
+const singleLoopPx = Math.max(4, barDurationOfSlice * pixelsPerBar);
+const waveTop = y + 16;
+const waveH = clipH - 18;
+const midY = waveTop + waveH / 2;
+tCtx.fillStyle = '#0e2407';
+let offsetPx = 0;
+const peakStartIdx = Math.floor(trimStart * tr.peaks.length);
+const peakEndIdx = Math.max(peakStartIdx + 1, Math.floor(trimEnd * tr.peaks.length));
+const slicePeakLen = peakEndIdx - peakStartIdx;
+while (offsetPx < clipW) {
+const drawW = Math.min(singleLoopPx, clipW - offsetPx);
+if (offsetPx > 0 && singleLoopPx >= 6) {
+tCtx.strokeStyle = 'rgba(14, 36, 7, 0.45)';
+tCtx.beginPath();
+tCtx.moveTo(x + offsetPx, y + 15);
+tCtx.lineTo(x + offsetPx, y + clipH);
+tCtx.stroke();
+}
+for (let px = 0; px < drawW; px++) {
+const relIdx = Math.floor((px / singleLoopPx) * slicePeakLen);
+const peakIdx = Math.min(tr.peaks.length - 1, peakStartIdx + relIdx);
+const amp = tr.peaks[peakIdx] * (waveH / 2);
+tCtx.fillRect(x + offsetPx + px, midY - amp, 1, Math.max(1, amp * 2));
+}
+offsetPx += singleLoopPx;
+}
+});
+});
+const phX = playheadBar * pixelsPerBar;
+tCtx.strokeStyle = '#38a810';
+tCtx.lineWidth = 1.5;
+tCtx.beginPath();
+tCtx.moveTo(phX, 0);
+tCtx.lineTo(phX, h);
+tCtx.stroke();
+}
+
+function drawPreviewWaveform() {
+const w = previewCanvas.width;
+const h = previewCanvas.height;
+pCtx.clearRect(0, 0, w, h);
+pCtx.strokeStyle = '#244720';
+pCtx.beginPath();
+pCtx.moveTo(0, h / 2);
+pCtx.lineTo(w, h / 2);
+pCtx.stroke();
+const tr = tracks.find(t => t.id === selectedTrackId && !t.isPending);
+if (!tr) {
+document.getElementById('inspectorTitle').textContent = 'Chopper / Waveform Trim: [Select a Track & Drag Below to Slice ms]';
+document.getElementById('inspectorMeta').textContent = '0ms - 0ms';
+return;
+}
+const startMs = Math.round(tr.trimStartRatio * tr.buffer.duration * 1000);
+const endMs = Math.round(tr.trimEndRatio * tr.buffer.duration * 1000);
+const sliceMs = endMs - startMs;
+document.getElementById('inspectorTitle').textContent = 'Chopper [' + tr.name + '] — Drag across waveform to trim millisecond slice for painting';
+document.getElementById('inspectorMeta').textContent = 'Slice: ' + startMs + 'ms → ' + endMs + 'ms (' + sliceMs + 'ms)';
+const selX1 = tr.trimStartRatio * w;
+const selX2 = tr.trimEndRatio * w;
+pCtx.fillStyle = 'rgba(110, 255, 61, 0.18)';
+pCtx.fillRect(selX1, 0, selX2 - selX1, h);
+const barW = w / tr.peaks.length;
+tr.peaks.forEach((p, i) => {
+const ratio = i / tr.peaks.length;
+const inSlice = ratio >= tr.trimStartRatio && ratio <= tr.trimEndRatio;
+pCtx.fillStyle = inSlice ? '#6eff3d' : '#25521d';
+const amp = p * (h * 0.45);
+pCtx.fillRect(i * barW, (h / 2) - amp, Math.max(1, barW - 0.5), Math.max(2, amp * 2));
+});
+pCtx.strokeStyle = '#b8ff70';
+pCtx.lineWidth = 2;
+pCtx.beginPath();
+pCtx.moveTo(selX1, 0);
+
+pCtx.lineTo(selX1, h);
+pCtx.moveTo(selX2, 0);
+pCtx.lineTo(selX2, h);
+pCtx.stroke();
+}
+previewCanvas.addEventListener('mousedown', (e) => {
+const tr = tracks.find(t => t.id === selectedTrackId && !t.isPending);
+if (!tr) return;
+const rect = previewCanvas.getBoundingClientRect();
+const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+isTrimming = true;
+trimDragStartRatio = ratio;
+tr.trimStartRatio = ratio;
+tr.trimEndRatio = Math.min(1, ratio + 0.02);
+drawPreviewWaveform();
+});
+window.addEventListener('mousemove', (e) => {
+if (!isTrimming) return;
+const tr = tracks.find(t => t.id === selectedTrackId && !t.isPending);
+if (!tr) return;
+const rect = previewCanvas.getBoundingClientRect();
+const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+tr.trimStartRatio = Math.min(trimDragStartRatio, ratio);
+tr.trimEndRatio = Math.max(trimDragStartRatio + 0.005, ratio);
+drawPreviewWaveform();
+});
+window.addEventListener('mouseup', () => {
+isTrimming = false;
+isPainting = false;
+isRightErasing = false;
+activeClip = null;
+});
+
+
+function resetTrim() {
+const tr = tracks.find(t => t.id === selectedTrackId && !t.isPending);
+if (!tr) return;
+tr.trimStartRatio = 0;
+tr.trimEndRatio = 1;
+drawPreviewWaveform();
+}
+function snapValue(bar) {
+const snap = parseFloat(document.getElementById('snapSelect').value);
+return Math.floor(bar / snap) * snap;
+}
+timelineCanvas.addEventListener('contextmenu', (e) => {
+e.preventDefault();
+});
+timelineCanvas.addEventListener('mousedown', (e) => {
+const rect = timelineCanvas.getBoundingClientRect();
+const x = e.clientX - rect.left;
+const y = e.clientY - rect.top;
+const trackIdx = Math.floor(y / TRACK_HEIGHT);
+if (trackIdx < 0 || trackIdx >= tracks.length) return;
+const tr = tracks[trackIdx];
+if (tr.isPending) return;
+selectTrack(tr.id);
+if (e.button === 2) {
+e.preventDefault();
+isRightErasing = true;
+isPainting = true;
+paintTrackIndex = trackIdx;
+eraseAt(trackIdx, x / pixelsPerBar);
+return;
+}
+if (e.button !== 0) return;
+const trackTopY = trackIdx * TRACK_HEIGHT + 3;
+for (let i = tr.clips.length - 1; i >= 0; i--) {
+const clip = tr.clips[i];
+const clipX = clip.startBar * pixelsPerBar;
+const clipW = clip.durationBars * pixelsPerBar;
+if (clipW >= 16) {
+const trashX = clipX + clipW - 15;
+const trashY = trackTopY + 2;
+if (x >= trashX && x <= trashX + 14 && y >= trashY && y <= trashY + 13) {
+tr.clips.splice(i, 1);
+drawTimeline();
+return;
+}
+}
+}
+const bar = snapValue(x / pixelsPerBar);
+const snap = parseFloat(document.getElementById('snapSelect').value);
+if (currentTool === 'erase') {
+eraseAt(trackIdx, x / pixelsPerBar);
+isPainting = true;
+paintTrackIndex = trackIdx;
+return;
+}
+isPainting = true;
+paintTrackIndex = trackIdx;
+paintStartBar = bar;
+activeClip = {
+startBar: bar,
+durationBars: snap,
+trimStartRatio: tr.trimStartRatio,
+trimEndRatio: tr.trimEndRatio
+};
+tr.clips.push(activeClip);
+drawTimeline();
+});
+timelineCanvas.addEventListener('mousemove', (e) => {
+const rect = timelineCanvas.getBoundingClientRect();
+const x = e.clientX - rect.left;
+const y = e.clientY - rect.top;
+if (!isPainting) {
+const trackIdx = Math.floor(y / TRACK_HEIGHT);
+let overTrash = false;
+if (trackIdx >= 0 && trackIdx < tracks.length && !tracks[trackIdx].isPending) {
+const tr = tracks[trackIdx];
+const trackTopY = trackIdx * TRACK_HEIGHT + 3;
+for (let i = 0; i < tr.clips.length; i++) {
+const clip = tr.clips[i];
+const clipX = clip.startBar * pixelsPerBar;
+const clipW = clip.durationBars * pixelsPerBar;
+if (clipW >= 16) {
+const trashX = clipX + clipW - 15;
+const trashY = trackTopY + 2;
+if (x >= trashX && x <= trashX + 14 && y >= trashY && y <= trashY + 13) {
+overTrash = true;
+break;
+}
+}
+}
+}
+timelineCanvas.style.cursor = overTrash ? 'pointer' : (currentTool === 'draw' ? 'crosshair' : 'not-allowed');
+return;
+}
+const snap = parseFloat(document.getElementById('snapSelect').value);
+if (currentTool === 'erase' || isRightErasing) {
+eraseAt(paintTrackIndex, x / pixelsPerBar);
+return;
+}
+if (activeClip) {
+const currentBar = snapValue(x / pixelsPerBar) + snap;
+if (currentBar > paintStartBar) {
+activeClip.startBar = paintStartBar;
+activeClip.durationBars = currentBar - paintStartBar;
+} else {
+activeClip.startBar = Math.max(0, currentBar - snap);
+activeClip.durationBars = Math.max(snap, paintStartBar - activeClip.startBar + snap);
+}
+drawTimeline();
+}
+});
+function eraseAt(trackIdx, exactBar) {
+const tr = tracks[trackIdx];
+if (!tr || tr.isPending) return;
+tr.clips = tr.clips.filter(c => !(exactBar >= c.startBar && exactBar <= c.startBar + c.durationBars));
+drawTimeline();
+}
+document.getElementById('rulerBar').addEventListener('mousedown', (e) => {
+const rect = rulerCanvas.getBoundingClientRect();
+const x = e.clientX - rect.left + timelineScroll.scrollLeft;
+playheadBar = Math.max(0, snapValue(x / pixelsPerBar));
+updateLCD();
+drawAll();
+if (isPlaying) {
+stopAudioNodes();
+scheduledUpToBar = playheadBar - 0.001;
+}
+});
+function setTool(tool) {
+currentTool = tool;
+document.getElementById('toolDraw').classList.toggle('active', tool === 'draw');
+document.getElementById('toolErase').classList.toggle('active', tool === 'erase');
+timelineCanvas.style.cursor = tool === 'draw' ? 'crosshair' : 'not-allowed';
+}
+function changeZoom(delta) {
+pixelsPerBar = Math.max(40, Math.min(320, pixelsPerBar + delta));
+resizeCanvases();
+drawAll();
+}
+function updateBPM(val) {
+bpm = parseInt(val);
+document.getElementById('bpmVal').textContent = bpm;
+activeSources.forEach(item => {
+try {
+item.src.playbackRate.value = bpm / item.sourceBpm;
+} catch (e) {}
+});
+if (isPlaying) {
+stopAudioNodes();
+scheduledUpToBar = playheadBar - 0.001;
+}
+drawTimeline();
+}
+function clearAllClips() {
+tracks.forEach(t => t.clips = []);
+drawTimeline();
+}
+function togglePlay() {
+if (audioCtx.state === 'suspended') audioCtx.resume();
+if (isPlaying) {
+pausePlayback();
+} else {
+startPlayback();
+}
+}
+function startPlayback() {
+isPlaying = true;
+document.getElementById('btnPlay').classList.add('active');
+document.getElementById('btnPlay').textContent = '⏸ Pause';
+lastFrameTime = performance.now();
+scheduledUpToBar = playheadBar - 0.001;
+scheduleAudioSlice(playheadBar, playheadBar + 0.08);
+requestAnimationFrame(playbackLoop);
+}
+function pausePlayback() {
+isPlaying = false;
+document.getElementById('btnPlay').classList.remove('active');
+document.getElementById('btnPlay').textContent = '▶ Play';
+stopAudioNodes();
+}
+function stopPlayback() {
+pausePlayback();
+playheadBar = 0;
+scheduledUpToBar = -0.001;
+updateLCD();
+drawAll();
+}
+function rewind() {
+playheadBar = 0;
+updateLCD();
+drawAll();
+if (isPlaying) {
+stopAudioNodes();
+scheduledUpToBar = -0.001;
+scheduleAudioSlice(0, 0.08);
+}
+}
+function toggleLoop() {
+isLooping = !isLooping;
+document.getElementById('btnLoop').classList.toggle('active', isLooping);
+}
+function stopAudioNodes() {
+activeSources.forEach(item => {
+try { item.src.stop(); } catch (e) {}
+});
+activeSources = [];
+}
+function playbackLoop(now) {
+if (!isPlaying) return;
+const dtSec = (now - lastFrameTime) / 1000;
+lastFrameTime = now;
+const secPerBar = getSecPerBar();
+const barsPerSec = 1 / secPerBar;
+const prevBar = playheadBar;
+playheadBar += dtSec * barsPerSec;
+const loopEndBar = parseInt(document.getElementById('loopBars').value) || 8;
+if (isLooping && playheadBar >= loopEndBar) {
+stopAudioNodes();
+playheadBar = 0;
+scheduledUpToBar = -0.001;
+scheduleAudioSlice(0, 0.08);
+} else {
+scheduleAudioSlice(prevBar, playheadBar + 0.08);
+}
+updateLCD();
+drawAll();
+requestAnimationFrame(playbackLoop);
+}
+function scheduleAudioSlice(fromBar, toBar) {
+if (toBar <= scheduledUpToBar) return;
+const windowStart = Math.max(fromBar, scheduledUpToBar);
+const windowEnd = toBar;
+scheduledUpToBar = windowEnd;
+const secPerBar = getSecPerBar();
+const anySolo = tracks.some(t => !t.isPending && t.solo);
+tracks.forEach(tr => {
+if (tr.isPending || tr.mute) return;
+if (anySolo && !tr.solo) return;
+const sourceBpm = tr.sourceBpm || bpm;
+const stretchRatio = bpm / sourceBpm;
+tr.clips.forEach(clip => {
+const clipEnd = clip.startBar + clip.durationBars;
+if (clipEnd <= windowStart || clip.startBar >= windowEnd) return;
+const trimStart = clip.trimStartRatio !== undefined ? clip.trimStartRatio : 0;
+const trimEnd = clip.trimEndRatio !== undefined ? clip.trimEndRatio : 1;
+const offsetSec = trimStart * tr.buffer.duration;
+const rawSliceSec = Math.max(0.015, (trimEnd - trimStart) * tr.buffer.duration);
+const stretchedSliceSec = rawSliceSec / stretchRatio;
+const sliceDurBars = stretchedSliceSec / secPerBar;
+let iterBar = clip.startBar;
+while (iterBar < clipEnd) {
+const iterEnd = Math.min(clipEnd, iterBar + sliceDurBars);
+if (iterBar >= windowStart && iterBar < windowEnd) {
+const delaySec = Math.max(0, (iterBar - playheadBar) * secPerBar);
+const playDurSec = (iterEnd - iterBar) * secPerBar;
+triggerBuffer(tr, audioCtx.currentTime + delaySec, offsetSec, playDurSec, stretchRatio);
+}
+iterBar += sliceDurBars;
+}
+});
+});
+}
+function triggerBuffer(track, when, offset, duration, playbackRate) {
+const src = audioCtx.createBufferSource();
+src.buffer = track.buffer;
+src.playbackRate.value = playbackRate;
+const gainNode = audioCtx.createGain();
+gainNode.gain.value = track.volume;
+const panNode = audioCtx.createStereoPanner();
+panNode.pan.value = track.pan;
+src.connect(gainNode);
+gainNode.connect(panNode);
+panNode.connect(audioCtx.destination);
+src.start(when, offset, duration * playbackRate);
+activeSources.push({ src: src, sourceBpm: track.sourceBpm || bpm });
+}
+function updateLCD() {
+const bar = Math.floor(playheadBar) + 1;
+const beatFloat = (playheadBar % 1) * beatsPerBar;
+const beat = Math.floor(beatFloat) + 1;
+const ticks = Math.floor((beatFloat % 1) * 960);
+document.getElementById('lcdTime').textContent =
+String(bar).padStart(3, '0') + '.' + String(beat).padStart(2, '0') + '.' + String(ticks).padStart(3, '0');
+const totalSec = playheadBar * getSecPerBar();
+const mins = Math.floor(totalSec / 60);
+const secs = (totalSec % 60).toFixed(1);
+document.getElementById('lcdSec').textContent =
+String(mins).padStart(2, '0') + ':' + secs.padStart(4, '0');
+}
+function loadDemoLoops() {
+const sr = audioCtx.sampleRate;
+const refBpm = bpm;
+const oneBarSec = getSecPerBar();
+const kickBuf = audioCtx.createBuffer(1, sr * oneBarSec, sr);
+const kData = kickBuf.getChannelData(0);
+for (let beat = 0; beat < beatsPerBar; beat++) {
+const startSample = Math.floor(beat * (oneBarSec / beatsPerBar) * sr);
+for (let i = 0; i < sr * 0.35 && startSample + i < kData.length; i++) {
+const t = i / sr;
+const freq = 140 * Math.exp(-t * 22) + 42;
+const env = Math.exp(-t * 9);
+kData[startSample + i] = Math.sin(2 * Math.PI * freq * t) * env * 0.9;
+}
+}
+addTrackFromBuffer('Acid_Kick.wav', kickBuf, refBpm);
+const bassBuf = audioCtx.createBuffer(1, sr * oneBarSec, sr);
+const bData = bassBuf.getChannelData(0);
+const notes = [55, 55, 110, 55, 82.4, 55, 73.4, 98];
+const stepSamples = Math.floor((oneBarSec / 8) * sr);
+for (let s = 0; s < 8; s++) {
+const freq = notes[s];
+for (let i = 0; i < stepSamples && s * stepSamples + i < bData.length; i++) {
+const t = i / sr;
+const env = Math.exp(-t * 7);
+const saw = ((t * freq) % 1) * 2 - 1;
+bData[s * stepSamples + i] = Math.tanh(saw * 2.5) * env * 0.5;
+}
+}
+addTrackFromBuffer('TB303_Bass.wav', bassBuf, refBpm);
+const hatBuf = audioCtx.createBuffer(1, sr * oneBarSec, sr);
+const hData = hatBuf.getChannelData(0);
+for (let eighth = 0; eighth < 8; eighth++) {
+const startSample = Math.floor(eighth * (oneBarSec / 8) * sr);
+const len = eighth % 2 === 1 ? sr * 0.14 : sr * 0.04;
+for (let i = 0; i < len && startSample + i < hData.length; i++) {
+const t = i / sr;
+const env = Math.exp(-t * (eighth % 2 === 1 ? 25 : 70));
+hData[startSample + i] = (Math.random() * 2 - 1) * env * 0.45;
+}
+}
+addTrackFromBuffer('909_HiHats.wav', hatBuf, refBpm);
+const snareBuf = audioCtx.createBuffer(1, sr * oneBarSec, sr);
+const sData = snareBuf.getChannelData(0);
+for (let beat = 1; beat < beatsPerBar; beat += 2) {
+const startSample = Math.floor(beat * (oneBarSec / beatsPerBar) * sr);
+for (let i = 0; i < sr * 0.22 && startSample + i < sData.length; i++) {
+const t = i / sr;
+const tone = Math.sin(2 * Math.PI * 185 * t) * Math.exp(-t * 25);
+const noise = (Math.random() * 2 - 1) * Math.exp(-t * 14);
+sData[startSample + i] = (tone * 0.4 + noise * 0.65) * 0.7;
+}
+}
+addTrackFromBuffer('909_SnareClap.wav', snareBuf, refBpm);
+const arpBuf = audioCtx.createBuffer(1, sr * oneBarSec, sr);
+const aData = arpBuf.getChannelData(0);
+const arpNotes = [220, 261.6, 329.6, 440, 329.6, 261.6, 293.7, 392.0];
+for (let s = 0; s < 8; s++) {
+const freq = arpNotes[s];
+for (let i = 0; i < stepSamples && s * stepSamples + i < aData.length; i++) {
+const t = i / sr;
+const env = Math.exp(-t * 10);
+const sq = Math.sin(2 * Math.PI * freq * t) >= 0 ? 1 : -1;
+aData[s * stepSamples + i] = sq * env * 0.22;
+}
+}
+addTrackFromBuffer('Acid_Synth_Arp.wav', arpBuf, refBpm);
+const len = tracks.length;
+tracks[len - 5].clips.push({ startBar: 0, durationBars: 8, trimStartRatio: 0, trimEndRatio: 1 });
+tracks[len - 4].clips.push({ startBar: 0, durationBars: 8, trimStartRatio: 0, trimEndRatio: 1 });
+tracks[len - 3].clips.push({ startBar: 1, durationBars: 7, trimStartRatio: 0, trimEndRatio: 1 });
+tracks[len - 2].clips.push({ startBar: 2, durationBars: 6, trimStartRatio: 0, trimEndRatio: 1 });
+tracks[len - 1].clips.push({ startBar: 4, durationBars: 4, trimStartRatio: 0, trimEndRatio: 1 });
+drawAll();
+}
+resizeCanvases();
+drawAll();
+
+</script>
+</body>
+</html>
