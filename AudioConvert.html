@@ -5,7 +5,7 @@
   <meta name="google" content="notranslate" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Audio & MP4 to WAV Base64 Converter [by Matt]</title>
+  <title>Audio & MP4 Base64 Converter (WAV / OGG Opus) [by Matt]</title>
   <style>
     :root {
       color-scheme: dark;
@@ -29,7 +29,7 @@
     }
     main {
       width: 100%;
-      max-width: 600px;
+      max-width: 620px;
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -105,8 +105,18 @@
 
     .settings-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
+    }
+    @media (max-width: 580px) {
+      .settings-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 400px) {
+      .settings-row {
+        grid-template-columns: 1fr;
+      }
     }
     .settings-row label {
       display: flex;
@@ -122,8 +132,9 @@
       font-size: 13px;
       color: var(--text);
     }
-
-
+    .wav-only.disabled-opt {
+      opacity: 0.55;
+    }
 
     canvas {
       width: 100%;
@@ -145,11 +156,18 @@
 </head>
 <body>
   <main>
-    <h1>Audio & MP4 to WAV Base64 Converter [by Matt]</h1>
+    <h1>Audio & MP4 Base64 Converter (WAV / OGG Opus) [by Matt]</h1>
 
     <input id="fileInput" type="file" accept="audio/*,video/mp4" />
 
     <div class="row settings-row">
+      <label>Output Format:
+        <select id="codecSelect">
+          <option value="wav" selected>WAV Base64</option>
+          <option value="ogg-opus">OGG Opus Base64</option>
+        </select>
+      </label>
+
       <label>Sample Rate:
         <select id="rateSelect">
           <option value="3000" selected>3,000 Hz (Web Audio min)</option>
@@ -163,10 +181,17 @@
         </select>
       </label>
 
-      <label>Bit Depth:
+      <label id="bitsLabel">Bit Depth (WAV):
         <select id="bitsSelect">
           <option value="8" selected>8-bit PCM</option>
           <option value="16">16-bit PCM</option>
+        </select>
+      </label>
+
+      <label>Channels:
+        <select id="channelsSelect">
+          <option value="1" selected>Mono (1 ch)</option>
+          <option value="2">Stereo (2 ch)</option>
         </select>
       </label>
     </div>
@@ -190,7 +215,7 @@
         <span id="trimInfo">0.00s / 0.00s</span>
       </div>
 
-      <canvas id="waveformCanvas" width="560" height="110"></canvas>
+      <canvas id="waveformCanvas" width="580" height="110"></canvas>
 
       <div class="row">
         <button id="playTrimBtn" class="primary" type="button">▶ Play Output</button>
@@ -209,9 +234,9 @@
       </div>
     </div>
 
-    <textarea id="output" readonly placeholder="Converted WAV output..."></textarea>
+    <textarea id="output" readonly placeholder="Converted Base64 output..."></textarea>
 
-    <div id="status" class="status">Select an audio or MP4 file.</div>
+    <div id="status" class="status">Select an audio or MP4 file (mono or stereo).</div>
   </main>
 
   <script>
@@ -225,8 +250,11 @@
   </script>
   <script>
     const fileInput = document.getElementById("fileInput");
+    const codecSelect = document.getElementById("codecSelect");
     const rateSelect = document.getElementById("rateSelect");
+    const bitsLabel = document.getElementById("bitsLabel");
     const bitsSelect = document.getElementById("bitsSelect");
+    const channelsSelect = document.getElementById("channelsSelect");
     const convertBtn = document.getElementById("convertBtn");
     const previewBtn = document.getElementById("previewBtn");
     const copyBtn = document.getElementById("copyBtn");
@@ -256,6 +284,7 @@
     let totalDuration = 0;
     let trimStart = 0;
     let trimEnd = 0;
+    let encodeJobId = 0;
 
     // Drag & Playback Cursor State
     let isDragging = false;
@@ -278,6 +307,12 @@
       return Math.pow(10, db / 20);
     }
 
+    function updateCodecUiState() {
+      const isWav = codecSelect.value === "wav";
+      bitsSelect.disabled = !isWav;
+      bitsLabel.classList.toggle("disabled-opt", !isWav);
+    }
+
     function refreshTextarea() {
       if (!cachedDataUrl) return;
       if (getSelectedFormat() === "raw") {
@@ -294,10 +329,18 @@
       }
     }
 
-    function encodePcmWav(channels, srcRate, targetRate, bitDepth, startSec, endSec) {
+    function getChannelSample(ch0, ch1, hasTwoInputChannels, idx) {
+      const s0 = ch0.at(idx) ?? 0;
+      if (!hasTwoInputChannels) return s0;
+      const s1 = ch1.at(idx) ?? s0;
+      return (s0 + s1) * 0.5;
+    }
+
+    function encodePcmWav(channels, srcRate, targetRate, bitDepth, numChannels, startSec, endSec) {
       const step = srcRate / targetRate;
       const ch0 = channels.at(0);
-      const ch1 = channels.length > 1 ? channels.at(1) : ch0;
+      const hasTwoInputChannels = channels.length > 1;
+      const ch1 = hasTwoInputChannels ? channels.at(1) : ch0;
 
       const startSample = Math.max(0, Math.floor(startSec * srcRate));
       const endSample = Math.min(ch0.length, Math.floor(endSec * srcRate));
@@ -305,8 +348,10 @@
 
       const outLen = Math.max(1, Math.floor(sliceLen / step));
       const bytesPerSample = bitDepth / 8;
+      const blockAlign = numChannels * bytesPerSample;
+      const byteRate = targetRate * blockAlign;
 
-      const dataSize = outLen * bytesPerSample;
+      const dataSize = outLen * blockAlign;
       const buffer = new ArrayBuffer(44 + dataSize);
       const view = new DataView(buffer);
 
@@ -315,468 +360,685 @@
       writeAscii(view, 8, "WAVEfmt ");
       view.setUint32(16, 16, true);
       view.setUint16(20, 1, true);
-      view.setUint16(22, 1, true);
+      view.setUint16(22, numChannels, true);
       view.setUint32(24, targetRate, true);
-      view.setUint32(28, targetRate * bytesPerSample, true);
-view.setUint16(32, bytesPerSample, true);
-view.setUint16(34, bitDepth, true);
-writeAscii(view, 36, "data");
-view.setUint32(40, dataSize, true);
-const gain = getGainMultiplier();
-for (let i = 0; i < outLen; i++) {
-const idx = Math.min(endSample - 1, startSample + Math.floor(i * step));
-const mono = (ch0.at(idx) + ch1.at(idx)) * 0.5 * gain;
-const s = Math.max(-1, Math.min(1, mono));
-if (bitDepth === 8) {
-view.setUint8(44 + i, Math.round((s + 1) * 127.5));
-} else {
-view.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-}
-}
-return new Blob(Array.of(buffer), { type: "audio/wav" });
-}
-function encodeImaAdpcmWav(channels, srcRate, targetRate, startSec, endSec) {
-const step = srcRate / targetRate;
-const ch0 = channels.at(0);
-const ch1 = channels.length > 1 ? channels.at(1) : ch0;
-const startSample = Math.max(0, Math.floor(startSec * srcRate));
-const endSample = Math.min(ch0.length, Math.floor(endSec * srcRate));
-const sliceLen = Math.max(1, endSample - startSample);
-const blockAlign = 256;
-const samplesPerBlock = (blockAlign - 4) * 2 + 1;
-const rawLen = Math.max(1, Math.floor(sliceLen / step));
-const numBlocks = Math.max(1, Math.ceil(rawLen / samplesPerBlock));
-const dataSize = numBlocks * blockAlign;
-const idxTable = "-1,-1,-1,-1,2,4,6,8,-1,-1,-1,-1,2,4,6,8".split(",").map(Number);
-const stepTable = "7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,1707,1878,2066,2272,2499,2749,3024,3327,3660,4026,4428,4871,5358,5894,6484,7132,7845,8630,9493,10442,11487,12635,13899,15289,16818,18500,20350,22385,24623,27086,29794,32767".split(",").map(Number);
-const buffer = new ArrayBuffer(48 + dataSize);
-const view = new DataView(buffer);
-writeAscii(view, 0, "RIFF");
-view.setUint32(4, 40 + dataSize, true);
-writeAscii(view, 8, "WAVEfmt ");
-view.setUint32(16, 20, true);
-view.setUint16(20, 17, true);
-view.setUint16(22, 1, true);
-view.setUint32(24, targetRate, true);
-view.setUint32(28, Math.floor((targetRate * blockAlign) / samplesPerBlock), true);
-view.setUint16(32, blockAlign, true);
-view.setUint16(34, 4, true);
-view.setUint16(36, 2, true);
-view.setUint16(38, samplesPerBlock, true);
-writeAscii(view, 40, "data");
-view.setUint32(44, dataSize, true);
-const gain = getGainMultiplier();
-const getSample = (n) => {
-const s0 = startSample + Math.floor(n * step);
-if (s0 >= endSample) return 0;
-const start = Math.min(endSample - 1, s0);
-const end = Math.min(endSample, Math.max(start + 1, startSample + Math.floor((n + 1) * step)));
-let sum = 0;
-for (let k = start; k < end; k++) {
-sum += (ch0.at(k) + ch1.at(k)) * 0.5;
-}
-const avg = (sum / (end - start)) * gain;
-return Math.max(-32768, Math.min(32767, Math.round(avg * 32767)));
-};
-let predictor = getSample(0);
-let stepIndex = 0;
-let samplePos = 0;
-let outOff = 48;
-for (let b = 0; b < numBlocks; b++) {
-predictor = getSample(samplePos++);
-view.setInt16(outOff, predictor, true);
-view.setUint8(outOff + 2, stepIndex);
-view.setUint8(outOff + 3, 0);
-outOff += 4;
-for (let i = 0; i < blockAlign - 4; i++) {
-let byte = 0;
-for (let nib = 0; nib < 2; nib++) {
-const s = getSample(samplePos++);
-let diff = s - predictor;
-let code = diff < 0 ? 8 : 0;
-if (diff < 0) diff = -diff;
-let st = stepTable.at(stepIndex);
-let delta = st >> 3;
-if (diff >= st) { code |= 4; diff -= st; delta += st; }
-st >>= 1;
-if (diff >= st) { code |= 2; diff -= st; delta += st; }
-st >>= 1;
-if (diff >= st) { code |= 1; delta += st; }
-predictor += (code & 8) ? -delta : delta;
-predictor = Math.max(-32768, Math.min(32767, predictor));
-stepIndex = Math.max(0, Math.min(88, stepIndex + idxTable.at(code)));
-byte |= (code & 0x0f) << (nib * 4);
-}
-view.setUint8(outOff++, byte);
-}
-}
-return new Blob(Array.of(buffer), { type: "audio/wav" });
-}
-function rebuildWavFromCache() {
-if (!lastRawChannels) return;
-const rate = Number(rateSelect.value);
-const bits = Number(bitsSelect.value);
-const db = Number(gainSlider.value) || 0;
-currentBlob = bits === 4
-? encodeImaAdpcmWav(lastRawChannels, lastSrcRate, rate, trimStart, trimEnd)
-: encodePcmWav(lastRawChannels, lastSrcRate, rate, bits, trimStart, trimEnd);
-const reader = new FileReader();
-reader.onload = () => {
-cachedDataUrl = reader.result;
-refreshTextarea();
-previewBtn.disabled = false;
-copyBtn.disabled = false;
-convertBtn.disabled = false;
-const dur = (trimEnd - trimStart).toFixed(2);
-const dbStr = db === 0 ? "0 dB" : (db > 0 ? "+" + db + " dB" : db + " dB");
-setStatus(
-"Ready (" + dur + "s, " + dbStr + "): " + rate + " Hz, " + bits + "-bit " + (bits === 4 ? "ADPCM" : "PCM") + " mono " +
-"(" + (currentBlob.size / 1024).toFixed(1) + " KB, " + outputEl.value.length.toLocaleString() + " chars).",
-"ok"
-);
-};
-reader.readAsDataURL(currentBlob);
-}
-async function captureVideoAudioFallback(file, audioCtx) {
-setStatus("Capturing MP4 audio stream in real time...");
-const url = URL.createObjectURL(file);
-const video = document.createElement("video");
-video.src = url;
-video.playsInline = true;
-video.muted = false;
-video.volume = 1.0;
-video.style.cssText = "position:fixed;width:1px;height:1px;opacity:0.01;pointer-events:none;";
-document.body.appendChild(video);
-try {
-await new Promise((res, rej) => {
-video.onloadedmetadata = res;
-video.onerror = () => rej(new Error("Could not load MP4 stream."));
-});
-const source = audioCtx.createMediaElementSource(video);
-const processor = audioCtx.createScriptProcessor(4096, 2, 2);
-const leftChunks = Array.of();
-const rightChunks = Array.of();
-processor.onaudioprocess = (e) => {
-if (video.paused || video.ended) return;
-leftChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
-rightChunks.push(new Float32Array(e.inputBuffer.getChannelData(1)));
-};
-source.connect(processor);
-processor.connect(audioCtx.destination);
-await video.play();
-await new Promise((res) => {
-video.onended = res;
-setTimeout(res, (video.duration || 10) * 1000 + 500);
-});
-processor.disconnect();
-source.disconnect();
-const totalLen = leftChunks.reduce((sum, c) => sum + c.length, 0);
-if (totalLen === 0) {
-throw new Error("0 audio frames captured from MP4.");
-}
-const left = new Float32Array(totalLen);
-const right = new Float32Array(totalLen);
-let pos = 0;
-for (let i = 0; i < leftChunks.length; i++) {
-left.set(leftChunks.at(i), pos);
-right.set(rightChunks.at(i), pos);
-pos += leftChunks.at(i).length;
-}
-lastRawChannels = Array.of(left, right);
-lastSrcRate = audioCtx.sampleRate;
-} finally {
-video.pause();
-video.remove();
-URL.revokeObjectURL(url);
-}
-}
-// Waveform Drawing + Gain Scaling + Trim Selection + Live Playhead
-function drawWaveform() {
-if (!lastRawChannels || !totalDuration) return;
-const width = canvas.width;
-const height = canvas.height;
-const ch0 = lastRawChannels.at(0);
-const step = Math.max(1, Math.ceil(ch0.length / width));
-const amp = height / 2;
-const gain = getGainMultiplier();
-ctx.clearRect(0, 0, width, height);
-// Draw waveform amplitude bars scaled by current gain
-for (let i = 0; i < width; i++) {
-let min = 1.0;
-let max = -1.0;
-let clipped = false;
-for (let j = 0; j < step; j++) {
-const rawVal = ch0[i * step + j];
-if (rawVal !== undefined) {
-const scaled = rawVal * gain;
-if (scaled > 1.0 || scaled < -1.0) clipped = true;
-const clamped = Math.max(-1.0, Math.min(1.0, scaled));
-if (clamped < min) min = clamped;
-if (clamped > max) max = clamped;
-}
-}
-ctx.fillStyle = clipped ? "#f85149" : "#3b82f6";
-ctx.fillRect(i, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
-}
-// Dim trimmed-out areas
-const startX = (trimStart / totalDuration) * width;
-const endX = (trimEnd / totalDuration) * width;
-ctx.fillStyle = "rgba(13, 17, 23, 0.72)";
-ctx.fillRect(0, 0, startX, height);
-ctx.fillRect(endX, 0, width - endX, height);
-// Draw selection handles
-ctx.strokeStyle = "#3fb950";
-ctx.lineWidth = 2;
-ctx.beginPath();
-ctx.moveTo(startX, 0);
-ctx.lineTo(startX, height);
-ctx.moveTo(endX, 0);
-ctx.lineTo(endX, height);
-ctx.stroke();
-// Draw moving playback cursor if playing
-if (playheadSec !== null) {
-const playX = (playheadSec / totalDuration) * width;
-ctx.strokeStyle = "#f85149";
-ctx.lineWidth = 2;
-ctx.beginPath();
-ctx.moveTo(playX, 0);
-ctx.lineTo(playX, height);
-ctx.stroke();
-}
-}
-function syncTrimInputs() {
-trimStartInput.value = trimStart.toFixed(2);
-trimEndInput.value = trimEnd.toFixed(2);
-trimStartInput.max = totalDuration.toFixed(2);
-trimEndInput.max = totalDuration.toFixed(2);
-trimInfoEl.textContent = (trimEnd - trimStart).toFixed(2) + "s / " + totalDuration.toFixed(2) + "s";
-}
-function updateGainDisplay() {
-const db = Number(gainSlider.value) || 0;
-gainLabel.textContent = (db > 0 ? "+" + db : db) + " dB";
-drawWaveform();
-}
-// Stop active preview playback cleanly
-function stopPreviewPlayback() {
-if (playAnimFrame) {
-cancelAnimationFrame(playAnimFrame);
-playAnimFrame = null;
-}
-playheadSec = null;
-if (activePlayCtx) {
-activePlayCtx.close().catch(() => {});
-activePlayCtx = null;
-}
-drawWaveform();
-}
-// Play current converted WAV & animate playhead over trimmed region
-async function playCurrentOutput() {
-if (!currentBlob) return;
-stopPreviewPlayback();
-try {
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
-const ctx = new AudioCtx();
-activePlayCtx = ctx;
-if (ctx.state === "suspended") await ctx.resume();
-const buf = await currentBlob.arrayBuffer();
-const audioBuf = await ctx.decodeAudioData(buf);
-const src = ctx.createBufferSource();
-src.buffer = audioBuf;
-src.connect(ctx.destination);
-const startedAt = ctx.currentTime;
-const clipStart = trimStart;
-const clipDur = audioBuf.duration;
-const updateCursor = () => {
-if (!activePlayCtx) return;
-const elapsed = ctx.currentTime - startedAt;
-if (elapsed <= clipDur) {
-playheadSec = Math.min(trimEnd, clipStart + elapsed);
-drawWaveform();
-playAnimFrame = requestAnimationFrame(updateCursor);
-}
-};
-src.onended = () => {
-stopPreviewPlayback();
-};
-src.start();
-updateCursor();
-setStatus("Playing (" + audioBuf.duration.toFixed(2) + "s).", "ok");
-} catch (err) {
-stopPreviewPlayback();
-setStatus("Preview error: " + (err.message || err), "err");
-}
-}
-// Pointer/Touch Dragging on Waveform Canvas
-function getCanvasX(clientX) {
-const rect = canvas.getBoundingClientRect();
-return Math.max(0, Math.min(canvas.width, (clientX - rect.left) * (canvas.width / rect.width)));
-}
-canvas.addEventListener("pointerdown", (e) => {
-if (!lastRawChannels || !totalDuration) return;
-stopPreviewPlayback();
-isDragging = true;
-canvas.setPointerCapture(e.pointerId);
-dragStartX = getCanvasX(e.clientX);
-});
-canvas.addEventListener("pointermove", (e) => {
-if (!isDragging || !lastRawChannels) return;
-const curX = getCanvasX(e.clientX);
-const minX = Math.min(dragStartX, curX);
-const maxX = Math.max(dragStartX, curX);
-trimStart = (minX / canvas.width) * totalDuration;
-trimEnd = (maxX / canvas.width) * totalDuration;
-syncTrimInputs();
-drawWaveform();
-});
-canvas.addEventListener("pointerup", (e) => {
-if (!isDragging) return;
-isDragging = false;
-canvas.releasePointerCapture(e.pointerId);
-// Ignore accidental clicks (< 0.05s) and keep full range
-if (trimEnd - trimStart < 0.05) {
-trimStart = 0;
-trimEnd = totalDuration;
-syncTrimInputs();
-drawWaveform();
-}
-rebuildWavFromCache();
-});
-// Manual Start/End Time Inputs
-trimStartInput.addEventListener("change", () => {
-if (!lastRawChannels) return;
-stopPreviewPlayback();
-trimStart = Math.max(0, Math.min(parseFloat(trimStartInput.value) || 0, trimEnd - 0.05));
-syncTrimInputs();
-drawWaveform();
-rebuildWavFromCache();
-});
-trimEndInput.addEventListener("change", () => {
-if (!lastRawChannels) return;
-stopPreviewPlayback();
-trimEnd = Math.min(totalDuration, Math.max(parseFloat(trimEndInput.value) || 0, trimStart + 0.05));
-syncTrimInputs();
-drawWaveform();
-rebuildWavFromCache();
-});
-resetTrimBtn.addEventListener("click", () => {
-if (!lastRawChannels) return;
-stopPreviewPlayback();
-trimStart = 0;
-trimEnd = totalDuration;
-syncTrimInputs();
-drawWaveform();
-rebuildWavFromCache();
-});
-// Gain Slider & Reset Events
-gainSlider.addEventListener("input", updateGainDisplay);
-gainSlider.addEventListener("change", () => {
-stopPreviewPlayback();
-rebuildWavFromCache();
-});
-resetGainBtn.addEventListener("click", () => {
-gainSlider.value = "0";
-updateGainDisplay();
-stopPreviewPlayback();
-rebuildWavFromCache();
-});
-playTrimBtn.addEventListener("click", playCurrentOutput);
-stopTrimBtn.addEventListener("click", stopPreviewPlayback);
-fileInput.addEventListener("change", () => {
-const file = fileInput.files.item(0);
-convertBtn.disabled = !file;
-lastRawChannels = null;
-stopPreviewPlayback();
-previewPanel.classList.remove("visible");
-previewBtn.textContent = "Preview Output";
-if (file) setStatus('Loaded "' + file.name + '" (' + (file.size / 1024).toFixed(1) + ' KB).');
-});
-fmtRadios.forEach((r) => r.addEventListener("change", refreshTextarea));
-rateSelect.addEventListener("change", () => { stopPreviewPlayback(); rebuildWavFromCache(); });
-bitsSelect.addEventListener("change", () => { stopPreviewPlayback(); rebuildWavFromCache(); });
-convertBtn.addEventListener("click", async () => {
-const file = fileInput.files.item(0);
-if (!file) return;
-stopPreviewPlayback();
-convertBtn.disabled = true;
-previewBtn.disabled = true;
-copyBtn.disabled = true;
-setStatus("Decoding...");
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
-const audioCtx = new AudioCtx();
-if (audioCtx.state === "suspended") await audioCtx.resume();
-try {
-try {
-const arrayBuffer = await file.arrayBuffer();
-const decoded = await audioCtx.decodeAudioData(arrayBuffer);
-const channels = Array.of();
-for (let c = 0; c < decoded.numberOfChannels; c++) {
-channels.push(decoded.getChannelData(c));
-}
-lastRawChannels = channels;
-lastSrcRate = decoded.sampleRate;
-} catch {
-await captureVideoAudioFallback(file, audioCtx);
-}
-totalDuration = lastRawChannels.at(0).length / lastSrcRate;
-trimStart = 0;
-trimEnd = totalDuration;
-syncTrimInputs();
-drawWaveform();
-rebuildWavFromCache();
-} catch (err) {
-convertBtn.disabled = false;
-setStatus("Error: " + (err.message || err), "err");
-} finally {
-audioCtx.close().catch(() => {});
-}
-});
-// Toggle Preview & Waveform Panel + Auto-play on Open
-previewBtn.addEventListener("click", () => {
-if (!currentBlob) return;
-const isVisible = previewPanel.classList.toggle("visible");
-if (isVisible) {
-previewBtn.textContent = "Hide Preview";
-drawWaveform();
-playCurrentOutput();
-} else {
-previewBtn.textContent = "Preview Output";
-stopPreviewPlayback();
-}
-});
-copyBtn.addEventListener("click", async () => {
-if (!outputEl.value) return;
-try {
-await navigator.clipboard.writeText(outputEl.value);
-setStatus("Copied Base64 to clipboard!", "ok");
-} catch {
-outputEl.select();
-document.execCommand("copy");
-setStatus("Copied Base64 to clipboard!", "ok");
-}
-});
-resetBtn.addEventListener("click", () => {
-stopPreviewPlayback();
-fileInput.value = "";
-previewPanel.classList.remove("visible");
-previewBtn.textContent = "Preview Output";
-currentBlob = null;
-cachedDataUrl = "";
-lastRawChannels = null;
-totalDuration = 0;
-trimStart = 0;
-trimEnd = 0;
-outputEl.value = "";
-gainSlider.value = "0";
-gainLabel.textContent = "0 dB";
-rateSelect.value = "3000";
-bitsSelect.value = "8";
-convertBtn.disabled = true;
-previewBtn.disabled = true;
-copyBtn.disabled = true;
-setStatus("Reset. Select an audio or MP4 file.");
-});
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, bitDepth, true);
+      writeAscii(view, 36, "data");
+      view.setUint32(40, dataSize, true);
 
+      const gain = getGainMultiplier();
+      for (let i = 0; i < outLen; i++) {
+        const idx = Math.min(endSample - 1, startSample + Math.floor(i * step));
+        const mono = getChannelSample(ch0, ch1, hasTwoInputChannels, idx);
 
-</script>
+        for (let c = 0; c < numChannels; c++) {
+          const rawCh = c === 0 ? mono : (hasTwoInputChannels ? (ch1.at(idx) ?? mono) : mono);
+          const s = Math.max(-1, Math.min(1, rawCh * gain));
+          const sampleOffset = 44 + (i * numChannels + c) * bytesPerSample;
+          if (bitDepth === 8) {
+            view.setUint8(sampleOffset, Math.round((s + 1) * 127.5));
+          } else {
+            view.setInt16(sampleOffset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+          }
+        }
+      }
+      return new Blob(Array.of(buffer), { type: "audio/wav" });
+    }
+
+    function encodeImaAdpcmWav(channels, srcRate, targetRate, numChannels, startSec, endSec) {
+      const step = srcRate / targetRate;
+      const ch0 = channels.at(0);
+      const hasTwoInputChannels = channels.length > 1;
+      const ch1 = hasTwoInputChannels ? channels.at(1) : ch0;
+
+      const startSample = Math.max(0, Math.floor(startSec * srcRate));
+      const endSample = Math.min(ch0.length, Math.floor(endSec * srcRate));
+      const sliceLen = Math.max(1, endSample - startSample);
+
+      const blockAlign = 256 * numChannels;
+      const samplesPerChannelBlock = ((256 - 4) * 2) + 1;
+      const rawLen = Math.max(1, Math.floor(sliceLen / step));
+      const numBlocks = Math.max(1, Math.ceil(rawLen / samplesPerChannelBlock));
+      const dataSize = numBlocks * blockAlign;
+
+      const idxTable = "-1,-1,-1,-1,2,4,6,8,-1,-1,-1,-1,2,4,6,8".split(",").map(Number);
+      const stepTable = "7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,1707,1878,2066,2272,2499,2749,3024,3327,3660,4026,4428,4871,5358,5894,6484,7132,7845,8630,9493,10442,11487,12635,13899,15289,16818,18500,20350,22385,24623,27086,29794,32767".split(",").map(Number);
+
+      const buffer = new ArrayBuffer(48 + dataSize);
+      const view = new DataView(buffer);
+
+      writeAscii(view, 0, "RIFF");
+      view.setUint32(4, 40 + dataSize, true);
+      writeAscii(view, 8, "WAVEfmt ");
+      view.setUint32(16, 20, true);
+      view.setUint16(20, 17, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, targetRate, true);
+      view.setUint32(28, Math.floor((targetRate * blockAlign) / samplesPerChannelBlock), true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, 4, true);
+      view.setUint16(36, 2, true);
+      view.setUint16(38, samplesPerChannelBlock, true);
+      writeAscii(view, 40, "data");
+      view.setUint32(44, dataSize, true);
+
+      const gain = getGainMultiplier();
+      const getSampleForChannel = (chIdx, n) => {
+        const s0 = startSample + Math.floor(n * step);
+        if (s0 >= endSample) return 0;
+        const start = Math.min(endSample - 1, s0);
+        const end = Math.min(endSample, Math.max(start + 1, startSample + Math.floor((n + 1) * step)));
+        let sum = 0;
+        for (let k = start; k < end; k++) {
+          if (numChannels === 1) {
+            sum += getChannelSample(ch0, ch1, hasTwoInputChannels, k);
+          } else {
+            const val = chIdx === 0
+              ? (ch0.at(k) ?? 0)
+              : (hasTwoInputChannels ? (ch1.at(k) ?? ch0.at(k) ?? 0) : (ch0.at(k) ?? 0));
+            sum += val;
+          }
+        }
+        const avg = (sum / (end - start)) * gain;
+        return Math.max(-32768, Math.min(32767, Math.round(avg * 32767)));
+      };
+
+      const predictors = new Array(numChannels).fill(0).map((_, c) => getSampleForChannel(c, 0));
+      const stepIndices = new Array(numChannels).fill(0);
+      let samplePos = 0;
+      let outOff = 48;
+
+      for (let b = 0; b < numBlocks; b++) {
+        for (let c = 0; c < numChannels; c++) {
+          predictors[c] = getSampleForChannel(c, samplePos);
+          view.setInt16(outOff, predictors[c], true);
+          view.setUint8(outOff + 2, stepIndices[c]);
+          view.setUint8(outOff + 3, 0);
+          outOff += 4;
+        }
+        samplePos++;
+
+        for (let c = 0; c < numChannels; c++) {
+          for (let i = 0; i < 252; i++) {
+            let byte = 0;
+            for (let nib = 0; nib < 2; nib++) {
+              const s = getSampleForChannel(c, samplePos + i * 2 + nib);
+              let diff = s - predictors[c];
+              let code = diff < 0 ? 8 : 0;
+              if (diff < 0) diff = -diff;
+              let st = stepTable.at(stepIndices[c]);
+              let delta = st >> 3;
+              if (diff >= st) { code |= 4; diff -= st; delta += st; }
+              st >>= 1;
+              if (diff >= st) { code |= 2; diff -= st; delta += st; }
+              st >>= 1;
+              if (diff >= st) { code |= 1; delta += st; }
+              predictors[c] += (code & 8) ? -delta : delta;
+              predictors[c] = Math.max(-32768, Math.min(32767, predictors[c]));
+              stepIndices[c] = Math.max(0, Math.min(88, stepIndices[c] + idxTable.at(code)));
+              byte |= (code & 0x0f) << (nib * 4);
+            }
+            view.setUint8(outOff++, byte);
+          }
+        }
+        samplePos += 504;
+      }
+      return new Blob(Array.of(buffer), { type: "audio/wav" });
+    }
+
+    function buildResampledAudioBuffer(channels, srcRate, targetRate, numChannels, startSec, endSec) {
+      const ch0 = channels.at(0);
+      const hasTwoInputChannels = channels.length > 1;
+      const ch1 = hasTwoInputChannels ? channels.at(1) : ch0;
+
+      const startSample = Math.max(0, Math.floor(startSec * srcRate));
+      const endSample = Math.min(ch0.length, Math.floor(endSec * srcRate));
+      const sliceSamples = Math.max(1, endSample - startSample);
+      const sliceDuration = sliceSamples / srcRate;
+      const outLen = Math.max(1, Math.round(sliceDuration * targetRate));
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const tempCtx = new AudioCtx();
+      const outBuf = tempCtx.createBuffer(numChannels, outLen, targetRate);
+      tempCtx.close().catch(() => {});
+
+      const gain = getGainMultiplier();
+      const ratio = sliceSamples / outLen;
+
+      for (let c = 0; c < numChannels; c++) {
+        const dst = outBuf.getChannelData(c);
+        for (let i = 0; i < outLen; i++) {
+          const srcIdx = Math.min(endSample - 1, startSample + Math.floor(i * ratio));
+          let sampleVal;
+          if (numChannels === 1) {
+            sampleVal = getChannelSample(ch0, ch1, hasTwoInputChannels, srcIdx);
+          } else {
+            sampleVal = c === 0
+              ? (ch0.at(srcIdx) ?? 0)
+              : (hasTwoInputChannels ? (ch1.at(srcIdx) ?? ch0.at(srcIdx) ?? 0) : (ch0.at(srcIdx) ?? 0));
+          }
+          dst[i] = Math.max(-1, Math.min(1, sampleVal * gain));
+        }
+      }
+      return outBuf;
+    }
+
+    function pickOpusMimeType() {
+      if (typeof MediaRecorder === "undefined" || typeof MediaRecorder.isTypeSupported !== "function") {
+        return null;
+      }
+      const candidates = [
+        "audio/ogg;codecs=opus",
+        "audio/ogg",
+        "audio/webm;codecs=opus",
+        "audio/webm"
+      ];
+      for (const mime of candidates) {
+        if (MediaRecorder.isTypeSupported(mime)) return mime;
+      }
+      return null;
+    }
+
+    async function encodeOpusBlob(channels, srcRate, targetRate, numChannels, startSec, endSec) {
+      const mimeType = pickOpusMimeType();
+      if (!mimeType) {
+        throw new Error("This browser does not support MediaRecorder Opus encoding.");
+      }
+
+      const outBuf = buildResampledAudioBuffer(channels, srcRate, targetRate, numChannels, startSec, endSec);
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const playCtx = new AudioCtx({ sampleRate: outBuf.sampleRate });
+      if (playCtx.state === "suspended") await playCtx.resume();
+
+      const srcNode = playCtx.createBufferSource();
+      srcNode.buffer = outBuf;
+
+      const destNode = playCtx.createMediaStreamDestination();
+      if (destNode.stream.getAudioTracks().length > 0 && typeof destNode.stream.getAudioTracks()[0].applyConstraints === "function") {
+        try {
+          await destNode.stream.getAudioTracks()[0].applyConstraints({ channelCount: numChannels });
+        } catch {}
+      }
+
+      srcNode.connect(destNode);
+
+      const recorder = new MediaRecorder(destNode.stream, { mimeType });
+      const chunks = [];
+
+      const blobPromise = new Promise((resolve, reject) => {
+        recorder.ondataavailable = (ev) => {
+          if (ev.data && ev.data.size > 0) chunks.push(ev.data);
+        };
+        recorder.onerror = (ev) => {
+          reject(ev.error || new Error("Opus encoding failed."));
+        };
+        recorder.onstop = () => {
+          const baseMime = mimeType.startsWith("audio/ogg") ? "audio/ogg" : mimeType.split(";")[0];
+          resolve(new Blob(chunks, { type: baseMime }));
+        };
+      });
+
+      recorder.start(100);
+      srcNode.start();
+
+      await new Promise((resolve) => {
+        srcNode.onended = () => {
+          setTimeout(() => {
+            if (recorder.state !== "inactive") recorder.stop();
+            resolve();
+          }, 120);
+        };
+      });
+
+      const blob = await blobPromise;
+      playCtx.close().catch(() => {});
+      return { blob, mimeType };
+    }
+
+    async function rebuildOutputFromCache() {
+      if (!lastRawChannels) return;
+      const jobId = ++encodeJobId;
+      const codec = codecSelect.value;
+      const rate = Number(rateSelect.value);
+      const bits = Number(bitsSelect.value);
+      const numChannels = Number(channelsSelect.value) === 2 ? 2 : 1;
+      const db = Number(gainSlider.value) || 0;
+      const dur = (trimEnd - trimStart).toFixed(2);
+      const dbStr = db === 0 ? "0 dB" : (db > 0 ? "+" + db + " dB" : db + " dB");
+      const chLabel = numChannels === 2 ? "stereo" : "mono";
+
+      convertBtn.disabled = true;
+      previewBtn.disabled = true;
+      copyBtn.disabled = true;
+
+      try {
+        let formatLabel = "";
+        if (codec === "ogg-opus") {
+          setStatus("Encoding OGG Opus...");
+          const opusResult = await encodeOpusBlob(lastRawChannels, lastSrcRate, rate, numChannels, trimStart, trimEnd);
+          if (jobId !== encodeJobId) return;
+          currentBlob = opusResult.blob;
+          formatLabel = opusResult.mimeType.includes("webm") ? "WebM/OGG Opus" : "OGG Opus";
+        } else {
+          currentBlob = bits === 4
+            ? encodeImaAdpcmWav(lastRawChannels, lastSrcRate, rate, numChannels, trimStart, trimEnd)
+            : encodePcmWav(lastRawChannels, lastSrcRate, rate, bits, numChannels, trimStart, trimEnd);
+          formatLabel = bits + "-bit " + (bits === 4 ? "ADPCM" : "PCM") + " WAV";
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (jobId !== encodeJobId) return;
+          cachedDataUrl = reader.result;
+          refreshTextarea();
+          previewBtn.disabled = false;
+          copyBtn.disabled = false;
+          convertBtn.disabled = false;
+          setStatus(
+            "Ready (" + dur + "s, " + dbStr + "): " + rate + " Hz, " + formatLabel + " " + chLabel + " " +
+            "(" + (currentBlob.size / 1024).toFixed(1) + " KB, " + outputEl.value.length.toLocaleString() + " chars).",
+            "ok"
+          );
+        };
+        reader.readAsDataURL(currentBlob);
+      } catch (err) {
+        if (jobId !== encodeJobId) return;
+        convertBtn.disabled = false;
+        setStatus("Error: " + (err.message || err), "err");
+      }
+    }
+
+    async function captureVideoAudioFallback(file, audioCtx) {
+      setStatus("Capturing MP4 audio stream in real time...");
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.src = url;
+      video.playsInline = true;
+      video.muted = false;
+      video.volume = 1.0;
+      video.style.cssText = "position:fixed;width:1px;height:1px;opacity:0.01;pointer-events:none;";
+      document.body.appendChild(video);
+
+      try {
+        await new Promise((res, rej) => {
+          video.onloadedmetadata = res;
+          video.onerror = () => rej(new Error("Could not load MP4 stream."));
+        });
+
+        const source = audioCtx.createMediaElementSource(video);
+        const processor = audioCtx.createScriptProcessor(4096, 2, 2);
+        const leftChunks = Array.of();
+        const rightChunks = Array.of();
+        let detectedChannels = 1;
+
+        processor.onaudioprocess = (e) => {
+          if (video.paused || video.ended) return;
+          const inputChCount = e.inputBuffer.numberOfChannels;
+          if (inputChCount > detectedChannels) detectedChannels = inputChCount;
+          const ch0Data = e.inputBuffer.getChannelData(0);
+          const ch1Data = inputChCount > 1 ? e.inputBuffer.getChannelData(1) : ch0Data;
+          leftChunks.push(new Float32Array(ch0Data));
+          rightChunks.push(new Float32Array(ch1Data));
+        };
+
+        source.connect(processor);
+        processor.connect(audioCtx.destination);
+        await video.play();
+        await new Promise((res) => {
+          video.onended = res;
+          setTimeout(res, (video.duration || 10) * 1000 + 500);
+        });
+
+        processor.disconnect();
+        source.disconnect();
+
+        const totalLen = leftChunks.reduce((sum, c) => sum + c.length, 0);
+        if (totalLen === 0) {
+          throw new Error("0 audio frames captured from MP4.");
+        }
+
+        const left = new Float32Array(totalLen);
+        let pos = 0;
+        for (let i = 0; i < leftChunks.length; i++) {
+          left.set(leftChunks.at(i), pos);
+          pos += leftChunks.at(i).length;
+        }
+
+        if (detectedChannels > 1) {
+          const right = new Float32Array(totalLen);
+          pos = 0;
+          for (let i = 0; i < rightChunks.length; i++) {
+            right.set(rightChunks.at(i), pos);
+            pos += rightChunks.at(i).length;
+          }
+          lastRawChannels = Array.of(left, right);
+        } else {
+          lastRawChannels = Array.of(left);
+        }
+        lastSrcRate = audioCtx.sampleRate;
+      } finally {
+        video.pause();
+        video.remove();
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    // Waveform Drawing + Gain Scaling + Trim Selection + Live Playhead
+    function drawWaveform() {
+      if (!lastRawChannels || !totalDuration) return;
+      const width = canvas.width;
+      const height = canvas.height;
+      const ch0 = lastRawChannels.at(0);
+      const step = Math.max(1, Math.ceil(ch0.length / width));
+      const amp = height / 2;
+      const gain = getGainMultiplier();
+
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < width; i++) {
+        let min = 1.0;
+        let max = -1.0;
+        let clipped = false;
+        for (let j = 0; j < step; j++) {
+          const rawVal = ch0[i * step + j];
+          if (rawVal !== undefined) {
+            const scaled = rawVal * gain;
+            if (scaled > 1.0 || scaled < -1.0) clipped = true;
+            const clamped = Math.max(-1.0, Math.min(1.0, scaled));
+            if (clamped < min) min = clamped;
+            if (clamped > max) max = clamped;
+          }
+        }
+        ctx.fillStyle = clipped ? "#f85149" : "#3b82f6";
+        ctx.fillRect(i, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
+      }
+
+      const startX = (trimStart / totalDuration) * width;
+      const endX = (trimEnd / totalDuration) * width;
+      ctx.fillStyle = "rgba(13, 17, 23, 0.72)";
+      ctx.fillRect(0, 0, startX, height);
+      ctx.fillRect(endX, 0, width - endX, height);
+
+      ctx.strokeStyle = "#3fb950";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(startX, 0);
+      ctx.lineTo(startX, height);
+      ctx.moveTo(endX, 0);
+      ctx.lineTo(endX, height);
+      ctx.stroke();
+
+      if (playheadSec !== null) {
+        const playX = (playheadSec / totalDuration) * width;
+        ctx.strokeStyle = "#f85149";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(playX, 0);
+        ctx.lineTo(playX, height);
+        ctx.stroke();
+      }
+    }
+
+    function syncTrimInputs() {
+      trimStartInput.value = trimStart.toFixed(2);
+      trimEndInput.value = trimEnd.toFixed(2);
+      trimStartInput.max = totalDuration.toFixed(2);
+      trimEndInput.max = totalDuration.toFixed(2);
+      trimInfoEl.textContent = (trimEnd - trimStart).toFixed(2) + "s / " + totalDuration.toFixed(2) + "s";
+    }
+
+    function updateGainDisplay() {
+      const db = Number(gainSlider.value) || 0;
+      gainLabel.textContent = (db > 0 ? "+" + db : db) + " dB";
+      drawWaveform();
+    }
+
+    function stopPreviewPlayback() {
+      if (playAnimFrame) {
+        cancelAnimationFrame(playAnimFrame);
+        playAnimFrame = null;
+      }
+      playheadSec = null;
+      if (activePlayCtx) {
+        activePlayCtx.close().catch(() => {});
+        activePlayCtx = null;
+      }
+      drawWaveform();
+    }
+
+    async function playCurrentOutput() {
+      if (!currentBlob) return;
+      stopPreviewPlayback();
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        activePlayCtx = ctx;
+        if (ctx.state === "suspended") await ctx.resume();
+        const buf = await currentBlob.arrayBuffer();
+        const audioBuf = await ctx.decodeAudioData(buf);
+        const src = ctx.createBufferSource();
+        src.buffer = audioBuf;
+        src.connect(ctx.destination);
+        const startedAt = ctx.currentTime;
+        const clipStart = trimStart;
+        const clipDur = audioBuf.duration;
+        const updateCursor = () => {
+          if (!activePlayCtx) return;
+          const elapsed = ctx.currentTime - startedAt;
+          if (elapsed <= clipDur) {
+            playheadSec = Math.min(trimEnd, clipStart + elapsed);
+            drawWaveform();
+            playAnimFrame = requestAnimationFrame(updateCursor);
+          }
+        };
+        src.onended = () => {
+          stopPreviewPlayback();
+        };
+        src.start();
+        updateCursor();
+        setStatus("Playing (" + audioBuf.duration.toFixed(2) + "s).", "ok");
+      } catch (err) {
+        stopPreviewPlayback();
+        setStatus("Preview error: " + (err.message || err), "err");
+      }
+    }
+
+    function getCanvasX(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      return Math.max(0, Math.min(canvas.width, (clientX - rect.left) * (canvas.width / rect.width)));
+    }
+
+    canvas.addEventListener("pointerdown", (e) => {
+      if (!lastRawChannels || !totalDuration) return;
+      stopPreviewPlayback();
+      isDragging = true;
+      canvas.setPointerCapture(e.pointerId);
+      dragStartX = getCanvasX(e.clientX);
+    });
+
+    canvas.addEventListener("pointermove", (e) => {
+      if (!isDragging || !lastRawChannels) return;
+      const curX = getCanvasX(e.clientX);
+      const minX = Math.min(dragStartX, curX);
+      const maxX = Math.max(dragStartX, curX);
+      trimStart = (minX / canvas.width) * totalDuration;
+      trimEnd = (maxX / canvas.width) * totalDuration;
+      syncTrimInputs();
+      drawWaveform();
+    });
+
+    canvas.addEventListener("pointerup", (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      canvas.releasePointerCapture(e.pointerId);
+      if (trimEnd - trimStart < 0.05) {
+        trimStart = 0;
+        trimEnd = totalDuration;
+        syncTrimInputs();
+        drawWaveform();
+      }
+      rebuildOutputFromCache();
+    });
+
+    trimStartInput.addEventListener("change", () => {
+      if (!lastRawChannels) return;
+      stopPreviewPlayback();
+      trimStart = Math.max(0, Math.min(parseFloat(trimStartInput.value) || 0, trimEnd - 0.05));
+      syncTrimInputs();
+      drawWaveform();
+      rebuildOutputFromCache();
+    });
+
+    trimEndInput.addEventListener("change", () => {
+      if (!lastRawChannels) return;
+      stopPreviewPlayback();
+      trimEnd = Math.min(totalDuration, Math.max(parseFloat(trimEndInput.value) || 0, trimStart + 0.05));
+      syncTrimInputs();
+      drawWaveform();
+      rebuildOutputFromCache();
+    });
+
+    resetTrimBtn.addEventListener("click", () => {
+      if (!lastRawChannels) return;
+      stopPreviewPlayback();
+      trimStart = 0;
+      trimEnd = totalDuration;
+      syncTrimInputs();
+      drawWaveform();
+      rebuildOutputFromCache();
+    });
+
+    gainSlider.addEventListener("input", updateGainDisplay);
+    gainSlider.addEventListener("change", () => {
+      stopPreviewPlayback();
+      rebuildOutputFromCache();
+    });
+
+    resetGainBtn.addEventListener("click", () => {
+      gainSlider.value = "0";
+      updateGainDisplay();
+      stopPreviewPlayback();
+      rebuildOutputFromCache();
+    });
+
+    playTrimBtn.addEventListener("click", playCurrentOutput);
+    stopTrimBtn.addEventListener("click", stopPreviewPlayback);
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files.item(0);
+      convertBtn.disabled = !file;
+      lastRawChannels = null;
+      stopPreviewPlayback();
+      previewPanel.classList.remove("visible");
+      previewBtn.textContent = "Preview Output";
+      if (file) setStatus('Loaded "' + file.name + '" (' + (file.size / 1024).toFixed(1) + ' KB).');
+    });
+
+    fmtRadios.forEach((r) => r.addEventListener("change", refreshTextarea));
+    codecSelect.addEventListener("change", () => {
+      updateCodecUiState();
+      stopPreviewPlayback();
+      rebuildOutputFromCache();
+    });
+    rateSelect.addEventListener("change", () => { stopPreviewPlayback(); rebuildOutputFromCache(); });
+    bitsSelect.addEventListener("change", () => { stopPreviewPlayback(); rebuildOutputFromCache(); });
+    channelsSelect.addEventListener("change", () => { stopPreviewPlayback(); rebuildOutputFromCache(); });
+
+    convertBtn.addEventListener("click", async () => {
+      const file = fileInput.files.item(0);
+      if (!file) return;
+      stopPreviewPlayback();
+      convertBtn.disabled = true;
+      previewBtn.disabled = true;
+      copyBtn.disabled = true;
+      setStatus("Decoding...");
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioCtx();
+      if (audioCtx.state === "suspended") await audioCtx.resume();
+
+      try {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const decoded = await audioCtx.decodeAudioData(arrayBuffer);
+          const channels = Array.of();
+          for (let c = 0; c < decoded.numberOfChannels; c++) {
+            channels.push(decoded.getChannelData(c));
+          }
+          lastRawChannels = channels;
+          lastSrcRate = decoded.sampleRate;
+        } catch {
+          await captureVideoAudioFallback(file, audioCtx);
+        }
+
+        totalDuration = lastRawChannels.at(0).length / lastSrcRate;
+        trimStart = 0;
+        trimEnd = totalDuration;
+        syncTrimInputs();
+        drawWaveform();
+        await rebuildOutputFromCache();
+      } catch (err) {
+        convertBtn.disabled = false;
+        setStatus("Error: " + (err.message || err), "err");
+      } finally {
+        audioCtx.close().catch(() => {});
+      }
+    });
+
+    previewBtn.addEventListener("click", () => {
+      if (!currentBlob) return;
+      const isVisible = previewPanel.classList.toggle("visible");
+      if (isVisible) {
+        previewBtn.textContent = "Hide Preview";
+        drawWaveform();
+        playCurrentOutput();
+      } else {
+        previewBtn.textContent = "Preview Output";
+        stopPreviewPlayback();
+      }
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      if (!outputEl.value) return;
+      try {
+        await navigator.clipboard.writeText(outputEl.value);
+        setStatus("Copied Base64 to clipboard!", "ok");
+      } catch {
+        outputEl.select();
+        document.execCommand("copy");
+        setStatus("Copied Base64 to clipboard!", "ok");
+      }
+    });
+
+    resetBtn.addEventListener("click", () => {
+      encodeJobId++;
+      stopPreviewPlayback();
+      fileInput.value = "";
+      previewPanel.classList.remove("visible");
+      previewBtn.textContent = "Preview Output";
+      currentBlob = null;
+      cachedDataUrl = "";
+      lastRawChannels = null;
+      totalDuration = 0;
+      trimStart = 0;
+      trimEnd = 0;
+      outputEl.value = "";
+      gainSlider.value = "0";
+      gainLabel.textContent = "0 dB";
+      codecSelect.value = "wav";
+      rateSelect.value = "3000";
+      bitsSelect.value = "8";
+      channelsSelect.value = "1";
+      updateCodecUiState();
+      convertBtn.disabled = true;
+      previewBtn.disabled = true;
+      copyBtn.disabled = true;
+      setStatus("Reset. Select an audio or MP4 file (mono or stereo).");
+    });
+
+    updateCodecUiState();
+  </script>
 </body>
 </html>
